@@ -1,12 +1,8 @@
 package chromahub.rhythm.app.ui.screens
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.core.content.ContextCompat
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -16,34 +12,34 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
 import chromahub.rhythm.app.data.AppSettings
 import chromahub.rhythm.app.ui.components.M3FourColorCircularLoader
 import chromahub.rhythm.app.ui.screens.onboarding.OnboardingStep
 import chromahub.rhythm.app.ui.screens.onboarding.PermissionScreenState
+import chromahub.rhythm.app.viewmodel.AppUpdaterViewModel
+import chromahub.rhythm.app.viewmodel.MusicViewModel
 import chromahub.rhythm.app.viewmodel.ThemeViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.shouldShowRationale
 import kotlinx.coroutines.delay
-import androidx.lifecycle.viewmodel.compose.viewModel
-import chromahub.rhythm.app.viewmodel.MusicViewModel
-import chromahub.rhythm.app.viewmodel.AppUpdaterViewModel
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.rememberCoroutineScope
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -52,9 +48,7 @@ fun PermissionHandler(
     themeViewModel: ThemeViewModel,
     appSettings: AppSettings,
     isLoading: Boolean, // Pass as parameter
-    isInitializingApp: Boolean, // Pass as parameter
     onSetIsLoading: (Boolean) -> Unit, // Callback to update state
-    onSetIsInitializingApp: (Boolean) -> Unit, // Callback to update state
     musicViewModel: MusicViewModel = viewModel(),
     updaterViewModel: AppUpdaterViewModel = viewModel()
 ) {
@@ -155,16 +149,6 @@ fun PermissionHandler(
                 if (!initialMediaScanCompleted && !showMediaScanLoader) {
                     showMediaScanLoader = true
                 }
-                onSetIsInitializingApp(true) // Start app initialization
-                val intent = Intent(context, chromahub.rhythm.app.service.MediaPlaybackService::class.java)
-                intent.action = chromahub.rhythm.app.service.MediaPlaybackService.ACTION_INIT_SERVICE
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    context.startForegroundService(intent)
-                } else {
-                    context.startService(intent)
-                }
-                delay(1000) // Give service time to initialize
-                onSetIsInitializingApp(false) // End app initialization
             }
             onSetIsLoading(false) // Always set loading to false after evaluation
         } else {
@@ -244,7 +228,7 @@ fun PermissionHandler(
     Box(modifier = Modifier.fillMaxSize()) {
         // Show the main app when onboarding is complete, not initializing, and media scan is not needed
         AnimatedVisibility(
-            visible = currentOnboardingStep == OnboardingStep.COMPLETE && !isInitializingApp && !showMediaScanLoader, // Show app when complete AND not initializing AND media scan is done
+            visible = currentOnboardingStep == OnboardingStep.COMPLETE && !showMediaScanLoader, // Show app when complete AND not initializing AND media scan is done
             enter = fadeIn(animationSpec = tween(1000, easing = androidx.compose.animation.core.EaseOutCubic)) +
                    slideInVertically(
                        initialOffsetY = { it / 3 },
@@ -271,7 +255,7 @@ fun PermissionHandler(
         }
 
         AnimatedVisibility(
-            visible = isInitializingApp || (isLoading && currentOnboardingStep != OnboardingStep.COMPLETE && currentOnboardingStep != OnboardingStep.PERMISSIONS), // Show loading if app initializing, or general loading not on permission screen
+            visible = (isLoading && currentOnboardingStep != OnboardingStep.COMPLETE && currentOnboardingStep != OnboardingStep.PERMISSIONS), // Show loading if app initializing, or general loading not on permission screen
             exit = fadeOut(animationSpec = tween(800, easing = androidx.compose.animation.core.EaseInCubic))
         ) {
             Box(
@@ -285,7 +269,7 @@ fun PermissionHandler(
         }
 
         AnimatedVisibility(
-            visible = !isLoading && !isInitializingApp && currentOnboardingStep != OnboardingStep.COMPLETE, // Show onboarding if not loading AND not initializing AND not complete
+            visible = !isLoading && currentOnboardingStep != OnboardingStep.COMPLETE, // Show onboarding if not loading AND not initializing AND not complete
             enter = fadeIn(animationSpec = tween(800, easing = androidx.compose.animation.core.EaseOutCubic)) +
                    scaleIn(initialScale = 0.95f, animationSpec = tween(800, easing = androidx.compose.animation.core.EaseOutCubic))
         ) {

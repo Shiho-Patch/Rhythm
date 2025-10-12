@@ -1,27 +1,26 @@
 package chromahub.rhythm.app.viewmodel
 
 import android.app.Application
-
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-
-import android.os.Build
-import android.media.audiofx.AudioEffect
 import android.net.Uri
+import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
+import androidx.core.os.bundleOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
+import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionToken
 import chromahub.rhythm.app.data.Album
 import chromahub.rhythm.app.data.AppSettings
 import chromahub.rhythm.app.data.Artist
+import chromahub.rhythm.app.data.LyricsData
 import chromahub.rhythm.app.data.MusicRepository
 import chromahub.rhythm.app.data.PlaybackLocation
 import chromahub.rhythm.app.data.Playlist
@@ -34,26 +33,24 @@ import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.PlaylistImportExportUtils
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.yield
 import kotlinx.coroutines.withTimeoutOrNull
-import java.time.Duration
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
-import java.util.Calendar
+import kotlinx.coroutines.yield
 import java.io.File
-import chromahub.rhythm.app.data.LyricsData // Import LyricsData
+import java.util.Calendar
 
 class MusicViewModel(application: Application) : AndroidViewModel(application) {
     private val TAG = "MusicViewModel"
@@ -1054,23 +1051,6 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     fun connectToMediaService() {
         Log.d(TAG, "Connecting to media service")
         val context = getApplication<Application>()
-        
-        // Start the service first to ensure it's running
-        val serviceIntent = Intent(context, MediaPlaybackService::class.java)
-        serviceIntent.action = MediaPlaybackService.ACTION_INIT_SERVICE
-        
-        // Use startForegroundService for Android 8.0+ to avoid BackgroundServiceStartNotAllowedException
-        try {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                context.startForegroundService(serviceIntent)
-            } else {
-                context.startService(serviceIntent)
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to start media service: ${e.message}", e)
-            // Try to connect without starting the service - the MediaController might still work
-        }
-        
         val sessionToken = SessionToken(
             context,
             ComponentName(context, MediaPlaybackService::class.java)
@@ -2951,59 +2931,26 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     // Playback settings functions
     fun setHighQualityAudio(enable: Boolean) {
         appSettings.setHighQualityAudio(enable)
-        applyPlaybackSettings()
     }
     
     fun setGaplessPlayback(enable: Boolean) {
         appSettings.setGaplessPlayback(enable)
-        applyPlaybackSettings()
     }
     
     fun setCrossfade(enable: Boolean) {
         appSettings.setCrossfade(enable)
-        applyPlaybackSettings()
     }
     
     fun setCrossfadeDuration(duration: Float) {
         appSettings.setCrossfadeDuration(duration)
-        applyPlaybackSettings()
     }
     
     fun setAudioNormalization(enable: Boolean) {
         appSettings.setAudioNormalization(enable)
-        applyPlaybackSettings()
     }
     
     fun setReplayGain(enable: Boolean) {
         appSettings.setReplayGain(enable)
-        applyPlaybackSettings()
-    }
-    
-    private fun applyPlaybackSettings() {
-        // Apply settings to the media player
-        mediaController?.let { controller ->
-            Log.d(TAG, "Applied playback settings: " +
-                    "HQ Audio=${enableHighQualityAudio.value}, " +
-                    "Gapless=${enableGaplessPlayback.value}, " +
-                    "Crossfade=${enableCrossfade.value} (${crossfadeDuration.value}s), " +
-                    "Normalization=${enableAudioNormalization.value}, " +
-                    "ReplayGain=${enableReplayGain.value}")
-            
-            // Send intent to update service settings
-            val context = getApplication<Application>()
-            val intent = Intent(context, MediaPlaybackService::class.java).apply {
-                action = MediaPlaybackService.ACTION_UPDATE_SETTINGS
-            }
-            try {
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                    context.startForegroundService(intent)
-                } else {
-                    context.startService(intent)
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to start media service for settings update: ${e.message}", e)
-            }
-        }
     }
 
     /**
@@ -4009,72 +3956,63 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         
         // Save to settings
         appSettings.setEqualizerEnabled(enabled)
-        
-        // Send to service
-        val intent = Intent(context, MediaPlaybackService::class.java).apply {
-            action = MediaPlaybackService.ACTION_SET_EQUALIZER_ENABLED
-            putExtra("enabled", enabled)
-        }
-        context.startService(intent)
+        mediaController?.sendCustomCommand(
+            SessionCommand(MediaPlaybackService.SET_EQUALIZER_ENABLED, bundleOf("enabled" to enabled)),
+            Bundle.EMPTY
+        )
         Log.d(TAG, "Set equalizer enabled: $enabled")
     }
     
     fun setEqualizerBandLevel(band: Short, level: Short) {
-        val context = getApplication<Application>()
-        val intent = Intent(context, MediaPlaybackService::class.java).apply {
-            action = MediaPlaybackService.ACTION_SET_EQUALIZER_BAND
-            putExtra("band", band)
-            putExtra("level", level)
-        }
-        context.startService(intent)
+        mediaController?.sendCustomCommand(
+            SessionCommand(
+                MediaPlaybackService.SET_EQUALIZER_BAND,
+                bundleOf("band" to band, "level" to level)
+            ),
+            Bundle.EMPTY
+        )
         Log.d(TAG, "Set equalizer band $band to level $level")
     }
     
     fun setBassBoost(enabled: Boolean, strength: Short = 500) {
-        val context = getApplication<Application>()
-        
         // Save to settings
         appSettings.setBassBoostEnabled(enabled)
         appSettings.setBassBoostStrength(strength.toInt())
-        
-        val intent = Intent(context, MediaPlaybackService::class.java).apply {
-            action = MediaPlaybackService.ACTION_SET_BASS_BOOST
-            putExtra("enabled", enabled)
-            putExtra("strength", strength)
-        }
-        context.startService(intent)
+        mediaController?.sendCustomCommand(
+            SessionCommand(
+                MediaPlaybackService.SET_BASS_BOOST,
+                bundleOf("enabled" to enabled, "strength" to strength)
+            ),
+            Bundle.EMPTY
+        )
         Log.d(TAG, "Set bass boost enabled: $enabled, strength: $strength")
     }
     
     fun setVirtualizer(enabled: Boolean, strength: Short = 500) {
-        val context = getApplication<Application>()
-        
         // Save to settings
         appSettings.setVirtualizerEnabled(enabled)
         appSettings.setVirtualizerStrength(strength.toInt())
-        
-        val intent = Intent(context, MediaPlaybackService::class.java).apply {
-            action = MediaPlaybackService.ACTION_SET_VIRTUALIZER
-            putExtra("enabled", enabled)
-            putExtra("strength", strength)
-        }
-        context.startService(intent)
+        mediaController?.sendCustomCommand(
+            SessionCommand(
+                MediaPlaybackService.SET_VIRTUALIZER,
+                bundleOf("enabled" to enabled, "strength" to strength)
+            ),
+            Bundle.EMPTY
+        )
         Log.d(TAG, "Set virtualizer enabled: $enabled, strength: $strength")
     }
     
     fun applyEqualizerPreset(preset: String, levels: List<Float>) {
-        val context = getApplication<Application>()
-        
         // Save to settings
         appSettings.setEqualizerPreset(preset)
         appSettings.setEqualizerBandLevels(levels.joinToString(","))
-        
-        val intent = Intent(context, MediaPlaybackService::class.java).apply {
-            action = MediaPlaybackService.ACTION_APPLY_EQUALIZER_PRESET
-            putExtra("preset", preset)
-            putExtra("levels", levels.toFloatArray())
-        }
-        context.startService(intent)
+        mediaController?.sendCustomCommand(
+            SessionCommand(
+                MediaPlaybackService.APPLY_EQUALIZER_PRESET,
+                bundleOf("preset" to preset, "levels" to levels.toFloatArray())
+            ),
+            Bundle.EMPTY
+        )
         Log.d(TAG, "Applied equalizer preset: $preset")
     }
     

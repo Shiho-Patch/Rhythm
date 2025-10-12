@@ -1,6 +1,6 @@
 package chromahub.rhythm.app
 
-import android.Manifest
+//import chromahub.rhythm.app.ui.annotations.RhythmAnimation
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -12,132 +12,39 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.foundation.background
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
-import chromahub.rhythm.app.R
-import chromahub.rhythm.app.ui.components.RhythmIcons
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.filled.WavingHand // New import for Welcome screen icon
-import androidx.compose.material.icons.filled.DarkMode // New import for Dark Mode icon
+import chromahub.rhythm.app.data.AppSettings
 import chromahub.rhythm.app.ui.navigation.RhythmNavigation
+import chromahub.rhythm.app.ui.screens.BetaProgramPopup
+import chromahub.rhythm.app.ui.screens.PermissionHandler
+import chromahub.rhythm.app.ui.screens.SplashScreen
+import chromahub.rhythm.app.ui.screens.onboarding.OnboardingStep
 import chromahub.rhythm.app.ui.theme.RhythmTheme
+import chromahub.rhythm.app.util.CrashReporter
+import chromahub.rhythm.app.util.MediaUtils
+import chromahub.rhythm.app.viewmodel.AppUpdaterViewModel
+import chromahub.rhythm.app.viewmodel.MusicViewModel
 import chromahub.rhythm.app.viewmodel.ThemeViewModel
-import chromahub.rhythm.app.viewmodel.AppUpdaterViewModel // Import AppUpdaterViewModel
-import chromahub.rhythm.app.util.CrashReporter // Import CrashReporter
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberMultiplePermissionsState
-import com.google.accompanist.permissions.rememberPermissionState
-import com.google.accompanist.permissions.shouldShowRationale
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import androidx.compose.foundation.Image
-import chromahub.rhythm.app.data.Song
-import chromahub.rhythm.app.util.MediaUtils
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.compose.LocalLifecycleOwner // Corrected import for LocalLifecycleOwner
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.animation.Crossfade
-import androidx.compose.ui.text.font.FontWeight
-import chromahub.rhythm.app.viewmodel.MusicViewModel
-//import chromahub.rhythm.app.ui.annotations.RhythmAnimation
-import android.provider.Settings
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.tween
-import chromahub.rhythm.app.data.AppSettings // Import AppSettings
-import java.util.Locale // Import Locale
-import androidx.compose.material.icons.filled.Public // Import Public icon
-import androidx.compose.material.icons.filled.BugReport // Import BugReport icon
-import androidx.compose.material.icons.filled.Check // Import Check icon
-import androidx.compose.material.icons.filled.MusicNote // Import MusicNote icon
-import androidx.compose.material.icons.filled.Palette // Import Palette icon
-import androidx.compose.material.icons.filled.Security // New import for Security icon
-import androidx.compose.material.icons.filled.SystemUpdate // Import SystemUpdate icon
-import androidx.compose.material.icons.filled.KeyboardArrowDown // Import KeyboardArrowDown icon
-import androidx.compose.material.icons.filled.FormatListNumbered // Import FormatListNumbered icon
-import androidx.compose.material.icons.filled.SortByAlpha // Import SortByAlpha icon
-import androidx.compose.material.icons.filled.AccessTime // Import AccessTime icon
-import androidx.compose.material.icons.filled.GridView // Import GridView icon
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.runtime.rememberCoroutineScope
-import chromahub.rhythm.app.ui.components.M3LinearLoader // Import M3LinearLoader
-import chromahub.rhythm.app.ui.components.M3FourColorCircularLoader // Import M3FourColorCircularLoader
-import androidx.compose.ui.platform.LocalHapticFeedback // Import LocalHapticFeedback
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType // Import HapticFeedbackType
-import androidx.compose.material3.ButtonDefaults // Import ButtonDefaults
-import chromahub.rhythm.app.ui.screens.SplashScreen
-import chromahub.rhythm.app.ui.screens.PermissionHandler
-import chromahub.rhythm.app.ui.screens.BetaProgramPopup
-import chromahub.rhythm.app.ui.screens.OnboardingScreen
-import chromahub.rhythm.app.ui.screens.onboarding.OnboardingStep
-import chromahub.rhythm.app.ui.screens.onboarding.PermissionScreenState
 
 class MainActivity : ComponentActivity() {
     private val TAG = "MainActivity"
@@ -209,7 +116,6 @@ class MainActivity : ComponentActivity() {
                     // State for permission handling and app initialization
                     var shouldShowSettingsRedirect by remember { mutableStateOf(false) }
                     var isLoading by remember { mutableStateOf(true) } // Start as true to show loading during splash/initial checks
-                    var isInitializingApp by remember { mutableStateOf(false) }
                     val lastCrashLog by appSettings.lastCrashLog.collectAsState() // Observe last crash log
 
                     // Handle splash screen completion and post-init tasks
@@ -260,9 +166,7 @@ class MainActivity : ComponentActivity() {
                                 themeViewModel = themeViewModel,
                                 appSettings = appSettings,
                                 isLoading = isLoading,
-                                isInitializingApp = isInitializingApp,
                                 onSetIsLoading = { isLoading = it },
-                                onSetIsInitializingApp = { isInitializingApp = it },
                                 musicViewModel = musicViewModel
                             )
                         }
@@ -423,21 +327,13 @@ class MainActivity : ComponentActivity() {
         // Extract metadata from the audio file with proper error handling
         val job = lifecycleScope.launch {
             try {
-                // Start the service with proper initialization waiting
-                val serviceStarted = startMediaServiceAndWait()
-                if (!serviceStarted) {
-                    Log.e(TAG, "Failed to start media service")
-                    Toast.makeText(applicationContext, "Failed to initialize media player", Toast.LENGTH_SHORT).show()
-                    return@launch
-                }
-                
                 // Extract metadata on a background thread
                 val song = withContext(Dispatchers.IO) {
                     MediaUtils.extractMetadataFromUri(applicationContext, uri)
                 }
-                
+
                 Log.d(TAG, "Extracted song metadata: ${song.title} by ${song.artist} from ${song.album}")
-                
+
                 // Ensure service connection with timeout
                 val serviceConnected = waitForServiceConnection(timeoutMs = 5000)
                 if (!serviceConnected) {
@@ -445,7 +341,7 @@ class MainActivity : ComponentActivity() {
                     fallbackPlayExternalFile(uri)
                     return@launch
                 }
-                
+
                 // Play the external file
                 musicViewModel.playExternalAudioFile(song)
                 
@@ -488,27 +384,7 @@ class MainActivity : ComponentActivity() {
             false
         }
     }
-    
-    private suspend fun startMediaServiceAndWait(): Boolean {
-        return try {
-            val serviceIntent = Intent(this, chromahub.rhythm.app.service.MediaPlaybackService::class.java)
-            serviceIntent.action = chromahub.rhythm.app.service.MediaPlaybackService.ACTION_INIT_SERVICE
-            
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(serviceIntent)
-            } else {
-                startService(serviceIntent)
-            }
-            
-            // Wait for service to be ready
-            delay(1000)
-            true
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to start media service", e)
-            false
-        }
-    }
-    
+
     private suspend fun waitForServiceConnection(timeoutMs: Long): Boolean {
         val startTime = System.currentTimeMillis()
         while (System.currentTimeMillis() - startTime < timeoutMs) {
