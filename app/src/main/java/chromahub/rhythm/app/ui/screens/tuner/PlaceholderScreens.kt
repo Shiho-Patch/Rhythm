@@ -12,6 +12,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.animation.core.Spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -67,15 +68,14 @@ import kotlin.system.exitProcess
 import chromahub.rhythm.app.ui.components.CollapsibleHeaderScreen
 import chromahub.rhythm.app.ui.components.RhythmIcons
 import chromahub.rhythm.app.viewmodel.MusicViewModel
-import chromahub.rhythm.app.utils.FontLoader
+import chromahub.rhythm.app.ui.theme.getFontPreviewStyle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import kotlin.system.exitProcess
-
-// Note: SettingItem and SettingGroup are defined in SettingsScreen.kt in the same package
+import chromahub.rhythm.app.utils.FontLoader
+import chromahub.rhythm.app.ui.theme.parseCustomColorScheme
 
 @Composable
 private fun TunerSettingRow(item: SettingItem) {
@@ -2870,16 +2870,13 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
     }
     val currentFont by appSettings.customFont.collectAsState()
 
-    // Color scheme state
-    var selectedColorScheme by remember { mutableStateOf("") }
-
-    // Custom color states
-    var customPrimaryColor by remember { mutableStateOf(Color(0xFF6750A4)) }
-    var customSecondaryColor by remember { mutableStateOf(Color(0xFF625B71)) }
-    var customTertiaryColor by remember { mutableStateOf(Color(0xFF7D5260)) }
-    var customSurfaceColor by remember { mutableStateOf(Color(0xFFFEF7FF)) }
-    var customOnSurfaceColor by remember { mutableStateOf(Color(0xFF1C1B1F)) }
-    var customErrorColor by remember { mutableStateOf(Color(0xFFBA1A1A)) }
+    // Dialog states
+    var showColorSourceDialog by remember { mutableStateOf(false) }
+    var showFontSourceDialog by remember { mutableStateOf(false) }
+    var showColorSchemesDialog by remember { mutableStateOf(false) }
+    var showCustomColorsDialog by remember { mutableStateOf(false) }
+    var showFontSelectionDialog by remember { mutableStateOf(false) }
+    var showParticleIntensityDialog by remember { mutableStateOf(false) }
 
     CollapsibleHeaderScreen(
         title = "Theme Customization",
@@ -2915,13 +2912,19 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                         Icons.Default.Palette,
                         "Color Source",
                         "Choose color extraction method",
-                        onClick = { /* TODO: Show color source selection */ }
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            showColorSourceDialog = true
+                        }
                     ),
                     SettingItem(
                         Icons.Default.TextFields,
                         "Font Source",
                         "Choose font source",
-                        onClick = { /* TODO: Show font source selection */ }
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            showFontSourceDialog = true
+                        }
                     )
                 )
             ),
@@ -2932,13 +2935,19 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                         Icons.Default.ColorLens,
                         "Color Schemes",
                         "Choose from preset color schemes",
-                        onClick = { /* TODO: Show color scheme selection */ }
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            showColorSchemesDialog = true
+                        }
                     ),
                     SettingItem(
                         Icons.Default.Brush,
                         "Custom Colors",
                         "Create custom color scheme",
-                        onClick = { /* TODO: Show custom color picker */ }
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            showCustomColorsDialog = true
+                        }
                     )
                 )
             ),
@@ -2949,7 +2958,10 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                         Icons.Default.TextFields,
                         "Font Selection",
                         "Choose from available fonts",
-                        onClick = { /* TODO: Show font selection */ }
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            showFontSelectionDialog = true
+                        }
                     ),
                     SettingItem(
                         Icons.Default.FileUpload,
@@ -3001,7 +3013,10 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                         Icons.Default.Speed,
                         "Particle Intensity",
                         "Adjust particle effect intensity",
-                        onClick = { /* TODO: Show intensity slider */ }
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            showParticleIntensityDialog = true
+                        }
                     ),
                     SettingItem(
                         Icons.Default.Flare,
@@ -3083,6 +3098,2023 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                    }
+                }
+            }
+        }
+    }
+
+    // Dialogs
+    ColorSourceDialog(
+        showDialog = showColorSourceDialog,
+        onDismiss = { showColorSourceDialog = false },
+        selectedColorSource = selectedColorSource,
+        onColorSourceSelected = { selectedColorSource = it },
+        appSettings = appSettings,
+        context = context,
+        haptic = haptic
+    )
+
+    FontSourceDialog(
+        showDialog = showFontSourceDialog,
+        onDismiss = { showFontSourceDialog = false },
+        selectedFontSource = selectedFontSource,
+        onFontSourceSelected = { selectedFontSource = it },
+        appSettings = appSettings,
+        customFontPath = customFontPath,
+        context = context,
+        haptic = haptic
+    )
+
+    ColorSchemesDialog(
+        showDialog = showColorSchemesDialog,
+        onDismiss = { showColorSchemesDialog = false },
+        colorSchemes = colorSchemes,
+        currentScheme = customColorScheme,
+        selectedColorSource = selectedColorSource,
+        onSchemeSelected = { },
+        appSettings = appSettings,
+        context = context,
+        haptic = haptic
+    )
+
+    CustomColorsDialog(
+        showDialog = showCustomColorsDialog,
+        onDismiss = { showCustomColorsDialog = false },
+        currentScheme = customColorScheme,
+        selectedColorSource = selectedColorSource,
+        onApply = { primary, secondary, tertiary ->
+            val primaryHex = String.format("%06X", (primary.toArgb() and 0xFFFFFF))
+            val secondaryHex = String.format("%06X", (secondary.toArgb() and 0xFFFFFF))
+            val tertiaryHex = String.format("%06X", (tertiary.toArgb() and 0xFFFFFF))
+            val customScheme = "custom_${primaryHex}_${secondaryHex}_${tertiaryHex}"
+            appSettings.setCustomColorScheme(customScheme)
+        },
+        appSettings = appSettings,
+        context = context,
+        haptic = haptic
+    )
+
+    FontSelectionDialog(
+        showDialog = showFontSelectionDialog,
+        onDismiss = { showFontSelectionDialog = false },
+        fontOptions = fontOptions,
+        currentFont = currentFont,
+        selectedFontSource = selectedFontSource,
+        onFontSelected = { selectedFont ->
+            selectedFontSource = FontSource.SYSTEM
+            appSettings.setFontSource("SYSTEM")
+        },
+        appSettings = appSettings,
+        context = context,
+        haptic = haptic
+    )
+
+    ParticleIntensityDialog(
+        showDialog = showParticleIntensityDialog,
+        onDismiss = { showParticleIntensityDialog = false },
+        currentIntensity = festiveThemeParticleIntensity,
+        onIntensityChanged = { /* handled in dialog */ },
+        appSettings = appSettings,
+        context = context,
+        haptic = haptic
+    )
+}
+
+// Color Source and Font Source Dialogs for Theme Customization
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ColorSourceDialog(
+    showDialog: Boolean,
+    onDismiss: () -> Unit,
+    selectedColorSource: ColorSource,
+    onColorSourceSelected: (ColorSource) -> Unit,
+    appSettings: AppSettings,
+    context: Context,
+    haptic: HapticFeedback
+) {
+    if (showDialog) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        
+        // Animation states
+        var showContent by remember { mutableStateOf(false) }
+
+        val contentAlpha by animateFloatAsState(
+            targetValue = if (showContent) 1f else 0f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            ),
+            label = "contentAlpha"
+        )
+
+        LaunchedEffect(Unit) {
+            delay(100)
+            showContent = true
+        }
+        
+        ModalBottomSheet(
+            onDismissRequest = onDismiss,
+            sheetState = sheetState,
+            dragHandle = {
+                BottomSheetDefaults.DragHandle(
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+                    .graphicsLayer(alpha = contentAlpha)
+            ) {
+                // Header
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 20.dp)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Palette,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Column {
+                        Text(
+                            text = "Color Source",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Choose how colors are extracted",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    ColorSource.entries.forEach { source ->
+                        val isSelected = selectedColorSource == source
+                        Card(
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                onColorSourceSelected(source)
+                                when (source) {
+                                    ColorSource.MONET -> {
+                                        appSettings.setUseDynamicColors(true)
+                                        appSettings.setColorSource("MONET")
+                                    }
+                                    ColorSource.ALBUM_ART -> {
+                                        appSettings.setUseDynamicColors(false)
+                                        appSettings.setColorSource("ALBUM_ART")
+                                    }
+                                    ColorSource.CUSTOM -> {
+                                        appSettings.setUseDynamicColors(false)
+                                        appSettings.setColorSource("CUSTOM")
+                                    }
+                                }
+                                onDismiss()
+                            },
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isSelected)
+                                    MaterialTheme.colorScheme.primaryContainer
+                                else
+                                    MaterialTheme.colorScheme.surfaceContainerHigh
+                            ),
+                            shape = RoundedCornerShape(16.dp),
+                            border = if (isSelected) {
+                                BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                            } else {
+                                null
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(20.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = if (isSelected)
+                                        MaterialTheme.colorScheme.primary
+                                    else
+                                        MaterialTheme.colorScheme.surfaceVariant,
+                                    modifier = Modifier.size(44.dp)
+                                ) {
+                                    Box(
+                                        contentAlignment = Alignment.Center,
+                                        modifier = Modifier.fillMaxSize()
+                                    ) {
+                                        Icon(
+                                            imageVector = source.icon,
+                                            contentDescription = null,
+                                            tint = if (isSelected)
+                                                MaterialTheme.colorScheme.onPrimary
+                                            else
+                                                MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(16.dp))
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = source.displayName,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (isSelected)
+                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                        else
+                                            MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = source.description,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = if (isSelected)
+                                            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Filled.CheckCircle,
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FontSourceDialog(
+    showDialog: Boolean,
+    onDismiss: () -> Unit,
+    selectedFontSource: FontSource,
+    onFontSourceSelected: (FontSource) -> Unit,
+    appSettings: AppSettings,
+    customFontPath: String?,
+    context: Context,
+    haptic: HapticFeedback
+) {
+    if (showDialog) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        
+        // Animation states
+        var showContent by remember { mutableStateOf(false) }
+
+        val contentAlpha by animateFloatAsState(
+            targetValue = if (showContent) 1f else 0f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            ),
+            label = "contentAlpha"
+        )
+
+        LaunchedEffect(Unit) {
+            delay(100)
+            showContent = true
+        }
+        
+        ModalBottomSheet(
+            onDismissRequest = onDismiss,
+            sheetState = sheetState,
+            dragHandle = {
+                BottomSheetDefaults.DragHandle(
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+                    .graphicsLayer(alpha = contentAlpha)
+            ) {
+                // Header
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 20.dp)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.TextFields,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Column {
+                        Text(
+                            text = "Font Source",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Choose where to load fonts from",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    FontSource.entries.forEach { source ->
+                        val isSelected = selectedFontSource == source
+                        Card(
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                onFontSourceSelected(source)
+                                when (source) {
+                                    FontSource.SYSTEM -> {
+                                        appSettings.setFontSource("SYSTEM")
+                                        if (customFontPath == null) {
+                                            appSettings.setCustomFont("System")
+                                        }
+                                    }
+                                    FontSource.CUSTOM -> {
+                                        appSettings.setFontSource("CUSTOM")
+                                    }
+                                }
+                                onDismiss()
+                            },
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isSelected)
+                                    MaterialTheme.colorScheme.primaryContainer
+                                else
+                                    MaterialTheme.colorScheme.surfaceContainerHigh
+                            ),
+                            shape = RoundedCornerShape(16.dp),
+                            border = if (isSelected) {
+                                BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                            } else {
+                                null
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(20.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = if (isSelected)
+                                        MaterialTheme.colorScheme.primary
+                                    else
+                                        MaterialTheme.colorScheme.surfaceVariant,
+                                    modifier = Modifier.size(44.dp)
+                                ) {
+                                    Box(
+                                        contentAlignment = Alignment.Center,
+                                        modifier = Modifier.fillMaxSize()
+                                    ) {
+                                        Icon(
+                                            imageVector = source.icon,
+                                            contentDescription = null,
+                                            tint = if (isSelected)
+                                                MaterialTheme.colorScheme.onPrimary
+                                            else
+                                                MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(16.dp))
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = source.displayName,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (isSelected)
+                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                        else
+                                            MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = source.description,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = if (isSelected)
+                                            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Filled.CheckCircle,
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+//                                    modifier = Modifier.size(40.dp)
+//                                ) {
+//                                    Box(
+//                                        contentAlignment = Alignment.Center,
+//                                        modifier = Modifier.fillMaxSize()
+//                                    ) {
+//                                        Icon(
+//                                            imageVector = source.icon,
+//                                            contentDescription = null,
+//                                            tint = if (isSelected)
+//                                                MaterialTheme.colorScheme.onPrimary
+//                                            else
+//                                                MaterialTheme.colorScheme.onSurfaceVariant,
+//                                            modifier = Modifier.size(20.dp)
+//                                        )
+//                                    }
+//                                }
+//
+//                                Spacer(modifier = Modifier.width(16.dp))
+//
+//                                Column(modifier = Modifier.weight(1f)) {
+//                                    Text(
+//                                        text = source.displayName,
+//                                        style = MaterialTheme.typography.titleMedium,
+//                                        fontWeight = FontWeight.SemiBold,
+//                                        color = if (isSelected)
+//                                            MaterialTheme.colorScheme.onPrimaryContainer
+//                                        else
+//                                            MaterialTheme.colorScheme.onSurface
+//                                    )
+//                                    Spacer(modifier = Modifier.height(4.dp))
+//                                    Text(
+//                                        text = source.description,
+//                                        style = MaterialTheme.typography.bodySmall,
+//                                        color = if (isSelected)
+//                                            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+//                                        else
+//                                            MaterialTheme.colorScheme.onSurfaceVariant
+//                                    )
+//                                }
+//
+//                                if (isSelected) {
+//                                    Icon(
+//                                        imageVector = Icons.Filled.CheckCircle,
+//                                        contentDescription = "Selected",
+//                                        tint = MaterialTheme.colorScheme.primary,
+//                                        modifier = Modifier.size(24.dp)
+//                                    )
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
+
+// Color Schemes Dialog for Theme Customization
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ColorSchemesDialog(
+    showDialog: Boolean,
+    onDismiss: () -> Unit,
+    colorSchemes: List<ColorSchemeOption>,
+    currentScheme: String,
+    selectedColorSource: ColorSource,
+    onSchemeSelected: (String) -> Unit,
+    appSettings: AppSettings,
+    context: Context,
+    haptic: HapticFeedback
+) {
+    if (showDialog) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        
+        // Animation states
+        var showContent by remember { mutableStateOf(false) }
+
+        val contentAlpha by animateFloatAsState(
+            targetValue = if (showContent) 1f else 0f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            ),
+            label = "contentAlpha"
+        )
+
+        LaunchedEffect(Unit) {
+            delay(100)
+            showContent = true
+        }
+        
+        ModalBottomSheet(
+            onDismissRequest = onDismiss,
+            sheetState = sheetState,
+            dragHandle = {
+                BottomSheetDefaults.DragHandle(
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+                    .graphicsLayer(alpha = contentAlpha)
+            ) {
+                // Header
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 20.dp)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.ColorLens,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Column {
+                        Text(
+                            text = "Color Schemes",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Choose from preset color schemes",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                
+                if (selectedColorSource != ColorSource.CUSTOM) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Info,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Color schemes are only available when using Custom color source.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Switch to Custom in the Color Source setting to access predefined schemes.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        // Featured schemes
+                        item {
+                            Text(
+                                text = "FEATURED SCHEMES",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        }
+
+                        val featuredSchemes = colorSchemes.filter {
+                            it.name in listOf("Default", "Warm", "Cool", "Forest", "Rose", "Monochrome")
+                        }
+
+                        items(featuredSchemes) { option ->
+                            ColorSchemeCard(
+                                option = option,
+                                isSelected = currentScheme == option.name,
+                                onSelect = {
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    onSchemeSelected(option.name)
+                                    appSettings.setCustomColorScheme(option.name)
+                                }
+                            )
+                        }
+
+                        // More schemes
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "MORE SCHEMES",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        }
+
+                        val otherSchemes = colorSchemes.filter {
+                            it.name !in listOf("Default", "Warm", "Cool", "Forest", "Rose", "Monochrome")
+                        }
+
+                        items(otherSchemes) { option ->
+                            ColorSchemeCard(
+                                option = option,
+                                isSelected = currentScheme == option.name,
+                                onSelect = {
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    onSchemeSelected(option.name)
+                                    appSettings.setCustomColorScheme(option.name)
+                                }
+                            )
+                        }
+
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ColorSchemeCard(
+    option: ColorSchemeOption,
+    isSelected: Boolean,
+    onSelect: () -> Unit
+) {
+    Card(
+        onClick = onSelect,
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected)
+                MaterialTheme.colorScheme.primaryContainer
+            else
+                MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        shape = RoundedCornerShape(16.dp),
+        border = if (isSelected) {
+            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+        } else {
+            null
+        },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Color preview circles
+            Row(
+                horizontalArrangement = Arrangement.spacedBy((-8).dp),
+                modifier = Modifier.padding(end = 16.dp)
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = option.primaryColor,
+                    modifier = Modifier.size(32.dp)
+                ) {}
+                Surface(
+                    shape = CircleShape,
+                    color = option.secondaryColor,
+                    modifier = Modifier.size(32.dp)
+                ) {}
+                Surface(
+                    shape = CircleShape,
+                    color = option.tertiaryColor,
+                    modifier = Modifier.size(32.dp)
+                ) {}
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = option.displayName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (isSelected)
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    else
+                        MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = option.description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isSelected)
+                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                    else
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            if (isSelected) {
+                Icon(
+                    imageVector = Icons.Filled.CheckCircle,
+                    contentDescription = "Selected",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+    }
+}
+
+// Custom Colors Dialog for Theme Customization
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CustomColorsDialog(
+    showDialog: Boolean,
+    onDismiss: () -> Unit,
+    currentScheme: String,
+    selectedColorSource: ColorSource,
+    onApply: (Color, Color, Color) -> Unit,
+    appSettings: AppSettings,
+    context: Context,
+    haptic: HapticFeedback
+) {
+    if (showDialog) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        
+        // Animation states
+        var showContent by remember { mutableStateOf(false) }
+
+        val contentAlpha by animateFloatAsState(
+            targetValue = if (showContent) 1f else 0f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            ),
+            label = "contentAlpha"
+        )
+
+        LaunchedEffect(Unit) {
+            delay(100)
+            showContent = true
+        }
+        
+        // Parse current custom colors from the scheme name, or use defaults
+        val customScheme = parseCustomColorScheme(currentScheme, false)
+
+        var primaryColor by remember(currentScheme) {
+            if (customScheme != null) {
+                mutableStateOf(customScheme.primary)
+            } else {
+                mutableStateOf(Color(0xFF5C4AD5)) // Default purple
+            }
+        }
+        var secondaryColor by remember(currentScheme) {
+            if (customScheme != null) {
+                mutableStateOf(customScheme.secondary)
+            } else {
+                mutableStateOf(Color(0xFF5D5D6B))
+            }
+        }
+        var tertiaryColor by remember(currentScheme) {
+            if (customScheme != null) {
+                mutableStateOf(customScheme.tertiary)
+            } else {
+                mutableStateOf(Color(0xFFFFDDB6))
+            }
+        }
+
+        var selectedColorType by remember { mutableStateOf(ColorType.PRIMARY) }
+
+        ModalBottomSheet(
+            onDismissRequest = onDismiss,
+            sheetState = sheetState,
+            dragHandle = {
+                BottomSheetDefaults.DragHandle(
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+                    .graphicsLayer(alpha = contentAlpha)
+            ) {
+                // Header
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 20.dp)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Brush,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Column {
+                        Text(
+                            text = "Custom Color Picker",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Create your own color scheme",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                
+                if (selectedColorSource != ColorSource.CUSTOM) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Info,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Custom colors are only available when using Custom color source.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Switch to Custom in the Color Source setting to create your own colors.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        // Color preview row with selection
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 20.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            ColorPreviewItem(
+                                label = "Primary",
+                                color = primaryColor,
+                                isSelected = selectedColorType == ColorType.PRIMARY,
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    selectedColorType = ColorType.PRIMARY
+                                }
+                            )
+                            ColorPreviewItem(
+                                label = "Secondary",
+                                color = secondaryColor,
+                                isSelected = selectedColorType == ColorType.SECONDARY,
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    selectedColorType = ColorType.SECONDARY
+                                }
+                            )
+                            ColorPreviewItem(
+                                label = "Tertiary",
+                                color = tertiaryColor,
+                                isSelected = selectedColorType == ColorType.TERTIARY,
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    selectedColorType = ColorType.TERTIARY
+                                }
+                            )
+                        }
+
+                        // Color picker controls
+                        when (selectedColorType) {
+                            ColorType.PRIMARY -> ColorPickerControls(
+                                color = primaryColor,
+                                onColorChange = { primaryColor = it }
+                            )
+                            ColorType.SECONDARY -> ColorPickerControls(
+                                color = secondaryColor,
+                                onColorChange = { secondaryColor = it }
+                            )
+                            ColorType.TERTIARY -> ColorPickerControls(
+                                color = tertiaryColor,
+                                onColorChange = { tertiaryColor = it }
+                            )
+                        }
+
+                        // Preset colors
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Text(
+                            text = "Quick Presets",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        val presetColors = listOf(
+                            Color(0xFF5C4AD5), Color(0xFFFF6B35), Color(0xFF1E88E5),
+                            Color(0xFF2E7D32), Color(0xFFE91E63), Color(0xFF424242),
+                            Color(0xFF7C4DFF), Color(0xFF006064), Color(0xFF00C853),
+                            Color(0xFFFF6F00), Color(0xFFB71C1C), Color(0xFF0097A7)
+                        )
+
+                        // Preset color grid
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            presetColors.chunked(6).forEach { rowColors ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    rowColors.forEach { presetColor ->
+                                        Surface(
+                                            shape = RoundedCornerShape(12.dp),
+                                            color = presetColor,
+                                            modifier = Modifier
+                                                .size(48.dp)
+                                                .weight(1f)
+                                                .clickable {
+                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                    when (selectedColorType) {
+                                                        ColorType.PRIMARY -> primaryColor = presetColor
+                                                        ColorType.SECONDARY -> secondaryColor = presetColor
+                                                        ColorType.TERTIARY -> tertiaryColor = presetColor
+                                                    }
+                                                }
+                                        ) {}
+                                    }
+                                    // Fill remaining space if row is not full
+                                    repeat(6 - rowColors.size) {
+                                        Spacer(modifier = Modifier.weight(1f))
+                                    }
+                                }
+                            }
+                        }
+
+                        // Buttons
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = onDismiss,
+                                modifier = Modifier.weight(1f),
+                                border = BorderStroke(2.dp, MaterialTheme.colorScheme.outline)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Close,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Cancel")
+                            }
+                            Button(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                    onApply(primaryColor, secondaryColor, tertiaryColor)
+                                    val primaryHex = String.format("%06X", (primaryColor.toArgb() and 0xFFFFFF))
+                                    val secondaryHex = String.format("%06X", (secondaryColor.toArgb() and 0xFFFFFF))
+                                    val tertiaryHex = String.format("%06X", (tertiaryColor.toArgb() and 0xFFFFFF))
+                                    val customScheme = "custom_${primaryHex}_${secondaryHex}_${tertiaryHex}"
+                                    appSettings.setCustomColorScheme(customScheme)
+                                    Toast.makeText(context, "Custom colors applied!", Toast.LENGTH_SHORT).show()
+                                    onDismiss()
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Apply")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ColorPreviewItem(
+    label: String,
+    color: Color,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    val scale by animateFloatAsState(
+        targetValue = if (isSelected) 1.1f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "scale"
+    )
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+    ) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = color,
+            border = if (isSelected) {
+                androidx.compose.foundation.BorderStroke(3.dp, MaterialTheme.colorScheme.primary)
+            } else {
+                androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            },
+            modifier = Modifier.size(64.dp)
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                if (isSelected) {
+                    Icon(
+                        imageVector = Icons.Filled.Check,
+                        contentDescription = "Selected",
+                        tint = if (color.luminance() > 0.5f) Color.Black.copy(alpha = 0.6f) else Color.White.copy(alpha = 0.9f),
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            color = if (isSelected)
+                MaterialTheme.colorScheme.primary
+            else
+                MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun ColorPickerControls(
+    color: Color,
+    onColorChange: (Color) -> Unit
+) {
+    val hsl = remember(color) { color.toHSL() }
+
+    var hue by remember(color) { mutableStateOf(hsl.hue) }
+    var saturation by remember(color) { mutableStateOf(hsl.saturation) }
+    var lightness by remember(color) { mutableStateOf(hsl.lightness) }
+
+    var showAdvanced by remember { mutableStateOf(false) }
+
+    // Update color when HSL values change
+    LaunchedEffect(hue, saturation, lightness) {
+        val newColor = HSLColor(hue, saturation, lightness).toColor()
+        onColorChange(newColor)
+    }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // Current color display with hex code
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = color,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(72.dp),
+            border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (color.luminance() > 0.5f) Color.Black.copy(alpha = 0.1f) else Color.White.copy(alpha = 0.15f),
+                    modifier = Modifier.padding(12.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Palette,
+                            contentDescription = null,
+                            tint = if (color.luminance() > 0.5f) Color.Black.copy(alpha = 0.7f) else Color.White.copy(alpha = 0.9f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = String.format("#%06X", (color.toArgb() and 0xFFFFFF)),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (color.luminance() > 0.5f) Color.Black.copy(alpha = 0.9f) else Color.White,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Hue Slider
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Hue",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHighest
+            ) {
+                Text(
+                    text = "${hue.toInt()}°",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Hue slider with color gradient
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = (0..360 step 20).map { h ->
+                                HSLColor(h.toFloat(), 1f, 0.5f).toColor()
+                            }
+                        )
+                    )
+            ) {
+                Slider(
+                    value = hue,
+                    onValueChange = { hue = it },
+                    valueRange = 0f..360f,
+                    modifier = Modifier.fillMaxSize(),
+                    colors = SliderDefaults.colors(
+                        thumbColor = Color.White,
+                        activeTrackColor = Color.Transparent,
+                        inactiveTrackColor = Color.Transparent
+                    )
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Saturation Slider
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Saturation",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHighest
+            ) {
+                Text(
+                    text = "${(saturation * 100).toInt()}%",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.LightGray,
+                                HSLColor(hue, 1f, lightness).toColor()
+                            )
+                        )
+                    )
+            ) {
+                Slider(
+                    value = saturation,
+                    onValueChange = { saturation = it },
+                    valueRange = 0f..1f,
+                    modifier = Modifier.fillMaxSize(),
+                    colors = SliderDefaults.colors(
+                        thumbColor = Color.White,
+                        activeTrackColor = Color.Transparent,
+                        inactiveTrackColor = Color.Transparent
+                    )
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Lightness Slider
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Lightness",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHighest
+            ) {
+                Text(
+                    text = "${(lightness * 100).toInt()}%",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.Black,
+                                HSLColor(hue, saturation, 0.5f).toColor(),
+                                Color.White
+                            )
+                        )
+                    )
+            ) {
+                Slider(
+                    value = lightness,
+                    onValueChange = { lightness = it },
+                    valueRange = 0f..1f,
+                    modifier = Modifier.fillMaxSize(),
+                    colors = SliderDefaults.colors(
+                        thumbColor = Color.White,
+                        activeTrackColor = Color.Transparent,
+                        inactiveTrackColor = Color.Transparent
+                    )
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Advanced RGB controls toggle
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "Advanced RGB Controls",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Switch(
+                checked = showAdvanced,
+                onCheckedChange = { showAdvanced = it },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = MaterialTheme.colorScheme.primary,
+                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            )
+        }
+
+        // Advanced RGB controls
+        AnimatedVisibility(
+            visible = showAdvanced,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            Column(modifier = Modifier.padding(top = 16.dp)) {
+                val red = (color.red * 255).toInt()
+                val green = (color.green * 255).toInt()
+                val blue = (color.blue * 255).toInt()
+
+                var redValue by remember(color) { mutableStateOf(red.toFloat()) }
+                var greenValue by remember(color) { mutableStateOf(green.toFloat()) }
+                var blueValue by remember(color) { mutableStateOf(blue.toFloat()) }
+
+                // Update HSL when RGB changes
+                LaunchedEffect(redValue, greenValue, blueValue) {
+                    val rgbColor = Color(
+                        red = redValue / 255f,
+                        green = greenValue / 255f,
+                        blue = blueValue / 255f
+                    )
+                    val newHsl = rgbColor.toHSL()
+                    hue = newHsl.hue
+                    saturation = newHsl.saturation
+                    lightness = newHsl.lightness
+                }
+
+                ColorSlider(
+                    label = "Red",
+                    value = redValue,
+                    onValueChange = { redValue = it },
+                    color = Color.Red,
+                    valueRange = 0f..255f
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                ColorSlider(
+                    label = "Green",
+                    value = greenValue,
+                    onValueChange = { greenValue = it },
+                    color = Color.Green,
+                    valueRange = 0f..255f
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                ColorSlider(
+                    label = "Blue",
+                    value = blueValue,
+                    onValueChange = { blueValue = it },
+                    color = Color.Blue,
+                    valueRange = 0f..255f
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ColorSlider(
+    label: String,
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    color: Color,
+    valueRange: ClosedFloatingPointRange<Float>
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                modifier = Modifier.padding(start = 12.dp)
+            ) {
+                Text(
+                    text = value.toInt().toString(),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Slider(
+            value = value,
+            onValueChange = onValueChange,
+            valueRange = valueRange,
+            colors = SliderDefaults.colors(
+                thumbColor = color,
+                activeTrackColor = color,
+                inactiveTrackColor = color.copy(alpha = 0.3f),
+                activeTickColor = color,
+                inactiveTickColor = color.copy(alpha = 0.3f)
+            )
+        )
+    }
+}
+
+private enum class ColorType {
+    PRIMARY, SECONDARY, TERTIARY
+}
+
+// Font Selection Dialog for Theme Customization
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FontSelectionDialog(
+    showDialog: Boolean,
+    onDismiss: () -> Unit,
+    fontOptions: List<FontOption>,
+    currentFont: String,
+    selectedFontSource: FontSource,
+    onFontSelected: (String) -> Unit,
+    appSettings: AppSettings,
+    context: Context,
+    haptic: HapticFeedback
+) {
+    if (showDialog) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        
+        // Animation states
+        var showContent by remember { mutableStateOf(false) }
+
+        val contentAlpha by animateFloatAsState(
+            targetValue = if (showContent) 1f else 0f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            ),
+            label = "contentAlpha"
+        )
+
+        LaunchedEffect(Unit) {
+            delay(100)
+            showContent = true
+        }
+        
+        ModalBottomSheet(
+            onDismissRequest = onDismiss,
+            sheetState = sheetState,
+            dragHandle = {
+                BottomSheetDefaults.DragHandle(
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+                    .graphicsLayer(alpha = contentAlpha)
+            ) {
+                // Header
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 20.dp)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.TextFields,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Column {
+                        Text(
+                            text = "Font Selection",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Choose from available system fonts",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                
+                if (selectedFontSource != FontSource.SYSTEM) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Info,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "System fonts are only available when using System font source.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Switch to System in the Font Source setting to choose from available fonts.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        items(fontOptions) { option ->
+                            FontCard(
+                                option = option,
+                                isSelected = currentFont == option.name,
+                                onSelect = {
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    onFontSelected(option.name)
+                                    appSettings.setCustomFont(option.name)
+                                }
+                            )
+                        }
+
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FontCard(
+    option: FontOption,
+    isSelected: Boolean,
+    onSelect: () -> Unit
+) {
+    Card(
+        onClick = onSelect,
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected)
+                MaterialTheme.colorScheme.primaryContainer
+            else
+                MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        shape = RoundedCornerShape(16.dp),
+        border = if (isSelected) {
+            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+        } else {
+            null
+        },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = option.displayName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (isSelected)
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        else
+                            MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = option.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (isSelected)
+                            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                if (isSelected) {
+                    Icon(
+                        imageVector = Icons.Filled.CheckCircle,
+                        contentDescription = "Selected",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Font preview text
+            Surface(
+                color = if (isSelected)
+                    MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+                else
+                    MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "The quick brown fox jumps over the lazy dog",
+                    style = getFontPreviewStyle(option.name),
+                    color = if (isSelected)
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    else
+                        MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        }
+    }
+}
+
+// Particle Intensity Dialog for Theme Customization
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ParticleIntensityDialog(
+    showDialog: Boolean,
+    onDismiss: () -> Unit,
+    currentIntensity: Float,
+    onIntensityChanged: (Float) -> Unit,
+    appSettings: AppSettings,
+    context: Context,
+    haptic: HapticFeedback
+) {
+    if (showDialog) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        
+        // Animation states
+        var showContent by remember { mutableStateOf(false) }
+
+        val contentAlpha by animateFloatAsState(
+            targetValue = if (showContent) 1f else 0f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            ),
+            label = "contentAlpha"
+        )
+
+        LaunchedEffect(Unit) {
+            delay(100)
+            showContent = true
+        }
+        
+        var intensity by remember { mutableStateOf(currentIntensity) }
+
+        ModalBottomSheet(
+            onDismissRequest = onDismiss,
+            sheetState = sheetState,
+            dragHandle = {
+                BottomSheetDefaults.DragHandle(
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+                    .graphicsLayer(alpha = contentAlpha)
+            ) {
+                // Header
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 20.dp)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Speed,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Column {
+                        Text(
+                            text = "Particle Intensity",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Control particle effect density",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Adjust the intensity of festive particles. Higher values create more particles.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 24.dp)
+                    )
+
+                    // Current intensity display
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Intensity: ${(intensity * 100).toInt()}%",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Intensity slider
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        shape = RoundedCornerShape(20.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Tune,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Particle Density",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = "${(intensity * 100).toInt()}%",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Slider(
+                                value = intensity,
+                                onValueChange = { intensity = it },
+                                valueRange = 0.1f..1.0f,
+                                colors = SliderDefaults.colors(
+                                    thumbColor = MaterialTheme.colorScheme.primary,
+                                    activeTrackColor = MaterialTheme.colorScheme.primary,
+                                    inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                                )
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Subtle",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = "Intense",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Buttons
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = onDismiss,
+                            modifier = Modifier.weight(1f),
+                            border = BorderStroke(2.dp, MaterialTheme.colorScheme.outline)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Close,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Cancel")
+                        }
+                        Button(
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                onIntensityChanged(intensity)
+                                appSettings.setFestiveThemeParticleIntensity(intensity)
+                                onDismiss()
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Apply")
+                        }
                     }
                 }
             }
