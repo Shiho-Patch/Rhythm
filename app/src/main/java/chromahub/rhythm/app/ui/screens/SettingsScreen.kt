@@ -189,6 +189,15 @@ fun SettingsScreen(
     onNavigateToAbout: () -> Unit
 ) {
     val context = LocalContext.current
+    var showTuner by remember { mutableStateOf(false) }
+    
+    if (showTuner) {
+        chromahub.rhythm.app.ui.screens.tuner.SettingsScreen(
+            onBack = { showTuner = false }
+        )
+        return
+    }
+    
     val appSettings = remember { AppSettings.getInstance(context) }
     val musicViewModel: MusicViewModel = viewModel()
 
@@ -1787,6 +1796,45 @@ fun SettingsScreen(
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
                                         text = "Support Group",
+                                        style = MaterialTheme.typography.labelLarge
+                                    )
+                                }
+                            }
+                            
+                            Spacer(modifier = Modifier.height(12.dp))
+                            
+                            // Switch to Tuner (Beta) button
+                            OutlinedButton(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(
+                                        context,
+                                        haptics,
+                                        HapticFeedbackType.TextHandleMove
+                                    )
+                                    showTuner = true
+                                },
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.primary
+                                ),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    1.5.dp,
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                                ),
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Settings,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "Switch to Tuner (Beta)",
                                         style = MaterialTheme.typography.labelLarge
                                     )
                                 }

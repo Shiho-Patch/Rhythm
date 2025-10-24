@@ -1524,16 +1524,6 @@ fun SingleCardSongsContent(
             android.util.Log.d("SongsTab", "Sample song metadata: ${sampleSong.title} - bitrate=${sampleSong.bitrate}, sampleRate=${sampleSong.sampleRate}, channels=${sampleSong.channels}, codec=${sampleSong.codec}")
         }
 
-        // Extract actual music genres from songs (AFTER quality filters)
-        val genres = songs.mapNotNull { song ->
-            song.genre?.takeIf { it.isNotBlank() && it.lowercase() != "unknown" }
-        }.distinct().sorted()
-
-        android.util.Log.d("SongsTab", "Found ${genres.size} distinct genres: $genres")
-        
-        // Add genres to categories
-        allCategories.addAll(genres)
-
         // Quality-based categories for lossy audio
         val highQualitySongs = songs.filter { song ->
             val bitrate = song.bitrate ?: 0
@@ -1585,15 +1575,7 @@ fun SingleCardSongsContent(
                 bitrate in 128000..319999 && !isLosslessAudio(song) && !isDolbyOrSurround(song)
             }
 
-            "Unknown Genre" -> songs.filter { song ->
-                song.genre.isNullOrBlank() || song.genre.lowercase() == "unknown"
-            }
-
-            else -> songs.filter { song ->
-                // This handles genre filtering
-                val songGenre = song.genre?.trim()?.takeIf { it.isNotBlank() }
-                songGenre?.equals(selectedCategory, ignoreCase = true) == true
-            }
+            else -> songs // Default to showing all songs for any unrecognized category
         }
     }
 
@@ -2318,16 +2300,6 @@ fun SongsTab(
             android.util.Log.d("SongsTab", "Sample song metadata: ${sampleSong.title} - bitrate=${sampleSong.bitrate}, sampleRate=${sampleSong.sampleRate}, channels=${sampleSong.channels}, codec=${sampleSong.codec}")
         }
         
-        // Extract actual music genres from songs (AFTER quality filters)
-        val genres = songs.mapNotNull { song ->
-            song.genre?.takeIf { it.isNotBlank() && it.lowercase() != "unknown" }
-        }.distinct().sorted()
-        
-        android.util.Log.d("SongsTab", "Found ${genres.size} distinct genres: $genres")
-        
-        // Add genres to categories
-        allCategories.addAll(genres)
-        
         // Quality-based categories for lossy audio
         val highQualitySongs = songs.filter { song ->
             val bitrate = song.bitrate ?: 0
@@ -2385,15 +2357,7 @@ fun SongsTab(
                 bitrate in 128000..319999 && !isLosslessAudio(song) && !isDolbyOrSurround(song)
             }
 
-            "Unknown Genre" -> songs.filter { song ->
-                song.genre.isNullOrBlank() || song.genre.lowercase() == "unknown"
-            }
-
-            else -> songs.filter { song ->
-                // This handles genre filtering
-                val songGenre = song.genre?.trim()?.takeIf { it.isNotBlank() }
-                songGenre?.equals(selectedCategory, ignoreCase = true) == true
-            }
+            else -> songs // Default to showing all songs for any unrecognized category
         }
     }
     
