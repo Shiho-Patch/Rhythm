@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -38,6 +39,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -55,6 +57,94 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+
+// Note: SettingItem and SettingGroup are defined in SettingsScreen.kt in the same package
+
+@Composable
+private fun TunerSettingRow(item: SettingItem) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = item.icon,
+            contentDescription = item.title,
+            modifier = Modifier
+                .size(40.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(50))
+                .padding(8.dp),
+            tint = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .then(
+                    if (item.onClick != {} && item.toggleState == null) {
+                        Modifier.clickable(onClick = item.onClick)
+                    } else if (item.onClick != {} && item.toggleState != null) {
+                        Modifier.clickable(onClick = item.onClick)
+                    } else {
+                        Modifier
+                    }
+                )
+        ) {
+            Text(
+                text = item.title,
+                style = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Default, fontWeight = FontWeight.Medium),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            item.description?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Default),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        if (item.toggleState != null && item.onClick != {}) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                contentDescription = "Navigate",
+                modifier = Modifier
+                    .size(16.dp)
+                    .padding(end = 8.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Switch(
+                checked = item.toggleState,
+                onCheckedChange = { item.onToggleChange?.invoke(it) },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = MaterialTheme.colorScheme.primary,
+                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
+                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                )
+            )
+        } else if (item.toggleState != null) {
+            Switch(
+                checked = item.toggleState,
+                onCheckedChange = { item.onToggleChange?.invoke(it) },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = MaterialTheme.colorScheme.primary,
+                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
+                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                )
+            )
+        } else if (item.onClick != {}) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                contentDescription = "Navigate",
+                modifier = Modifier.size(16.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
 
 // ✅ API Management Screen (FULLY MERGED from ApiManagementBottomSheet)
 @Composable
@@ -237,31 +327,60 @@ fun NotificationsSettingsScreen(onBackClick: () -> Unit) {
     val context = LocalContext.current
     val appSettings = AppSettings.getInstance(context)
     val useCustomNotification by appSettings.useCustomNotification.collectAsState()
-    
+
     CollapsibleHeaderScreen(
         title = "Notifications",
         showBackButton = true,
         onBackClick = onBackClick
     ) { modifier ->
+        val settingGroups = listOf(
+            SettingGroup(
+                title = "Notification Style",
+                items = listOf(
+                    SettingItem(
+                        Icons.Default.Notifications,
+                        "Custom Notifications",
+                        "Use app's custom notification style instead of system media notification",
+                        toggleState = useCustomNotification,
+                        onToggleChange = { appSettings.setUseCustomNotification(it) }
+                    )
+                )
+            )
+        )
+
         LazyColumn(
             modifier = modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .background(MaterialTheme.colorScheme.background)
+                .padding(horizontal = 24.dp)
         ) {
-            item { Spacer(modifier = Modifier.height(8.dp)) }
-            
-            item {
-                TunerSettingCard(
-                    title = "Custom Notifications",
-                    description = "Use app's custom notification style instead of system media notification",
-                    icon = Icons.Default.Notifications,
-                    checked = useCustomNotification,
-                    onCheckedChange = { appSettings.setUseCustomNotification(it) }
+            items(settingGroups) { group ->
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = group.title,
+                    style = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Default, fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                 )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column {
+                        group.items.forEachIndexed { index, item ->
+                            TunerSettingRow(item = item)
+                            if (index < group.items.lastIndex) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                            }
+                        }
+                    }
+                }
             }
-            
-            item { Spacer(modifier = Modifier.height(8.dp)) }
         }
     }
 }
@@ -276,99 +395,99 @@ fun NotificationsSettingsScreen(onBackClick: () -> Unit) {
 fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
     val context = LocalContext.current
     val appSettings = AppSettings.getInstance(context)
-    
+
     val shuffleUsesExoplayer by appSettings.shuffleUsesExoplayer.collectAsState()
     val autoAddToQueue by appSettings.autoAddToQueue.collectAsState()
     val clearQueueOnNewSong by appSettings.clearQueueOnNewSong.collectAsState()
     val repeatModePersistence by appSettings.repeatModePersistence.collectAsState()
     val shuffleModePersistence by appSettings.shuffleModePersistence.collectAsState()
-    
+
     CollapsibleHeaderScreen(
         title = "Queue & Playback",
         showBackButton = true,
         onBackClick = onBackClick
     ) { modifier ->
+        val settingGroups = listOf(
+            SettingGroup(
+                title = "Queue Behavior",
+                items = listOf(
+                    SettingItem(
+                        RhythmIcons.Shuffle,
+                        "Use ExoPlayer Shuffle",
+                        "Let the media player handle shuffle (recommended: OFF for manual shuffle)",
+                        toggleState = shuffleUsesExoplayer,
+                        onToggleChange = { appSettings.setShuffleUsesExoplayer(it) }
+                    ),
+                    SettingItem(
+                        RhythmIcons.Queue,
+                        "Auto Queue",
+                        "Automatically add related songs to queue when playing",
+                        toggleState = autoAddToQueue,
+                        onToggleChange = { appSettings.setAutoAddToQueue(it) }
+                    ),
+                    SettingItem(
+                        RhythmIcons.Delete,
+                        "Clear Queue on New Song",
+                        "Clear the current queue when playing a new song directly",
+                        toggleState = clearQueueOnNewSong,
+                        onToggleChange = { appSettings.setClearQueueOnNewSong(it) }
+                    )
+                )
+            ),
+            SettingGroup(
+                title = "Playback Persistence",
+                items = listOf(
+                    SettingItem(
+                        RhythmIcons.Repeat,
+                        "Remember Repeat Mode",
+                        "Save repeat mode (Off/All/One) between app restarts",
+                        toggleState = repeatModePersistence,
+                        onToggleChange = { appSettings.setRepeatModePersistence(it) }
+                    ),
+                    SettingItem(
+                        RhythmIcons.Shuffle,
+                        "Remember Shuffle Mode",
+                        "Save shuffle on/off state between app restarts",
+                        toggleState = shuffleModePersistence,
+                        onToggleChange = { appSettings.setShuffleModePersistence(it) }
+                    )
+                )
+            )
+        )
+
         LazyColumn(
             modifier = modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .background(MaterialTheme.colorScheme.background)
+                .padding(horizontal = 24.dp)
         ) {
-            item { Spacer(modifier = Modifier.height(8.dp)) }
-            
-            item {
+            items(settingGroups) { group ->
+                Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    text = "Queue Behavior",
-                    style = MaterialTheme.typography.titleSmall,
+                    text = group.title,
+                    style = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Default, fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                 )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column {
+                        group.items.forEachIndexed { index, item ->
+                            TunerSettingRow(item = item)
+                            if (index < group.items.lastIndex) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                            }
+                        }
+                    }
+                }
             }
-            
-            item {
-                TunerSettingCard(
-                    title = "Use ExoPlayer Shuffle",
-                    description = "Let the media player handle shuffle (recommended: OFF for manual shuffle)",
-                    icon = RhythmIcons.Shuffle,
-                    checked = shuffleUsesExoplayer,
-                    onCheckedChange = { appSettings.setShuffleUsesExoplayer(it) }
-                )
-            }
-            
-            item {
-                TunerSettingCard(
-                    title = "Auto Queue",
-                    description = "Automatically add related songs to queue when playing",
-                    icon = RhythmIcons.Queue,
-                    checked = autoAddToQueue,
-                    onCheckedChange = { appSettings.setAutoAddToQueue(it) }
-                )
-            }
-            
-            item {
-                TunerSettingCard(
-                    title = "Clear Queue on New Song",
-                    description = "Clear the current queue when playing a new song directly",
-                    icon = RhythmIcons.Delete,
-                    checked = clearQueueOnNewSong,
-                    onCheckedChange = { appSettings.setClearQueueOnNewSong(it) }
-                )
-            }
-            
-            item { Spacer(modifier = Modifier.height(8.dp)) }
-            
-            item {
-                Text(
-                    text = "Playback Persistence",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
-                )
-            }
-            
-            item {
-                TunerSettingCard(
-                    title = "Remember Repeat Mode",
-                    description = "Save repeat mode (Off/All/One) between app restarts",
-                    icon = RhythmIcons.Repeat,
-                    checked = repeatModePersistence,
-                    onCheckedChange = { appSettings.setRepeatModePersistence(it) }
-                )
-            }
-            
-            item {
-                TunerSettingCard(
-                    title = "Remember Shuffle Mode",
-                    description = "Save shuffle on/off state between app restarts",
-                    icon = RhythmIcons.Shuffle,
-                    checked = shuffleModePersistence,
-                    onCheckedChange = { appSettings.setShuffleModePersistence(it) }
-                )
-            }
-            
-            item { Spacer(modifier = Modifier.height(8.dp)) }
         }
     }
 }
@@ -380,14 +499,19 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
     val haptic = LocalHapticFeedback.current
     val musicViewModel: MusicViewModel = viewModel()
     val playlists by musicViewModel.playlists.collectAsState()
-    
+
     val defaultPlaylists = playlists.filter { it.isDefault }
     val userPlaylists = playlists.filter { !it.isDefault }
     val emptyPlaylists = playlists.filter { !it.isDefault && it.songs.isEmpty() }
-    
+
     var showCreatePlaylistDialog by remember { mutableStateOf(false) }
     var playlistToDelete by remember { mutableStateOf<Playlist?>(null) }
-    
+    var showBulkExportDialog by remember { mutableStateOf(false) }
+    var showImportDialog by remember { mutableStateOf(false) }
+    var showOperationProgress by remember { mutableStateOf(false) }
+    var operationProgressText by remember { mutableStateOf("") }
+    var showCleanupConfirmDialog by remember { mutableStateOf(false) }
+
     CollapsibleHeaderScreen(
         title = "Playlists",
         showBackButton = true,
@@ -400,7 +524,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item { Spacer(modifier = Modifier.height(8.dp)) }
-            
+
             // Statistics Card
             item {
                 Card(
@@ -408,11 +532,24 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(modifier = Modifier.padding(20.dp)) {
-                        Text(
-                            text = "Your Collection",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Analytics,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "Your Collection",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
                         Spacer(modifier = Modifier.height(16.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -422,31 +559,37 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                                 Text(
                                     text = "${playlists.size}",
                                     style = MaterialTheme.typography.headlineMedium,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
-                                Text("Total", style = MaterialTheme.typography.bodySmall)
+                                Text("Total", style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer)
                             }
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
                                     text = "${userPlaylists.size}",
                                     style = MaterialTheme.typography.headlineMedium,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
-                                Text("Custom", style = MaterialTheme.typography.bodySmall)
+                                Text("Custom", style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer)
                             }
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
                                     text = "${defaultPlaylists.size}",
                                     style = MaterialTheme.typography.headlineMedium,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
-                                Text("Default", style = MaterialTheme.typography.bodySmall)
+                                Text("Default", style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer)
                             }
                         }
                     }
                 }
             }
-            
+
             // Management Actions
             item {
                 Card(
@@ -454,147 +597,234 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(modifier = Modifier.padding(20.dp)) {
-                        Text(
-                            text = "Manage Playlists",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Settings,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "Manage Playlists",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                         Spacer(modifier = Modifier.height(16.dp))
-                        
+
                         TunerSettingCard(
-                            icon = Icons.Default.Add,
+                            icon = Icons.Rounded.AddCircle,
                             title = "Create New Playlist",
                             description = "Add a new custom playlist",
-                            onClick = { 
+                            onClick = {
                                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                showCreatePlaylistDialog = true 
+                                showCreatePlaylistDialog = true
                             }
                         )
-                        
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        TunerSettingCard(
+                            icon = Icons.Rounded.FileUpload,
+                            title = "Import Playlists",
+                            description = "Import from JSON, M3U, or PLS files",
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                showImportDialog = true
+                            }
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        TunerSettingCard(
+                            icon = Icons.Rounded.FileDownload,
+                            title = "Export All Playlists",
+                            description = "Backup all playlists to file",
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                showBulkExportDialog = true
+                            }
+                        )
+
                         if (emptyPlaylists.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(12.dp))
                             TunerSettingCard(
-                                icon = Icons.Default.Delete,
+                                icon = Icons.Rounded.CleaningServices,
                                 title = "Cleanup Empty Playlists",
                                 description = "Remove ${emptyPlaylists.size} empty playlist${if (emptyPlaylists.size > 1) "s" else ""}",
                                 onClick = {
                                     HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                    emptyPlaylists.forEach { playlist ->
-                                        musicViewModel.deletePlaylist(playlist.id)
-                                    }
+                                    showCleanupConfirmDialog = true
                                 }
                             )
                         }
                     }
                 }
             }
-            
+
             // Default Playlists
             if (defaultPlaylists.isNotEmpty()) {
                 item {
-                    Text(
-                        text = "Default Playlists",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                }
-                
-                items(defaultPlaylists) { playlist ->
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        shape = RoundedCornerShape(16.dp)
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.MusicNote,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(32.dp)
-                            )
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = playlist.name,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Star,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp)
                                 )
+                                Spacer(modifier = Modifier.width(12.dp))
                                 Text(
-                                    text = "${playlist.songs.size} songs",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    text = "Default Playlists",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold
                                 )
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                defaultPlaylists.forEach { playlist ->
+                                    Card(
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                        ),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.MusicNote,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(32.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(16.dp))
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = playlist.name,
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                                Text(
+                                                    text = "${playlist.songs.size} songs",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
-            
+
             // User Playlists
             if (userPlaylists.isNotEmpty()) {
                 item {
-                    Text(
-                        text = "My Playlists",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                }
-                
-                items(userPlaylists) { playlist ->
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        shape = RoundedCornerShape(16.dp)
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.QueueMusic,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(32.dp)
-                            )
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = playlist.name,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                Text(
-                                    text = "${playlist.songs.size} songs",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            IconButton(
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                    playlistToDelete = playlist
-                                }
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = "Delete",
-                                    tint = MaterialTheme.colorScheme.error
+                                    imageVector = Icons.Rounded.Person,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp)
                                 )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = "My Playlists",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                userPlaylists.forEach { playlist ->
+                                    Card(
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                        ),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.QueueMusic,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(32.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(16.dp))
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = playlist.name,
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                                Text(
+                                                    text = "${playlist.songs.size} songs",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                            IconButton(
+                                                onClick = {
+                                                    HapticUtils.performHapticFeedback(
+                                                        context,
+                                                        haptic,
+                                                        HapticFeedbackType.TextHandleMove
+                                                    )
+                                                    playlistToDelete = playlist
+                                                }
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Delete,
+                                                    contentDescription = "Delete",
+                                                    tint = MaterialTheme.colorScheme.error
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
-            
+
             item { Spacer(modifier = Modifier.height(8.dp)) }
         }
     }
-    
+
+    // Dialogs
     if (showCreatePlaylistDialog) {
         chromahub.rhythm.app.ui.components.CreatePlaylistDialog(
             onDismiss = { showCreatePlaylistDialog = false },
@@ -604,7 +834,76 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
             }
         )
     }
-    
+
+    if (showBulkExportDialog) {
+        chromahub.rhythm.app.ui.components.BulkPlaylistExportDialog(
+            playlistCount = playlists.size,
+            onDismiss = { showBulkExportDialog = false },
+            onExport = { format, includeDefault ->
+                showBulkExportDialog = false
+                showOperationProgress = true
+                operationProgressText = "Exporting playlists..."
+                musicViewModel.exportAllPlaylists(format, includeDefault) { result ->
+                    showOperationProgress = false
+                }
+            },
+            onExportToCustomLocation = { format, includeDefault, directoryUri ->
+                showBulkExportDialog = false
+                showOperationProgress = true
+                operationProgressText = "Exporting playlists to selected location..."
+                musicViewModel.exportAllPlaylists(format, includeDefault, directoryUri) { result ->
+                    showOperationProgress = false
+                }
+            }
+        )
+    }
+
+    if (showImportDialog) {
+        chromahub.rhythm.app.ui.components.PlaylistImportDialog(
+            onDismiss = { showImportDialog = false },
+            onImport = { uri, onResult, onRestartRequired ->
+                showImportDialog = false
+                showOperationProgress = true
+                operationProgressText = "Importing playlist..."
+                musicViewModel.importPlaylist(uri, onResult, onRestartRequired)
+            }
+        )
+    }
+
+    if (showOperationProgress) {
+        chromahub.rhythm.app.ui.components.PlaylistOperationProgressDialog(
+            operation = operationProgressText,
+            onDismiss = { /* Cannot dismiss during operation */ }
+        )
+    }
+
+    if (showCleanupConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showCleanupConfirmDialog = false },
+            title = { Text("Cleanup Empty Playlists?") },
+            text = {
+                Text("This will permanently delete ${emptyPlaylists.size} empty playlist${if (emptyPlaylists.size > 1) "s" else ""}. This action cannot be undone.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        emptyPlaylists.forEach { playlist ->
+                            musicViewModel.deletePlaylist(playlist.id)
+                        }
+                        showCleanupConfirmDialog = false
+                    }
+                ) {
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCleanupConfirmDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     playlistToDelete?.let { playlist ->
         AlertDialog(
             onDismissRequest = { playlistToDelete = null },
@@ -1110,43 +1409,74 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
     val appSettings = AppSettings.getInstance(context)
     val updatesEnabled by appSettings.updatesEnabled.collectAsState()
     val autoCheckForUpdates by appSettings.autoCheckForUpdates.collectAsState()
-    
+
     CollapsibleHeaderScreen(
         title = "Updates",
         showBackButton = true,
         onBackClick = onBackClick
     ) { modifier ->
+        val updateItems = mutableListOf(
+            SettingItem(
+                Icons.Default.SystemUpdate,
+                "Enable Updates",
+                "Allow the app to check for and download updates",
+                toggleState = updatesEnabled,
+                onToggleChange = { appSettings.setUpdatesEnabled(it) }
+            )
+        )
+
+        if (updatesEnabled) {
+            updateItems.add(
+                SettingItem(
+                    Icons.Default.Update,
+                    "Periodic Check",
+                    "Automatically check for updates from Rhythm's GitHub repo",
+                    toggleState = autoCheckForUpdates,
+                    onToggleChange = { appSettings.setAutoCheckForUpdates(it) }
+                )
+            )
+        }
+
+        val settingGroups = listOf(
+            SettingGroup(
+                title = "Update Settings",
+                items = updateItems
+            )
+        )
+
         LazyColumn(
             modifier = modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .background(MaterialTheme.colorScheme.background)
+                .padding(horizontal = 24.dp)
         ) {
-            item { Spacer(modifier = Modifier.height(8.dp)) }
-            
-            item {
-                TunerSettingCard(
-                    title = "Enable Updates",
-                    description = "Allow the app to check for and download updates",
-                    icon = Icons.Default.SystemUpdate,
-                    checked = updatesEnabled,
-                    onCheckedChange = { appSettings.setUpdatesEnabled(it) }
+            items(settingGroups) { group ->
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = group.title,
+                    style = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Default, fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                 )
-            }
-            
-            if (updatesEnabled) {
-                item {
-                    TunerSettingCard(
-                        title = "Periodic Check",
-                        description = "Automatically check for updates from Rhythm's GitHub repo",
-                        icon = Icons.Default.Update,
-                        checked = autoCheckForUpdates,
-                        onCheckedChange = { appSettings.setAutoCheckForUpdates(it) }
-                    )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column {
+                        group.items.forEachIndexed { index, item ->
+                            TunerSettingRow(item = item)
+                            if (index < group.items.lastIndex) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                            }
+                        }
+                    }
                 }
             }
-            
-            item { Spacer(modifier = Modifier.height(8.dp)) }
         }
     }
 }
@@ -1156,31 +1486,89 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
     val context = LocalContext.current
     val appSettings = AppSettings.getInstance(context)
     val hapticFeedbackEnabled by appSettings.hapticFeedbackEnabled.collectAsState()
-    
+    val groupByAlbumArtist by appSettings.groupByAlbumArtist.collectAsState()
+    val showLyrics by appSettings.showLyrics.collectAsState()
+
     CollapsibleHeaderScreen(
         title = "Experimental Features",
         showBackButton = true,
         onBackClick = onBackClick
     ) { modifier ->
+        val settingGroups = listOf(
+            SettingGroup(
+                title = "Interface",
+                items = listOf(
+                    SettingItem(
+                        Icons.Default.Vibration,
+                        "Haptic Feedback",
+                        "Vibrate when tapping buttons and interacting with the interface",
+                        toggleState = hapticFeedbackEnabled,
+                        onToggleChange = { appSettings.setHapticFeedbackEnabled(it) }
+                    )
+                )
+            ),
+            SettingGroup(
+                title = "Library Organization",
+                items = listOf(
+                    SettingItem(
+                        Icons.Default.Person,
+                        "Group by Album Artist",
+                        "Show collaboration albums under main artist",
+                        toggleState = groupByAlbumArtist,
+                        onToggleChange = { appSettings.setGroupByAlbumArtist(it) }
+                    )
+                )
+            ),
+            SettingGroup(
+                title = "Lyrics & Metadata",
+                items = listOf(
+                    SettingItem(
+                        Icons.Default.Lyrics,
+                        "Show Lyrics",
+                        "Display lyrics when available (priority: Spotify → Apple Music → LRCLib)",
+                        toggleState = showLyrics,
+                        onToggleChange = { appSettings.setShowLyrics(it) }
+                    )
+                )
+            )
+        )
+
         LazyColumn(
             modifier = modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .background(MaterialTheme.colorScheme.background)
+                .padding(horizontal = 24.dp)
         ) {
-            item { Spacer(modifier = Modifier.height(8.dp)) }
-            
-            item {
-                TunerSettingCard(
-                    title = "Haptic Feedback",
-                    description = "Vibrate when tapping buttons and interacting with the interface",
-                    icon = Icons.Default.Vibration,
-                    checked = hapticFeedbackEnabled,
-                    onCheckedChange = { appSettings.setHapticFeedbackEnabled(it) }
+            items(settingGroups) { group ->
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = group.title,
+                    style = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Default, fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                 )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column {
+                        group.items.forEachIndexed { index, item ->
+                            TunerSettingRow(item = item)
+                            if (index < group.items.lastIndex) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                            }
+                        }
+                    }
+                }
             }
-            
+
             item {
+                Spacer(modifier = Modifier.height(16.dp))
                 Card(
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
@@ -1207,8 +1595,6 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
-            item { Spacer(modifier = Modifier.height(8.dp)) }
         }
     }
 }
