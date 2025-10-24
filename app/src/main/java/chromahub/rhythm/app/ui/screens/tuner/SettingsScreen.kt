@@ -16,17 +16,25 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Equalizer
-import androidx.compose.material.icons.filled.GraphicEq
-import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Update
-import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.Api
+import androidx.compose.material.icons.filled.Backup
+import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Equalizer
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lyrics
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.QueueMusic
+import androidx.compose.material.icons.filled.Reorder
 import androidx.compose.material.icons.filled.Science
+import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.TouchApp
+import androidx.compose.material.icons.filled.Update
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -49,7 +57,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import chromahub.rhythm.app.ui.components.CollapsibleHeaderScreen
+import chromahub.rhythm.app.ui.components.RhythmIcons
+import chromahub.rhythm.app.data.AppSettings
 import android.content.Context
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -59,16 +71,20 @@ import chromahub.rhythm.app.ui.theme.RhythmTheme
 // Define routes for navigation
 object SettingsRoutes {
     const val NOTIFICATIONS = "notifications_settings"
-    const val THEMING = "theming_settings"
     const val EXPERIMENTAL_FEATURES = "experimental_features_settings"
     const val ABOUT = "about_screen"
     const val UPDATES = "updates_screen"
-    const val STREAMING = "streaming_settings"
-    const val AUDIO = "audio_settings"
-    const val DOWNLOADS = "downloads_settings"
-    const val OFFLINE_MODE = "offline_mode_settings"
     const val MEDIA_SCAN = "media_scan_settings"
     const val PLAYLISTS = "playlist_settings"
+    const val API_MANAGEMENT = "api_management_settings"
+    const val CACHE_MANAGEMENT = "cache_management_settings"
+    const val BACKUP_RESTORE = "backup_restore_settings"
+    const val LIBRARY_TAB_ORDER = "library_tab_order_settings"
+    const val THEME_CUSTOMIZATION = "theme_customization_settings"
+    const val EQUALIZER = "equalizer_settings"
+    const val SLEEP_TIMER = "sleep_timer_settings"
+    const val CRASH_LOG_HISTORY = "crash_log_history_settings"
+    const val QUEUE_PLAYBACK = "queue_playback_settings"
 }
 
 data class SettingItem(
@@ -92,8 +108,14 @@ fun TunerSettingsScreen(
 ) {
     val hapticFeedback = LocalHapticFeedback.current
     val context = LocalContext.current
-    var isOfflineModeEnabled by remember { mutableStateOf(false) } // State for offline mode toggle
-    var isUpdatesEnabled by remember { mutableStateOf(true) } // State for updates toggle
+    val appSettings = AppSettings.getInstance(context)
+    
+    // Collect states for toggles
+    val updatesEnabled by appSettings.updatesEnabled.collectAsState()
+    val hapticFeedbackEnabled by appSettings.hapticFeedbackEnabled.collectAsState()
+    val useSystemVolume by appSettings.useSystemVolume.collectAsState()
+    val showLyrics by appSettings.showLyrics.collectAsState()
+    val groupByAlbumArtist by appSettings.groupByAlbumArtist.collectAsState()
 
     CollapsibleHeaderScreen(
         title = "Tuner",
@@ -107,44 +129,70 @@ fun TunerSettingsScreen(
             SettingGroup(
                 title = "Appearance",
                 items = listOf(
-                    SettingItem(Icons.Default.Palette, "Theme", "Customize app theme and appearance", onClick = { /* TODO: Add theme settings */ })
+                    SettingItem(Icons.Default.Palette, "Theme Customization", "Customize colors, fonts, and appearance", onClick = { onNavigateTo(SettingsRoutes.THEME_CUSTOMIZATION) }),
+                    SettingItem(Icons.Default.Reorder, "Library Tab Order", "Reorder tabs in the library", onClick = { onNavigateTo(SettingsRoutes.LIBRARY_TAB_ORDER) })
                 )
             ),
             SettingGroup(
-                title = "Notifications & Alerts",
+                title = "User Interface",
                 items = listOf(
-                    SettingItem(Icons.Default.Notifications, "Notifications", "Manage notification preferences", onClick = { onNavigateTo(SettingsRoutes.NOTIFICATIONS) })
+                    SettingItem(
+                        Icons.Default.TouchApp, 
+                        "Haptic Feedback", 
+                        "Vibrate when tapping buttons", 
+                        toggleState = hapticFeedbackEnabled,
+                        onToggleChange = { appSettings.setHapticFeedbackEnabled(it) }
+                    )
                 )
             ),
             SettingGroup(
                 title = "Audio & Playback",
-                items = buildList {
-                    if (!isOfflineModeEnabled) {
-                        add(SettingItem(Icons.Default.GraphicEq, "Streaming", "Audio quality and streaming settings", onClick = { onNavigateTo(SettingsRoutes.STREAMING) }))
-                    }
-                    add(SettingItem(Icons.Default.Equalizer, "Audio", "Audio effects, queue, and playback settings", onClick = { onNavigateTo(SettingsRoutes.AUDIO) }))
-                }
+                items = listOf(
+                    SettingItem(
+                        RhythmIcons.Player.VolumeUp, 
+                        "System Volume", 
+                        "Use device volume for playback", 
+                        toggleState = useSystemVolume,
+                        onToggleChange = { appSettings.setUseSystemVolume(it) }
+                    ),
+                    SettingItem(
+                        Icons.Default.Lyrics, 
+                        "Show Lyrics", 
+                        "Display lyrics when available", 
+                        toggleState = showLyrics,
+                        onToggleChange = { appSettings.setShowLyrics(it) }
+                    ),
+                    SettingItem(Icons.Default.QueueMusic, "Queue & Playback", "Configure queue and playback behavior", onClick = { onNavigateTo(SettingsRoutes.QUEUE_PLAYBACK) }),
+                    SettingItem(Icons.Default.GraphicEq, "Equalizer", "Adjust audio frequencies and effects", onClick = { onNavigateTo(SettingsRoutes.EQUALIZER) }),
+                    SettingItem(Icons.Default.AccessTime, "Sleep Timer", "Auto-stop playback after set time", onClick = { onNavigateTo(SettingsRoutes.SLEEP_TIMER) })
+                )
             ),
             SettingGroup(
-                title = "Library & Storage",
-                items = buildList {
-                    add(SettingItem(Icons.Default.Folder, "Media Scan", "Manage blacklist and media scanning", onClick = { onNavigateTo(SettingsRoutes.MEDIA_SCAN) }))
-                    add(SettingItem(Icons.AutoMirrored.Filled.QueueMusic, "Playlists", "Manage your playlists", onClick = { onNavigateTo(SettingsRoutes.PLAYLISTS) }))
-                    add(SettingItem(Icons.Default.Download, "Storage & Cache", "Manage cache and storage", onClick = { onNavigateTo(SettingsRoutes.DOWNLOADS) }))
-                    add(
-                        SettingItem(
-                            Icons.Default.CloudOff,
-                            "Offline Mode",
-                            "Enable or disable offline playback",
-                            onClick = { onNavigateTo(SettingsRoutes.OFFLINE_MODE) },
-                            toggleState = isOfflineModeEnabled,
-                            onToggleChange = { newValue ->
-                                isOfflineModeEnabled = newValue
-                                // TODO: Implement offline mode toggle
-                            }
-                        )
-                    )
-                }
+                title = "Library & Content",
+                items = listOf(
+                    SettingItem(
+                        Icons.Default.Person, 
+                        "Group by Album Artist", 
+                        "Show collaboration albums under main artist", 
+                        toggleState = groupByAlbumArtist,
+                        onToggleChange = { appSettings.setGroupByAlbumArtist(it) }
+                    ),
+                    SettingItem(Icons.Default.Folder, "Media Scan", "Manage blacklist and media scanning", onClick = { onNavigateTo(SettingsRoutes.MEDIA_SCAN) }),
+                    SettingItem(Icons.AutoMirrored.Filled.QueueMusic, "Playlists", "Manage your playlists", onClick = { onNavigateTo(SettingsRoutes.PLAYLISTS) })
+                )
+            ),
+            SettingGroup(
+                title = "Storage & Data",
+                items = listOf(
+                    SettingItem(Icons.Default.Storage, "Cache Management", "Control cache size and clearing", onClick = { onNavigateTo(SettingsRoutes.CACHE_MANAGEMENT) }),
+                    SettingItem(Icons.Default.Backup, "Backup & Restore", "Safeguard settings and playlists", onClick = { onNavigateTo(SettingsRoutes.BACKUP_RESTORE) })
+                )
+            ),
+            SettingGroup(
+                title = "Services",
+                items = listOf(
+                    SettingItem(Icons.Default.Api, "API Management", "Configure external API services", onClick = { onNavigateTo(SettingsRoutes.API_MANAGEMENT) })
+                )
             ),
             SettingGroup(
                 title = "Updates & Info",
@@ -152,18 +200,18 @@ fun TunerSettingsScreen(
                     SettingItem(
                         Icons.Default.Update,
                         "Updates",
-                        "Manage app updates and auto-check",
-                        onClick = { onNavigateTo(SettingsRoutes.UPDATES) },
-                        toggleState = isUpdatesEnabled,
-                        onToggleChange = { newValue -> isUpdatesEnabled = newValue }
+                        "Check for app updates",
+                        toggleState = updatesEnabled,
+                        onToggleChange = { appSettings.setUpdatesEnabled(it) },
+                        onClick = { onNavigateTo(SettingsRoutes.UPDATES) }
                     ),
-                    SettingItem(Icons.Default.Info, "About", "Tuner Beta version info", onClick = { onNavigateTo(SettingsRoutes.ABOUT) })
+                    SettingItem(Icons.Default.Info, "About", "App version and info", onClick = { onNavigateTo(SettingsRoutes.ABOUT) })
                 )
             ),
             SettingGroup(
                 title = "Advanced",
                 items = listOf(
-                    SettingItem(Icons.Default.Science, "Experimental Features", "Beta functionality and haptic feedback", onClick = { onNavigateTo(SettingsRoutes.EXPERIMENTAL_FEATURES) })
+                    SettingItem(Icons.Default.BugReport, "Crash Log History", "View and manage crash reports", onClick = { onNavigateTo(SettingsRoutes.CRASH_LOG_HISTORY) })
                 )
             )
         )
@@ -307,16 +355,20 @@ fun SettingsScreen(onBack: () -> Unit) {
     
     when (currentRoute) {
         SettingsRoutes.NOTIFICATIONS -> NotificationsSettingsScreen(onBackClick = { currentRoute = null })
-//        SettingsRoutes.THEMING -> ThemingSettingsScreen(onBackClick = { currentRoute = null })
-        SettingsRoutes.STREAMING -> StreamingSettingsScreen(onBackClick = { currentRoute = null })
-        SettingsRoutes.AUDIO -> AudioSettingsScreen(onBackClick = { currentRoute = null })
-        SettingsRoutes.DOWNLOADS -> DownloadsSettingsScreen(onBackClick = { currentRoute = null })
-        SettingsRoutes.OFFLINE_MODE -> OfflineModeSettingsScreen(onBackClick = { currentRoute = null })
         SettingsRoutes.PLAYLISTS -> PlaylistsSettingsScreen(onBackClick = { currentRoute = null })
         SettingsRoutes.MEDIA_SCAN -> MediaScanSettingsScreen(onBackClick = { currentRoute = null })
         SettingsRoutes.ABOUT -> AboutScreen(onBackClick = { currentRoute = null })
         SettingsRoutes.UPDATES -> UpdatesSettingsScreen(onBackClick = { currentRoute = null })
         SettingsRoutes.EXPERIMENTAL_FEATURES -> ExperimentalFeaturesScreen(onBackClick = { currentRoute = null })
+        SettingsRoutes.API_MANAGEMENT -> ApiManagementSettingsScreen(onBackClick = { currentRoute = null })
+        SettingsRoutes.CACHE_MANAGEMENT -> CacheManagementSettingsScreen(onBackClick = { currentRoute = null })
+        SettingsRoutes.BACKUP_RESTORE -> BackupRestoreSettingsScreen(onBackClick = { currentRoute = null })
+        SettingsRoutes.LIBRARY_TAB_ORDER -> LibraryTabOrderSettingsScreen(onBackClick = { currentRoute = null })
+        SettingsRoutes.THEME_CUSTOMIZATION -> ThemeCustomizationSettingsScreen(onBackClick = { currentRoute = null })
+        SettingsRoutes.EQUALIZER -> EqualizerSettingsScreen(onBackClick = { currentRoute = null })
+        SettingsRoutes.SLEEP_TIMER -> SleepTimerSettingsScreen(onBackClick = { currentRoute = null })
+        SettingsRoutes.CRASH_LOG_HISTORY -> CrashLogHistorySettingsScreen(onBackClick = { currentRoute = null })
+        SettingsRoutes.QUEUE_PLAYBACK -> QueuePlaybackSettingsScreen(onBackClick = { currentRoute = null })
         else -> TunerSettingsScreen(
             onBackClick = onBack,
             onNavigateTo = { route -> currentRoute = route }
