@@ -67,6 +67,7 @@ import chromahub.rhythm.app.util.HapticUtils
 import kotlin.system.exitProcess
 import chromahub.rhythm.app.ui.components.CollapsibleHeaderScreen
 import chromahub.rhythm.app.ui.components.RhythmIcons
+import chromahub.rhythm.app.ui.components.StandardBottomSheetHeader
 import chromahub.rhythm.app.viewmodel.MusicViewModel
 import chromahub.rhythm.app.ui.theme.getFontPreviewStyle
 import kotlinx.coroutines.delay
@@ -82,6 +83,13 @@ private fun TunerSettingRow(item: SettingItem) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .then(
+                if (item.onClick != {} && item.toggleState == null) {
+                    Modifier.clickable(onClick = item.onClick)
+                } else {
+                    Modifier
+                }
+            )
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -96,17 +104,7 @@ private fun TunerSettingRow(item: SettingItem) {
         )
         Spacer(modifier = Modifier.width(16.dp))
         Column(
-            modifier = Modifier
-                .weight(1f)
-                .then(
-                    if (item.onClick != {} && item.toggleState == null) {
-                        Modifier.clickable(onClick = item.onClick)
-                    } else if (item.onClick != {} && item.toggleState != null) {
-                        Modifier.clickable(onClick = item.onClick)
-                    } else {
-                        Modifier
-                    }
-                )
+            modifier = Modifier.weight(1f)
         ) {
             Text(
                 text = item.title,
@@ -122,26 +120,7 @@ private fun TunerSettingRow(item: SettingItem) {
             }
         }
 
-        if (item.toggleState != null && item.onClick != {}) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-                contentDescription = "Navigate",
-                modifier = Modifier
-                    .size(16.dp)
-                    .padding(end = 8.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Switch(
-                checked = item.toggleState,
-                onCheckedChange = { item.onToggleChange?.invoke(it) },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = MaterialTheme.colorScheme.primary,
-                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
-                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
-                )
-            )
-        } else if (item.toggleState != null) {
+        if (item.toggleState != null) {
             Switch(
                 checked = item.toggleState,
                 onCheckedChange = { item.onToggleChange?.invoke(it) },
@@ -2911,7 +2890,11 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     SettingItem(
                         Icons.Default.Palette,
                         "Color Source",
-                        "Choose color extraction method",
+                        when (selectedColorSource) {
+                            ColorSource.ALBUM_ART -> "Album Art (extracts from artwork)"
+                            ColorSource.MONET -> "System Colors (Material You)"
+                            ColorSource.CUSTOM -> "Custom Scheme (${customColorScheme})"
+                        },
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                             showColorSourceDialog = true
@@ -2920,7 +2903,10 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     SettingItem(
                         Icons.Default.TextFields,
                         "Font Source",
-                        "Choose font source",
+                        when (selectedFontSource) {
+                            FontSource.SYSTEM -> "System (${currentFont})"
+                            FontSource.CUSTOM -> "Custom (${customFontFamily ?: "No font imported"})"
+                        },
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                             showFontSourceDialog = true
@@ -2934,7 +2920,10 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     SettingItem(
                         Icons.Default.ColorLens,
                         "Color Schemes",
-                        "Choose from preset color schemes",
+                        if (selectedColorSource == ColorSource.CUSTOM) 
+                            "Current: ${customColorScheme}" 
+                        else 
+                            "Available when using Custom color source",
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                             showColorSchemesDialog = true
@@ -2943,7 +2932,10 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     SettingItem(
                         Icons.Default.Brush,
                         "Custom Colors",
-                        "Create custom color scheme",
+                        if (selectedColorSource == ColorSource.CUSTOM) 
+                            "Create your own color palette" 
+                        else 
+                            "Available when using Custom color source",
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                             showCustomColorsDialog = true
@@ -2957,7 +2949,10 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     SettingItem(
                         Icons.Default.TextFields,
                         "Font Selection",
-                        "Choose from available fonts",
+                        if (selectedFontSource == FontSource.SYSTEM) 
+                            "Current: ${currentFont}" 
+                        else 
+                            "Available when using System font source",
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                             showFontSelectionDialog = true
@@ -2966,7 +2961,10 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     SettingItem(
                         Icons.Default.FileUpload,
                         "Import Font",
-                        "Import custom font file",
+                        if (customFontPath != null) 
+                            "Custom font imported: ${customFontFamily}" 
+                        else 
+                            "Import custom font file (.ttf, .otf)",
                         onClick = {
                             HapticUtils.performHapticFeedback(
                                 context,
@@ -3073,30 +3071,49 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                 }
             }
 
+            // Tips Card
             item {
                 Spacer(modifier = Modifier.height(16.dp))
                 Card(
-                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
                     ),
+                    shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(16.dp)
+                    Column(
+                        modifier = Modifier.padding(20.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Science,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.tertiary,
-                            modifier = Modifier.size(24.dp)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Lightbulb,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "Good to Know",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        }
+
+                        ThemeTipItem(
+                            icon = Icons.Filled.Palette,
+                            text = "Album Art colors adapt dynamically to your music"
                         )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = "More experimental features coming soon in future updates",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        ThemeTipItem(
+                            icon = Icons.Filled.Wallpaper,
+                            text = "Material You uses system wallpaper colors (Android 12+)"
+                        )
+                        ThemeTipItem(
+                            icon = Icons.Filled.FontDownload,
+                            text = "Import custom fonts to personalize typography"
                         )
                     }
                 }
@@ -3132,7 +3149,10 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
         colorSchemes = colorSchemes,
         currentScheme = customColorScheme,
         selectedColorSource = selectedColorSource,
-        onSchemeSelected = { },
+        onSchemeSelected = { scheme ->
+            appSettings.setCustomColorScheme(scheme)
+            showColorSchemesDialog = false
+        },
         appSettings = appSettings,
         context = context,
         haptic = haptic
@@ -3162,8 +3182,8 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
         currentFont = currentFont,
         selectedFontSource = selectedFontSource,
         onFontSelected = { selectedFont ->
-            selectedFontSource = FontSource.SYSTEM
-            appSettings.setFontSource("SYSTEM")
+            appSettings.setCustomFont(selectedFont)
+            showFontSelectionDialog = false
         },
         appSettings = appSettings,
         context = context,
@@ -3776,7 +3796,6 @@ private fun ColorSchemesDialog(
                                 onSelect = {
                                     HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                                     onSchemeSelected(option.name)
-                                    appSettings.setCustomColorScheme(option.name)
                                 }
                             )
                         }
@@ -3804,7 +3823,6 @@ private fun ColorSchemesDialog(
                                 onSelect = {
                                     HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                                     onSchemeSelected(option.name)
-                                    appSettings.setCustomColorScheme(option.name)
                                 }
                             )
                         }
@@ -3847,25 +3865,31 @@ private fun ColorSchemeCard(
                 .padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Color preview circles
+            // Enhanced color preview with better visibility
             Row(
-                horizontalArrangement = Arrangement.spacedBy((-8).dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
                 modifier = Modifier.padding(end = 16.dp)
             ) {
                 Surface(
                     shape = CircleShape,
                     color = option.primaryColor,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier
+                        .size(36.dp)
+                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), CircleShape)
                 ) {}
                 Surface(
                     shape = CircleShape,
                     color = option.secondaryColor,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier
+                        .size(36.dp)
+                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), CircleShape)
                 ) {}
                 Surface(
                     shape = CircleShape,
                     color = option.tertiaryColor,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier
+                        .size(36.dp)
+                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), CircleShape)
                 ) {}
             }
 
@@ -3895,7 +3919,7 @@ private fun ColorSchemeCard(
                     imageVector = Icons.Filled.CheckCircle,
                     contentDescription = "Selected",
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(28.dp)
                 )
             }
         }
@@ -4785,7 +4809,6 @@ private fun FontSelectionDialog(
                                 onSelect = {
                                     HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                                     onFontSelected(option.name)
-                                    appSettings.setCustomFont(option.name)
                                 }
                             )
                         }
@@ -5364,5 +5387,29 @@ fun CrashLogHistorySettingsScreen(onBackClick: () -> Unit, appSettings: AppSetti
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ThemeTipItem(
+    icon: ImageVector,
+    text: String
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 6.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f),
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onTertiaryContainer
+        )
     }
 }
