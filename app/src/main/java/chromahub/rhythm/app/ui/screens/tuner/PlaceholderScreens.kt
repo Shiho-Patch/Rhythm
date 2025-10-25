@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.provider.DocumentsContract
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -92,6 +93,7 @@ import kotlinx.coroutines.MainScope
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.io.File
 import chromahub.rhythm.app.utils.FontLoader
 import chromahub.rhythm.app.ui.theme.parseCustomColorScheme
 import androidx.compose.ui.viewinterop.AndroidView
@@ -119,7 +121,7 @@ private fun TunerSettingRow(item: SettingItem) {
         modifier = Modifier
             .fillMaxWidth()
             .then(
-                if (item.onClick != {} && item.toggleState == null) {
+                if (item.onClick != null && item.toggleState == null) {
                     Modifier.clickable(onClick = {
                         HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
                         item.onClick()
@@ -158,7 +160,15 @@ private fun TunerSettingRow(item: SettingItem) {
             }
         }
 
-        if (item.toggleState != null) {
+        if (item.toggleState != null && item.onClick != null) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                contentDescription = "Navigate",
+                modifier = Modifier
+                    .size(16.dp)
+                    .padding(end = 8.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Switch(
                 checked = item.toggleState,
                 onCheckedChange = {
@@ -172,7 +182,21 @@ private fun TunerSettingRow(item: SettingItem) {
                     uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
                 )
             )
-        } else if (item.onClick != {}) {
+        } else if (item.toggleState != null) {
+            Switch(
+                checked = item.toggleState,
+                onCheckedChange = {
+                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                    item.onToggleChange?.invoke(it)
+                },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = MaterialTheme.colorScheme.primary,
+                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
+                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                )
+            )
+        } else if (item.onClick != null) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                 contentDescription = "Navigate",
@@ -810,6 +834,50 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
     // View state
     var currentView by remember { mutableStateOf("overview") } // "overview", "songs", "folders"
     
+    // File picker launcher for folder selection
+    val folderPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                try {
+                    val docId = DocumentsContract.getTreeDocumentId(uri)
+                    val split = docId.split(":")
+                    
+                    if (split.size >= 2) {
+                        val storageType = split[0] // e.g., "primary", "home", or specific SD card ID
+                        val relativePath = split[1] // e.g., "Music/MyFolder"
+                        
+                        // Build the full path based on storage type
+                        val fullPath = when (storageType) {
+                            "primary" -> "/storage/emulated/0/$relativePath"
+                            "home" -> "/storage/emulated/0/$relativePath"
+                            else -> {
+                                // For SD cards or other storage, try to construct path
+                                // This is a best-effort approach
+                                if (storageType.contains("-")) {
+                                    // SD card UUID format
+                                    "/storage/$storageType/$relativePath"
+                                } else {
+                                    // Fallback to emulated storage
+                                    "/storage/emulated/0/$relativePath"
+                                }
+                            }
+                        }
+                        
+                        if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) {
+                            appSettings.addFolderToBlacklist(fullPath)
+                        } else {
+                            appSettings.addFolderToWhitelist(fullPath)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("MediaScanSettingsScreen", "Error parsing folder path", e)
+                }
+            }
+        }
+    }
+    
     // Computed values OUTSIDE LazyColumn
     val filteredSongDetails = remember(allSongs, blacklistedSongs, whitelistedSongs, currentMode) {
         when (currentMode) {
@@ -864,7 +932,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
             items = listOf(
                 SettingItem(
                     Icons.AutoMirrored.Filled.QueueMusic,
-                    "Manage Songs",
+                    "View Songs",
                     "${filteredSongDetails.size} ${if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) "blocked" else "whitelisted"} songs",
                     onClick = {
                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
@@ -891,11 +959,21 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
             items = listOf(
                 SettingItem(
                     Icons.Default.Folder,
-                    "Manage Folders",
+                    "View Folders",
                     "${filteredFoldersList.size} ${if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) "blocked" else "whitelisted"} folders",
                     onClick = {
                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                         currentView = "folders"
+                    }
+                ),
+                SettingItem(
+                    Icons.Default.Add,
+                    "Add Folder",
+                    "Select a folder to ${if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) "block" else "whitelist"}",
+                    onClick = {
+                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+                        folderPickerLauncher.launch(intent)
                     }
                 ),
                 SettingItem(
@@ -987,6 +1065,37 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                         }
                     }
                     
+                    // Action buttons
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            if (filteredSongDetails.isNotEmpty()) {
+                                Button(
+                                    onClick = {
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) {
+                                            appSettings.clearBlacklist()
+                                        } else {
+                                            appSettings.clearWhitelist()
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) 
+                                            MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer,
+                                        contentColor = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) 
+                                            MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer
+                                    ),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text("Clear All")
+                                }
+                            }
+                        }
+                    }
+                    
                     items(filteredSongDetails, key = { it.id }) { song ->
                         Card(
                             modifier = Modifier.fillMaxWidth(),
@@ -1063,6 +1172,59 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                         }
                     }
                     
+                    // Action buttons
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+                                    folderPickerLauncher.launch(intent)
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) 
+                                        MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer,
+                                    contentColor = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) 
+                                        MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer
+                                ),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Add,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Add Folder")
+                            }
+                            
+                            if (filteredFoldersList.isNotEmpty()) {
+                                Button(
+                                    onClick = {
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) {
+                                            blacklistedFolders.forEach { folder ->
+                                                appSettings.removeFolderFromBlacklist(folder)
+                                            }
+                                        } else {
+                                            whitelistedFolders.forEach { folder ->
+                                                appSettings.removeFolderFromWhitelist(folder)
+                                            }
+                                        }
+                                    },
+                                    colors = ButtonDefaults.outlinedButtonColors(),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text("Clear All")
+                                }
+                            }
+                        }
+                    }
+                    
                     items(filteredFoldersList) { folder ->
                         Card(
                             modifier = Modifier.fillMaxWidth(),
@@ -1076,14 +1238,28 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                                     .padding(16.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = folder,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
+                                // Folder icon
+                                Icon(
+                                    imageVector = Icons.Filled.Folder,
+                                    contentDescription = null,
+                                    tint = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) 
+                                        MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                
+                                Spacer(modifier = Modifier.width(12.dp))
+                                
+                                // Folder path
+                                Text(
+                                    text = File(folder).name.ifEmpty { folder },
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                
+                                // Remove button
                                 IconButton(
                                     onClick = {
                                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
@@ -2824,24 +3000,28 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
             // What's New section
             if (updatesEnabled && latestVersion != null && whatsNew.isNotEmpty()) {
                 item {
+                    Spacer(modifier = Modifier.height(24.dp))
                     Text(
                         text = "What's New",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(top = 8.dp)
+                        style = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Default, fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                     )
                 }
                 item {
                     Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.fillMaxWidth()
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
+                        Column(
+                            modifier = Modifier.padding(20.dp)
+                        ) {
                             val onSurfaceColor = MaterialTheme.colorScheme.onSurface.toArgb()
                             whatsNew.forEachIndexed { index, change ->
                                 Row(
-                                    modifier = Modifier.padding(vertical = 4.dp),
+                                    modifier = Modifier.padding(vertical = 2.dp),
                                     verticalAlignment = Alignment.Top
                                 ) {
                                     Box(
@@ -2868,7 +3048,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                                     )
                                 }
                                 if (index < whatsNew.size - 1) {
-                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Spacer(modifier = Modifier.height(1.dp))
                                 }
                             }
                         }
@@ -2879,24 +3059,28 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
             // Known Issues section
             if (updatesEnabled && latestVersion != null && knownIssues.isNotEmpty()) {
                 item {
+                    Spacer(modifier = Modifier.height(24.dp))
                     Text(
                         text = "Known Issues",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(top = 8.dp)
+                        style = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Default, fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                     )
                 }
                 item {
                     Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.fillMaxWidth()
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
+                        Column(
+                            modifier = Modifier.padding(20.dp)
+                        ) {
                             val onSurfaceColor = MaterialTheme.colorScheme.onSurface.toArgb()
                             knownIssues.forEachIndexed { index, issue ->
                                 Row(
-                                    modifier = Modifier.padding(vertical = 4.dp),
+                                    modifier = Modifier.padding(vertical = 2.dp),
                                     verticalAlignment = Alignment.Top
                                 ) {
                                     Box(
@@ -2923,7 +3107,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                                     )
                                 }
                                 if (index < knownIssues.size - 1) {
-                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Spacer(modifier = Modifier.height(1.dp))
                                 }
                             }
                         }
@@ -2933,7 +3117,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
 
             // Settings Section below
             item {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = "Update Settings",
                     style = MaterialTheme.typography.titleSmall.copy(
