@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Lyrics
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
@@ -78,6 +79,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import chromahub.rhythm.app.ui.theme.RhythmTheme
+import chromahub.rhythm.app.util.HapticUtils
 
 // Define routes for navigation
 object SettingsRoutes {
@@ -132,7 +134,7 @@ fun TunerSettingsScreen(
         title = "Tuner",
         showBackButton = true,
         onBackClick = {
-            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
             onBackClick()
         }
     ) { modifier ->
@@ -261,6 +263,55 @@ fun TunerSettingsScreen(
                         }
                     }
                 }
+                            }
+
+            // Quick Tips Card
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
+                    ),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Lightbulb,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "Quick Tips",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        }
+
+                        TipItem(
+                            icon = Icons.Default.Palette,
+                            text = "Customize your theme with colors, fonts, and festive effects"
+                        )
+                        TipItem(
+                            icon = Icons.Default.TouchApp,
+                            text = "Enable haptic feedback for tactile responses"
+                        )
+                        TipItem(
+                            icon = Icons.Default.Folder,
+                            text = "Use media scan to hide unwanted files from your library"
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(24.dp))
 //                Spacer(modifier = Modifier.height(24.dp)) // Space at the bottom
             }
         }
@@ -295,16 +346,12 @@ fun SettingRow(item: SettingItem) {
                 .then(
                     if (item.onClick != {} && item.toggleState == null) {
                         Modifier.clickable(onClick = {
-                            if (hapticFeedbackEnabled) {
-                                hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            }
+                            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
                             item.onClick()
                         })
                     } else if (item.onClick != {} && item.toggleState != null) {
                         Modifier.clickable(onClick = {
-                            if (hapticFeedbackEnabled) {
-                                hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            }
+                            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
                             item.onClick()
                         })
                     } else {
@@ -338,9 +385,7 @@ fun SettingRow(item: SettingItem) {
             Switch(
                 checked = item.toggleState,
                 onCheckedChange = {
-                    if (hapticFeedbackEnabled) {
-                        hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    }
+                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
                     item.onToggleChange?.invoke(it)
                 },
                 colors = SwitchDefaults.colors(
@@ -354,9 +399,7 @@ fun SettingRow(item: SettingItem) {
             Switch(
                 checked = item.toggleState,
                 onCheckedChange = {
-                    if (hapticFeedbackEnabled) {
-                        hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    }
+                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
                     item.onToggleChange?.invoke(it)
                 },
                 colors = SwitchDefaults.colors(
@@ -453,5 +496,29 @@ fun SettingsScreen(onBack: () -> Unit, appSettings: chromahub.rhythm.app.data.Ap
                 onNavigateTo = { route -> currentRoute = route }
             )
         }
+    }
+}
+
+@Composable
+private fun TipItem(
+    icon: ImageVector,
+    text: String
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 6.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f),
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onTertiaryContainer
+        )
     }
 }

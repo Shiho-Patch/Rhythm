@@ -111,12 +111,19 @@ data class EqualizerPreset(
 
 @Composable
 private fun TunerSettingRow(item: SettingItem) {
+    val hapticFeedback = LocalHapticFeedback.current
+    val context = LocalContext.current
+    val appSettings = AppSettings.getInstance(context)
+    val hapticFeedbackEnabled by appSettings.hapticFeedbackEnabled.collectAsState()
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .then(
                 if (item.onClick != {} && item.toggleState == null) {
-                    Modifier.clickable(onClick = item.onClick)
+                    Modifier.clickable(onClick = {
+                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
+                        item.onClick()
+                    })
                 } else {
                     Modifier
                 }
@@ -154,7 +161,10 @@ private fun TunerSettingRow(item: SettingItem) {
         if (item.toggleState != null) {
             Switch(
                 checked = item.toggleState,
-                onCheckedChange = { item.onToggleChange?.invoke(it) },
+                onCheckedChange = {
+                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                    item.onToggleChange?.invoke(it)
+                },
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = MaterialTheme.colorScheme.primary,
                     checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
@@ -447,14 +457,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
     val settingGroups = listOf(
         SettingGroup(
             title = "Overview",
-            items = listOf(
-                SettingItem(
-                    Icons.Default.BarChart,
-                    "Collection Statistics",
-                    "${playlists.size} total • ${userPlaylists.size} custom • ${defaultPlaylists.size} default",
-                    onClick = {} // Read-only info
-                )
-            )
+            items = listOf() // Empty items - we'll add the stat card separately
         ),
         SettingGroup(
             title = "Management",
@@ -562,7 +565,88 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(settingGroups) { group ->
+            // Collection Statistics Card
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Overview",
+                    style = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Default, fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column(modifier = Modifier.padding(20.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Card(
+                                modifier = Modifier.weight(1f),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                                )
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Text(
+                                        text = "${playlists.size}",
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "Total",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Card(
+                                modifier = Modifier.weight(1f),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                                )
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Text(
+                                        text = "${userPlaylists.size}",
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "Custom",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Card(
+                                modifier = Modifier.weight(1f),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                                )
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Text(
+                                        text = "${defaultPlaylists.size}",
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "Default",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            items(settingGroups.filter { it.title != "Overview" }) { group ->
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = group.title,
@@ -772,20 +856,6 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                             appSettings.setMediaScanMode("whitelist")
                         }
                     }
-                )
-            )
-        ),
-        SettingGroup(
-            title = "Information",
-            items = listOf(
-                SettingItem(
-                    Icons.Default.Info,
-                    "How It Works",
-                    if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST)
-                        "Hide specific songs or folders from library. Perfect for excluding ringtones and notifications."
-                    else
-                        "Only show songs from selected folders. Create a curated library.",
-                    onClick = {} // Read-only info
                 )
             )
         ),
@@ -1063,6 +1133,54 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                                         )
                                     }
                                 }
+                            }
+                        }
+                    }
+                    
+                    // Quick Tips Card
+                    item {
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
+                            ),
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(20.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(bottom = 12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Lightbulb,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(
+                                        text = "Quick Tips",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                                    )
+                                }
+
+                                MediaScanTipItem(
+                                    icon = Icons.Default.Block,
+                                    text = "Blacklist mode hides specific songs and folders from your library"
+                                )
+                                MediaScanTipItem(
+                                    icon = Icons.Default.CheckCircle,
+                                    text = "Whitelist mode only shows songs from selected folders"
+                                )
+                                MediaScanTipItem(
+                                    icon = Icons.Default.Folder,
+                                    text = "Use folder management to organize your music collection"
+                                )
                             }
                         }
                     }
@@ -2945,18 +3063,6 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
     ) { modifier ->
         val settingGroups = listOf(
             SettingGroup(
-                title = "Interface",
-                items = listOf(
-                    SettingItem(
-                        Icons.Default.Vibration,
-                        "Haptic Feedback",
-                        "Vibrate when tapping buttons and interacting with the interface",
-                        toggleState = hapticFeedbackEnabled,
-                        onToggleChange = { appSettings.setHapticFeedbackEnabled(it) }
-                    )
-                )
-            ),
-            SettingGroup(
                 title = "Library Organization",
                 items = listOf(
                     SettingItem(
@@ -2968,18 +3074,6 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                     )
                 )
             ),
-            SettingGroup(
-                title = "Lyrics & Metadata",
-                items = listOf(
-                    SettingItem(
-                        Icons.Default.Lyrics,
-                        "Show Lyrics",
-                        "Display lyrics when available (priority: Spotify → Apple Music → LRCLib)",
-                        toggleState = showLyrics,
-                        onToggleChange = { appSettings.setShowLyrics(it) }
-                    )
-                )
-            )
         )
 
         LazyColumn(
@@ -3834,13 +3928,14 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
         LazyColumn(
             modifier = modifier
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             
             item { Spacer(modifier = Modifier.height(8.dp)) }
             
-            // Backup Status Cards
+            // Status Cards
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -3894,119 +3989,6 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                         }
                     }
 
-                    // Success/Error Dialogs for BackupRestoreSettingsScreen
-                    if (showBackupSuccess) {
-                        AlertDialog(
-                            onDismissRequest = { showBackupSuccess = false },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Filled.CheckCircle,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            },
-                            title = { Text("Backup Created Successfully") },
-                            text = {
-                                Text("Your complete Rhythm backup has been created including:\n\n" +
-                                        "• All app settings and preferences\n" +
-                                        "• Your playlists and favorite songs\n" +
-                                        "• Blacklisted/whitelisted songs and folders\n" +
-                                        "• Pinned folders and library customization\n" +
-                                        "• Theme settings (colors, fonts, album art colors)\n" +
-                                        "• Audio preferences and API settings\n" +
-                                        "• Recently played history and statistics\n\n" +
-                                        "The backup has been saved and copied to your clipboard for easy sharing.")
-                            },
-                            confirmButton = {
-                                Button(onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                    showBackupSuccess = false
-                                }) {
-                                    Icon(
-                                        imageVector = Icons.Filled.CheckCircle,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("OK")
-                                }
-                            },
-                            shape = RoundedCornerShape(24.dp)
-                        )
-                    }
-
-                    if (showRestoreSuccess) {
-                        AlertDialog(
-                            onDismissRequest = { showRestoreSuccess = false },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Filled.CheckCircle,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            },
-                            title = { Text("Restore Completed Successfully") },
-                            text = {
-                                Text("Your Rhythm data has been restored successfully including:\n\n" +
-                                        "• All app settings and preferences\n" +
-                                        "• Your playlists and favorite songs\n" +
-                                        "• Blacklisted songs and folders\n" +
-                                        "• Theme and audio preferences\n\n" +
-                                        "Please restart the app for all changes to take full effect.")
-                            },
-                            confirmButton = {
-                                TextButton(
-                                    onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                        showRestoreSuccess = false
-
-                                        // Restart the app
-                                        val packageManager = context.packageManager
-                                        val intent = packageManager.getLaunchIntentForPackage(context.packageName)
-                                        val componentName = intent?.component
-                                        val mainIntent = Intent.makeRestartActivityTask(componentName)
-                                        context.startActivity(mainIntent)
-                                        (context as? Activity)?.finish()
-                                        exitProcess(0)
-                                    }
-                                ) {
-                                    Text("Restart Now")
-                                }
-                            },
-                            shape = RoundedCornerShape(24.dp)
-                        )
-                    }
-
-                    if (showError) {
-                        AlertDialog(
-                            onDismissRequest = { showError = false },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Filled.Error,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.error
-                                )
-                            },
-                            title = { Text("Error") },
-                            text = { Text(errorMessage) },
-                            confirmButton = {
-                                Button(onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                    showError = false
-                                }) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Close,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("OK")
-                                }
-                            },
-                            shape = RoundedCornerShape(24.dp)
-                        )
-                    }
-                    
                     // Auto Backup Card
                     Card(
                         modifier = Modifier.weight(1f),
@@ -4085,113 +4067,108 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                 }
             }
             
-            // Auto-backup toggle
-            item {
-                TunerSettingCard(
-                    title = "Auto-backup",
-                    description = "Automatically backup settings weekly",
-                    icon = Icons.Filled.Autorenew,
-                    checked = autoBackupEnabled,
-                    onCheckedChange = { 
-                        appSettings.setAutoBackupEnabled(it)
-                        if (it) appSettings.triggerImmediateBackup()
-                    }
-                )
-            }
-            
-            // Backup action button
-            item {
-                Button(
-                    onClick = {
-                        if (!isCreatingBackup) {
-                            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                                addCategory(Intent.CATEGORY_OPENABLE)
-                                type = "application/json"
-                                putExtra(Intent.EXTRA_TITLE, "rhythm_backup_${SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(Date())}.json")
+            val settingGroups = listOf(
+                SettingGroup(
+                    title = "Settings",
+                    items = listOf(
+                        SettingItem(
+                            Icons.Default.Autorenew,
+                            "Auto-backup",
+                            "Automatically backup settings weekly",
+                            toggleState = autoBackupEnabled,
+                            onToggleChange = { 
+                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                appSettings.setAutoBackupEnabled(it)
+                                if (it) appSettings.triggerImmediateBackup()
                             }
-                            backupLocationLauncher.launch(intent)
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !isCreatingBackup,
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    if (isCreatingBackup) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onPrimary
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-                    Icon(Icons.Filled.Save, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(if (isCreatingBackup) "Creating Backup..." else "Create Backup to File")
-                }
-            }
-            
-            // Restore buttons row
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // Restore from Clipboard Button
-                    OutlinedButton(
-                        onClick = {
-                            if (!isRestoringFromClipboard && !isRestoringFromFile && !isCreatingBackup) {
-                                restoreFromClipboard()
-                            }
-                        },
-                        modifier = Modifier.weight(1f),
-                        enabled = !isRestoringFromClipboard && !isRestoringFromFile && !isCreatingBackup,
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        if (isRestoringFromClipboard) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                        } else {
-                            Icon(Icons.Filled.ContentCopy, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                        }
-                        Text(if (isRestoringFromClipboard) "Restoring..." else "From Clipboard")
-                    }
-                    
-                    // Restore from File Button
-                    OutlinedButton(
-                        onClick = {
-                            if (!isRestoringFromFile && !isRestoringFromClipboard && !isCreatingBackup) {
-                                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                                    addCategory(Intent.CATEGORY_OPENABLE)
-                                    type = "application/json"
+                    )
+                ),
+                SettingGroup(
+                    title = "Backup Actions",
+                    items = listOf(
+                        SettingItem(
+                            Icons.Default.Save,
+                            "Create Backup to File",
+                            "Export complete backup to a JSON file",
+                            onClick = {
+                                if (!isCreatingBackup) {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                                        addCategory(Intent.CATEGORY_OPENABLE)
+                                        type = "application/json"
+                                        putExtra(Intent.EXTRA_TITLE, "rhythm_backup_${SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(Date())}.json")
+                                    }
+                                    backupLocationLauncher.launch(intent)
                                 }
-                                filePickerLauncher.launch(intent)
                             }
-                        },
-                        modifier = Modifier.weight(1f),
-                        enabled = !isRestoringFromFile && !isRestoringFromClipboard && !isCreatingBackup,
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        if (isRestoringFromFile) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                        } else {
-                            Icon(Icons.Filled.FolderOpen, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
+                        )
+                    )
+                ),
+                SettingGroup(
+                    title = "Restore Actions",
+                    items = listOf(
+                        SettingItem(
+                            Icons.Default.ContentCopy,
+                            "Restore from Clipboard",
+                            "Import backup data from clipboard",
+                            onClick = {
+                                if (!isRestoringFromClipboard && !isRestoringFromFile && !isCreatingBackup) {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    restoreFromClipboard()
+                                }
+                            }
+                        ),
+                        SettingItem(
+                            Icons.Default.FolderOpen,
+                            "Restore from File",
+                            "Import backup from a JSON file",
+                            onClick = {
+                                if (!isRestoringFromFile && !isRestoringFromClipboard && !isCreatingBackup) {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                                        addCategory(Intent.CATEGORY_OPENABLE)
+                                        type = "application/json"
+                                    }
+                                    filePickerLauncher.launch(intent)
+                                }
+                            }
+                        )
+                    )
+                )
+            )
+
+            items(settingGroups) { group ->
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = group.title,
+                    style = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Default, fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column {
+                        group.items.forEachIndexed { index, item ->
+                            SettingRow(item = item)
+                            if (index < group.items.lastIndex) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                            }
                         }
-                        Text(if (isRestoringFromFile) "Restoring..." else "From File")
                     }
                 }
             }
             
             // Tips/Information Card
             item {
+                Spacer(modifier = Modifier.height(24.dp))
                 Card(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
@@ -8308,6 +8285,30 @@ private fun CrashLogEntryCard(entry: chromahub.rhythm.app.data.CrashLogEntry, on
 
 @Composable
 private fun ThemeTipItem(
+    icon: ImageVector,
+    text: String
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 6.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f),
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onTertiaryContainer
+        )
+    }
+}
+
+@Composable
+private fun MediaScanTipItem(
     icon: ImageVector,
     text: String
 ) {
