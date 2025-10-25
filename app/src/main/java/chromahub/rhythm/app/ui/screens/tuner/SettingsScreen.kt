@@ -267,7 +267,7 @@ fun TunerSettingsScreen(
 
             // Quick Tips Card
             item {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(24.dp))
                 Card(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
