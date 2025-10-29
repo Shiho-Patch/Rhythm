@@ -406,6 +406,7 @@ fun RhythmNavigation(
                             onPlayPause = onPlayPause,
                             onPlayerClick = onPlayerClick,
                             onSkipNext = onSkipNext,
+                            onSkipPrevious = onSkipPrevious,
                             onDismiss = {
                                 // Clear the current song to hide the mini player
                                 viewModel.clearCurrentSong()
