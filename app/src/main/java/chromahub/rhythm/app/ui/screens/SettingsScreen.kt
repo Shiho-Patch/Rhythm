@@ -82,6 +82,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTopAppBarState
+import chromahub.rhythm.app.ui.components.CollapsibleHeaderScreen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -572,83 +573,22 @@ fun SettingsScreen(
         }
     }
 
-    Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            LargeTopAppBar(
-                title = {
-                    val expandedTextStyle =
-                        MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold)
-                    val collapsedTextStyle =
-                        MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
-
-                    val fraction = scrollBehavior.state.collapsedFraction
-                    val currentFontSize = lerp(
-                        expandedTextStyle.fontSize.value,
-                        collapsedTextStyle.fontSize.value,
-                        fraction
-                    ).sp
-                    val currentFontWeight =
-                        if (fraction < 0.5f) FontWeight.Bold else FontWeight.Bold // Changed to FontWeight.Bold
-
-                    Text(
-                        text = "Settings",
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontSize = currentFontSize,
-                            fontWeight = currentFontWeight
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(start = 8.dp) // Added padding
-                    )
-                },
-                navigationIcon = {
-                    FilledIconButton(
-                        onClick = {
-                            HapticUtils.performHapticFeedback(
-                                context,
-                                haptics,
-                                HapticFeedbackType.LongPress
-                            )
-                            onBack()
-                        },
-                        colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    ) {
-                        Icon(
-                            imageVector = RhythmIcons.Back,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = Color.Transparent,
-                    scrolledContainerColor = Color.Transparent
-                ),
-                scrollBehavior = scrollBehavior,
-                modifier = Modifier.padding(horizontal = 8.dp) // Added padding
+    CollapsibleHeaderScreen(
+        title = "Settings",
+        showBackButton = true,
+        onBackClick = {
+            HapticUtils.performHapticFeedback(
+                context,
+                haptics,
+                HapticFeedbackType.LongPress
             )
-        },
-        bottomBar = {
-            if (false /* MiniPlayer handled globally */) {
-                MiniPlayer(
-                    song = currentSong,
-                    isPlaying = isPlaying,
-                    progress = progress,
-                    onPlayPause = onPlayPause,
-                    onPlayerClick = onPlayerClick,
-                    onSkipNext = onSkipNext
-                )
-            }
+            onBack()
         }
-        ) { paddingValues ->
+    ) { modifier ->
         LazyColumn(
             state = lazyListState,
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
-                .padding(paddingValues)
                 .padding(horizontal = 16.dp)
         ) {
             // Search TextField (always visible)

@@ -55,6 +55,7 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import chromahub.rhythm.app.ui.components.CollapsibleHeaderScreen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -1724,106 +1725,51 @@ fun RhythmNavigation(
                                         }
                                     }
 
-                                    Scaffold(
-                                        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-                                        topBar = {
-                                            LargeTopAppBar(
-                                                title = {
-                                                    val expandedTextStyle =
-                                                        MaterialTheme.typography.headlineLarge.copy(
-                                                            fontWeight = FontWeight.Bold
-                                                        )
-                                                    val collapsedTextStyle =
-                                                        MaterialTheme.typography.headlineSmall.copy(
-                                                            fontWeight = FontWeight.Bold
-                                                        )
-
-                                                    val fraction =
-                                                        scrollBehavior.state.collapsedFraction
-                                                    val currentFontSize = lerp(
-                                                        expandedTextStyle.fontSize,
-                                                        collapsedTextStyle.fontSize,
-                                                        fraction
-                                                    )
-                                                    val currentFontWeight =
-                                                        if (fraction < 0.5f) FontWeight.Bold else FontWeight.Bold
-
-                                                    Text(
-                                                        text = "Add to ${targetPlaylist.name}",
-                                                        style = MaterialTheme.typography.headlineSmall.copy(
-                                                            fontSize = currentFontSize,
-                                                            fontWeight = currentFontWeight
-                                                        ),
-                                                        maxLines = 1,
-                                                        overflow = TextOverflow.Ellipsis,
-                                                        modifier = Modifier.padding(start = 8.dp) // Added padding
-                                                    )
-                                                },
-                                                navigationIcon = {
-                                                    FilledIconButton(
-                                                        onClick = {
-                                                            HapticUtils.performHapticFeedback(
-                                                                context,
-                                                                haptic,
-                                                                HapticFeedbackType.LongPress
-                                                            )
-                                                            if (showSearchBar) {
-                                                                showSearchBar = false
-                                                                searchQuery = ""
-                                                            } else {
-                                                                viewModel.clearTargetPlaylistForAddingSongs()
-                                                                navController.popBackStack()
-                                                            }
-                                                        },
-                                                        colors = IconButtonDefaults.filledIconButtonColors(
-                                                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                                        )
-                                                    ) {
-                                                        Icon(
-                                                            imageVector = if (showSearchBar) RhythmIcons.Close else RhythmIcons.Back,
-                                                            contentDescription = if (showSearchBar) "Close search" else "Back"
-                                                        )
-                                                    }
-                                                },
-                                                actions = {
-                                                    if (!showSearchBar) {
-                                                        FilledIconButton(
-                                                            onClick = {
-                                                                HapticUtils.performHapticFeedback(
-                                                                    context,
-                                                                    haptic,
-                                                                    HapticFeedbackType.LongPress
-                                                                )
-                                                                showSearchBar = true
-                                                            },
-                                                            colors = IconButtonDefaults.filledIconButtonColors(
-                                                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                                            )
-                                                        ) {
-                                                            Icon(
-                                                                imageVector = RhythmIcons.Search,
-                                                                contentDescription = "Search songs",
-                                                                modifier = Modifier.size(20.dp)
-                                                            )
-                                                        }
-                                                    }
-                                                },
-                                                colors = TopAppBarDefaults.largeTopAppBarColors(
-                                                    containerColor = Color.Transparent,
-                                                    scrolledContainerColor = Color.Transparent
-                                                ),
-                                                scrollBehavior = scrollBehavior, // Apply scroll behavior
-                                                modifier = Modifier.padding(horizontal = 8.dp) // Added padding
+                                    CollapsibleHeaderScreen(
+                                        title = "Add to ${targetPlaylist.name}",
+                                        showBackButton = true,
+                                        onBackClick = {
+                                            HapticUtils.performHapticFeedback(
+                                                context,
+                                                haptic,
+                                                HapticFeedbackType.LongPress
                                             )
+                                            if (showSearchBar) {
+                                                showSearchBar = false
+                                                searchQuery = ""
+                                            } else {
+                                                viewModel.clearTargetPlaylistForAddingSongs()
+                                                navController.popBackStack()
+                                            }
+                                        },
+                                        actions = {
+                                            if (!showSearchBar) {
+                                                FilledIconButton(
+                                                    onClick = {
+                                                        HapticUtils.performHapticFeedback(
+                                                            context,
+                                                            haptic,
+                                                            HapticFeedbackType.LongPress
+                                                        )
+                                                        showSearchBar = true
+                                                    },
+                                                    colors = IconButtonDefaults.filledIconButtonColors(
+                                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                                    )
+                                                ) {
+                                                    Icon(
+                                                        imageVector = RhythmIcons.Search,
+                                                        contentDescription = "Search songs",
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
+                                            }
                                         }
-                                    ) { innerPadding ->
+                                    ) { modifier ->
                                         LazyColumn(
                                             state = listState,
-                                            modifier = Modifier
-                                                .padding(innerPadding)
-                                                .padding(horizontal = 16.dp), // Added horizontal padding
+                                            modifier = modifier.padding(horizontal = 16.dp), // Added horizontal padding
                                             contentPadding = PaddingValues(vertical = 8.dp)
                                         ) {
                                             if (showSearchBar) {
