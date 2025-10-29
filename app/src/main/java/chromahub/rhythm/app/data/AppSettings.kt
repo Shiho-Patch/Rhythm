@@ -1258,6 +1258,11 @@ class AppSettings private constructor(context: Context) {
         _initialMediaScanCompleted.value = completed
     }
 
+    fun setGenreDetectionCompleted(completed: Boolean) {
+        prefs.edit().putBoolean(KEY_GENRE_DETECTION_COMPLETED, completed).apply()
+        _genreDetectionCompleted.value = completed
+    }
+
     // App Updater Settings Methods
     fun setAutoCheckForUpdates(enable: Boolean) {
         prefs.edit().putBoolean(KEY_AUTO_CHECK_FOR_UPDATES, enable).apply()
@@ -2058,6 +2063,7 @@ class AppSettings private constructor(context: Context) {
         _hapticFeedbackEnabled.value = prefs.getBoolean(KEY_HAPTIC_FEEDBACK_ENABLED, true)
         _onboardingCompleted.value = prefs.getBoolean(KEY_ONBOARDING_COMPLETED, false)
         _initialMediaScanCompleted.value = prefs.getBoolean(KEY_INITIAL_MEDIA_SCAN_COMPLETED, false)
+        _genreDetectionCompleted.value = prefs.getBoolean(KEY_GENRE_DETECTION_COMPLETED, false)
         
         // Blacklisted items
         _blacklistedSongs.value = try {

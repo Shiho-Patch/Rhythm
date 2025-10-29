@@ -400,6 +400,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     // Genre detection state
     private val _isGenreDetectionComplete = MutableStateFlow(false)
     val isGenreDetectionComplete: StateFlow<Boolean> = _isGenreDetectionComplete.asStateFlow()
+    private val _isGenreDetectionRunning = MutableStateFlow(false)
 
     // Queue operation state
     private val _queueOperationError = MutableStateFlow<String?>(null)
@@ -628,7 +629,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             try {
                 delay(2000) // Wait 2 seconds after app load before starting genre detection
-                detectGenresInBackground()
+                if (!appSettings.genreDetectionCompleted.value) {
+                    detectGenresInBackground()
+                } else {
+                    Log.d(TAG, "Genre detection already completed, skipping")
+                    _isGenreDetectionComplete.value = true
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Error starting background genre detection", e)
             }
@@ -649,8 +655,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
      * Detects genres for songs in background and updates the UI dynamically
      */
     private suspend fun detectGenresInBackground() {
+        // Prevent running if already complete or currently running
+        if (_isGenreDetectionComplete.value || _isGenreDetectionRunning.value) {
+            Log.d(TAG, "Genre detection already complete or running, skipping")
+            return
+        }
+
         Log.d(TAG, "Starting background genre detection for ${songs.value.size} songs")
-        
+        _isGenreDetectionRunning.value = true
+
         try {
             repository.detectGenresInBackground(
                 songs = songs.value,
@@ -662,6 +675,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                     // Update the songs state with the new genre information
                     _songs.value = updatedSongs
                     _isGenreDetectionComplete.value = true
+                    _isGenreDetectionRunning.value = false
                     Log.d(TAG, "Background genre detection completed, updated ${updatedSongs.count { it.genre != null }} songs with genres")
                 }
             )
@@ -669,6 +683,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             Log.e(TAG, "Error during background genre detection", e)
             // Mark as complete even on error to prevent infinite loading
             _isGenreDetectionComplete.value = true
+            _isGenreDetectionRunning.value = false
         }
     }
     
@@ -740,6 +755,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             _isMediaScanning.value = true // Show media scan loader
             _isInitialized.value = false // Indicate that data is being refreshed
             _isGenreDetectionComplete.value = false // Reset genre detection state
+            // Don't reset _isGenreDetectionRunning to allow proper concurrency check
 
             try {
                 // Trigger the refresh in the repository
@@ -766,15 +782,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
                 
-                // Restart background genre detection for new or updated songs
-                launch {
-                    try {
-                        delay(2000) // Wait 2 seconds before starting genre detection
-                        detectGenresInBackground()
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error restarting background genre detection", e)
-                    }
-                }
+                // Note: Genre detection is handled by the initial load, no need to restart here
                 
                 // Restart background audio metadata extraction
                 launch {

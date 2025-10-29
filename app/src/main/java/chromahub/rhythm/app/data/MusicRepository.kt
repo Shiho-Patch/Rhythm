@@ -37,6 +37,7 @@ import java.net.URL
 import chromahub.rhythm.app.data.LyricsData
 import java.lang.ref.WeakReference
 import chromahub.rhythm.app.util.AudioFormatDetector
+import android.content.SharedPreferences
 
 class MusicRepository(context: Context) {
     private val TAG = "MusicRepository"
@@ -46,6 +47,9 @@ class MusicRepository(context: Context) {
         get() = contextRef.get() ?: throw IllegalStateException("Context has been garbage collected")
     
     private val repositoryScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    
+    // Genre cache using SharedPreferences
+    private val genrePrefs: SharedPreferences by lazy { context.getSharedPreferences("genre_cache", Context.MODE_PRIVATE) }
 
     /**
      * API Fallback Strategy:
@@ -303,6 +307,17 @@ class MusicRepository(context: Context) {
                 albumId
             )
 
+            // Load cached genre if available
+            val cachedGenre = try {
+                genrePrefs.getString("genre_$id", null)?.takeIf { it.isNotBlank() }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to load cached genre for song ID $id", e)
+                null
+            }
+            if (cachedGenre != null) {
+                Log.d(TAG, "Loaded cached genre '$cachedGenre' for song ID $id: $title")
+            }
+
             // Note: Audio metadata extraction moved to background task to avoid blocking initial scan
             // Use extractAudioMetadata() separately when needed for detailed info
 
@@ -318,7 +333,7 @@ class MusicRepository(context: Context) {
                 trackNumber = track,
                 year = year,
                 dateAdded = dateAdded,
-                genre = null, // Genre will be detected in background
+                genre = cachedGenre, // Use cached genre if available
                 albumArtist = albumArtist,
                 bitrate = null, // Will be extracted lazily when needed
                 sampleRate = null,
@@ -1833,6 +1848,7 @@ class MusicRepository(context: Context) {
     }
 
     /**
+
      * Saves lyrics to a local file
      */
     private fun saveLocalLyrics(artist: String, title: String, lyricsData: LyricsData) {
@@ -2598,7 +2614,17 @@ class MusicRepository(context: Context) {
                         if (genre != null && genre.isNotBlank() && !genre.equals("unknown", ignoreCase = true)) {
                             val updatedSong = song.copy(genre = genre)
                             updatedSongs.add(updatedSong)
-                            Log.d(TAG, "Detected genre '$genre' for song: ${song.title}")
+                            // Cache the detected genre
+                            try {
+                                val success = genrePrefs.edit().putString("genre_$songId", genre).commit()
+                                if (success) {
+                                    Log.d(TAG, "Detected and cached genre '$genre' for song ID $songId: ${song.title}")
+                                } else {
+                                    Log.e(TAG, "Failed to commit genre cache for song ID $songId")
+                                }
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Failed to cache genre for song ID $songId", e)
+                            }
                         } else {
                             // Keep the original song if no valid genre was found
                             updatedSongs.add(song)
