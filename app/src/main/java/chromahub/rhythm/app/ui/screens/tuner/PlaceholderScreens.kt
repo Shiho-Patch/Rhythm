@@ -4676,6 +4676,8 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
     val festiveThemeShowParticles by appSettings.festiveThemeShowParticles.collectAsState()
     val festiveThemeShowDecorations by appSettings.festiveThemeShowDecorations.collectAsState()
     val festiveThemeParticleIntensity by appSettings.festiveThemeParticleIntensity.collectAsState()
+    val festiveThemeShowEmojiDecorations by appSettings.festiveThemeShowEmojiDecorations.collectAsState()
+    val festiveThemeEmojiDecorationsIntensity by appSettings.festiveThemeEmojiDecorationsIntensity.collectAsState()
     val festiveThemeApplyToSplash by appSettings.festiveThemeApplyToSplash.collectAsState()
     val festiveThemeApplyToMainUI by appSettings.festiveThemeApplyToMainUI.collectAsState()
 
@@ -4886,6 +4888,7 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
     var showCustomColorsDialog by remember { mutableStateOf(false) }
     var showFontSelectionDialog by remember { mutableStateOf(false) }
     var showParticleIntensityDialog by remember { mutableStateOf(false) }
+    var showEmojiIntensityDialog by remember { mutableStateOf(false) }
 
     CollapsibleHeaderScreen(
         title = "Theme Customization",
@@ -4894,36 +4897,41 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
     ) { modifier ->
         val settingGroups = listOf(
             SettingGroup(
-                title = "Overview",
+                title = "Display Mode",
                 items = listOf(
                     SettingItem(
                         Icons.Default.Brightness6,
-                        "Dynamic Colors",
-                        "Use system colors for theme",
+                        "Dynamic Colors (Material You)",
+                        "Extract colors from your wallpaper",
                         toggleState = useDynamicColors,
                         onToggleChange = { appSettings.setUseDynamicColors(it) }
                     ),
                     SettingItem(
                         Icons.Default.Settings,
-                        "System Theme",
-                        "Follow system light/dark mode",
+                        "Follow System Theme",
+                        "Automatically switch between light and dark mode",
                         toggleState = useSystemTheme,
                         onToggleChange = { appSettings.setUseSystemTheme(it) }
                     ),
                     SettingItem(
                         Icons.Default.DarkMode,
                         "Dark Mode",
-                        "Enable dark theme",
+                        if (useSystemTheme) "Managed by system settings" else "Enable dark theme manually",
                         toggleState = darkMode,
                         onToggleChange = { appSettings.setDarkMode(it) }
-                    ),
+                    )
+                )
+            ),
+            SettingGroup(
+                title = "Color Customization",
+                items = listOf(
                     SettingItem(
                         Icons.Default.Palette,
                         "Color Source",
                         when (selectedColorSource) {
-                            ColorSource.ALBUM_ART -> "Album Art (extracts from artwork)"
-                            ColorSource.MONET -> "System Colors (Material You)"
-                            ColorSource.CUSTOM -> "Custom Scheme (${customColorScheme})"
+                            ColorSource.ALBUM_ART -> "Album Art - Extracts from artwork"
+                            ColorSource.MONET -> "System Colors - Material You"
+                            ColorSource.CUSTOM -> "Custom Scheme - ${customColorScheme}"
                         },
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
@@ -4931,29 +4939,12 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                         }
                     ),
                     SettingItem(
-                        Icons.Default.TextFields,
-                        "Font Source",
-                        when (selectedFontSource) {
-                            FontSource.SYSTEM -> "System (${currentFont})"
-                            FontSource.CUSTOM -> "Custom (${customFontFamily ?: "No font imported"})"
-                        },
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                            showFontSourceDialog = true
-                        }
-                    )
-                )
-            ),
-            SettingGroup(
-                title = "Colors",
-                items = listOf(
-                    SettingItem(
                         Icons.Default.ColorLens,
                         "Color Schemes",
                         if (selectedColorSource == ColorSource.CUSTOM) 
-                            "Current: ${customColorScheme}" 
+                            "Browse and select predefined color palettes" 
                         else 
-                            "Available when using Custom color source",
+                            "Available only with Custom color source",
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                             showColorSchemesDialog = true
@@ -4963,9 +4954,9 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                         Icons.Default.Brush,
                         "Custom Colors",
                         if (selectedColorSource == ColorSource.CUSTOM) 
-                            "Create your own color palette" 
+                            "Create your own unique color palette" 
                         else 
-                            "Available when using Custom color source",
+                            "Available only with Custom color source",
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                             showCustomColorsDialog = true
@@ -4974,15 +4965,27 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                 )
             ),
             SettingGroup(
-                title = "Fonts",
+                title = "Font Customization",
                 items = listOf(
+                    SettingItem(
+                        Icons.Default.TextFields,
+                        "Font Source",
+                        when (selectedFontSource) {
+                            FontSource.SYSTEM -> "System Font - ${currentFont}"
+                            FontSource.CUSTOM -> "Custom Font - ${customFontFamily ?: "Not imported"}"
+                        },
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            showFontSourceDialog = true
+                        }
+                    ),
                     SettingItem(
                         Icons.Default.TextFields,
                         "Font Selection",
                         if (selectedFontSource == FontSource.SYSTEM) 
-                            "Current: ${currentFont}" 
+                            "Choose from built-in font options" 
                         else 
-                            "Available when using System font source",
+                            "Available only with System font source",
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                             showFontSelectionDialog = true
@@ -4990,11 +4993,11 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     ),
                     SettingItem(
                         Icons.Default.FileUpload,
-                        "Import Font",
+                        "Import Custom Font",
                         if (customFontPath != null) 
-                            "Custom font imported: ${customFontFamily}" 
+                            "Imported: ${customFontFamily}" 
                         else 
-                            "Import custom font file (.ttf, .otf)",
+                            "Import your own font file (.ttf, .otf)",
                         onClick = {
                             HapticUtils.performHapticFeedback(
                                 context,
@@ -5007,56 +5010,87 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                 )
             ),
             SettingGroup(
-                title = "Festive",
+                title = "Festive Themes",
                 items = listOf(
                     SettingItem(
                         Icons.Default.Celebration,
-                        "Festive Theme",
-                        "Enable festive theme",
+                        "Enable Festive Themes",
+                        "Celebrate special occasions with themed decorations",
                         toggleState = festiveThemeEnabled,
                         onToggleChange = { appSettings.setFestiveThemeEnabled(it) }
                     ),
                     SettingItem(
                         Icons.Default.Schedule,
-                        "Auto Detect",
-                        "Automatically detect festive seasons",
+                        "Auto-Detect Festival",
+                        "Automatically apply themes based on current date",
                         toggleState = festiveThemeAutoDetect,
                         onToggleChange = { appSettings.setFestiveThemeAutoDetect(it) }
-                    ),
+                    )
+                )
+            ),
+            SettingGroup(
+                title = "Particle Effects",
+                items = listOf(
                     SettingItem(
                         Icons.Default.Brightness7,
-                        "Show Particles",
-                        "Display festive particles",
+                        "Show Animated Particles",
+                        "Display moving decorative particle effects",
                         toggleState = festiveThemeShowParticles,
                         onToggleChange = { appSettings.setFestiveThemeShowParticles(it) }
                     ),
                     SettingItem(
-                        Icons.Default.Celebration,
-                        "Show Decorations",
-                        "Display festive decorations",
-                        toggleState = festiveThemeShowDecorations,
-                        onToggleChange = { appSettings.setFestiveThemeShowDecorations(it) }
-                    ),
-                    SettingItem(
                         Icons.Default.Speed,
                         "Particle Intensity",
-                        "Adjust particle effect intensity",
+                        "Adjust particle density: ${(festiveThemeParticleIntensity * 100).toInt()}%",
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                             showParticleIntensityDialog = true
                         }
+                    )
+                )
+            ),
+            SettingGroup(
+                title = "Emoji Decorations",
+                items = listOf(
+                    SettingItem(
+                        Icons.Default.EmojiEmotions,
+                        "Show Emoji Decorations",
+                        "Display static emoji decorations around screen edges",
+                        toggleState = festiveThemeShowEmojiDecorations,
+                        onToggleChange = { appSettings.setFestiveThemeShowEmojiDecorations(it) }
+                    ),
+                    SettingItem(
+                        Icons.Default.Tune,
+                        "Emoji Intensity",
+                        "Adjust emoji count: ${(festiveThemeEmojiDecorationsIntensity * 100).toInt()}%",
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            showEmojiIntensityDialog = true
+                        }
+                    )
+                )
+            ),
+            SettingGroup(
+                title = "Application Scope",
+                items = listOf(
+                    SettingItem(
+                        Icons.Default.Celebration,
+                        "Festive Greetings & Decorations",
+                        "Show festival-specific text greetings on splash screen",
+                        toggleState = festiveThemeShowDecorations,
+                        onToggleChange = { appSettings.setFestiveThemeShowDecorations(it) }
                     ),
                     SettingItem(
                         Icons.Default.Flare,
-                        "Apply to Splash",
-                        "Use festive theme on app launch",
+                        "Apply to Splash Screen",
+                        "Show festive effects during app launch",
                         toggleState = festiveThemeApplyToSplash,
                         onToggleChange = { appSettings.setFestiveThemeApplyToSplash(it) }
                     ),
                     SettingItem(
                         Icons.Default.Home,
                         "Apply to Main UI",
-                        "Use festive theme in main interface",
+                        "Show festive effects throughout the app interface",
                         toggleState = festiveThemeApplyToMainUI,
                         onToggleChange = { appSettings.setFestiveThemeApplyToMainUI(it) }
                     )
@@ -5224,6 +5258,16 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
         showDialog = showParticleIntensityDialog,
         onDismiss = { showParticleIntensityDialog = false },
         currentIntensity = festiveThemeParticleIntensity,
+        onIntensityChanged = { /* handled in dialog */ },
+        appSettings = appSettings,
+        context = context,
+        haptic = haptic
+    )
+    
+    EmojiIntensityDialog(
+        showDialog = showEmojiIntensityDialog,
+        onDismiss = { showEmojiIntensityDialog = false },
+        currentIntensity = festiveThemeEmojiDecorationsIntensity,
         onIntensityChanged = { /* handled in dialog */ },
         appSettings = appSettings,
         context = context,
@@ -7131,6 +7175,213 @@ private fun ParticleIntensityDialog(
                                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
                                 onIntensityChanged(intensity)
                                 appSettings.setFestiveThemeParticleIntensity(intensity)
+                                onDismiss()
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Apply")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Emoji Intensity Dialog for Theme Customization
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EmojiIntensityDialog(
+    showDialog: Boolean,
+    onDismiss: () -> Unit,
+    currentIntensity: Float,
+    onIntensityChanged: (Float) -> Unit,
+    appSettings: AppSettings,
+    context: Context,
+    haptic: HapticFeedback
+) {
+    if (showDialog) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        
+        // Animation states
+        var showContent by remember { mutableStateOf(false) }
+
+        val contentAlpha by animateFloatAsState(
+            targetValue = if (showContent) 1f else 0f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            ),
+            label = "contentAlpha"
+        )
+
+        LaunchedEffect(Unit) {
+            delay(100)
+            showContent = true
+        }
+        
+        var intensity by remember { mutableStateOf(currentIntensity) }
+
+        ModalBottomSheet(
+            onDismissRequest = onDismiss,
+            sheetState = sheetState,
+            dragHandle = {
+                BottomSheetDefaults.DragHandle(
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+                    .graphicsLayer(alpha = contentAlpha)
+            ) {
+                // Header 
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 0.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                            text = "Emoji Decorations Intensity",
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 6.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    shape = CircleShape
+                                )
+                        ) {
+                            Text(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.labelLarge,
+                                text = "Control emoji decoration count",
+                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 1,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Intensity slider
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        shape = RoundedCornerShape(20.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.EmojiEmotions,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Emoji Count",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = "${(intensity * 100).toInt()}%",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Slider(
+                                value = intensity,
+                                onValueChange = { intensity = it },
+                                valueRange = 0.1f..1.0f,
+                                colors = SliderDefaults.colors(
+                                    thumbColor = MaterialTheme.colorScheme.primary,
+                                    activeTrackColor = MaterialTheme.colorScheme.primary,
+                                    inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                                )
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Minimal",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = "Maximum",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Buttons
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = onDismiss,
+                            modifier = Modifier.weight(1f),
+                            border = BorderStroke(2.dp, MaterialTheme.colorScheme.outline)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Close,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Cancel")
+                        }
+                        Button(
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                onIntensityChanged(intensity)
+                                appSettings.setFestiveThemeEmojiDecorationsIntensity(intensity)
                                 onDismiss()
                             },
                             modifier = Modifier.weight(1f),

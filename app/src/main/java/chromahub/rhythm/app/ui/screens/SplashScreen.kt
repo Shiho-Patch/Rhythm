@@ -2,6 +2,8 @@ package chromahub.rhythm.app.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.EaseInOut
+import androidx.compose.animation.core.EaseInOutSine
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
@@ -19,11 +21,13 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -39,25 +43,32 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import chromahub.rhythm.app.R
+import chromahub.rhythm.app.data.AppSettings
+import chromahub.rhythm.app.ui.components.FestiveDecorations
+import chromahub.rhythm.app.ui.theme.FestiveTheme
+import chromahub.rhythm.app.ui.theme.FestiveThemeConfig
 import chromahub.rhythm.app.viewmodel.MusicViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.random.Random
 
 @Composable
 fun SplashScreen(
     musicViewModel: MusicViewModel,
     onMediaScanComplete: () -> Unit = {}
 ) {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val appSettings = remember { chromahub.rhythm.app.data.AppSettings.getInstance(context) }
+    val context = LocalContext.current
+    val appSettings = remember { AppSettings.getInstance(context) }
     
     // Festive theme states
     val festiveThemeEnabled by appSettings.festiveThemeEnabled.collectAsState()
@@ -66,21 +77,28 @@ fun SplashScreen(
     val festiveThemeShowParticles by appSettings.festiveThemeShowParticles.collectAsState()
     val festiveThemeShowDecorations by appSettings.festiveThemeShowDecorations.collectAsState()
     val festiveThemeParticleIntensity by appSettings.festiveThemeParticleIntensity.collectAsState()
+    val festiveThemeShowEmojiDecorations by appSettings.festiveThemeShowEmojiDecorations.collectAsState()
+    val festiveThemeEmojiDecorationsIntensity by appSettings.festiveThemeEmojiDecorationsIntensity.collectAsState()
     val festiveThemeApplyToSplash by appSettings.festiveThemeApplyToSplash.collectAsState()
     
     // Determine active festive theme
     val activeFestiveTheme = remember(festiveThemeEnabled, festiveThemeAutoDetect, festiveThemeSelected) {
         if (!festiveThemeEnabled) {
-            chromahub.rhythm.app.ui.theme.FestiveTheme.NONE
+            FestiveTheme.NONE
         } else if (festiveThemeAutoDetect) {
-            chromahub.rhythm.app.ui.theme.FestiveTheme.detectCurrentFestival()
+            FestiveTheme.detectCurrentFestival()
         } else {
             try {
-                chromahub.rhythm.app.ui.theme.FestiveTheme.valueOf(festiveThemeSelected)
+                FestiveTheme.valueOf(festiveThemeSelected)
             } catch (e: Exception) {
-                chromahub.rhythm.app.ui.theme.FestiveTheme.NONE
+                FestiveTheme.NONE
             }
         }
+    }
+    
+    // Memoize the festive greeting to prevent re-randomization on recomposition
+    val festiveGreeting = remember(activeFestiveTheme) {
+        getFestiveGreeting(activeFestiveTheme)
     }
     
     val infiniteTransition = rememberInfiniteTransition(label = "splashAnimations")
@@ -92,7 +110,7 @@ fun SplashScreen(
         animationSpec = infiniteRepeatable(
             animation = tween(
                 durationMillis = 2500,
-                easing = androidx.compose.animation.core.EaseInOutSine
+                easing = EaseInOutSine
             ),
             repeatMode = RepeatMode.Reverse
         ),
@@ -171,7 +189,7 @@ fun SplashScreen(
         showLoader = true
         loaderAlpha.animateTo(
             targetValue = 1f,
-            animationSpec = tween(400, easing = androidx.compose.animation.core.EaseInOut)
+            animationSpec = tween(400, easing = EaseInOut)
         )
     }
 
@@ -205,9 +223,9 @@ fun SplashScreen(
         contentAlignment = Alignment.Center
     ) {
         // Festive decorations overlay
-        if (festiveThemeEnabled && festiveThemeApplyToSplash && activeFestiveTheme != chromahub.rhythm.app.ui.theme.FestiveTheme.NONE) {
-            chromahub.rhythm.app.ui.components.FestiveDecorations(
-                config = chromahub.rhythm.app.ui.theme.FestiveThemeConfig(
+        if (festiveThemeEnabled && festiveThemeApplyToSplash && activeFestiveTheme != FestiveTheme.NONE) {
+            FestiveDecorations(
+                config = FestiveThemeConfig(
                     enabled = festiveThemeEnabled,
                     selectedTheme = activeFestiveTheme,
                     autoDetect = festiveThemeAutoDetect,
@@ -218,6 +236,15 @@ fun SplashScreen(
                 ),
                 modifier = Modifier.fillMaxSize()
             )
+            
+            // Emoji decorations overlay
+            if (festiveThemeShowEmojiDecorations) {
+                EmojiDecorationsOverlay(
+                    theme = activeFestiveTheme,
+                    intensity = festiveThemeEmojiDecorationsIntensity,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
         
         // Background particles using the drawable
@@ -259,7 +286,7 @@ fun SplashScreen(
                                 translationX = appNameOffsetX.value
                             }
                         ) {
-                            androidx.compose.animation.AnimatedVisibility(
+                            AnimatedVisibility(
                                 visible = showAppName,
                                 enter = expandHorizontally(
                                     animationSpec = spring(
@@ -309,7 +336,7 @@ fun SplashScreen(
                 ) {
                     if (showTagline) {
                         Row {
-                            androidx.compose.animation.AnimatedVisibility(
+                            AnimatedVisibility(
                                 visible = showTagline,
                                 enter = expandHorizontally(
                                     animationSpec = spring(
@@ -333,7 +360,7 @@ fun SplashScreen(
                                     // Show festive greeting if enabled and decorations are on
                                     if (festiveThemeEnabled && festiveThemeApplyToSplash && 
                                         festiveThemeShowDecorations && 
-                                        activeFestiveTheme != chromahub.rhythm.app.ui.theme.FestiveTheme.NONE) {
+                                        activeFestiveTheme != FestiveTheme.NONE) {
                                         
                                         Row(
                                             verticalAlignment = Alignment.CenterVertically,
@@ -345,7 +372,7 @@ fun SplashScreen(
                                                 modifier = Modifier.padding(end = 8.dp)
                                             )
                                             Text(
-                                                text = getFestiveGreeting(activeFestiveTheme),
+                                                text = festiveGreeting,
                                                 style = MaterialTheme.typography.titleMedium.copy(
                                                     letterSpacing = 1.sp,
                                                     fontSize = 17.sp
@@ -417,7 +444,7 @@ fun SplashScreen(
                                     animation = tween(
                                         600,
                                         delayMillis = animationDelay,
-                                        easing = androidx.compose.animation.core.EaseInOut
+                                        easing = EaseInOut
                                     ),
                                     repeatMode = RepeatMode.Reverse
                                 ),
@@ -440,19 +467,184 @@ fun SplashScreen(
 }
 
 /**
- * Get festive greeting text for the given theme
+ * Emoji decorations overlay for festive themes
  */
-private fun getFestiveGreeting(theme: chromahub.rhythm.app.ui.theme.FestiveTheme): String {
-    return when (theme) {
-        chromahub.rhythm.app.ui.theme.FestiveTheme.DIWALI -> "Happy Diwali!"
-        chromahub.rhythm.app.ui.theme.FestiveTheme.CHRISTMAS -> "Merry Christmas!"
-        chromahub.rhythm.app.ui.theme.FestiveTheme.NEW_YEAR -> "Happy New Year!"
-        chromahub.rhythm.app.ui.theme.FestiveTheme.HOLI -> "Happy Holi!"
-        chromahub.rhythm.app.ui.theme.FestiveTheme.HALLOWEEN -> "Happy Halloween!"
-        chromahub.rhythm.app.ui.theme.FestiveTheme.VALENTINES -> "Happy Valentine's Day!"
-        chromahub.rhythm.app.ui.theme.FestiveTheme.EASTER -> "Happy Easter!"
-        chromahub.rhythm.app.ui.theme.FestiveTheme.INDEPENDENCE_DAY -> "Happy Independence Day!"
-        chromahub.rhythm.app.ui.theme.FestiveTheme.THANKSGIVING -> "Happy Thanksgiving!"
-        else -> ""
+@Composable
+fun EmojiDecorationsOverlay(
+    theme: FestiveTheme,
+    intensity: Float,
+    modifier: Modifier = Modifier
+) {
+    if (theme.emojiDecorations.isEmpty() || intensity <= 0f) return
+
+    // Generate unique layout ID per screen instance
+    val layoutId = remember { Random.nextInt(10000) }
+    
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val screenWidth = constraints.maxWidth.toFloat()
+        val screenHeight = constraints.maxHeight.toFloat()
+        
+        val emojiData = remember(theme, intensity, layoutId, screenWidth, screenHeight) {
+            val emojiCount = (theme.emojiDecorations.size * intensity * 1.5f).toInt().coerceIn(8, 20)
+            val selectedEmojis = theme.emojiDecorations.shuffled(Random(layoutId)).take(emojiCount)
+            
+            selectedEmojis.mapIndexed { index, emoji ->
+                val random = Random(layoutId + index * 123)
+                
+                // Distribute emojis ONLY around the screen edges (corners and sides)
+                val edgeSelection = random.nextFloat()
+                val (x, y) = when {
+                    // Top edge: 30% of emojis
+                    edgeSelection < 0.30f -> {
+                        Pair(
+                            random.nextFloat() * screenWidth,
+                            random.nextFloat() * 80f // Top 80px
+                        )
+                    }
+                    // Bottom edge: 30% of emojis
+                    edgeSelection < 0.60f -> {
+                        Pair(
+                            random.nextFloat() * screenWidth,
+                            screenHeight - random.nextFloat() * 80f // Bottom 80px
+                        )
+                    }
+                    // Left edge: 20% of emojis
+                    edgeSelection < 0.80f -> {
+                        Pair(
+                            random.nextFloat() * 80f, // Left 80px
+                            random.nextFloat() * screenHeight
+                        )
+                    }
+                    // Right edge: 20% of emojis
+                    else -> {
+                        Pair(
+                            screenWidth - random.nextFloat() * 80f, // Right 80px
+                            random.nextFloat() * screenHeight
+                        )
+                    }
+                }
+                
+                val rotation = random.nextInt(-30, 31).toFloat()
+                val alpha = 0.25f + random.nextFloat() * 0.35f
+                val size = 0.8f + random.nextFloat() * 0.6f
+                
+                EmojiData(emoji, x, y, rotation, alpha, size)
+            }
+        }
+
+        emojiData.forEach { data ->
+            Text(
+                text = data.emoji,
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontSize = (20 * data.size).sp
+                ),
+                modifier = Modifier
+                    .offset(x = data.x.dp, y = data.y.dp)
+                    .graphicsLayer {
+                        rotationZ = data.rotation
+                        this.alpha = data.alpha
+                    }
+            )
+        }
     }
+}
+
+/**
+ * Data class to hold emoji decoration information
+ */
+private data class EmojiData(
+    val emoji: String,
+    val x: Float,
+    val y: Float,
+    val rotation: Float,
+    val alpha: Float,
+    val size: Float = 1f
+)
+
+/**
+ * Get festive greeting text for the given theme with random comic variations
+ */
+private fun getFestiveGreeting(theme: FestiveTheme): String {
+    val greetings = when (theme) {
+        FestiveTheme.DIWALI -> listOf(
+            "Happy Diwali! 🪔✨",
+            "Light Up Your Music! 🎵🪔",
+            "Diwali Vibes & Music Tribes! 🎉",
+            "Sparkle Like Your Playlist! ✨🎶",
+            "Festival of Lights & Beats! 💫",
+            "Diwali Dhamaka! 🎇🎵"
+        )
+        FestiveTheme.CHRISTMAS -> listOf(
+            "Merry Christmas! 🎄🎁",
+            "Jingle All The Way! 🔔🎵",
+            "Ho Ho Ho & Let's Go! 🎅✨",
+            "Santa's Got Your Playlist! 🎁🎶",
+            "Rockin' Around The Music Tree! 🎄🎸",
+            "Sleigh Your Musical Day! 🛷🎵",
+            "Jolly Tunes & Christmas Moons! 🌙⭐"
+        )
+        FestiveTheme.NEW_YEAR -> listOf(
+            "Happy New Year! 🎊🎉",
+            "New Year, New Beats! 🎵✨",
+            "Countdown to Music! 🕛🎶",
+            "Cheers to Fresh Tunes! 🥂🎵",
+            "365 Days of Rhythm! 📅🎶",
+            "Let's Rock This Year! 🎸🎊",
+            "Turn Up for the New Year! 🔊🎉"
+        )
+        FestiveTheme.HOLI -> listOf(
+            "Happy Holi! 🎨🌈",
+            "Paint The Town With Music! 🎵🎨",
+            "Colors of Melody! 🌈🎶",
+            "Splash Beats Everywhere! 💦🎵",
+            "Rainbow Rhythms! 🌈✨",
+            "Let's Get Colorful! 🎨🎉"
+        )
+        FestiveTheme.HALLOWEEN -> listOf(
+            "Happy Halloween! 🎃👻",
+            "Spooky Beats Alert! 👻🎵",
+            "Trick or Treat Your Ears! 🍬🎶",
+            "Creep It Real! 🎃✨",
+            "Boo-tiful Music Time! 👻🎵",
+            "Scary Good Playlists! 🦇🎶",
+            "Fang-tastic Vibes! 🧛🎵"
+        )
+        FestiveTheme.VALENTINES -> listOf(
+            "Happy Valentine's Day! 💕💘",
+            "Love Your Music! ❤️🎵",
+            "Cupid's Playlist! 💘🎶",
+            "Music From The Heart! 💗🎵",
+            "Love Songs & Good Vibes! 💝✨",
+            "You + Music = 💕",
+            "Rhythm of Love! 💓🎶"
+        )
+        FestiveTheme.EASTER -> listOf(
+            "Happy Easter! 🐰🥚",
+            "Hop Into Music! 🐇🎵",
+            "Egg-cellent Tunes! 🥚🎶",
+            "Spring Into Rhythm! 🌸🎵",
+            "Bunny Approved Beats! 🐰✨",
+            "Crack Open Some Jams! 🥚🎶"
+        )
+        FestiveTheme.INDEPENDENCE_DAY -> listOf(
+            "Happy Independence Day! 🇮🇳🎆",
+            "Freedom to Rock! 🎸🇮🇳",
+            "Patriotic Beats! 🎵🇮🇳",
+            "Celebrate with Music! 🎆🎶",
+            "Liberty & Melodies! ✨🇮🇳",
+            "Nation's Rhythm! 🎵🇮🇳"
+        )
+        FestiveTheme.THANKSGIVING -> listOf(
+            "Happy Thanksgiving! 🦃🍂",
+            "Grateful for Music! 🎵🙏",
+            "Feast on Beats! 🍽️🎶",
+            "Thankful Tunes! 🦃🎵",
+            "Harvest of Melodies! 🍂🎶",
+            "Turkey & Tunes! 🦃🎵"
+        )
+        else -> listOf("")
+    }
+    
+    // Return random greeting from the list
+    return greetings.randomOrNull() ?: ""
 }

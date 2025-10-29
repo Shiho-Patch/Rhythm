@@ -14,7 +14,8 @@ enum class FestiveTheme(
     val primaryColor: Color,
     val secondaryColor: Color,
     val tertiaryColor: Color,
-    val particleColors: List<Color> = listOf()
+    val particleColors: List<Color> = listOf(),
+    val emojiDecorations: List<String> = listOf()
 ) {
     NONE(
         displayName = "None",
@@ -38,6 +39,9 @@ enum class FestiveTheme(
             Color(0xFFFF1744), // Red
             Color(0xFFFFC107), // Amber
             Color(0xFFFF6F00)  // Deep Orange
+        ),
+        emojiDecorations = listOf(
+            "🪔", "✨", "🎆", "🎇", "💫", "🌟", "⭐", "🌙", "🕯️", "🔥"
         )
     ),
     CHRISTMAS(
@@ -54,6 +58,10 @@ enum class FestiveTheme(
             Color(0xFFFFD740), // Gold
             Color(0xFFC62828), // Dark Red
             Color(0xFFEF5350)  // Light Red
+        ),
+        emojiDecorations = listOf(
+            "🎄", "🎅", "🎁", "❄️", "⛄", "🔔", "🎶", "⭐", "🌟", "✨",
+            "🦌", "🍪", "🥛", "🕯️", "🔥", "🌿", "🍎", "🥧", "🎵", "🎼"
         )
     ),
     NEW_YEAR(
@@ -70,6 +78,10 @@ enum class FestiveTheme(
             Color(0xFFFF1744), // Red
             Color(0xFF00E676), // Green
             Color(0xFFFF4081)  // Pink
+        ),
+        emojiDecorations = listOf(
+            "🎆", "🎇", "🎉", "🎊", "✨", "💫", "🌟", "⭐", "🥂", "🍾",
+            "🎈", "🎀", "🎁", "🕛", "🎵", "🎶", "🔔", "🌙", "💥", "🌠"
         )
     ),
     HALLOWEEN(
@@ -85,6 +97,11 @@ enum class FestiveTheme(
             Color(0xFF212121), // Black
             Color(0xFF4CAF50), // Green
             Color(0xFFFFFFFF)  // White
+        ),
+        emojiDecorations = listOf(
+            "🎃", "👻", "🦇", "🕷️", "🕸️", "🧙", "🧛", "🧟", "💀", "👹",
+            "🦴", "🌙", "🌕", "🕯️", "🔮", "🪄", "🍂", "🍁", "🎭", "🪦",
+            "🧙‍♀️", "🧙‍♂️", "🧛‍♀️", "🧛‍♂️", "🧟‍♀️", "🧟‍♂️", "☠️", "👿", "😈", "🌑"
         )
     ),
     HOLI(
@@ -101,6 +118,10 @@ enum class FestiveTheme(
             Color(0xFF4CAF50), // Green
             Color(0xFFFFEB3B), // Yellow
             Color(0xFFFF5722)  // Orange
+        ),
+        emojiDecorations = listOf(
+            "🌈", "🎨", "💦", "🎉", "🎊", "✨", "💫", "🌟", "🎵", "🎶",
+            "💕", "💖", "💗", "💙", "💚", "💛", "🧡", "💜", "🌺", "🌸"
         )
     ),
     VALENTINES(
@@ -116,6 +137,10 @@ enum class FestiveTheme(
             Color(0xFFFF4081), // Accent Pink
             Color(0xFFF8BBD0), // Light Pink
             Color(0xFFD32F2F)  // Red
+        ),
+        emojiDecorations = listOf(
+            "💝", "💕", "💖", "💗", "💘", "💞", "💓", "❤️", "🧡", "💛",
+            "💚", "💙", "💜", "🖤", "🤍", "🌹", "🌺", "🌸", "🎀", "💐"
         )
     ),
     EASTER(
@@ -131,6 +156,10 @@ enum class FestiveTheme(
             Color(0xFFFFEB3B), // Yellow
             Color(0xFFE91E63), // Pink
             Color(0xFF00BCD4)  // Light Blue
+        ),
+        emojiDecorations = listOf(
+            "🐰", "🥚", "🐣", "🐤", "🐥", "🌸", "🌺", "🌷", "🌻", "🌼",
+            "🦋", "🐝", "🌿", "🍀", "🌱", "☀️", "🌞", "✨", "💐", "🎀"
         )
     ),
     INDEPENDENCE_DAY(
@@ -145,6 +174,10 @@ enum class FestiveTheme(
             Color(0xFF4CAF50), // Green
             Color(0xFFFFFFFF), // White
             Color(0xFF2196F3)  // Blue
+        ),
+        emojiDecorations = listOf(
+            "🇮🇳", "🎆", "🎇", "✨", "💫", "🌟", "⭐", "🎉", "🎊", "🎈",
+            "🕊️", "🦅", "🪔", "🔥", "💪", "🎵", "🎶", "🥁", "🎺", "🎸"
         )
     ),
     THANKSGIVING(
@@ -160,6 +193,10 @@ enum class FestiveTheme(
             Color(0xFFFFEB3B), // Yellow
             Color(0xFFD32F2F), // Red
             Color(0xFF8D6E63)  // Light Brown
+        ),
+        emojiDecorations = listOf(
+            "🦃", "🍂", "🍁", "🌾", "🌻", "🌰", "🥧", "🍽️", "🥖", "🍞",
+            "🌽", "🥕", "🎃", "🍎", "🍇", "🍊", "🙏", "❤️", "✨", "🎉"
         )
     );
 

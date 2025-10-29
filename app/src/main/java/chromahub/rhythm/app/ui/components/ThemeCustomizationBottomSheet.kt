@@ -218,6 +218,8 @@ fun ThemeCustomizationBottomSheet(
     val festiveThemeShowParticles by appSettings.festiveThemeShowParticles.collectAsState()
     val festiveThemeShowDecorations by appSettings.festiveThemeShowDecorations.collectAsState()
     val festiveThemeParticleIntensity by appSettings.festiveThemeParticleIntensity.collectAsState()
+    val festiveThemeShowEmojiDecorations by appSettings.festiveThemeShowEmojiDecorations.collectAsState()
+    val festiveThemeEmojiDecorationsIntensity by appSettings.festiveThemeEmojiDecorationsIntensity.collectAsState()
     val festiveThemeApplyToSplash by appSettings.festiveThemeApplyToSplash.collectAsState()
     val festiveThemeApplyToMainUI by appSettings.festiveThemeApplyToMainUI.collectAsState()
     
@@ -687,6 +689,8 @@ fun ThemeCustomizationBottomSheet(
                         festiveThemeShowParticles = festiveThemeShowParticles,
                         festiveThemeShowDecorations = festiveThemeShowDecorations,
                         festiveThemeParticleIntensity = festiveThemeParticleIntensity,
+                        festiveThemeShowEmojiDecorations = festiveThemeShowEmojiDecorations,
+                        festiveThemeEmojiDecorationsIntensity = festiveThemeEmojiDecorationsIntensity,
                         festiveThemeApplyToSplash = festiveThemeApplyToSplash,
                         festiveThemeApplyToMainUI = festiveThemeApplyToMainUI,
                         onFestiveThemeEnabledChange = { appSettings.setFestiveThemeEnabled(it) },
@@ -695,6 +699,8 @@ fun ThemeCustomizationBottomSheet(
                         onFestiveThemeShowParticlesChange = { appSettings.setFestiveThemeShowParticles(it) },
                         onFestiveThemeShowDecorationsChange = { appSettings.setFestiveThemeShowDecorations(it) },
                         onFestiveThemeParticleIntensityChange = { appSettings.setFestiveThemeParticleIntensity(it) },
+                        onFestiveThemeShowEmojiDecorationsChange = { appSettings.setFestiveThemeShowEmojiDecorations(it) },
+                        onFestiveThemeEmojiDecorationsIntensityChange = { appSettings.setFestiveThemeEmojiDecorationsIntensity(it) },
                         onFestiveThemeApplyToSplashChange = { appSettings.setFestiveThemeApplyToSplash(it) },
                         onFestiveThemeApplyToMainUIChange = { appSettings.setFestiveThemeApplyToMainUI(it) },
                         context = context,
@@ -2742,6 +2748,8 @@ private fun FestiveContent(
     festiveThemeShowParticles: Boolean,
     festiveThemeShowDecorations: Boolean,
     festiveThemeParticleIntensity: Float,
+    festiveThemeShowEmojiDecorations: Boolean,
+    festiveThemeEmojiDecorationsIntensity: Float,
     festiveThemeApplyToSplash: Boolean,
     festiveThemeApplyToMainUI: Boolean,
     onFestiveThemeEnabledChange: (Boolean) -> Unit,
@@ -2750,6 +2758,8 @@ private fun FestiveContent(
     onFestiveThemeShowParticlesChange: (Boolean) -> Unit,
     onFestiveThemeShowDecorationsChange: (Boolean) -> Unit,
     onFestiveThemeParticleIntensityChange: (Float) -> Unit,
+    onFestiveThemeShowEmojiDecorationsChange: (Boolean) -> Unit,
+    onFestiveThemeEmojiDecorationsIntensityChange: (Float) -> Unit,
     onFestiveThemeApplyToSplashChange: (Boolean) -> Unit,
     onFestiveThemeApplyToMainUIChange: (Boolean) -> Unit,
     context: Context,
@@ -3063,6 +3073,80 @@ private fun FestiveContent(
                                 value = festiveThemeParticleIntensity,
                                 onValueChange = {
                                     onFestiveThemeParticleIntensityChange(it)
+                                },
+                                valueRange = 0.1f..1.0f,
+                                colors = SliderDefaults.colors(
+                                    thumbColor = MaterialTheme.colorScheme.primary,
+                                    activeTrackColor = MaterialTheme.colorScheme.primary,
+                                    inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+            
+            // Emoji Decorations Toggle
+            item {
+                ThemeSettingCard(
+                    icon = Icons.Filled.EmojiEmotions,
+                    title = "Show Emoji Decorations",
+                    description = "Display static emoji decorations around the screen edges",
+                    checked = festiveThemeShowEmojiDecorations,
+                    onCheckedChange = { checked ->
+                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        onFestiveThemeShowEmojiDecorationsChange(checked)
+                    }
+                )
+            }
+            
+            // Emoji Decorations Intensity Slider
+            if (festiveThemeShowEmojiDecorations) {
+                item {
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        shape = RoundedCornerShape(20.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Tune,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Emoji Decorations Intensity",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = "${(festiveThemeEmojiDecorationsIntensity * 100).toInt()}%",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            
+                            Spacer(modifier = Modifier.height(16.dp))
+                            
+                            Slider(
+                                value = festiveThemeEmojiDecorationsIntensity,
+                                onValueChange = {
+                                    onFestiveThemeEmojiDecorationsIntensityChange(it)
                                 },
                                 valueRange = 0.1f..1.0f,
                                 colors = SliderDefaults.colors(

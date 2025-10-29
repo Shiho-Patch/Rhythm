@@ -77,6 +77,8 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_FESTIVE_THEME_SHOW_PARTICLES = "festive_theme_show_particles"
         private const val KEY_FESTIVE_THEME_SHOW_DECORATIONS = "festive_theme_show_decorations"
         private const val KEY_FESTIVE_THEME_PARTICLE_INTENSITY = "festive_theme_particle_intensity"
+        private const val KEY_FESTIVE_THEME_SHOW_EMOJI_DECORATIONS = "festive_theme_show_emoji_decorations"
+        private const val KEY_FESTIVE_THEME_EMOJI_DECORATIONS_INTENSITY = "festive_theme_emoji_decorations_intensity"
         private const val KEY_FESTIVE_THEME_APPLY_TO_SPLASH = "festive_theme_apply_to_splash"
         private const val KEY_FESTIVE_THEME_APPLY_TO_MAIN_UI = "festive_theme_apply_to_main_ui"
         
@@ -303,10 +305,10 @@ class AppSettings private constructor(context: Context) {
     val customFontFamily: StateFlow<String> = _customFontFamily.asStateFlow()
     
     // Festive Theme Settings
-    private val _festiveThemeEnabled = MutableStateFlow(prefs.getBoolean(KEY_FESTIVE_THEME_ENABLED, false))
+    private val _festiveThemeEnabled = MutableStateFlow(prefs.getBoolean(KEY_FESTIVE_THEME_ENABLED, true))
     val festiveThemeEnabled: StateFlow<Boolean> = _festiveThemeEnabled.asStateFlow()
     
-    private val _festiveThemeSelected = MutableStateFlow(prefs.getString(KEY_FESTIVE_THEME_SELECTED, "NONE") ?: "NONE")
+    private val _festiveThemeSelected = MutableStateFlow(prefs.getString(KEY_FESTIVE_THEME_SELECTED, "HALLOWEEN") ?: "HALLOWEEN")
     val festiveThemeSelected: StateFlow<String> = _festiveThemeSelected.asStateFlow()
     
     private val _festiveThemeAutoDetect = MutableStateFlow(prefs.getBoolean(KEY_FESTIVE_THEME_AUTO_DETECT, false))
@@ -320,6 +322,12 @@ class AppSettings private constructor(context: Context) {
     
     private val _festiveThemeParticleIntensity = MutableStateFlow(prefs.getFloat(KEY_FESTIVE_THEME_PARTICLE_INTENSITY, 0.7f))
     val festiveThemeParticleIntensity: StateFlow<Float> = _festiveThemeParticleIntensity.asStateFlow()
+    
+    private val _festiveThemeShowEmojiDecorations = MutableStateFlow(prefs.getBoolean(KEY_FESTIVE_THEME_SHOW_EMOJI_DECORATIONS, true))
+    val festiveThemeShowEmojiDecorations: StateFlow<Boolean> = _festiveThemeShowEmojiDecorations.asStateFlow()
+    
+    private val _festiveThemeEmojiDecorationsIntensity = MutableStateFlow(prefs.getFloat(KEY_FESTIVE_THEME_EMOJI_DECORATIONS_INTENSITY, 0.5f))
+    val festiveThemeEmojiDecorationsIntensity: StateFlow<Float> = _festiveThemeEmojiDecorationsIntensity.asStateFlow()
     
     private val _festiveThemeApplyToSplash = MutableStateFlow(prefs.getBoolean(KEY_FESTIVE_THEME_APPLY_TO_SPLASH, true))
     val festiveThemeApplyToSplash: StateFlow<Boolean> = _festiveThemeApplyToSplash.asStateFlow()
@@ -893,6 +901,16 @@ class AppSettings private constructor(context: Context) {
     fun setFestiveThemeParticleIntensity(intensity: Float) {
         prefs.edit().putFloat(KEY_FESTIVE_THEME_PARTICLE_INTENSITY, intensity).apply()
         _festiveThemeParticleIntensity.value = intensity
+    }
+    
+    fun setFestiveThemeShowEmojiDecorations(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_FESTIVE_THEME_SHOW_EMOJI_DECORATIONS, enabled).apply()
+        _festiveThemeShowEmojiDecorations.value = enabled
+    }
+    
+    fun setFestiveThemeEmojiDecorationsIntensity(intensity: Float) {
+        prefs.edit().putFloat(KEY_FESTIVE_THEME_EMOJI_DECORATIONS_INTENSITY, intensity).apply()
+        _festiveThemeEmojiDecorationsIntensity.value = intensity
     }
     
     fun setFestiveThemeApplyToSplash(enabled: Boolean) {

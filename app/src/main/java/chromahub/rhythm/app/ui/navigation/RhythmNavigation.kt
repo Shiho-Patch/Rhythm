@@ -257,6 +257,33 @@ fun RhythmNavigation(
     val useSystemTheme by themeViewModel.useSystemTheme.collectAsState()
     val darkMode by themeViewModel.darkMode.collectAsState()
 
+    // Festive theme states
+    val festiveThemeEnabled by appSettings.festiveThemeEnabled.collectAsState()
+    val festiveThemeSelected by appSettings.festiveThemeSelected.collectAsState()
+    val festiveThemeAutoDetect by appSettings.festiveThemeAutoDetect.collectAsState()
+    val festiveThemeShowParticles by appSettings.festiveThemeShowParticles.collectAsState()
+    val festiveThemeShowDecorations by appSettings.festiveThemeShowDecorations.collectAsState()
+    val festiveThemeParticleIntensity by appSettings.festiveThemeParticleIntensity.collectAsState()
+    val festiveThemeShowEmojiDecorations by appSettings.festiveThemeShowEmojiDecorations.collectAsState()
+    val festiveThemeEmojiDecorationsIntensity by appSettings.festiveThemeEmojiDecorationsIntensity.collectAsState()
+    val festiveThemeApplyToSplash by appSettings.festiveThemeApplyToSplash.collectAsState()
+    val festiveThemeApplyToMainUI by appSettings.festiveThemeApplyToMainUI.collectAsState()
+
+    // Determine active festive theme
+    val activeFestiveTheme = remember(festiveThemeEnabled, festiveThemeAutoDetect, festiveThemeSelected) {
+        if (!festiveThemeEnabled) {
+            chromahub.rhythm.app.ui.theme.FestiveTheme.NONE
+        } else if (festiveThemeAutoDetect) {
+            chromahub.rhythm.app.ui.theme.FestiveTheme.detectCurrentFestival()
+        } else {
+            try {
+                chromahub.rhythm.app.ui.theme.FestiveTheme.valueOf(festiveThemeSelected)
+            } catch (e: Exception) {
+                chromahub.rhythm.app.ui.theme.FestiveTheme.NONE
+            }
+        }
+    }
+
     var selectedTab by remember { mutableIntStateOf(0) }
 
     val haptic = LocalHapticFeedback.current
@@ -2092,6 +2119,15 @@ fun RhythmNavigation(
                         ),
                         modifier = Modifier.fillMaxSize()
                     )
+                    
+                    // Emoji decorations overlay for main UI
+                    if (festiveThemeShowEmojiDecorations) {
+                        chromahub.rhythm.app.ui.screens.EmojiDecorationsOverlay(
+                            theme = activeFestiveTheme,
+                            intensity = festiveThemeEmojiDecorationsIntensity,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
                 }
             }
         }

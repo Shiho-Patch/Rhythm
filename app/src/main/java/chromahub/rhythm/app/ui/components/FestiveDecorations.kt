@@ -45,7 +45,7 @@ enum class ParticleType {
 }
 
 /**
- * Festive decorations overlay with animated particles
+ * Festive decorations overlay with animated particles - ULTRA OPTIMIZED VERSION
  */
 @Composable
 fun FestiveDecorations(
@@ -56,11 +56,11 @@ fun FestiveDecorations(
         return
     }
 
-    val density = LocalDensity.current
     var screenWidth by remember { mutableStateOf(0f) }
     var screenHeight by remember { mutableStateOf(0f) }
     
-    val particleCount = (30 * config.particleIntensity).toInt().coerceAtLeast(10)
+    // Ultra minimal particle count for maximum performance
+    val particleCount = (8 * config.particleIntensity).toInt().coerceIn(3, 12)
     val particles = remember { mutableStateListOf<FestiveParticle>() }
     
     // Initialize particles
@@ -71,15 +71,15 @@ fun FestiveDecorations(
         }
     }
     
-    // Animate particles with optimized frame rate
-    LaunchedEffect(config.selectedTheme) {
+    // Animate particles with 10 FPS for maximum performance
+    LaunchedEffect(config.selectedTheme, particles) {
         while (true) {
-            delay(16L) // 60 FPS - smoother and more performant
+            delay(100L) // 10 FPS - maximum performance
             particles.forEachIndexed { index, particle ->
                 updateParticle(particle, screenWidth, screenHeight, config.selectedTheme)
                 
                 // Respawn particle if it goes off screen
-                if (particle.y > screenHeight + 50 || particle.x < -50 || particle.x > screenWidth + 50) {
+                if (particle.y > screenHeight + 100 || particle.x < -100 || particle.x > screenWidth + 100) {
                     particles[index] = createRandomParticle(config.selectedTheme, screenWidth, screenHeight, respawn = true)
                 }
             }
@@ -87,12 +87,12 @@ fun FestiveDecorations(
     }
     
     Canvas(
-        modifier = modifier
-            .fillMaxSize()
+        modifier = modifier.fillMaxSize()
     ) {
         screenWidth = size.width
         screenHeight = size.height
         
+        // Draw all particles in one pass - simplified drawing
         particles.forEach { particle ->
             drawParticle(particle)
         }
@@ -100,7 +100,7 @@ fun FestiveDecorations(
 }
 
 /**
- * Create a random particle based on the festive theme
+ * Create a random particle based on the festive theme - ULTRA OPTIMIZED
  */
 private fun createRandomParticle(
     theme: FestiveTheme,
@@ -108,7 +108,6 @@ private fun createRandomParticle(
     screenHeight: Float,
     respawn: Boolean = false
 ): FestiveParticle {
-    val particleType = getParticleTypeForTheme(theme)
     val colors = theme.particleColors.ifEmpty { 
         listOf(theme.primaryColor, theme.secondaryColor, theme.tertiaryColor) 
     }
@@ -116,19 +115,18 @@ private fun createRandomParticle(
     return FestiveParticle(
         x = Random.nextFloat() * screenWidth,
         y = if (respawn) -50f else Random.nextFloat() * screenHeight,
-        velocityX = (Random.nextFloat() - 0.5f) * 2f,
+        velocityX = (Random.nextFloat() - 0.5f) * 0.8f,  // Very slow horizontal movement
         velocityY = when (theme) {
-            FestiveTheme.CHRISTMAS -> Random.nextFloat() * 1.5f + 0.5f // Snow falls down
-            FestiveTheme.HOLI -> (Random.nextFloat() - 0.5f) * 3f // Colors fly everywhere
-            FestiveTheme.NEW_YEAR -> -Random.nextFloat() * 3f - 1f // Fireworks go up
-            else -> Random.nextFloat() * 2f + 0.5f
+            FestiveTheme.CHRISTMAS -> Random.nextFloat() * 0.5f + 0.2f // Gentle snow
+            FestiveTheme.NEW_YEAR -> -Random.nextFloat() * 1.0f - 0.3f // Moderate fireworks
+            else -> Random.nextFloat() * 0.8f + 0.2f // Slow general movement
         },
-        size = Random.nextFloat() * 8f + 4f,
+        size = Random.nextFloat() * 4f + 2f,  // Very small particles
         color = colors.random(),
-        alpha = Random.nextFloat() * 0.5f + 0.3f,
-        rotation = Random.nextFloat() * 360f,
-        rotationSpeed = (Random.nextFloat() - 0.5f) * 5f,
-        type = particleType
+        alpha = Random.nextFloat() * 0.3f + 0.5f,
+        rotation = 0f,  // No rotation for performance
+        rotationSpeed = 0f,  // No rotation for performance
+        type = ParticleType.CIRCLE  // Only circles for maximum performance
     )
 }
 
@@ -151,7 +149,7 @@ private fun getParticleTypeForTheme(theme: FestiveTheme): ParticleType {
 }
 
 /**
- * Update particle position and properties with optimized calculations
+ * Update particle position and properties - ULTRA OPTIMIZED
  */
 private fun updateParticle(
     particle: FestiveParticle,
@@ -159,27 +157,25 @@ private fun updateParticle(
     screenHeight: Float,
     theme: FestiveTheme
 ) {
-    // Basic movement - optimized for 60 FPS (scale velocities accordingly)
-    particle.x += particle.velocityX * 1.33f  // Scale for 60 FPS vs 75 FPS
-    particle.y += particle.velocityY * 1.33f
-    particle.rotation += particle.rotationSpeed * 1.33f
+    // Basic movement optimized for 10 FPS (6x velocity multiplier)
+    particle.x += particle.velocityX * 6f
+    particle.y += particle.velocityY * 6f
+    particle.rotation += particle.rotationSpeed * 6f
     
-    // Add theme-specific effects with optimized calculations
+    // Minimal theme effects - only for key themes
     when (theme) {
         FestiveTheme.CHRISTMAS -> {
-            // Gentle horizontal wave motion
-            particle.x += sin(particle.y * 0.02f) * 0.67f
-        }
-        FestiveTheme.HOLI -> {
-            // Pulsing alpha with optimized calculation
-            particle.alpha = (sin(particle.y * 0.0333f) * 0.3f + 0.5f).coerceIn(0.2f, 0.8f)
+            // Very gentle horizontal sway
+            particle.x += sin(particle.y * 0.01f) * 0.8f
         }
         FestiveTheme.NEW_YEAR -> {
-            // Fireworks fade out as they rise (optimized fade rate)
-            particle.alpha = (particle.alpha - 0.013f).coerceAtLeast(0.1f)
-            if (particle.alpha <= 0.11f) particle.alpha = 0.8f
+            // Simple fade for fireworks
+            particle.alpha = (particle.alpha - 0.03f).coerceAtLeast(0.2f)
+            if (particle.alpha <= 0.22f) particle.alpha = 0.9f
         }
-        else -> {}
+        else -> {
+            // No effects for other themes for maximum performance
+        }
     }
 }
 
