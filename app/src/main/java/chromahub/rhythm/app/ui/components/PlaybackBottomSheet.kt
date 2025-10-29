@@ -145,7 +145,7 @@ fun PlaybackBottomSheet(
 
     // Initialize system volume and monitor for changes
     LaunchedEffect(Unit) {
-        delay(250) // Reduced delay for faster appearance
+        delay(100) // Reduced delay for faster appearance
         showContent = true
         
         // Get system volume
@@ -169,7 +169,7 @@ fun PlaybackBottomSheet(
                 systemMaxVolume = maxVolume
             }
             
-            delay(500) // Check every 500ms
+            delay(800) // Check every 500ms
         }
     }
 
