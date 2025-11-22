@@ -244,7 +244,7 @@ fun TunerSettingsScreen(
                 Spacer(modifier = Modifier.height(24.dp)) // Increased space between groups
                 Text(
                     text = group.title,
-                    style = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Default, fontWeight = FontWeight.SemiBold), // Smaller title for group
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold), // Smaller title for group
                     color = MaterialTheme.colorScheme.primary, // Use primary color for group title
                     modifier = Modifier.padding(start = 16.dp, bottom = 8.dp) // Indent group title
                 )
@@ -389,13 +389,13 @@ fun SettingRow(item: SettingItem) {
         ) {
             Text(
                 text = item.title,
-                style = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Default, fontWeight = FontWeight.Medium),
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
                 color = MaterialTheme.colorScheme.onSurface
             )
             item.description?.let {
                 Text(
                     text = it,
-                    style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Default),
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -551,3 +551,4 @@ private fun TipItem(
         )
     }
 }
+

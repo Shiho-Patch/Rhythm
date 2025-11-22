@@ -149,13 +149,13 @@ private fun TunerSettingRow(item: SettingItem) {
         ) {
             Text(
                 text = item.title,
-                style = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Default, fontWeight = FontWeight.Medium),
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
                 color = MaterialTheme.colorScheme.onSurface
             )
             item.description?.let {
                 Text(
                     text = it,
-                    style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Default),
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -253,14 +253,13 @@ private fun TunerSettingCard(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge.copy(
-                        fontFamily = FontFamily.Default,
                         fontWeight = FontWeight.Medium
                     ),
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = description,
-                    style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Default),
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -325,7 +324,7 @@ fun NotificationsSettingsScreen(onBackClick: () -> Unit) {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = group.title,
-                    style = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Default, fontWeight = FontWeight.SemiBold),
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                 )
@@ -432,7 +431,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = group.title,
-                    style = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Default, fontWeight = FontWeight.SemiBold),
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                 )
@@ -595,7 +594,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = "Overview",
-                    style = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Default, fontWeight = FontWeight.SemiBold),
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                 )
@@ -675,7 +674,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = group.title,
-                    style = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Default, fontWeight = FontWeight.SemiBold),
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                 )
@@ -1019,7 +1018,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                 item {
                     Text(
                         text = group.title,
-                        style = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Default, fontWeight = FontWeight.SemiBold),
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                     )
@@ -3280,7 +3279,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                         Spacer(modifier = Modifier.height(24.dp))
                         Text(
                             text = "What's New",
-                            style = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Default, fontWeight = FontWeight.SemiBold),
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                         )
@@ -3344,7 +3343,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                         Spacer(modifier = Modifier.height(24.dp))
                         Text(
                             text = "Known Issues",
-                            style = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Default, fontWeight = FontWeight.SemiBold),
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                         )
@@ -3403,7 +3402,6 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                 Text(
                     text = "Update Settings",
                     style = MaterialTheme.typography.titleSmall.copy(
-                        fontFamily = FontFamily.Default,
                         fontWeight = FontWeight.SemiBold
                     ),
                     color = MaterialTheme.colorScheme.primary,
@@ -3747,7 +3745,7 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = group.title,
-                    style = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Default, fontWeight = FontWeight.SemiBold),
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                 )
@@ -4803,7 +4801,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = group.title,
-                    style = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Default, fontWeight = FontWeight.SemiBold),
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                 )
@@ -5643,7 +5641,6 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                 Text(
                     text = group.title,
                     style = MaterialTheme.typography.titleSmall.copy(
-                        fontFamily = FontFamily.Default,
                         fontWeight = FontWeight.SemiBold
                     ),
                     color = MaterialTheme.colorScheme.primary,
@@ -8069,7 +8066,6 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
                 Text(
                     text = "External Services",
                     style = MaterialTheme.typography.titleSmall.copy(
-                        fontFamily = FontFamily.Default,
                         fontWeight = FontWeight.SemiBold
                     ),
                     color = MaterialTheme.colorScheme.primary,
@@ -8992,7 +8988,6 @@ fun SleepTimerSettingsScreen(onBackClick: () -> Unit) {
                 Text(
                     text = "Sleep Timer",
                     style = MaterialTheme.typography.titleSmall.copy(
-                        fontFamily = FontFamily.Default,
                         fontWeight = FontWeight.SemiBold
                     ),
                     color = MaterialTheme.colorScheme.primary,
@@ -9359,7 +9354,6 @@ fun LyricsSourceSettingsScreen(onBackClick: () -> Unit) {
                 Text(
                     text = "Lyrics Source Priority",
                     style = MaterialTheme.typography.titleSmall.copy(
-                        fontFamily = FontFamily.Default,
                         fontWeight = FontWeight.SemiBold
                     ),
                     color = MaterialTheme.colorScheme.primary,
@@ -9531,3 +9525,7 @@ fun LyricsSourceSettingsScreen(onBackClick: () -> Unit) {
         }
     }
 }
+
+
+
+
