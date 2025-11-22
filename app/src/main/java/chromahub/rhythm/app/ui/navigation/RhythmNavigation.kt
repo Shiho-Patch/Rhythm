@@ -85,7 +85,6 @@ import chromahub.rhythm.app.ui.screens.AddToPlaylistBottomSheet
 import chromahub.rhythm.app.ui.components.CreatePlaylistDialog
 import chromahub.rhythm.app.ui.components.MiniPlayer
 import chromahub.rhythm.app.ui.components.RhythmIcons
-import chromahub.rhythm.app.ui.screens.AppUpdaterScreen
 import chromahub.rhythm.app.ui.screens.LibraryScreen
 import chromahub.rhythm.app.ui.components.RhythmIcons.Delete
 import chromahub.rhythm.app.ui.screens.HomeScreen
@@ -95,7 +94,6 @@ import chromahub.rhythm.app.ui.screens.PlaylistDetailScreen
 import chromahub.rhythm.app.ui.screens.SearchScreen
 import chromahub.rhythm.app.ui.screens.tuner.SettingsScreen as TunerSettingsScreenWrapper
 import chromahub.rhythm.app.ui.screens.tuner.*
-import chromahub.rhythm.app.ui.screens.AboutScreen // Added import for AboutScreen
 import chromahub.rhythm.app.ui.screens.MediaScanLoader // Add MediaScanLoader import
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.viewmodel.MusicViewModel
@@ -162,13 +160,9 @@ sealed class Screen(val route: String) {
     object Player : Screen("player")
     object Settings : Screen("settings")
     object AddToPlaylist : Screen("add_to_playlist")
-    object AppUpdater : Screen("app_updater?autoDownload={autoDownload}") {
-        fun createRoute(autoDownload: Boolean = false) = "app_updater?autoDownload=$autoDownload"
-    }
     object PlaylistDetail : Screen("playlist/{playlistId}") {
         fun createRoute(playlistId: String) = "playlist/$playlistId"
     }
-    object About : Screen("about")
     
     // Tuner Settings Subroutes
     object TunerNotifications : Screen("tuner_notifications_settings")
@@ -835,8 +829,8 @@ fun RhythmNavigation(
                                 navController.navigate(Screen.Settings.route)
                             },
                             onAppUpdateClick = { autoDownload ->
-                                // Navigate to app updater with autoDownload parameter
-                                navController.navigate(Screen.AppUpdater.createRoute(autoDownload))
+                                // Navigate to updates settings in tuner
+                                navController.navigate(Screen.TunerUpdates.route)
                             },
                             onNavigateToLibrary = {
                                 // Navigate to library with playlists tab selected
@@ -971,47 +965,6 @@ fun RhythmNavigation(
                                 navController.popBackStack()
                             },
                             appSettings = appSettings
-                        )
-                    }
-
-                    composable(
-                        route = Screen.About.route,
-                        enterTransition = {
-                            fadeIn(animationSpec = tween(350)) +
-                                    scaleIn(
-                                        initialScale = 0.85f,
-                                        animationSpec = tween(400, easing = EaseOutQuint)
-                                    )
-                        },
-                        exitTransition = {
-                            fadeOut(animationSpec = tween(350)) +
-                                    scaleOut(
-                                        targetScale = 0.85f,
-                                        animationSpec = tween(300, easing = EaseInOutQuart)
-                                    )
-                        },
-                        popEnterTransition = {
-                            fadeIn(animationSpec = tween(350)) +
-                                    scaleIn(
-                                        initialScale = 0.85f,
-                                        animationSpec = tween(400, easing = EaseOutQuint)
-                                    )
-                        },
-                        popExitTransition = {
-                            fadeOut(animationSpec = tween(350)) +
-                                    scaleOut(
-                                        targetScale = 0.85f,
-                                        animationSpec = tween(300, easing = EaseInOutQuart)
-                                    )
-                        }
-                    ) {
-                        AboutScreen(
-                            onBack = {
-                                navController.popBackStack()
-                            },
-                            onCheckForUpdates = {
-                                navController.navigate(Screen.AppUpdater.createRoute(true))
-                            }
                         )
                     }
                     
@@ -2000,66 +1953,6 @@ fun RhythmNavigation(
                                 navController.popBackStack()
                             }
                         }
-                    }
-
-                    // Add App Updater screen
-                    composable(
-                        Screen.AppUpdater.route,
-                        arguments = listOf(
-                            navArgument("autoDownload") {
-                                type = NavType.BoolType
-                                defaultValue = false
-                            }
-                        ),
-                        enterTransition = {
-                            fadeIn(animationSpec = tween(350)) +
-                                    scaleIn(
-                                        initialScale = 0.85f,
-                                        animationSpec = tween(400, easing = EaseOutQuint)
-                                    )
-                        },
-                        exitTransition = {
-                            fadeOut(animationSpec = tween(350)) +
-                                    scaleOut(
-                                        targetScale = 0.85f,
-                                        animationSpec = tween(300, easing = EaseInOutQuart)
-                                    )
-                        },
-                        popEnterTransition = {
-                            fadeIn(animationSpec = tween(350)) +
-                                    scaleIn(
-                                        initialScale = 0.85f,
-                                        animationSpec = tween(400, easing = EaseOutQuint)
-                                    )
-                        },
-                        popExitTransition = {
-                            fadeOut(animationSpec = tween(350)) +
-                                    scaleOut(
-                                        targetScale = 0.85f,
-                                        animationSpec = tween(300, easing = EaseInOutQuart)
-                                    )
-                        }
-                    ) {
-                        val autoDownload = it.arguments?.getBoolean("autoDownload") ?: false
-
-                        AppUpdaterScreen(
-                            currentSong = currentSong,
-                            isPlaying = isPlaying,
-                            progress = progress,
-                            onPlayPause = onPlayPause,
-                            onPlayerClick = {
-                                navController.navigate(Screen.Player.route)
-                            },
-                            onSkipNext = onSkipNext,
-                            onBack = {
-                                navController.popBackStack()
-                            },
-                            onSettingsClick = {
-                                navController.navigate(Screen.Settings.route)
-                            },
-                            autoDownload = autoDownload,
-                            appSettings = appSettings
-                        )
                     }
                 }
 
