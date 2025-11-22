@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import chromahub.rhythm.app.worker.BackupWorker
+import chromahub.rhythm.app.worker.UpdateNotificationWorker
 import java.util.Date // Import Date for timestamp
 import java.util.concurrent.TimeUnit
 
@@ -155,6 +156,8 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_AUTO_CHECK_FOR_UPDATES = "auto_check_for_updates"
         private const val KEY_UPDATE_CHANNEL = "update_channel" // New key for update channel
         private const val KEY_UPDATES_ENABLED = "updates_enabled" // Master switch for updates
+        private const val KEY_UPDATE_NOTIFICATIONS_ENABLED = "update_notifications_enabled" // Push-style notifications
+        private const val KEY_USE_SMART_UPDATE_POLLING = "use_smart_update_polling" // Use ETag/conditional requests
         private const val KEY_MEDIA_SCAN_MODE = "media_scan_mode" // Mode for media scanning: "blacklist" or "whitelist"
         private const val KEY_UPDATE_CHECK_INTERVAL_HOURS = "update_check_interval_hours" // Configurable interval
 
@@ -229,6 +232,13 @@ class AppSettings private constructor(context: Context) {
         // Schedule auto-backup if enabled
         if (prefs.getBoolean(KEY_AUTO_BACKUP_ENABLED, false)) {
             scheduleAutoBackup()
+        }
+        
+        // Schedule update notification worker if enabled
+        if (prefs.getBoolean(KEY_UPDATES_ENABLED, true) &&
+            prefs.getBoolean(KEY_UPDATE_NOTIFICATIONS_ENABLED, true) &&
+            prefs.getBoolean(KEY_USE_SMART_UPDATE_POLLING, true)) {
+            scheduleUpdateNotificationWorker()
         }
     }
     
@@ -637,6 +647,12 @@ class AppSettings private constructor(context: Context) {
 
     private val _updatesEnabled = MutableStateFlow(prefs.getBoolean(KEY_UPDATES_ENABLED, true))
     val updatesEnabled: StateFlow<Boolean> = _updatesEnabled.asStateFlow()
+
+    private val _updateNotificationsEnabled = MutableStateFlow(prefs.getBoolean(KEY_UPDATE_NOTIFICATIONS_ENABLED, true))
+    val updateNotificationsEnabled: StateFlow<Boolean> = _updateNotificationsEnabled.asStateFlow()
+
+    private val _useSmartUpdatePolling = MutableStateFlow(prefs.getBoolean(KEY_USE_SMART_UPDATE_POLLING, true))
+    val useSmartUpdatePolling: StateFlow<Boolean> = _useSmartUpdatePolling.asStateFlow()
 
     // Media Scan Mode
     private val _mediaScanMode = MutableStateFlow(prefs.getString(KEY_MEDIA_SCAN_MODE, "blacklist") ?: "blacklist")
@@ -1281,6 +1297,37 @@ class AppSettings private constructor(context: Context) {
     fun setUpdatesEnabled(enable: Boolean) {
         prefs.edit().putBoolean(KEY_UPDATES_ENABLED, enable).apply()
         _updatesEnabled.value = enable
+        
+        // Update WorkManager scheduling based on new state
+        if (enable && _updateNotificationsEnabled.value && _useSmartUpdatePolling.value) {
+            scheduleUpdateNotificationWorker()
+        } else {
+            cancelUpdateNotificationWorker()
+        }
+    }
+
+    fun setUpdateNotificationsEnabled(enable: Boolean) {
+        prefs.edit().putBoolean(KEY_UPDATE_NOTIFICATIONS_ENABLED, enable).apply()
+        _updateNotificationsEnabled.value = enable
+        
+        // Update WorkManager scheduling
+        if (enable && _updatesEnabled.value && _useSmartUpdatePolling.value) {
+            scheduleUpdateNotificationWorker()
+        } else {
+            cancelUpdateNotificationWorker()
+        }
+    }
+
+    fun setUseSmartUpdatePolling(enable: Boolean) {
+        prefs.edit().putBoolean(KEY_USE_SMART_UPDATE_POLLING, enable).apply()
+        _useSmartUpdatePolling.value = enable
+        
+        // Update WorkManager scheduling
+        if (enable && _updatesEnabled.value && _updateNotificationsEnabled.value) {
+            scheduleUpdateNotificationWorker()
+        } else {
+            cancelUpdateNotificationWorker()
+        }
     }
 
     fun setMediaScanMode(mode: String) {
@@ -1643,6 +1690,61 @@ class AppSettings private constructor(context: Context) {
             Log.d("AppSettings", "Auto-backup cancelled")
         } catch (e: Exception) {
             Log.e("AppSettings", "Failed to cancel auto-backup", e)
+        }
+    }
+    
+    /**
+     * Schedule periodic update notification checks using WorkManager
+     * This implements a webhook-style system using smart polling
+     */
+    private fun scheduleUpdateNotificationWorker() {
+        try {
+            // Get the check interval from settings (default 6 hours)
+            val intervalHours = _updateCheckIntervalHours.value.toLong()
+            
+            val workRequest = PeriodicWorkRequestBuilder<chromahub.rhythm.app.worker.UpdateNotificationWorker>(
+                intervalHours, TimeUnit.HOURS,
+                30, TimeUnit.MINUTES // Flex interval
+            ).build()
+            
+            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                chromahub.rhythm.app.worker.UpdateNotificationWorker.WORK_NAME,
+                ExistingPeriodicWorkPolicy.UPDATE, // Update if interval changes
+                workRequest
+            )
+            
+            Log.d("AppSettings", "Update notification worker scheduled: checks every $intervalHours hours")
+        } catch (e: Exception) {
+            Log.e("AppSettings", "Failed to schedule update notification worker", e)
+        }
+    }
+    
+    /**
+     * Cancel update notification checks
+     */
+    private fun cancelUpdateNotificationWorker() {
+        try {
+            WorkManager.getInstance(context).cancelUniqueWork(
+                chromahub.rhythm.app.worker.UpdateNotificationWorker.WORK_NAME
+            )
+            Log.d("AppSettings", "Update notification worker cancelled")
+        } catch (e: Exception) {
+            Log.e("AppSettings", "Failed to cancel update notification worker", e)
+        }
+    }
+    
+    /**
+     * Trigger an immediate update check (useful for testing)
+     */
+    fun triggerImmediateUpdateCheck() {
+        try {
+            val workRequest = OneTimeWorkRequestBuilder<chromahub.rhythm.app.worker.UpdateNotificationWorker>()
+                .build()
+            
+            WorkManager.getInstance(context).enqueue(workRequest)
+            Log.d("AppSettings", "Immediate update check triggered")
+        } catch (e: Exception) {
+            Log.e("AppSettings", "Failed to trigger immediate update check", e)
         }
     }
     
@@ -2050,8 +2152,15 @@ class AppSettings private constructor(context: Context) {
         _autoCheckForUpdates.value = prefs.getBoolean(KEY_AUTO_CHECK_FOR_UPDATES, true)
         _updateChannel.value = prefs.getString(KEY_UPDATE_CHANNEL, "stable") ?: "stable"
         _updatesEnabled.value = prefs.getBoolean(KEY_UPDATES_ENABLED, true)
+        _updateNotificationsEnabled.value = prefs.getBoolean(KEY_UPDATE_NOTIFICATIONS_ENABLED, true)
+        _useSmartUpdatePolling.value = prefs.getBoolean(KEY_USE_SMART_UPDATE_POLLING, true)
         _mediaScanMode.value = prefs.getString(KEY_MEDIA_SCAN_MODE, "blacklist") ?: "blacklist"
         _updateCheckIntervalHours.value = prefs.getInt(KEY_UPDATE_CHECK_INTERVAL_HOURS, 24)
+        
+        // Re-schedule update notification worker if settings changed
+        if (_updatesEnabled.value && _updateNotificationsEnabled.value && _useSmartUpdatePolling.value) {
+            scheduleUpdateNotificationWorker()
+        }
         
         // Beta Program
         _hasShownBetaPopup.value = prefs.getBoolean(KEY_HAS_SHOWN_BETA_POPUP, false)
