@@ -144,17 +144,26 @@ class UpdateNotificationWorker(
             Log.d(TAG, "Smart polling - Last ETag: $lastETag, Last Modified: $lastModified")
             Log.d(TAG, "Consecutive 304 responses: $consecutiveNotModified")
             
-            // Fetch latest release based on channel
+            // Build headers for conditional request
+            val headers = mutableMapOf<String, String>()
+            lastETag?.let { headers["If-None-Match"] = it }
+            lastModified?.let { headers["If-Modified-Since"] = it }
+            
+            // Fetch latest release based on channel with conditional headers
             val response = if (channel == "beta") {
-                gitHubApiService.getReleases(
+                gitHubApiService.getReleasesWithHeaders(
                     owner = "cromaguy",
                     repo = "Rhythm",
-                    perPage = 10
+                    perPage = 10,
+                    ifNoneMatch = lastETag,
+                    ifModifiedSince = lastModified
                 )
             } else {
-                gitHubApiService.getLatestRelease(
+                gitHubApiService.getLatestReleaseWithHeaders(
                     owner = "cromaguy",
-                    repo = "Rhythm"
+                    repo = "Rhythm",
+                    ifNoneMatch = lastETag,
+                    ifModifiedSince = lastModified
                 )
             }
             
@@ -233,27 +242,78 @@ class UpdateNotificationWorker(
     
     /**
      * Compare version strings to determine if new version is newer
+     * Handles semantic versioning with build numbers and pre-release tags
      */
     private fun isNewerVersion(newVersion: String, currentVersion: String): Boolean {
         try {
-            // Remove 'v' prefix if present
-            val newVer = newVersion.removePrefix("v").split(".")
-            val currentVer = currentVersion.removePrefix("v").split(".")
+            // Parse semantic versions
+            val newSemVer = parseSemanticVersion(newVersion)
+            val currentSemVer = parseSemanticVersion(currentVersion)
             
-            for (i in 0 until maxOf(newVer.size, currentVer.size)) {
-                val new = newVer.getOrNull(i)?.toIntOrNull() ?: 0
-                val current = currentVer.getOrNull(i)?.toIntOrNull() ?: 0
-                
-                when {
-                    new > current -> return true
-                    new < current -> return false
-                }
+            // Compare major.minor.patch first
+            if (newSemVer.major != currentSemVer.major) return newSemVer.major > currentSemVer.major
+            if (newSemVer.minor != currentSemVer.minor) return newSemVer.minor > currentSemVer.minor
+            if (newSemVer.patch != currentSemVer.patch) return newSemVer.patch > currentSemVer.patch
+            if (newSemVer.subpatch != currentSemVer.subpatch) return newSemVer.subpatch > currentSemVer.subpatch
+            
+            // If versions are equal, compare build numbers
+            if (newSemVer.buildNumber != currentSemVer.buildNumber) {
+                return newSemVer.buildNumber > currentSemVer.buildNumber
+            }
+            
+            // Pre-releases are considered older than stable releases
+            if (newSemVer.isPreRelease != currentSemVer.isPreRelease) {
+                return !newSemVer.isPreRelease && currentSemVer.isPreRelease
             }
             
             return false
         } catch (e: Exception) {
-            Log.e(TAG, "Error comparing versions: ${e.message}")
+            Log.e(TAG, "Error comparing versions: ${e.message}", e)
             return false
+        }
+    }
+    
+    /**
+     * Parse version string to semantic version components
+     */
+    private data class SemanticVersion(
+        val major: Int,
+        val minor: Int,
+        val patch: Int,
+        val subpatch: Int = 0,
+        val buildNumber: Int = 0,
+        val isPreRelease: Boolean = false
+    )
+    
+    private fun parseSemanticVersion(versionString: String): SemanticVersion {
+        try {
+            val cleaned = versionString.trim().removePrefix("v")
+            
+            // Extract build number (e.g., "b-127" or "build-127")
+            val buildRegex = Regex("(?:b|build)-(\\d+)", RegexOption.IGNORE_CASE)
+            val buildNumber = buildRegex.find(cleaned)?.groupValues?.get(1)?.toIntOrNull() ?: 0
+            
+            // Extract base version (remove build info and tags)
+            val versionBase = cleaned.split(" ")[0].split("-")[0].split("_")[0]
+            val versionParts = versionBase.split(".")
+            
+            // Check for pre-release keywords
+            val preReleaseKeywords = listOf("alpha", "beta", "pre", "rc", "dev", "snapshot")
+            val isPreRelease = preReleaseKeywords.any { keyword ->
+                cleaned.contains(keyword, ignoreCase = true)
+            }
+            
+            return SemanticVersion(
+                major = versionParts.getOrNull(0)?.toIntOrNull() ?: 0,
+                minor = versionParts.getOrNull(1)?.toIntOrNull() ?: 0,
+                patch = versionParts.getOrNull(2)?.toIntOrNull() ?: 0,
+                subpatch = versionParts.getOrNull(3)?.toIntOrNull() ?: 0,
+                buildNumber = buildNumber,
+                isPreRelease = isPreRelease
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing version: $versionString", e)
+            return SemanticVersion(0, 0, 0, 0, 0, false)
         }
     }
     
