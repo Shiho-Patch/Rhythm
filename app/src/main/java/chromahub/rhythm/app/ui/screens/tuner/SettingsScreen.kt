@@ -2,11 +2,14 @@ package chromahub.rhythm.app.ui.screens.tuner
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -98,6 +101,7 @@ object SettingsRoutes {
     const val SLEEP_TIMER = "sleep_timer_settings"
     const val CRASH_LOG_HISTORY = "crash_log_history_settings"
     const val QUEUE_PLAYBACK = "queue_playback_settings"
+    const val LYRICS_SOURCE = "lyrics_source_settings"
 }
 
 data class SettingItem(
@@ -254,6 +258,31 @@ fun TunerSettingsScreen(
                     Column {
                         group.items.forEachIndexed { index, item ->
                             SettingRow(item = item)
+                            
+                            // Show Lyrics Source setting when Show Lyrics is enabled
+                            if (group.title == "Audio & Playback" && item.title == "Show Lyrics") {
+                                AnimatedVisibility(
+                                    visible = showLyrics,
+                                    enter = fadeIn(animationSpec = tween(300)) + expandVertically(animationSpec = tween(300)),
+                                    exit = fadeOut(animationSpec = tween(200)) + shrinkVertically(animationSpec = tween(200))
+                                ) {
+                                    Column {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 20.dp),
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                        )
+                                        SettingRow(
+                                            item = SettingItem(
+                                                Icons.Default.Lyrics,
+                                                "Lyrics Source",
+                                                "Configure embedded vs online lyrics",
+                                                onClick = { onNavigateTo(SettingsRoutes.LYRICS_SOURCE) }
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                            
                             if (index < group.items.lastIndex) {
                                 HorizontalDivider(
                                     modifier = Modifier.padding(horizontal = 20.dp),
@@ -491,6 +520,7 @@ fun SettingsScreen(onBack: () -> Unit, appSettings: chromahub.rhythm.app.data.Ap
             SettingsRoutes.SLEEP_TIMER -> SleepTimerSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.CRASH_LOG_HISTORY -> CrashLogHistorySettingsScreen(onBackClick = { currentRoute = null }, appSettings = appSettings)
             SettingsRoutes.QUEUE_PLAYBACK -> QueuePlaybackSettingsScreen(onBackClick = { currentRoute = null })
+            SettingsRoutes.LYRICS_SOURCE -> LyricsSourceSettingsScreen(onBackClick = { currentRoute = null })
             else -> TunerSettingsScreen(
                 onBackClick = handleBack,
                 onNavigateTo = { route -> currentRoute = route }

@@ -2520,6 +2520,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
     val updatesEnabled by appSettings.updatesEnabled.collectAsState()
     val autoCheckForUpdates by appSettings.autoCheckForUpdates.collectAsState()
     val updateChannel by appSettings.updateChannel.collectAsState()
+    val updateCheckIntervalHours by appSettings.updateCheckIntervalHours.collectAsState()
     val currentVersion by updaterViewModel.currentVersion.collectAsState()
     val latestVersion by updaterViewModel.latestVersion.collectAsState()
     val isCheckingForUpdates by updaterViewModel.isCheckingForUpdates.collectAsState()
@@ -2530,6 +2531,10 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
     val downloadedFile by updaterViewModel.downloadedFile.collectAsState()
     val whatsNew = latestVersion?.whatsNew ?: emptyList()
     val knownIssues = latestVersion?.knownIssues ?: emptyList()
+    
+    // Dialog states
+    var showChannelDialog by remember { mutableStateOf(false) }
+    var showIntervalDialog by remember { mutableStateOf(false) }
 
     // Determine status text for header
     val statusText = when {
@@ -3130,28 +3135,6 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
             }
 
             item {
-                val updateItems = mutableListOf(
-                    SettingItem(
-                        Icons.Default.SystemUpdate,
-                        "Enable Updates",
-                        "Allow the app to check for and download updates",
-                        toggleState = updatesEnabled,
-                        onToggleChange = { appSettings.setUpdatesEnabled(it) }
-                    )
-                )
-
-                if (updatesEnabled) {
-                    updateItems.add(
-                        SettingItem(
-                            Icons.Default.Update,
-                            "Periodic Check",
-                            "Automatically check for updates from Rhythm's GitHub repo",
-                            toggleState = autoCheckForUpdates,
-                            onToggleChange = { appSettings.setAutoCheckForUpdates(it) }
-                        )
-                    )
-                }
-
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(18.dp),
@@ -3159,12 +3142,58 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Column {
-                        updateItems.forEachIndexed { index, item ->
-                            TunerSettingRow(item = item)
-                            if (index < updateItems.lastIndex) {
+                        TunerSettingRow(
+                            item = SettingItem(
+                                Icons.Default.SystemUpdate,
+                                "Enable Updates",
+                                "Allow the app to check for and download updates",
+                                toggleState = updatesEnabled,
+                                onToggleChange = { appSettings.setUpdatesEnabled(it) }
+                            )
+                        )
+                        
+                        AnimatedVisibility(
+                            visible = updatesEnabled,
+                            enter = fadeIn(animationSpec = tween(300)) + expandVertically(animationSpec = tween(300)),
+                            exit = fadeOut(animationSpec = tween(200)) + shrinkVertically(animationSpec = tween(200))
+                        ) {
+                            Column {
                                 HorizontalDivider(
                                     modifier = Modifier.padding(horizontal = 20.dp),
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                                TunerSettingRow(
+                                    item = SettingItem(
+                                        Icons.Default.Update,
+                                        "Periodic Check",
+                                        "Automatically check for updates from Rhythm's GitHub repo",
+                                        toggleState = autoCheckForUpdates,
+                                        onToggleChange = { appSettings.setAutoCheckForUpdates(it) }
+                                    )
+                                )
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                                TunerSettingRow(
+                                    item = SettingItem(
+                                        Icons.Default.Category,
+                                        "Update Channel",
+                                        "${updateChannel.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }} - Tap to change",
+                                        onClick = { showChannelDialog = true }
+                                    )
+                                )
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                                TunerSettingRow(
+                                    item = SettingItem(
+                                        Icons.Default.Schedule,
+                                        "Check Interval",
+                                        "Every $updateCheckIntervalHours hours",
+                                        onClick = { showIntervalDialog = true }
+                                    )
                                 )
                             }
                         }
@@ -3172,6 +3201,163 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                 }
             }
         }
+    }
+    
+    // Update Channel Dialog
+    if (showChannelDialog) {
+        AlertDialog(
+            onDismissRequest = { showChannelDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Category,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = { Text("Update Channel") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "Choose which update channel to follow:",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    val channels = listOf(
+                        "stable" to "Stable - Tested and reliable releases",
+                        "beta" to "Beta - Early access to new features"
+                    )
+                    
+                    channels.forEach { (channel, description) ->
+                        Card(
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                appSettings.setUpdateChannel(channel)
+                                showChannelDialog = false
+                            },
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (updateChannel == channel)
+                                    MaterialTheme.colorScheme.primaryContainer
+                                else
+                                    MaterialTheme.colorScheme.surfaceVariant
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = channel.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Text(
+                                        text = description,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                if (updateChannel == channel) {
+                                    Icon(
+                                        imageVector = Icons.Filled.CheckCircle,
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showChannelDialog = false }) {
+                    Text("Close")
+                }
+            },
+            shape = RoundedCornerShape(24.dp)
+        )
+    }
+    
+    // Update Check Interval Dialog
+    if (showIntervalDialog) {
+        AlertDialog(
+            onDismissRequest = { showIntervalDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Schedule,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = { Text("Update Check Interval") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "How often should Rhythm check for updates?",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    val intervals = listOf(
+                        1 to "Every hour",
+                        6 to "Every 6 hours",
+                        12 to "Every 12 hours",
+                        24 to "Once a day",
+                        168 to "Once a week"
+                    )
+                    
+                    intervals.forEach { (hours, label) ->
+                        Card(
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                appSettings.setUpdateCheckIntervalHours(hours)
+                                showIntervalDialog = false
+                            },
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (updateCheckIntervalHours == hours)
+                                    MaterialTheme.colorScheme.primaryContainer
+                                else
+                                    MaterialTheme.colorScheme.surfaceVariant
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = if (updateCheckIntervalHours == hours) FontWeight.SemiBold else FontWeight.Normal,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                if (updateCheckIntervalHours == hours) {
+                                    Icon(
+                                        imageVector = Icons.Filled.CheckCircle,
+                                        contentDescription = "Selected",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showIntervalDialog = false }) {
+                    Text("Close")
+                }
+            },
+            shape = RoundedCornerShape(24.dp)
+        )
     }
 }
 
@@ -5122,13 +5308,100 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Column {
-                        group.items.forEachIndexed { index, item ->
-                            TunerSettingRow(item = item)
-                            if (index < group.items.lastIndex) {
+                        when (group.title) {
+                            "Display Mode" -> {
+                                // First item: Dynamic Colors
+                                TunerSettingRow(item = group.items[0])
                                 HorizontalDivider(
                                     modifier = Modifier.padding(horizontal = 20.dp),
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                                 )
+                                // Second item: Follow System Theme
+                                TunerSettingRow(item = group.items[1])
+                                
+                                // Third item: Dark Mode with AnimatedVisibility
+                                AnimatedVisibility(
+                                    visible = !useSystemTheme,
+                                    enter = fadeIn(animationSpec = tween(300)) + expandVertically(animationSpec = tween(300)),
+                                    exit = fadeOut(animationSpec = tween(200)) + shrinkVertically(animationSpec = tween(200))
+                                ) {
+                                    Column {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 20.dp),
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                        )
+                                        TunerSettingRow(item = group.items[2])
+                                    }
+                                }
+                            }
+                            "Festive Themes" -> {
+                                // First item: Enable Festive Themes
+                                TunerSettingRow(item = group.items[0])
+                                
+                                // Second item: Auto-Detect Festival with AnimatedVisibility
+                                AnimatedVisibility(
+                                    visible = festiveThemeEnabled,
+                                    enter = fadeIn(animationSpec = tween(300)) + expandVertically(animationSpec = tween(300)),
+                                    exit = fadeOut(animationSpec = tween(200)) + shrinkVertically(animationSpec = tween(200))
+                                ) {
+                                    Column {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 20.dp),
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                        )
+                                        TunerSettingRow(item = group.items[1])
+                                    }
+                                }
+                            }
+                            "Particle Effects" -> {
+                                // First item: Show Animated Particles
+                                TunerSettingRow(item = group.items[0])
+                                
+                                // Second item: Particle Intensity with AnimatedVisibility
+                                AnimatedVisibility(
+                                    visible = festiveThemeShowParticles,
+                                    enter = fadeIn(animationSpec = tween(300)) + expandVertically(animationSpec = tween(300)),
+                                    exit = fadeOut(animationSpec = tween(200)) + shrinkVertically(animationSpec = tween(200))
+                                ) {
+                                    Column {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 20.dp),
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                        )
+                                        TunerSettingRow(item = group.items[1])
+                                    }
+                                }
+                            }
+                            "Emoji Decorations" -> {
+                                // First item: Show Emoji Decorations
+                                TunerSettingRow(item = group.items[0])
+                                
+                                // Second item: Emoji Intensity with AnimatedVisibility
+                                AnimatedVisibility(
+                                    visible = festiveThemeShowEmojiDecorations,
+                                    enter = fadeIn(animationSpec = tween(300)) + expandVertically(animationSpec = tween(300)),
+                                    exit = fadeOut(animationSpec = tween(200)) + shrinkVertically(animationSpec = tween(200))
+                                ) {
+                                    Column {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 20.dp),
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                        )
+                                        TunerSettingRow(item = group.items[1])
+                                    }
+                                }
+                            }
+                            else -> {
+                                // Default rendering for other groups
+                                group.items.forEachIndexed { index, item ->
+                                    TunerSettingRow(item = item)
+                                    if (index < group.items.lastIndex) {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 20.dp),
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -8705,5 +8978,208 @@ private fun MediaScanTipItem(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onTertiaryContainer
         )
+    }
+}
+
+// Lyrics Source Settings Screen
+@Composable
+fun LyricsSourceSettingsScreen(onBackClick: () -> Unit) {
+    val context = LocalContext.current
+    val appSettings = AppSettings.getInstance(context)
+    val hapticFeedback = LocalHapticFeedback.current
+
+    val lyricsSourcePreference by appSettings.lyricsSourcePreference.collectAsState()
+
+    CollapsibleHeaderScreen(
+        title = "Lyrics Source",
+        showBackButton = true,
+        onBackClick = {
+            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+            onBackClick()
+        }
+    ) { modifier ->
+        LazyColumn(
+            modifier = modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(horizontal = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            item { Spacer(modifier = Modifier.height(8.dp)) }
+
+            item {
+                Text(
+                    text = "Lyrics Source Priority",
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontFamily = FontFamily.Default,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+                Text(
+                    text = "Choose where Rhythm should look for lyrics first",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 16.dp)
+                )
+            }
+
+            val sourceOptions = listOf<Pair<chromahub.rhythm.app.data.LyricsSourcePreference, Triple<String, String, androidx.compose.ui.graphics.vector.ImageVector>>>(
+                chromahub.rhythm.app.data.LyricsSourcePreference.EMBEDDED_FIRST to Triple(
+                    "Embedded First",
+                    "Prefer lyrics embedded in audio files, fallback to online APIs",
+                    Icons.Default.MusicNote
+                ),
+                chromahub.rhythm.app.data.LyricsSourcePreference.API_FIRST to Triple(
+                    "Online First",
+                    "Prefer online APIs (Apple Music, LRCLib), fallback to embedded",
+                    Icons.Default.CloudQueue
+                ),
+                chromahub.rhythm.app.data.LyricsSourcePreference.LOCAL_FIRST to Triple(
+                    "Local First",
+                    "Prefer local .lrc files, then embedded lyrics, then online APIs",
+                    Icons.Default.Storage
+                )
+            )
+
+            items(sourceOptions) { (preference, info) ->
+                val (title, description, icon) = info
+                val isSelected = lyricsSourcePreference == preference
+
+                Card(
+                    onClick = {
+                        HapticUtils.performHapticFeedback(
+                            context,
+                            hapticFeedback,
+                            HapticFeedbackType.TextHandleMove
+                        )
+                        appSettings.setLyricsSourcePreference(preference)
+                    },
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isSelected)
+                            MaterialTheme.colorScheme.primaryContainer
+                        else
+                            MaterialTheme.colorScheme.surfaceContainer
+                    ),
+                    shape = RoundedCornerShape(18.dp),
+                    border = if (isSelected) {
+                        BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                    } else null,
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = if (isSelected) 2.dp else 0.dp
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = if (isSelected)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.surfaceVariant,
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                Icon(
+                                    imageVector = icon,
+                                    contentDescription = null,
+                                    tint = if (isSelected)
+                                        MaterialTheme.colorScheme.onPrimary
+                                    else
+                                        MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = title,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (isSelected)
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                else
+                                    MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = description,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (isSelected)
+                                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        if (isSelected) {
+                            Icon(
+                                imageVector = Icons.Filled.CheckCircle,
+                                contentDescription = "Selected",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Info Card
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
+                    ),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(20.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Info,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "About Lyrics Sources",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        }
+
+                        Text(
+                            text = "• Embedded lyrics are stored in your audio files\n" +
+                                    "• Online APIs provide high-quality synced lyrics\n" +
+                                    "• Apple Music offers word-by-word sync\n" +
+                                    "• LRCLib provides free line-by-line sync",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                            lineHeight = 20.sp
+                        )
+                    }
+                }
+            }
+
+            item { Spacer(modifier = Modifier.height(8.dp)) }
+        }
     }
 }
