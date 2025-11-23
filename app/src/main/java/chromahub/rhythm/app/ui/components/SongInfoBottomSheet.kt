@@ -991,11 +991,10 @@ private fun EditSongSheet(
         isSaving = true
         when {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> {
-                // Android 13+ - Request media permissions
+                // Android 13+ - Request only audio permission (images are optional)
                 multiplePermissionsLauncher.launch(
                     arrayOf(
-                        Manifest.permission.READ_MEDIA_AUDIO,
-                        Manifest.permission.READ_MEDIA_IMAGES
+                        Manifest.permission.READ_MEDIA_AUDIO
                     )
                 )
             }
