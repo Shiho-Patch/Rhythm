@@ -764,14 +764,26 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                 } else {
                     player.play()
                 }
+                // Update widget immediately after action
+                updateWidgetFromMediaItem(player.currentMediaItem)
             }
             ACTION_SKIP_NEXT -> {
                 Log.d(TAG, "Widget skip next action")
                 player.seekToNext()
+                // Update widget immediately after action
+                serviceScope.launch {
+                    kotlinx.coroutines.delay(100) // Small delay for track change
+                    updateWidgetFromMediaItem(player.currentMediaItem)
+                }
             }
             ACTION_SKIP_PREVIOUS -> {
                 Log.d(TAG, "Widget skip previous action")
                 player.seekToPrevious()
+                // Update widget immediately after action
+                serviceScope.launch {
+                    kotlinx.coroutines.delay(100) // Small delay for track change
+                    updateWidgetFromMediaItem(player.currentMediaItem)
+                }
             }
         }
         

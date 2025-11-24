@@ -3,7 +3,8 @@
     android:color="?android:colorControlHighlight">
     <item>
         <shape android:shape="oval">
-            <solid android:color="#332D41" />
+            <!-- Android 16 expressive button background -->
+            <solid android:color="@color/widget_secondary_container_dark" />
         </shape>
     </item>
 </ripple>

@@ -6,8 +6,8 @@
     <string name="media3_notification_channel_description">Media playback controls</string>
     
     <!-- Widget strings -->
-    <string name="widget_description">Rhythm Music Widget - Control playback with Material Design. Resizable from 2x1 to 4x4</string>
-    <string name="widget_description_glance">Rhythm Music - Modern Material 3 widget with dynamic colors and 6 responsive layouts</string>
+    <string name="widget_description">Rhythm Music Widget - Control Playback with responsive layouts supporting 2x1 to 5x5 grid sizes</string>
+    <string name="widget_description_glance">Rhythm Music - Control Playback with 9 responsive layouts, Material 3 design, and real-time state updates</string>
     <string name="widget_name_glance">Rhythm Music</string>
     <string name="no_song_playing">No song playing</string>
     <string name="unknown_artist">Unknown artist</string>

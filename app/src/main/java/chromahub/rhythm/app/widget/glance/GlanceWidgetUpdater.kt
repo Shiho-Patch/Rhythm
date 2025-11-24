@@ -1,12 +1,19 @@
 package chromahub.rhythm.app.widget.glance
 
 import android.content.Context
+import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.appwidget.updateAll
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import chromahub.rhythm.app.data.Song
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.booleanPreferencesKey
 
 /**
  * Utility object for updating the Glance-based widget
@@ -27,7 +34,7 @@ object GlanceWidgetUpdater {
         hasPrevious: Boolean = false,
         hasNext: Boolean = false
     ) {
-        // Update SharedPreferences for widget data synchronously
+        // Update SharedPreferences for legacy widget
         val prefs = context.getSharedPreferences("widget_prefs", Context.MODE_PRIVATE)
         prefs.edit().apply {
             if (song != null) {
@@ -44,12 +51,36 @@ object GlanceWidgetUpdater {
             putBoolean(RhythmMusicWidget.KEY_IS_PLAYING, isPlaying)
             putBoolean(RhythmMusicWidget.KEY_HAS_PREVIOUS, hasPrevious)
             putBoolean(RhythmMusicWidget.KEY_HAS_NEXT, hasNext)
-            commit() // Use commit for immediate write
+            apply() // Use apply for async write
         }
         
-        // Trigger widget update immediately
+        // Update Glance widget state directly using Glance state system
         scope.launch {
             try {
+                val manager = GlanceAppWidgetManager(context)
+                val glanceIds = manager.getGlanceIds(RhythmMusicWidget::class.java)
+                
+                glanceIds.forEach { glanceId ->
+                    updateAppWidgetState(context, glanceId) { prefs ->
+                        if (song != null) {
+                            prefs[stringPreferencesKey(RhythmMusicWidget.KEY_SONG_TITLE)] = song.title
+                            prefs[stringPreferencesKey(RhythmMusicWidget.KEY_ARTIST_NAME)] = song.artist
+                            prefs[stringPreferencesKey(RhythmMusicWidget.KEY_ALBUM_NAME)] = song.album
+                            song.artworkUri?.let {
+                                prefs[stringPreferencesKey(RhythmMusicWidget.KEY_ARTWORK_URI)] = it.toString()
+                            }
+                        } else {
+                            prefs[stringPreferencesKey(RhythmMusicWidget.KEY_SONG_TITLE)] = "No song playing"
+                            prefs[stringPreferencesKey(RhythmMusicWidget.KEY_ARTIST_NAME)] = "Unknown artist"
+                            prefs[stringPreferencesKey(RhythmMusicWidget.KEY_ALBUM_NAME)] = ""
+                        }
+                        prefs[booleanPreferencesKey(RhythmMusicWidget.KEY_IS_PLAYING)] = isPlaying
+                        prefs[booleanPreferencesKey(RhythmMusicWidget.KEY_HAS_PREVIOUS)] = hasPrevious
+                        prefs[booleanPreferencesKey(RhythmMusicWidget.KEY_HAS_NEXT)] = hasNext
+                    }
+                }
+                
+                // Force update all widgets
                 RhythmMusicWidget().updateAll(context)
             } catch (e: Exception) {
                 android.util.Log.e("GlanceWidgetUpdater", "Error updating widget", e)
@@ -80,6 +111,24 @@ object GlanceWidgetUpdater {
             } catch (e: Exception) {
                 android.util.Log.e("GlanceWidgetUpdater", "Error forcing widget update", e)
             }
+        }
+        
+        // Also trigger worker update
+        scheduleWidgetUpdate(context, delayMillis = 0)
+    }
+    
+    /**
+     * Schedule a widget update using WorkManager for reliability
+     */
+    private fun scheduleWidgetUpdate(context: Context, delayMillis: Long = 0) {
+        try {
+            val updateRequest = OneTimeWorkRequestBuilder<RhythmWidgetWorker>()
+                .setInitialDelay(delayMillis, TimeUnit.MILLISECONDS)
+                .build()
+            
+            WorkManager.getInstance(context).enqueue(updateRequest)
+        } catch (e: Exception) {
+            android.util.Log.e("GlanceWidgetUpdater", "Error scheduling widget update", e)
         }
     }
 }

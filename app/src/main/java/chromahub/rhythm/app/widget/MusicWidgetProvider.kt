@@ -86,19 +86,37 @@ class MusicWidgetProvider : AppWidgetProvider() {
         val minWidth = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
         val minHeight = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT)
         
-        // Determine widget layout based on size - matching Glance responsive breakpoints
+        // Determine widget layout based on size - comprehensive grid support
+        // Android home screen grid: ~70dp per cell
         val layoutId = when {
-            // Extra Small (2x1): 110-150dp width x 48-100dp height
-            minWidth < 150 && minHeight < 100 -> R.layout.widget_music_extra_small
-            // Small (2x2): 120-180dp width x 120-180dp height
-            minWidth < 180 && minHeight >= 100 -> R.layout.widget_music_small
-            // Wide (4x2): 320+ width x 120-180dp height
-            minWidth >= 300 && minHeight < 180 -> R.layout.widget_music_wide
-            // Extra Large (4x4+): 320+ width x 320+ height
+            // 5x5+ (400+ width x 400+ height): Premium largest size
+            minWidth >= 380 && minHeight >= 380 -> R.layout.widget_music_5x5
+            
+            // 5x4 (400+ width x 320+ height): Tall wide layout
+            minWidth >= 380 && minHeight >= 300 -> R.layout.widget_music_extra_large
+            
+            // 4x4+ (320+ width x 320+ height): Extra large square
             minWidth >= 300 && minHeight >= 280 -> R.layout.widget_music_extra_large
-            // Large (3x3): 250+ width x 250+ height
+            
+            // 5x3 or 4x3 (300+ width x 250+ height): Large horizontal
+            minWidth >= 300 && minHeight >= 230 -> R.layout.widget_music_large
+            
+            // 3x3 (250+ width x 250+ height): Large square
             minWidth >= 200 && minHeight >= 200 -> R.layout.widget_music_large
-            // Medium (3x2): 180-300dp width x 120-250dp height (default fallback)
+            
+            // 5x2 or 4x2 (320+ width x 120-230dp height): Wide horizontal
+            minWidth >= 300 && minHeight < 230 -> R.layout.widget_music_wide
+            
+            // 3x2 (180-300dp width x 120-200dp height): Medium horizontal
+            minWidth >= 180 && minHeight >= 100 && minHeight < 200 -> R.layout.widget_music_medium
+            
+            // 2x2 (120-180dp width x 120-180dp height): Small square
+            minWidth >= 100 && minWidth < 180 && minHeight >= 100 -> R.layout.widget_music_small
+            
+            // 3x1 or 2x1 (110-300dp width x 48-100dp height): Extra small horizontal strip
+            minHeight < 100 -> R.layout.widget_music_extra_small
+            
+            // Default fallback: Medium for any unmatched sizes
             else -> R.layout.widget_music_medium
         }
         

@@ -108,7 +108,7 @@ fun LicensesBottomSheet(
             // Libraries Card
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
                 ),
                 shape = RoundedCornerShape(20.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -244,6 +244,24 @@ fun LicensesBottomSheet(
                 )
                 
                 LicenseSheetItem(
+                    name = "Glance AppWidget",
+                    description = "Modern reactive widgets framework with Material 3",
+                    license = "Apache License 2.0",
+                    url = "https://developer.android.com/jetpack/androidx/releases/glance",
+                    context = context,
+                    haptic = haptic
+                )
+                
+                LicenseSheetItem(
+                    name = "WorkManager",
+                    description = "Deferrable, asynchronous task management library",
+                    license = "Apache License 2.0",
+                    url = "https://developer.android.com/jetpack/androidx/releases/work",
+                    context = context,
+                    haptic = haptic
+                )
+                
+                LicenseSheetItem(
                     name = "Material Icons Extended",
                     description = "Extended set of Material Design icons",
                     license = "Apache License 2.0",
@@ -316,7 +334,7 @@ private fun LicenseSheetItem(
             context.startActivity(intent)
         },
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f)
         ),
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth()

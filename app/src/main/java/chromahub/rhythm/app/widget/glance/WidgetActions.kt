@@ -5,7 +5,9 @@ import android.content.Intent
 import androidx.glance.GlanceId
 import androidx.glance.action.ActionParameters
 import androidx.glance.appwidget.action.ActionCallback
+import androidx.glance.appwidget.updateAll
 import chromahub.rhythm.app.service.MediaPlaybackService
+import kotlinx.coroutines.delay
 
 /**
  * Play/Pause action callback for widget
@@ -20,6 +22,10 @@ class PlayPauseAction : ActionCallback {
             action = MediaPlaybackService.ACTION_PLAY_PAUSE
         }
         context.startService(intent)
+        
+        // Trigger immediate widget update after short delay for state change
+        delay(100)
+        RhythmMusicWidget().updateAll(context)
     }
 }
 
@@ -36,6 +42,10 @@ class SkipNextAction : ActionCallback {
             action = MediaPlaybackService.ACTION_SKIP_NEXT
         }
         context.startService(intent)
+        
+        // Trigger immediate widget update after short delay for state change
+        delay(100)
+        RhythmMusicWidget().updateAll(context)
     }
 }
 
@@ -52,5 +62,9 @@ class SkipPreviousAction : ActionCallback {
             action = MediaPlaybackService.ACTION_SKIP_PREVIOUS
         }
         context.startService(intent)
+        
+        // Trigger immediate widget update after short delay for state change
+        delay(100)
+        RhythmMusicWidget().updateAll(context)
     }
 }

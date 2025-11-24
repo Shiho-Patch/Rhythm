@@ -36,6 +36,12 @@ import chromahub.rhythm.app.R
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.layout.ContentScale
 import androidx.glance.appwidget.ImageProvider as AppWidgetImageProvider
+import androidx.glance.state.GlanceStateDefinition
+import androidx.glance.state.PreferencesGlanceStateDefinition
+import androidx.glance.currentState
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.booleanPreferencesKey
 
 /**
  * Modern Glance-based Music Widget with Material 3 Expressive Design
@@ -59,6 +65,9 @@ class RhythmMusicWidget : GlanceAppWidget() {
         const val KEY_HAS_NEXT = "has_next"
     }
     
+    // Use preferences-based state definition for reactive updates
+    override val stateDefinition: GlanceStateDefinition<*> = PreferencesGlanceStateDefinition
+    
     // Responsive sizing - adapts to different widget sizes
     override val sizeMode = SizeMode.Responsive(
         setOf(
@@ -73,7 +82,8 @@ class RhythmMusicWidget : GlanceAppWidget() {
     
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {
-            val widgetData = getWidgetData(context)
+            val prefs = currentState<Preferences>()
+            val widgetData = getWidgetData(prefs)
             GlanceTheme {
                 ResponsiveWidgetContent(widgetData)
             }
@@ -889,16 +899,15 @@ class RhythmMusicWidget : GlanceAppWidget() {
         }
     }
     
-    private fun getWidgetData(context: Context): WidgetData {
-        val prefs = context.getSharedPreferences("widget_prefs", Context.MODE_PRIVATE)
+    private fun getWidgetData(prefs: Preferences): WidgetData {
         return WidgetData(
-            songTitle = prefs.getString(KEY_SONG_TITLE, "No song playing") ?: "No song playing",
-            artistName = prefs.getString(KEY_ARTIST_NAME, "Unknown artist") ?: "Unknown artist",
-            albumName = prefs.getString(KEY_ALBUM_NAME, "") ?: "",
-            isPlaying = prefs.getBoolean(KEY_IS_PLAYING, false),
-            artworkUri = prefs.getString(KEY_ARTWORK_URI, null)?.let { android.net.Uri.parse(it) },
-            hasPrevious = prefs.getBoolean(KEY_HAS_PREVIOUS, false),
-            hasNext = prefs.getBoolean(KEY_HAS_NEXT, false)
+            songTitle = prefs[stringPreferencesKey(KEY_SONG_TITLE)] ?: "No song playing",
+            artistName = prefs[stringPreferencesKey(KEY_ARTIST_NAME)] ?: "Unknown artist",
+            albumName = prefs[stringPreferencesKey(KEY_ALBUM_NAME)] ?: "",
+            isPlaying = prefs[booleanPreferencesKey(KEY_IS_PLAYING)] ?: false,
+            artworkUri = prefs[stringPreferencesKey(KEY_ARTWORK_URI)]?.let { android.net.Uri.parse(it) },
+            hasPrevious = prefs[booleanPreferencesKey(KEY_HAS_PREVIOUS)] ?: false,
+            hasNext = prefs[booleanPreferencesKey(KEY_HAS_NEXT)] ?: false
         )
     }
 }

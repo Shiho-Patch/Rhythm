@@ -3,7 +3,8 @@
     android:color="?android:colorPrimary">
     <item>
         <shape android:shape="oval">
-            <solid android:color="#6750A4" />
+            <!-- Android 16 expressive primary button with vibrant color -->
+            <solid android:color="@color/widget_primary_dark" />
         </shape>
     </item>
 </ripple>

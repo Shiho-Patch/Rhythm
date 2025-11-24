@@ -145,6 +145,14 @@ Rhythm automatically detects and displays audio quality badges:
 - 🖼️ **Online Artwork** - Fetch high-quality album art from Deezer
 - 📱 **Telegram Support** - Join our active community
 
+### 📲 **Home Screen Widgets**
+- 🎛️ **Modern Design** - Android 16 expressive style with rounded corners and vibrant colors
+- 📐 **9 Responsive Layouts** - From compact 2x1 to premium 5x5, perfect fit for every home screen
+- ⚡ **Real-Time Updates** - Glance widgets with instant state synchronization using Glance framework
+- 🎨 **Material 3 Colors** - Dynamic theming with translucent backgrounds and proper contrast
+- 🔄 **Dual Support** - Both legacy RemoteViews and modern Glance implementations
+- 📦 **Complete Grid Coverage** - 2x1, 2x2, 2x3, 3x2, 3x3, 4x2, 4x4, 5x2, 5x5 layouts available
+
 ---
 
 ## 📱 Screenshots
@@ -300,9 +308,12 @@ Rhythm requests the following permissions for optimal functionality:
 | **🎧 Audio Settings**<br>`MODIFY_AUDIO_SETTINGS` | Control audio output and routing | • Audio focus management<br>• Bluetooth device switching<br>• Volume control integration<br>• Equalizer support |
 | **📱 Bluetooth**<br>`BLUETOOTH`<br>`BLUETOOTH_ADMIN` (API ≤30)<br>`BLUETOOTH_CONNECT`<br>`BLUETOOTH_SCAN` | Connect to wireless audio devices | • Bluetooth speaker/headphone support<br>• Audio output device selection<br>• Wireless playback controls |
 | **📲 Install Packages**<br>`REQUEST_INSTALL_PACKAGES` | Install app updates automatically | • In-app APK installation<br>• Automatic update deployment |
+| **📲 Home Screen Widgets**<br>`BIND_APPWIDGET`<br>`UPDATE_APPWIDGET` | Display and update home screen widgets | • Legacy RemoteViews widgets<br>• Modern Glance widgets<br>• Real-time playback state<br>• Background widget updates |
 | **🎵 Media Playback**<br>`FOREGROUND_SERVICE`<br>`FOREGROUND_SERVICE_MEDIA_PLAYBACK` | Background music playback | • Continuous music playback<br>• Lock screen controls<br>• Background audio processing |
 
 > **Privacy Note**: Rhythm is fully FOSS-compliant and only uses standard media permissions. We removed `MANAGE_EXTERNAL_STORAGE` and `ACCESS_MEDIA_LOCATION` as they're not needed for music playback. All permissions are used solely for the app's core functionality, and no personal data is ever uploaded.
+
+> **Android 16 Update**: Widget support now includes modern Glance framework with 9 responsive layouts (2x1 to 5x5), real-time state synchronization, and Material 3 design with dynamic theming.
 
 ### 🎵 **Basic App Usage**
 
@@ -341,6 +352,16 @@ Rhythm requests the following permissions for optimal functionality:
 - **Equalizer**: Access system equalizer for audio adjustments
 - **Sleep Timer**: Set automatic playback stop time
 - **Output Selection**: Choose audio output device (speaker, Bluetooth, etc.)
+
+#### **Home Screen Widgets**
+- **Add Widget**: Long-press home screen → Widgets → Rhythm Music
+- **Resize Widget**: Long-press widget → Drag handles to resize (2x1 to 5x5)
+- **Widget Types**: 
+  - **Legacy Widget** - RemoteViews with 7 sizes (extra small to 5x5)
+  - **Glance Widget** - Modern Material 3 with 9 responsive layouts
+- **Controls**: Play/pause, skip next/previous directly from widget
+- **Real-Time Updates**: Widget shows current song, artist, and album art
+- **Automatic Updates**: Background WorkManager ensures fresh data
 
 ### 🆘 **Troubleshooting**
 
@@ -395,10 +416,12 @@ Rhythm requests the following permissions for optimal functionality:
 | 🎨 **UI Framework** | **Jetpack Compose** | Modern declarative UI toolkit for Android |
 | 🎭 **Design System** | **Material 3** | Latest Material Design components and theming |
 | 🎵 **Audio Engine** | **Media3 ExoPlayer** | Professional-grade media playback |
+| 📲 **Widgets** | **Glance 1.1.1** | Modern reactive widgets with Material 3 |
 | 💻 **Language** | **Kotlin 100%** | Modern, safe, and concise programming |
 | 🏗️ **Architecture** | **MVVM + Clean** | Separation of concerns and testability |
 | ⚡ **Async** | **Coroutines & Flow** | Reactive and efficient asynchronous programming |
 | 🔄 **State Management** | **StateFlow** | Reactive UI state management |
+| ⏰ **Background Work** | **WorkManager** | Reliable background widget updates |
 | 🧭 **Navigation** | **Navigation Compose** | Type-safe navigation between screens |
 | 🖼️ **Image Loading** | **Coil** | Efficient image loading and caching |
 | 🌐 **Networking** | **Retrofit + OkHttp** | Type-safe HTTP client |
@@ -622,7 +645,6 @@ We're grateful to these amazing individuals who have contributed to making Rhyth
 - **[Izzy](https://github.com/IzzySoft)** - Manages updates on IzzyOnDroid
 - **[Christian](https://github.com/mardous)** - Collaboration & Project Booming's Lead Dev
 - **[Alex](https://github.com/Paxsenix0)** - Spotify Canvas API Integration
-- **[DJ SMAS](https://github.com/smas7832)** - UI/UX Feedback & Suggestions
 
 ### 💖 **Special Thanks**
 
