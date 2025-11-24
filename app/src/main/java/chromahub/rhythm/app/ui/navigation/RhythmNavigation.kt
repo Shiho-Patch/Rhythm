@@ -250,39 +250,12 @@ fun RhythmNavigation(
     // Theme state
     val useSystemTheme by themeViewModel.useSystemTheme.collectAsState()
     val darkMode by themeViewModel.darkMode.collectAsState()
-
-    // Festive theme states
-    val festiveThemeEnabled by appSettings.festiveThemeEnabled.collectAsState()
-    val festiveThemeSelected by appSettings.festiveThemeSelected.collectAsState()
-    val festiveThemeAutoDetect by appSettings.festiveThemeAutoDetect.collectAsState()
-    val festiveThemeShowParticles by appSettings.festiveThemeShowParticles.collectAsState()
-    val festiveThemeShowDecorations by appSettings.festiveThemeShowDecorations.collectAsState()
-    val festiveThemeParticleIntensity by appSettings.festiveThemeParticleIntensity.collectAsState()
-    val festiveThemeShowEmojiDecorations by appSettings.festiveThemeShowEmojiDecorations.collectAsState()
-    val festiveThemeEmojiDecorationsIntensity by appSettings.festiveThemeEmojiDecorationsIntensity.collectAsState()
-    val festiveThemeApplyToSplash by appSettings.festiveThemeApplyToSplash.collectAsState()
-    val festiveThemeApplyToMainUI by appSettings.festiveThemeApplyToMainUI.collectAsState()
     
     // Default landing screen
     val defaultScreen by appSettings.defaultScreen.collectAsState()
     val startDestination = when (defaultScreen) {
         "library" -> Screen.Library.route
         else -> Screen.Home.route
-    }
-
-    // Determine active festive theme
-    val activeFestiveTheme = remember(festiveThemeEnabled, festiveThemeAutoDetect, festiveThemeSelected) {
-        if (!festiveThemeEnabled) {
-            chromahub.rhythm.app.ui.theme.FestiveTheme.NONE
-        } else if (festiveThemeAutoDetect) {
-            chromahub.rhythm.app.ui.theme.FestiveTheme.detectCurrentFestival()
-        } else {
-            try {
-                chromahub.rhythm.app.ui.theme.FestiveTheme.valueOf(festiveThemeSelected)
-            } catch (e: Exception) {
-                chromahub.rhythm.app.ui.theme.FestiveTheme.NONE
-            }
-        }
     }
 
     var selectedTab by remember { mutableIntStateOf(0) }
@@ -700,30 +673,6 @@ fun RhythmNavigation(
                 }
             }
         ) { paddingValues ->
-            // Festive decorations states
-            val festiveThemeEnabled by appSettings.festiveThemeEnabled.collectAsState()
-            val festiveThemeSelected by appSettings.festiveThemeSelected.collectAsState()
-            val festiveThemeAutoDetect by appSettings.festiveThemeAutoDetect.collectAsState()
-            val festiveThemeShowParticles by appSettings.festiveThemeShowParticles.collectAsState()
-            val festiveThemeParticleIntensity by appSettings.festiveThemeParticleIntensity.collectAsState()
-            val festiveThemeApplyToMainUI by appSettings.festiveThemeApplyToMainUI.collectAsState()
-
-            // Determine active festive theme
-            val activeFestiveTheme =
-                remember(festiveThemeEnabled, festiveThemeAutoDetect, festiveThemeSelected) {
-                    if (!festiveThemeEnabled) {
-                        chromahub.rhythm.app.ui.theme.FestiveTheme.NONE
-                    } else if (festiveThemeAutoDetect) {
-                        chromahub.rhythm.app.ui.theme.FestiveTheme.detectCurrentFestival()
-                    } else {
-                        try {
-                            chromahub.rhythm.app.ui.theme.FestiveTheme.valueOf(festiveThemeSelected)
-                        } catch (e: Exception) {
-                            chromahub.rhythm.app.ui.theme.FestiveTheme.NONE
-                        }
-                    }
-                }
-
             Box(modifier = Modifier.fillMaxSize()) {
                 // Main content
                 NavHost(
@@ -1967,31 +1916,6 @@ fun RhythmNavigation(
                                 navController.popBackStack()
                             }
                         }
-                    }
-                }
-
-                // Festive decorations overlay on top of content
-                if (festiveThemeEnabled && festiveThemeApplyToMainUI && activeFestiveTheme != chromahub.rhythm.app.ui.theme.FestiveTheme.NONE) {
-                    chromahub.rhythm.app.ui.components.FestiveDecorations(
-                        config = chromahub.rhythm.app.ui.theme.FestiveThemeConfig(
-                            enabled = festiveThemeEnabled,
-                            selectedTheme = activeFestiveTheme,
-                            autoDetect = festiveThemeAutoDetect,
-                            showParticles = festiveThemeShowParticles,
-                            particleIntensity = festiveThemeParticleIntensity,
-                            applyToSplash = false,
-                            applyToMainUI = festiveThemeApplyToMainUI
-                        ),
-                        modifier = Modifier.fillMaxSize()
-                    )
-                    
-                    // Emoji decorations overlay for main UI
-                    if (festiveThemeShowEmojiDecorations) {
-                        chromahub.rhythm.app.ui.screens.EmojiDecorationsOverlay(
-                            theme = activeFestiveTheme,
-                            intensity = festiveThemeEmojiDecorationsIntensity,
-                            modifier = Modifier.fillMaxSize()
-                        )
                     }
                 }
             }
