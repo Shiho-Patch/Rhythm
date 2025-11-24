@@ -78,6 +78,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.delay
+import chromahub.rhythm.app.R
 import chromahub.rhythm.app.data.PlaybackLocation
 import chromahub.rhythm.app.ui.components.RhythmIcons
 import chromahub.rhythm.app.data.AppSettings

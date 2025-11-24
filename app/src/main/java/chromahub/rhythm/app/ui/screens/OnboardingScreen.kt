@@ -1054,6 +1054,7 @@ fun EnhancedPermissionCard(
     description: String,
     isGranted: Boolean = false
 ) {
+    val context = LocalContext.current
     // Animated state changes
     val containerColor by animateColorAsState(
         targetValue = if (isGranted) 
@@ -3969,6 +3970,7 @@ private fun OnboardingExpressiveUpdateStatus(
     onDismissError: () -> Unit,
     onRetry: () -> Unit
 ) {
+    val context = LocalContext.current
     // Main Column - NO BOX OR CARD WRAPPING
     Column(
         modifier = Modifier

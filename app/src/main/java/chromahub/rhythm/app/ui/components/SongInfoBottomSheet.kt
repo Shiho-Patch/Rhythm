@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import chromahub.rhythm.app.R
 import chromahub.rhythm.app.data.Song
 import chromahub.rhythm.app.data.AppSettings
 import chromahub.rhythm.app.ui.components.M3PlaceholderType
@@ -634,6 +635,7 @@ private fun MetadataGridSection(
     extendedInfo: ExtendedSongInfo?,
     isLoading: Boolean
 ) {
+    val context = LocalContext.current
     // Prepare metadata items (avoiding duplicates and showing more information)
     val metadataItems = buildList {
         // Basic song info
@@ -833,6 +835,7 @@ private fun MetadataGridSection(
 private fun MetadataGridItem(
     item: MetadataItem
 ) {
+    val context = LocalContext.current
     Surface(
         modifier = Modifier
             .fillMaxWidth()

@@ -474,6 +474,7 @@ private fun ModernScrollableContent(
     musicViewModel: chromahub.rhythm.app.viewmodel.MusicViewModel,
     coroutineScope: CoroutineScope
 ) {
+    val context = LocalContext.current
     val scrollState = rememberScrollState()
     val allSongs by musicViewModel.filteredSongs.collectAsState()
     

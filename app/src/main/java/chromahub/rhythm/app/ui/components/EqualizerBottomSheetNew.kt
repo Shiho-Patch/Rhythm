@@ -87,6 +87,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import chromahub.rhythm.app.R
 import chromahub.rhythm.app.ui.components.RhythmIcons
 import chromahub.rhythm.app.viewmodel.MusicViewModel
 import kotlinx.coroutines.delay
@@ -932,6 +933,8 @@ private fun EmptyEqualizerContent(
     onEnableEqualizer: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    
     Box(
         modifier = modifier
             .fillMaxWidth()

@@ -155,6 +155,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
+import chromahub.rhythm.app.R
 import chromahub.rhythm.app.data.Album
 import chromahub.rhythm.app.data.Artist
 import chromahub.rhythm.app.data.Playlist
@@ -1885,6 +1886,7 @@ fun SingleCardPlaylistsContent(
     onExportPlaylists: (() -> Unit)? = null,
     appSettings: AppSettings
 ) {
+    val context = LocalContext.current
     val playlistViewType by appSettings.playlistViewType.collectAsState()
 
     if (playlists.isEmpty()) {
@@ -2074,6 +2076,7 @@ fun SingleCardAlbumsContent(
     haptics: androidx.compose.ui.hapticfeedback.HapticFeedback,
     appSettings: AppSettings
 ) {
+    val context = LocalContext.current
     val albumViewType by appSettings.albumViewType.collectAsState()
 
     if (albums.isEmpty()) {
@@ -2684,6 +2687,7 @@ fun PlaylistsTab(
     onPlaylistClick: (Playlist) -> Unit,
     haptics: androidx.compose.ui.hapticfeedback.HapticFeedback
 ) {
+    val context = LocalContext.current
     if (playlists.isEmpty()) {
         EmptyState(
             message = "No playlists yet\nCreate your first playlist using the + button",
@@ -3851,6 +3855,7 @@ fun EmptyState(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.padding(48.dp)
             ) {
+                val context = LocalContext.current
                 val animatedSize by animateFloatAsState(
                     targetValue = 1f,
                     animationSpec = spring(
@@ -3921,6 +3926,7 @@ private fun AnimateIn(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
+    val context = LocalContext.current
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         visible = true
@@ -4474,6 +4480,7 @@ fun SingleCardArtistsContent(
 private fun ArtistSectionHeader(
     artistCount: Int
 ) {
+    val context = LocalContext.current
     
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -4534,6 +4541,7 @@ private fun ArtistSectionHeader(
 
 @Composable
 private fun EmptyArtistsState() {
+    val context = LocalContext.current
     Box(
         modifier = Modifier
             .fillMaxWidth()

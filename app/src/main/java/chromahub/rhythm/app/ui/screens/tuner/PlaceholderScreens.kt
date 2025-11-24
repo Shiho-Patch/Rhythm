@@ -7391,6 +7391,7 @@ private fun ColorPickerControls(
     color: Color,
     onColorChange: (Color) -> Unit
 ) {
+    val context = LocalContext.current
     val hsl = remember(color) { color.toHSL() }
 
     var hue by remember(color) { mutableStateOf(hsl.hue) }

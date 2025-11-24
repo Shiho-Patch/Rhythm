@@ -63,6 +63,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import chromahub.rhythm.app.R
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import chromahub.rhythm.app.util.HapticUtils
 import kotlinx.coroutines.delay
@@ -607,6 +608,7 @@ private fun LyricsEditorHeader(
     hasLyrics: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     Row(
         modifier = modifier
             .fillMaxWidth()

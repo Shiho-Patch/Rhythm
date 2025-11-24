@@ -61,6 +61,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import chromahub.rhythm.app.R
 import chromahub.rhythm.app.data.AppSettings
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.viewmodel.MusicViewModel

@@ -83,6 +83,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.rounded.Collections
 import androidx.compose.material.icons.rounded.VideoLibrary
+import chromahub.rhythm.app.R
 import chromahub.rhythm.app.data.Song
 import chromahub.rhythm.app.ui.components.RhythmIcons
 import chromahub.rhythm.app.ui.components.M3PlaceholderType
@@ -396,6 +397,7 @@ private fun NowPlayingCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     // Subtle pulsing animation for the Now Playing indicator
     val infiniteTransition = rememberInfiniteTransition(label = "nowPlayingPulse")
     val pulseAlpha by infiniteTransition.animateFloat(
@@ -734,6 +736,7 @@ private fun EmptyQueueContent(
     onAddSongsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -821,6 +824,7 @@ private fun EmptyUpNextContent(
     onAddSongsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     Box(
         modifier = modifier
             .fillMaxWidth()

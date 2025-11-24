@@ -300,11 +300,11 @@ fun SplashScreen(
                                 ) {
                                     Text(
                                         text = context.getString(R.string.splash_tagline),
-                                        style = MaterialTheme.typography.titleLarge,
+                                        style = MaterialTheme.typography.titleLarge.copy(
                                             letterSpacing = 1.sp,
-                                            fontSize = 17.sp
+                                            fontSize = 17.sp,
+                                            fontWeight = FontWeight.Medium
                                         ),
-                                        fontWeight = FontWeight.Medium,
                                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f),
                                         textAlign = TextAlign.Center
                                     )

@@ -49,6 +49,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import chromahub.rhythm.app.R
 import chromahub.rhythm.app.data.AppSettings
 import chromahub.rhythm.app.ui.screens.tuner.CacheSizeDialog
 import chromahub.rhythm.app.util.HapticUtils

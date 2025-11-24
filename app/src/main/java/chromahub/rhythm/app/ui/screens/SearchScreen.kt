@@ -92,6 +92,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import chromahub.rhythm.app.R
 import chromahub.rhythm.app.data.Album
 import chromahub.rhythm.app.data.Artist
 import chromahub.rhythm.app.data.Playlist
@@ -1163,6 +1164,7 @@ fun SearchBrowseContent(
     onSongClick: (Song) -> Unit = {},
     onArtistBottomSheetClick: (Artist) -> Unit = {}
 ) {
+    val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
     // Make entire content scrollable
     LazyColumn(
@@ -1956,6 +1958,7 @@ private fun RecentlyPlayedSection(
     recentlyPlayed: List<Song>,
     onSongClick: (Song) -> Unit
 ) {
+    val context = LocalContext.current
     Card(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
@@ -2476,6 +2479,7 @@ private fun RecommendedForYouSection(
     songs: List<Song>,
     onSongClick: (Song) -> Unit
 ) {
+    val context = LocalContext.current
     if (songs.isEmpty()) return
     
     Column(

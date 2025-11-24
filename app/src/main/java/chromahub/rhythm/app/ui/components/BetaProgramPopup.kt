@@ -22,12 +22,16 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import chromahub.rhythm.app.R
 
 @Composable
 fun BetaProgramPopup(onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    
     Box(
         modifier = Modifier
             .fillMaxSize()

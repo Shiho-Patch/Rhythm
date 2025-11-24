@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import chromahub.rhythm.app.R
 import chromahub.rhythm.app.data.Song
 import chromahub.rhythm.app.viewmodel.MusicViewModel
 import chromahub.rhythm.app.viewmodel.MusicViewModel.SleepAction
@@ -617,6 +618,7 @@ private fun Material3TimePickerDialog(
     onDismiss: () -> Unit,
     onTimeSelected: (hours: Int, minutes: Int) -> Unit
 ) {
+    val context = LocalContext.current
     val timePickerState = rememberTimePickerState(
         initialHour = 0,
         initialMinute = 30,

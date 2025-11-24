@@ -64,6 +64,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import chromahub.rhythm.app.R
 import chromahub.rhythm.app.data.Playlist
 import chromahub.rhythm.app.data.Song
 import chromahub.rhythm.app.ui.components.RhythmIcons
@@ -213,6 +214,8 @@ private fun AddToPlaylistHeader(
     totalPlaylists: Int,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -537,6 +540,8 @@ private fun PlaylistCard(
 private fun EmptyPlaylistsState(
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    
     Box(
         modifier = modifier
             .fillMaxWidth()

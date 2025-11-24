@@ -13,11 +13,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import chromahub.rhythm.app.R
 import chromahub.rhythm.app.util.LyricsParser
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -30,6 +32,7 @@ fun SyncedLyricsView(
     listState: LazyListState = rememberLazyListState(),
     onSeek: ((Long) -> Unit)? = null
 ) {
+    val context = LocalContext.current
     val parsedLyrics = remember(lyrics) {
         LyricsParser.parseLyrics(lyrics)
     }

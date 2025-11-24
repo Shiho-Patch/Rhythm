@@ -82,6 +82,7 @@ fun MediaScanLoader(
     musicViewModel: MusicViewModel = viewModel(),
     onScanComplete: () -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val songs by musicViewModel.songs.collectAsState()
     val albums by musicViewModel.albums.collectAsState()
     val artists by musicViewModel.artists.collectAsState()
@@ -253,8 +254,9 @@ fun MediaScanLoader(
                     Text(
                         text = context.getString(R.string.common_rhythm),
                         style = MaterialTheme.typography.displayMedium.copy(
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontWeight = FontWeight.Bold
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontWeight = FontWeight.Bold
+                        )
                     )
                 }
                 

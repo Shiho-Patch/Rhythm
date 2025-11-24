@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import chromahub.rhythm.app.R
 import chromahub.rhythm.app.util.PlaylistImportExportUtils
 import androidx.compose.animation.core.*
 import androidx.compose.animation.core.VectorConverter
@@ -42,6 +43,8 @@ fun AppRestartDialog(
     onRestart: () -> Unit,
     onContinue: () -> Unit
 ) {
+    val context = LocalContext.current
+    
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = {
@@ -104,6 +107,7 @@ fun PlaylistExportDialog(
     onExport: (PlaylistImportExportUtils.PlaylistExportFormat) -> Unit,
     onExportToCustomLocation: (PlaylistImportExportUtils.PlaylistExportFormat, Uri) -> Unit
 ) {
+    val context = LocalContext.current
     var selectedFormat by remember { mutableStateOf(PlaylistImportExportUtils.PlaylistExportFormat.JSON) }
     var showLocationOptions by remember { mutableStateOf(false) }
     
@@ -254,6 +258,7 @@ fun BulkPlaylistExportDialog(
     onExport: (PlaylistImportExportUtils.PlaylistExportFormat, Boolean) -> Unit,
     onExportToCustomLocation: (PlaylistImportExportUtils.PlaylistExportFormat, Boolean, Uri) -> Unit
 ) {
+    val context = LocalContext.current
     var selectedFormat by remember { mutableStateOf(PlaylistImportExportUtils.PlaylistExportFormat.JSON) }
     var includeDefaultPlaylists by remember { mutableStateOf(false) }
     var showLocationOptions by remember { mutableStateOf(false) }
@@ -539,6 +544,7 @@ fun PlaylistOperationProgressDialog(
     operation: String, // "Importing" or "Exporting"
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
     Dialog(
         onDismissRequest = { /* Prevent dismissal during operation */ },
         properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)

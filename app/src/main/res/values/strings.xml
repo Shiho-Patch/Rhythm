@@ -152,6 +152,7 @@
     <string name="settings_about_developer_role">Lead Developer &amp; Project Architect</string>
     <string name="settings_about_team">Team ChromaHub</string>
     <string name="settings_about_team_desc">Passionate developers creating innovative experiences</string>
+    <string name="settings_about_team_chromahub">Team ChromaHub</string>
     <string name="settings_about_special_thanks">Special Thanks</string>
     <string name="settings_about_community">Community</string>
     <string name="settings_about_community_desc">Special thanks to our amazing community members who have contributed to making Rhythm better through testing, feedback, suggestions, and collaboration.</string>
@@ -164,6 +165,8 @@
     <string name="settings_about_want_featured">Want to be featured here?</string>
     <string name="settings_about_contribute">Contribute to Rhythm through testing, feedback, or code contributions and join our amazing community!</string>
     <string name="settings_about_open_source_libraries">Open Source Libraries</string>
+    <string name="settings_about_open_source_libs">Open Source Libraries</string>
+    <string name="settings_about_view_dependencies">View Dependencies</string>
     <string name="settings_about_view_licenses">View all dependencies and licenses</string>
     <string name="settings_about_actions">Actions</string>
     <string name="settings_about_check_updates">Check for Updates</string>
@@ -322,6 +325,7 @@
     <string name="player_queue">Queue</string>
     <string name="player_playback_speed">Playback Speed</string>
     <string name="player_playback_speed_desc">Adjust the speed of audio playback.</string>
+    <string name="playback_speed">Playback Speed</string>
     
     <!-- SearchScreen -->
     <string name="search_filter_results">Filter Results</string>
@@ -402,6 +406,8 @@
     <string name="updates_download_update">Download Update</string>
     <string name="updates_install_update">Install Update</string>
     <string name="updates_cancel_download">Cancel Download</string>
+    <string name="cancel_download">Cancel Download</string>
+    <string name="download_update">Download Update</string>
     <string name="updates_auto_check_disabled">Automatic update checking is disabled. You can still check manually.</string>
     <string name="updates_disabled_desc">App updates have been disabled in settings</string>
     <string name="updates_smart_polling">Smart Polling Active</string>
@@ -493,6 +499,10 @@
     <string name="cache_calculating">Calculating cache size…</string>
     <string name="cache_total_size">Total Cache Size:</string>
     <string name="cache_limit">Cache Limit:</string>
+    <string name="cache_max_size">Maximum Cache Size</string>
+    <string name="cache_max_size_desc">Set the maximum size for cached data</string>
+    <string name="cache_about">About Cache</string>
+    <string name="cache_size_limit">Cache Size Limit</string>
     <string name="cache_clear_on_exit">Clear Cache on Exit</string>
     <string name="cache_clear_on_exit_desc">Automatically clear cached data when app closes</string>
     

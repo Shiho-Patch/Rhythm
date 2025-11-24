@@ -88,6 +88,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import chromahub.rhythm.app.R
 import chromahub.rhythm.app.ui.components.CollapsibleHeaderScreen
 import chromahub.rhythm.app.ui.components.RhythmIcons
 import chromahub.rhythm.app.ui.utils.LazyListStateSaver

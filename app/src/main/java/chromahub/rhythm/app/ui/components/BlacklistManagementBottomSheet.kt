@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import chromahub.rhythm.app.R
 import chromahub.rhythm.app.data.AppSettings
 import chromahub.rhythm.app.data.Song
 import chromahub.rhythm.app.ui.components.SimpleCircularLoader
