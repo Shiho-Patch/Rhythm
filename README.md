@@ -614,6 +614,92 @@ Help others understand Rhythm better:
 - Create video tutorials
 - Document APIs and functions
 
+### 🌍 **Translations**
+
+Help make Rhythm accessible to users worldwide:
+
+- Translate strings to your native language
+- Review and improve existing translations
+- Add support for right-to-left (RTL) languages
+- Test translations in the app
+- Update translations for new features
+
+**Current Translation Status:**
+- 🇬🇧 English (100% - Default)
+- 🇪🇸 Spanish - `values-es` (Needs Update)
+- 🇫🇷 French - `values-fr` (Needs Update)
+- 🇩🇪 German - `values-de` (Needs Update)
+- 🇮🇹 Italian - `values-it` (Needs Update)
+- 🇵🇹 Portuguese - `values-pt` (Needs Update)
+- 🇷🇺 Russian - `values-ru` (Needs Update)
+- 🇯🇵 Japanese - `values-ja` (Needs Update)
+- 🇰🇷 Korean - `values-ko` (Needs Update)
+- 🇨🇳 Chinese - `values-zh` (Needs Update)
+- 🇳🇱 Dutch - `values-nl` (Needs Update)
+- 🇵🇱 Polish - `values-pl` (Needs Update)
+- 🇹🇷 Turkish - `values-tr` (Needs Update)
+- 🇻🇳 Vietnamese - `values-vi` (Needs Update)
+- 🇮🇳 Hindi - `values-hi` (Needs Update)
+- 🇸🇦 Arabic - `values-ar` (Needs Update)
+
+**How to Contribute Translations:**
+
+1. **Fork the Repository**
+   ```bash
+   git clone https://github.com/cromaguy/Rhythm.git
+   cd Rhythm
+   ```
+
+2. **Navigate to Strings Resources**
+   - Main strings file: `app/src/main/res/values/strings.xml`
+   - Translation files: `app/src/main/res/values-{language}/strings.xml`
+   - Example: Spanish translations go in `values-es/strings.xml`
+
+3. **Edit or Create Translation File**
+   - Copy `values/strings.xml` to `values-{language_code}/strings.xml`
+   - Translate the string values (not the names)
+   - Keep formatting placeholders like `%1$s`, `%1$d`, `&amp;`, etc.
+   - Preserve special characters and escape sequences
+
+4. **Example Translation**
+   ```xml
+   <!-- English (values/strings.xml) -->
+   <string name="home_greeting_morning">Good morning</string>
+   
+   <!-- Spanish (values-es/strings.xml) -->
+   <string name="home_greeting_morning">Buenos días</string>
+   
+   <!-- French (values-fr/strings.xml) -->
+   <string name="home_greeting_morning">Bonjour</string>
+   ```
+
+5. **Test Your Translation**
+   - Build and run the app
+   - Change device language to test
+   - Ensure text fits in UI elements
+   - Check for proper RTL support if applicable
+
+6. **Submit Pull Request**
+   - Commit your changes with clear message: `Add/Update {language} translation`
+   - Push to your fork
+   - Open a Pull Request with description of changes
+
+**Translation Guidelines:**
+- ✅ Keep the meaning and tone consistent
+- ✅ Use natural, native expressions
+- ✅ Respect cultural context
+- ✅ Maintain consistency across similar terms
+- ✅ Keep technical terms where appropriate (e.g., "Equalizer")
+- ✅ Test on actual device with your language
+- ❌ Don't translate brand names ("Rhythm", "Material You")
+- ❌ Don't change placeholder formats (`%1$s`, `%1$d`)
+- ❌ Don't remove HTML entities (`&amp;`, `\'`)
+
+**Need Help?**
+- Join our [Telegram group](https://t.me/RhythmSupport) for translation discussions
+- Check [Android localization guide](https://developer.android.com/guide/topics/resources/localization)
+- Ask questions in [GitHub Discussions](https://github.com/cromaguy/Rhythm/discussions)
+
 ### 💬 **Community Support**
 
 Help fellow users:
