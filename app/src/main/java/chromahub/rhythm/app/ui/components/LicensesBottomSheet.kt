@@ -78,7 +78,7 @@ fun LicensesBottomSheet(
             ) {
                 Column {
                     Text(
-                        text = "Open Source Licenses",
+                        text = context.getString(R.string.licenses_title),
                         style = MaterialTheme.typography.displayMedium,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
@@ -94,7 +94,7 @@ fun LicensesBottomSheet(
                         Text(
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                             style = MaterialTheme.typography.labelLarge,
-                            text = "Built with amazing open source projects",
+                            text = context.getString(R.string.licenses_desc),
                             overflow = TextOverflow.Ellipsis,
                             maxLines = 1,
                             color = MaterialTheme.colorScheme.onSurface
@@ -297,14 +297,14 @@ fun LicensesBottomSheet(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Apache License 2.0",
+                            text = context.getString(R.string.licenses_apache),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "All libraries permit use, reproduction, and distribution with proper attribution",
+                            text = context.getString(R.string.licenses_attribution),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

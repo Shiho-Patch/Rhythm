@@ -429,7 +429,7 @@ fun OnboardingScreen(
                                 label = "progressText"
                             ) { step ->
                                 Text(
-                                    text = "${step + 1} of $totalSteps",
+                                    text = context.getString(R.string.onboarding_step_progress, step + 1, totalSteps),
                                     style = MaterialTheme.typography.labelMedium.copy(
                                         fontWeight = FontWeight.Bold,
                                         letterSpacing = 1.sp
@@ -678,7 +678,7 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
                     ) + fadeIn(animationSpec = tween(800, delayMillis = 200))
                 ) {
                     Text(
-                        text = "Rhythm",
+                        text = context.getString(R.string.onboarding_welcome_title),
                         style = MaterialTheme.typography.displayLarge.copy(
                             fontSize = 48.sp,
                             letterSpacing = 0.8.sp
@@ -701,7 +701,7 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
                     ) + fadeIn(animationSpec = tween(800, delayMillis = 400))
                 ) {
                     Text(
-                        text = "Your all-in-one offline music player",
+                        text = context.getString(R.string.onboarding_welcome_subtitle),
                         style = MaterialTheme.typography.titleMedium.copy(
                             letterSpacing = 0.4.sp
                         ),
@@ -724,7 +724,7 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
                         )
             ) {
                 Text(
-                    text = "Personalize every aspect of your listening experience with powerful features and complete privacy. Play your music offline, ad-free, with full control.",
+                    text = context.getString(R.string.onboarding_welcome_desc),
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontSize = 14.sp,
                         lineHeight = 22.sp
@@ -773,7 +773,7 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         Text(
-                            text = "Get Started",
+                            text = context.getString(R.string.onboarding_get_started),
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontSize = 20.sp
                             ),
@@ -799,15 +799,15 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
                 ) {
                     WelcomeFeatureChip(
                         icon = Icons.Filled.MusicNote,
-                        text = "Offline"
+                        text = context.getString(R.string.onboarding_offline)
                     )
                     WelcomeFeatureChip(
                         icon = Icons.Filled.Palette,
-                        text = "Customizable"
+                        text = context.getString(R.string.onboarding_customizable)
                     )
                     WelcomeFeatureChip(
                         icon = Icons.Filled.Security,
-                        text = "Private"
+                        text = context.getString(R.string.onboarding_private)
                     )
                 }
             }
@@ -820,7 +820,7 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
                 enter = fadeIn(animationSpec = tween(800, delayMillis = 1200))
             ) {
                 Text(
-                    text = "Music player • Designed for Android",
+                    text = context.getString(R.string.onboarding_tagline),
                     style = MaterialTheme.typography.bodyMedium.copy(
                         letterSpacing = 0.3.sp
                     ),
@@ -992,14 +992,14 @@ fun EnhancedPermissionContent(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Android 13+ Notice",
+                            text = context.getString(R.string.onboarding_android13_notice),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                     Text(
-                        text = "On newer Android versions, you'll see multiple permission requests. Please grant access to audio files and notifications for the best experience.",
+                        text = context.getString(R.string.onboarding_android13_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 18.sp
@@ -1157,7 +1157,7 @@ fun EnhancedPermissionCard(
                             shape = RoundedCornerShape(8.dp)
                         ) {
                             Text(
-                                text = "✓ Granted",
+                                text = context.getString(R.string.onboarding_granted),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onPrimary,
                                 fontWeight = FontWeight.Bold,
@@ -1234,7 +1234,7 @@ fun EnhancedBackupRestoreContent(
             Spacer(modifier = Modifier.height(16.dp))
             
             Text(
-                text = "Protect Your Data",
+                text = context.getString(R.string.onboarding_backup_title),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -1242,7 +1242,7 @@ fun EnhancedBackupRestoreContent(
             )
             
             Text(
-                text = "Keep your playlists, settings, and preferences safe with automatic backups. Restore everything when switching devices or after reinstalling - never lose your music collection.",
+                text = context.getString(R.string.onboarding_backup_desc),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 32.dp)
@@ -1286,12 +1286,12 @@ fun EnhancedBackupRestoreContent(
                 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Auto-backup",
+                        text = context.getString(R.string.onboarding_auto_backup),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = "Automatically backup your settings weekly",
+                        text = context.getString(R.string.onboarding_auto_backup_desc),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1332,13 +1332,13 @@ fun EnhancedBackupRestoreContent(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Backup & Restore Center",
+                        text = context.getString(R.string.onboarding_backup_center),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Text(
-                        text = "Create backups or restore from existing backup files",
+                        text = context.getString(R.string.onboarding_backup_center_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
@@ -1377,7 +1377,7 @@ fun EnhancedBackupRestoreContent(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "You can manually create backups anytime in Settings > Backup & Restore",
+                        text = context.getString(R.string.onboarding_manual_backup_info),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onTertiaryContainer
                     )
@@ -1407,7 +1407,7 @@ fun EnhancedBackupRestoreContent(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "What Gets Backed Up?",
+                        text = context.getString(R.string.onboarding_what_backed_up),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -1416,15 +1416,15 @@ fun EnhancedBackupRestoreContent(
                 
                 BackupFeatureTipItem(
                     icon = Icons.Filled.Save,
-                    text = "All settings, playlists, themes, and library customization"
+                    text = context.getString(R.string.onboarding_backed_up_1)
                 )
                 BackupFeatureTipItem(
                     icon = Icons.Filled.RestoreFromTrash,
-                    text = "Restore from files or clipboard with one tap"
+                    text = context.getString(R.string.onboarding_backed_up_2)
                 )
                 BackupFeatureTipItem(
                     icon = Icons.Filled.Security,
-                    text = "Backups stored locally on your device for privacy"
+                    text = context.getString(R.string.onboarding_backed_up_3)
                 )
             }
         }
@@ -1556,7 +1556,7 @@ fun EnhancedAudioPlaybackContent(
         Spacer(modifier = Modifier.height(24.dp))
         
         Text(
-            text = "Audio & Playback Experience",
+            text = context.getString(R.string.onboarding_audio_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -1564,7 +1564,7 @@ fun EnhancedAudioPlaybackContent(
         )
         
         Text(
-            text = "Customize your audio experience with haptic feedback, default screen, volume controls, queue behavior, shuffle settings, lyrics display, and equalizer settings.",
+            text = context.getString(R.string.onboarding_audio_desc),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 32.dp)
@@ -1704,7 +1704,7 @@ fun EnhancedAudioPlaybackContent(
                             )
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
-                                text = "API: Online lyrics • Embedded: Metadata lyrics • Local: .lrc files",
+                                text = context.getString(R.string.onboarding_lyrics_sources),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
                             )
@@ -1739,7 +1739,7 @@ fun EnhancedAudioPlaybackContent(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "Additional Audio Features",
+                        text = context.getString(R.string.onboarding_additional_features),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -1748,11 +1748,11 @@ fun EnhancedAudioPlaybackContent(
                 
                 LibraryTipItem(
                     icon = Icons.Filled.GraphicEq,
-                    text = "Equalizer: Fine-tune audio frequencies in Tuner > Equalizer"
+                    text = context.getString(R.string.onboarding_equalizer_desc)
                 )
                 LibraryTipItem(
                     icon = Icons.Filled.AccessTime,
-                    text = "Sleep Timer: Auto-stop playback after set time (access from Now Playing screen)"
+                    text = context.getString(R.string.onboarding_sleep_timer_desc)
                 )
             }
         }
@@ -1803,7 +1803,7 @@ fun EnhancedLibrarySetupContent(
         Spacer(modifier = Modifier.height(24.dp))
         
         Text(
-            text = "Organize Your Music Library",
+            text = context.getString(R.string.onboarding_library_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -1811,7 +1811,7 @@ fun EnhancedLibrarySetupContent(
         )
         
         Text(
-            text = "Customize how your albums, artists, and songs are displayed. Choose your preferred layout, sorting order, and tab arrangement.",
+            text = context.getString(R.string.onboarding_library_desc),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 32.dp)
@@ -1929,7 +1929,7 @@ fun EnhancedLibrarySetupContent(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "How Library Organization Works",
+                        text = context.getString(R.string.onboarding_library_how_works),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -1938,15 +1938,15 @@ fun EnhancedLibrarySetupContent(
                 
                 LibraryTipItem(
                     icon = Icons.Filled.Reorder,
-                    text = "Customize tab order in Library for quick access to your favorites"
+                    text = context.getString(R.string.onboarding_library_1)
                 )
                 LibraryTipItem(
                     icon = Icons.Filled.Queue,
-                    text = "Create and manage playlists directly from the Library screen"
+                    text = context.getString(R.string.onboarding_library_2)
                 )
                 LibraryTipItem(
                     icon = Icons.Filled.Tune,
-                    text = "Advanced display and sorting options available in Tuner > Theme Customization"
+                    text = context.getString(R.string.onboarding_library_3)
                 )
             }
         }
@@ -2071,7 +2071,7 @@ fun EnhancedThemingContent(
         Spacer(modifier = Modifier.height(24.dp))
         
         Text(
-            text = "Make Rhythm Yours",
+            text = context.getString(R.string.onboarding_theme_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -2079,7 +2079,7 @@ fun EnhancedThemingContent(
         )
         
         Text(
-            text = "Personalize Rhythm's appearance to match your style. Choose your system theme, font, or Material You dynamic colors (Android 12+).",
+            text = context.getString(R.string.onboarding_theme_desc),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 32.dp)
@@ -2103,7 +2103,7 @@ fun EnhancedThemingContent(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Live Preview",
+                        text = context.getString(R.string.onboarding_live_preview),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
@@ -2136,7 +2136,7 @@ fun EnhancedThemingContent(
                             }
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "Primary",
+                                text = context.getString(R.string.onboarding_primary),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -2163,7 +2163,7 @@ fun EnhancedThemingContent(
                             }
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "Container",
+                                text = context.getString(R.string.onboarding_container),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -2190,7 +2190,7 @@ fun EnhancedThemingContent(
                             }
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "Accent",
+                                text = context.getString(R.string.onboarding_accent),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -2277,13 +2277,13 @@ fun EnhancedThemingContent(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Advanced Customization",
+                        text = context.getString(R.string.onboarding_advanced_customization),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Text(
-                        text = "Custom color schemes, album art colors, and fonts",
+                        text = context.getString(R.string.onboarding_advanced_customization_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
@@ -2320,7 +2320,7 @@ fun EnhancedThemingContent(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "More Customization in Tuner",
+                        text = context.getString(R.string.onboarding_more_tuner),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -2329,15 +2329,15 @@ fun EnhancedThemingContent(
                 
                 LibraryTipItem(
                     icon = Icons.Filled.Palette,
-                    text = "Custom color schemes and album art color extraction"
+                    text = context.getString(R.string.onboarding_tuner_1)
                 )
                 LibraryTipItem(
                     icon = Icons.Filled.FontDownload,
-                    text = "Font customization and typography settings"
+                    text = context.getString(R.string.onboarding_tuner_2)
                 )
                 LibraryTipItem(
                     icon = Icons.Filled.AutoAwesome,
-                    text = "Advanced theme options available in Tuner > Theme Customization"
+                    text = context.getString(R.string.onboarding_tuner_3)
                 )
             }
         }
@@ -3392,7 +3392,7 @@ fun EnhancedMediaScanContent(
         Spacer(modifier = Modifier.height(24.dp))
         
         Text(
-            text = "Filter Your Music Library",
+            text = context.getString(R.string.onboarding_media_scan_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -3400,7 +3400,7 @@ fun EnhancedMediaScanContent(
         )
         
         Text(
-            text = "Control which audio files appear in your library. Use Blacklist mode to hide unwanted files (ringtones, notifications), or Whitelist mode to only show specific music folders.",
+            text = context.getString(R.string.onboarding_media_scan_desc),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 32.dp)
@@ -3428,13 +3428,13 @@ fun EnhancedMediaScanContent(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Configure Media Scanning",
+                        text = context.getString(R.string.onboarding_media_scan_configure),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Text(
-                        text = "Choose Blacklist or Whitelist mode • Current: ${mediaScanMode.replaceFirstChar { it.uppercase() }}",
+                        text = context.getString(R.string.onboarding_media_scan_current_mode, mediaScanMode.replaceFirstChar { it.uppercase() }),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
@@ -3473,7 +3473,7 @@ fun EnhancedMediaScanContent(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "Media Scanning Settings",
+                        text = context.getString(R.string.onboarding_media_scan_settings),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -3482,15 +3482,15 @@ fun EnhancedMediaScanContent(
                 
                 LibraryTipItem(
                     icon = Icons.Filled.Block,
-                    text = "Blacklist Mode: Hide specific songs and folders (ringtones, notifications)"
+                    text = context.getString(R.string.onboarding_media_scan_blacklist)
                 )
                 LibraryTipItem(
                     icon = Icons.Filled.CheckCircle,
-                    text = "Whitelist Mode: Show only songs from selected folders"
+                    text = context.getString(R.string.onboarding_media_scan_whitelist)
                 )
                 LibraryTipItem(
                     icon = Icons.Filled.Settings,
-                    text = "Configure scanning in Tuner > Media Scan"
+                    text = context.getString(R.string.onboarding_media_scan_configure_in_tuner)
                 )
             }
         }
@@ -3517,13 +3517,13 @@ fun EnhancedMediaScanContent(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Storage Management",
+                        text = context.getString(R.string.onboarding_storage_title),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Text(
-                        text = "Manage cache size and storage in Tuner > Cache Management",
+                        text = context.getString(R.string.onboarding_storage_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
@@ -3814,7 +3814,7 @@ fun EnhancedSetupFinishedContent(onFinish: () -> Unit) {
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "You're All Set!",
+            text = context.getString(R.string.onboarding_complete_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -3822,7 +3822,7 @@ fun EnhancedSetupFinishedContent(onFinish: () -> Unit) {
         )
 
         Text(
-            text = "Rhythm is ready to play! Your music library is being scanned in the background. Here's what's configured:",
+            text = context.getString(R.string.onboarding_complete_desc),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 32.dp)
@@ -3884,7 +3884,7 @@ fun EnhancedSetupFinishedContent(onFinish: () -> Unit) {
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "What's Next?",
+                        text = context.getString(R.string.onboarding_whats_next),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -3893,19 +3893,19 @@ fun EnhancedSetupFinishedContent(onFinish: () -> Unit) {
                 
                 NextStepItem(
                     icon = Icons.Filled.LibraryMusic,
-                    text = "Browse your songs, albums, and artists"
+                    text = context.getString(R.string.onboarding_next_browse)
                 )
                 NextStepItem(
                     icon = Icons.Filled.Queue,
-                    text = "Create your first playlist"
+                    text = context.getString(R.string.onboarding_next_create)
                 )
                 NextStepItem(
                     icon = Icons.Filled.GraphicEq,
-                    text = "Fine-tune audio with the Equalizer"
+                    text = context.getString(R.string.onboarding_next_finetune)
                 )
                 NextStepItem(
                     icon = Icons.Filled.Settings,
-                    text = "Explore more settings anytime"
+                    text = context.getString(R.string.onboarding_next_explore)
                 )
             }
         }
@@ -3914,7 +3914,7 @@ fun EnhancedSetupFinishedContent(onFinish: () -> Unit) {
         
         // Reminder text
         Text(
-            text = "All settings can be changed anytime in Settings",
+            text = context.getString(R.string.onboarding_settings_change),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
             textAlign = TextAlign.Center,
@@ -4136,7 +4136,7 @@ private fun OnboardingExpressiveUpdateStatus(
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "Install Update Now",
+                                text = context.getString(R.string.install_update_now),
                                 fontWeight = FontWeight.ExtraBold,
                                 style = MaterialTheme.typography.titleMedium,
                                 letterSpacing = 0.5.sp,
@@ -4162,7 +4162,7 @@ private fun OnboardingExpressiveUpdateStatus(
                             )
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
-                                text = "Cancel Download",
+                                text = context.getString(R.string.cancel_download),
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.titleSmall,
                                 modifier = Modifier.padding(vertical = 6.dp)
@@ -4194,7 +4194,7 @@ private fun OnboardingExpressiveUpdateStatus(
                                 modifier = Modifier.padding(vertical = 6.dp)
                             ) {
                                 Text(
-                                    text = "Download Update",
+                                    text = context.getString(R.string.download_update),
                                     fontWeight = FontWeight.ExtraBold,
                                     style = MaterialTheme.typography.titleMedium,
                                     letterSpacing = 0.5.sp

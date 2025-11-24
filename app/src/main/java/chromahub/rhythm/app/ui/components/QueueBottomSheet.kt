@@ -456,7 +456,7 @@ private fun NowPlayingCard(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = "NOW PLAYING",
+                    text = context.getString(R.string.now_playing),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                     fontWeight = FontWeight.Bold
@@ -766,7 +766,7 @@ private fun EmptyQueueContent(
             Spacer(modifier = Modifier.height(24.dp))
             
             Text(
-                text = "Your queue is empty",
+                text = context.getString(R.string.queue_empty),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -776,7 +776,7 @@ private fun EmptyQueueContent(
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = "Add songs from your library to start listening",
+                text = context.getString(R.string.queue_add_songs),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -805,7 +805,7 @@ private fun EmptyQueueContent(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Browse Library",
+                        text = context.getString(R.string.browse_library),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -854,7 +854,7 @@ private fun EmptyUpNextContent(
             
             // Enhanced text styling
             Text(
-                text = "No more songs in queue",
+                text = context.getString(R.string.queue_no_more),
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.SemiBold
                 ),
@@ -865,7 +865,7 @@ private fun EmptyUpNextContent(
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = "Add more songs to keep the music playing",
+                text = context.getString(R.string.queue_add_more),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -892,7 +892,7 @@ private fun EmptyUpNextContent(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Add more songs",
+                        text = context.getString(R.string.add_more_songs),
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontWeight = FontWeight.Medium
                         ),

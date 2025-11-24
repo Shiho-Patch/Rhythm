@@ -133,7 +133,7 @@ fun WordByWordLyricsView(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Word-by-word lyrics not available.",
+                text = context.getString(R.string.word_by_word_unavailable),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center

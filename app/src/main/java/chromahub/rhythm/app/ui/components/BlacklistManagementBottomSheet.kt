@@ -90,7 +90,7 @@ fun BlacklistManagementBottomSheet(
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
                     Text(
-                        text = "Blacklist Management",
+                        text = context.getString(R.string.blacklist_title),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -106,7 +106,7 @@ fun BlacklistManagementBottomSheet(
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = "Blocked songs and folders won't appear in search results, recommendations, or auto-play queues",
+                text = context.getString(R.string.blacklist_desc),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -312,7 +312,7 @@ private fun SongsBlacklistTab(
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )
                     Text(
-                        text = "Blocked Songs",
+                        text = context.getString(R.string.blacklist_blocked_songs),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )
@@ -340,7 +340,7 @@ private fun SongsBlacklistTab(
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Text(
-                        text = "Available Songs",
+                        text = context.getString(R.string.blacklist_available_songs),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
@@ -363,7 +363,7 @@ private fun SongsBlacklistTab(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Blacklisted Songs",
+                        text = context.getString(R.string.blacklist_songs),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -419,12 +419,12 @@ private fun SongsBlacklistTab(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "No blacklisted songs",
+                    text = context.getString(R.string.blacklist_no_songs),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = "All your songs are available for playback",
+                    text = context.getString(R.string.blacklist_all_available),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -495,7 +495,7 @@ private fun FoldersBlacklistTab(
                     color = MaterialTheme.colorScheme.onErrorContainer
                 )
                 Text(
-                    text = "Blocked Folders",
+                    text = context.getString(R.string.blocked_folders),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onErrorContainer
                 )
@@ -539,7 +539,7 @@ private fun FoldersBlacklistTab(
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = "Add Folder to Blacklist",
+                    text = context.getString(R.string.blacklist_add_folder),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -562,7 +562,7 @@ private fun FoldersBlacklistTab(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Blacklisted Folders",
+                        text = context.getString(R.string.blacklist_folders),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -616,12 +616,12 @@ private fun FoldersBlacklistTab(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "No blacklisted folders",
+                    text = context.getString(R.string.blacklist_no_folders),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = "Tap the button above to add folders to the blacklist",
+                    text = context.getString(R.string.blacklist_tap_to_add),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -63,7 +63,7 @@ fun SyncedLyricsView(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Synchronized lyrics not available for this format.",
+                text = context.getString(R.string.synced_lyrics_unavailable),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center

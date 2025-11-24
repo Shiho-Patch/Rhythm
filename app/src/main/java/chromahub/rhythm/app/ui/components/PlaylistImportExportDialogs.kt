@@ -53,7 +53,7 @@ fun AppRestartDialog(
         },
         title = {
             Text(
-                text = "Restart App?",
+                text = context.getString(R.string.restart_app),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -127,7 +127,7 @@ fun PlaylistExportDialog(
         },
         title = {
             Text(
-                text = "Export Playlist",
+                text = context.getString(R.string.export_playlist),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -278,7 +278,7 @@ fun BulkPlaylistExportDialog(
         },
         title = {
             Text(
-                text = "Export All Playlists",
+                text = context.getString(R.string.export_all_playlists),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -344,7 +344,7 @@ fun BulkPlaylistExportDialog(
                         Spacer(modifier = Modifier.width(8.dp))
                         
                         Text(
-                            text = "Include default playlists (Favorites, Recently Added, Most Played)",
+                            text = context.getString(R.string.include_default_playlists),
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -443,7 +443,7 @@ fun PlaylistImportDialog(
         },
         title = {
             Text(
-                text = "Import Playlist",
+                text = context.getString(R.string.import_playlist),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -451,7 +451,7 @@ fun PlaylistImportDialog(
         text = {
             Column {
                 Text(
-                    text = "Select a playlist file to import:",
+                    text = context.getString(R.string.select_playlist_file),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -467,7 +467,7 @@ fun PlaylistImportDialog(
                         modifier = Modifier.padding(16.dp)
                     ) {
                         Text(
-                            text = "Supported formats:",
+                            text = context.getString(R.string.supported_formats),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -574,7 +574,7 @@ fun PlaylistOperationProgressDialog(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(
-                    text = "This may take a few moments...",
+                    text = context.getString(R.string.may_take_moments),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center

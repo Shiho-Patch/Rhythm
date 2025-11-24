@@ -223,7 +223,7 @@ private fun AddToPlaylistHeader(
         // Title and count
         Column {
             Text(
-                text = "Add to Playlists",
+                text = context.getString(R.string.add_to_playlists),
                 style = MaterialTheme.typography.displayMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface
@@ -373,7 +373,7 @@ private fun CreateNewPlaylistCard(
             Spacer(modifier = Modifier.width(16.dp))
             
             Text(
-                text = "Create New Playlist",
+                text = context.getString(R.string.playlist_create_new),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -566,7 +566,7 @@ private fun EmptyPlaylistsState(
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = "Create your first playlist to add songs",
+                text = context.getString(R.string.playlist_create_first),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center

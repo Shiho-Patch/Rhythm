@@ -323,7 +323,7 @@ private fun PlaybackHeader(
                 Text(
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                     style = MaterialTheme.typography.labelLarge,
-                    text = "Audio Settings",
+                    text = context.getString(R.string.audio_settings),
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
@@ -383,7 +383,7 @@ private fun ActiveDeviceCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "ACTIVE DEVICE",
+                    text = context.getString(R.string.active_device),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
@@ -525,7 +525,7 @@ private fun ActiveDeviceCard(
                         )
                         
                         Text(
-                            text = "Tap to select output",
+                            text = context.getString(R.string.tap_select_output),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f)
                         )
@@ -789,7 +789,7 @@ private fun PlaybackSpeedCard(
                 Spacer(modifier = Modifier.width(12.dp))
                 
                 Text(
-                    text = "Playback Speed",
+                    text = context.getString(R.string.playback_speed),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -941,7 +941,7 @@ private fun PlaybackSettingsCard(
                 Spacer(modifier = Modifier.width(12.dp))
 
                 Text(
-                    text = "Playback Settings",
+                    text = context.getString(R.string.playback_settings),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -1056,14 +1056,14 @@ private fun PlaybackSettingsCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "Lyrics Source Priority",
+                    text = context.getString(R.string.playback_lyrics_priority),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Choose which source to check first for lyrics",
+                    text = context.getString(R.string.playback_lyrics_priority_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

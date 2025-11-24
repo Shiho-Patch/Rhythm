@@ -240,8 +240,8 @@ fun SplashScreen(
                                 exit = shrinkHorizontally() + fadeOut()
                             ) {
                                 Text(
-                                    text = "Rhythm",
-                                    style = MaterialTheme.typography.displayMedium.copy(
+                                    text = context.getString(R.string.common_rhythm),
+                                    style = MaterialTheme.typography.displayLarge.copy(
                                         fontSize = 48.sp,
                                         letterSpacing = 2.sp
                                     ),
@@ -299,8 +299,8 @@ fun SplashScreen(
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Text(
-                                        text = "Your Music, Your Rhythm",
-                                        style = MaterialTheme.typography.titleMedium.copy(
+                                        text = context.getString(R.string.splash_tagline),
+                                        style = MaterialTheme.typography.titleLarge,
                                             letterSpacing = 1.sp,
                                             fontSize = 17.sp
                                         ),
@@ -332,7 +332,7 @@ fun SplashScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "Loading your music library...",
+                        text = context.getString(R.string.splash_loading),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                         fontWeight = FontWeight.Medium

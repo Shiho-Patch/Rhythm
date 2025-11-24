@@ -407,7 +407,7 @@ fun EqualizerBottomSheetNew(
                                     )
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Text(
-                                        text = "Frequency Bands",
+                                        text = context.getString(R.string.frequency_bands),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.SemiBold
                                     )
@@ -427,7 +427,7 @@ fun EqualizerBottomSheetNew(
                                         modifier = Modifier.padding(16.dp)
                                     ) {
                                         Text(
-                                            text = "Frequency Response",
+                                            text = context.getString(R.string.frequency_response),
                                             style = MaterialTheme.typography.labelLarge,
                                             fontWeight = FontWeight.Medium,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -622,7 +622,7 @@ fun EqualizerBottomSheetNew(
                                     )
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Text(
-                                        text = "Audio Effects",
+                                        text = context.getString(R.string.audio_effects),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.SemiBold
                                     )
@@ -746,7 +746,7 @@ fun EqualizerBottomSheetNew(
                                             
                                             Column(modifier = Modifier.weight(1f)) {
                                                 Text(
-                                                    text = "Virtualizer",
+                                                    text = context.getString(R.string.virtualizer),
                                                     style = MaterialTheme.typography.titleSmall,
                                                     fontWeight = FontWeight.Medium
                                                 )
@@ -825,12 +825,12 @@ fun EqualizerBottomSheetNew(
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = "System Equalizer",
+                                            text = context.getString(R.string.system_equalizer),
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.SemiBold
                                         )
                                         Text(
-                                            text = "Access your device's built-in equalizer",
+                                            text = context.getString(R.string.system_equalizer_desc),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -963,7 +963,7 @@ private fun EmptyEqualizerContent(
             Spacer(modifier = Modifier.height(24.dp))
             
             Text(
-                text = "Equalizer is disabled",
+                text = context.getString(R.string.equalizer_disabled),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -973,7 +973,7 @@ private fun EmptyEqualizerContent(
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = "Enable the equalizer to customize your audio experience.",
+                text = context.getString(R.string.equalizer_enable_desc),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -999,7 +999,7 @@ private fun EmptyEqualizerContent(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Open System Equalizer",
+                    text = context.getString(R.string.equalizer_open_system),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Medium
                 )

@@ -194,7 +194,7 @@ fun SleepTimerBottomSheetNew(
                 ) {
                     Column {
                         Text(
-                            text = "Sleep Timer",
+                            text = context.getString(R.string.sleep_timer),
                             style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -372,7 +372,7 @@ fun SleepTimerBottomSheetNew(
                                 )
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Text(
-                                    text = "Quick Timer",
+                                    text = context.getString(R.string.sleep_timer_quick),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -458,7 +458,7 @@ fun SleepTimerBottomSheetNew(
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = "Custom Timer",
+                                        text = context.getString(R.string.sleep_timer_custom),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.SemiBold
                                     )
@@ -517,12 +517,12 @@ fun SleepTimerBottomSheetNew(
                             Spacer(modifier = Modifier.width(12.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Timer Action",
+                                    text = context.getString(R.string.sleep_timer_action),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Text(
-                                    text = "What happens when the timer ends",
+                                    text = context.getString(R.string.sleep_timer_action_desc),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -640,7 +640,7 @@ private fun Material3TimePickerDialog(
             ) {
                 // Title
                 Text(
-                    text = "Select Timer Duration",
+                    text = context.getString(R.string.sleep_timer_select_duration),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface

@@ -67,7 +67,7 @@ fun BetaProgramPopup(onDismiss: () -> Unit) {
                 )
                 
                 Text(
-                    text = "Welcome to the Beta Program!",
+                    text = context.getString(R.string.beta_welcome),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
@@ -76,7 +76,7 @@ fun BetaProgramPopup(onDismiss: () -> Unit) {
                 )
                 
                 Text(
-                    text = "You are currently using the beta release of Rhythm. This version is still in development and may contain bugs, incomplete features, or unexpected behavior.",
+                    text = context.getString(R.string.beta_desc),
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

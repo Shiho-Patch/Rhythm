@@ -251,7 +251,7 @@ fun LyricsEditorBottomSheet(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Sync Adjustment",
+                                text = context.getString(R.string.sync_adjustment),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = if (hasSyncedLyrics) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
@@ -295,7 +295,7 @@ fun LyricsEditorBottomSheet(
                     if (!hasSyncedLyrics) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Sync adjustment only works with time-synced lyrics (LRC format). Use Reset to fetch synced lyrics if available.",
+                            text = context.getString(R.string.lyrics_sync_note),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(vertical = 4.dp)
@@ -524,7 +524,7 @@ fun LyricsEditorBottomSheet(
                             .height(450.dp),
                         placeholder = {
                             Text(
-                                text = "Enter lyrics here...\n\nYou can use LRC format:\n[00:12.00] Line one\n[00:17.00] Line two",
+                                text = context.getString(R.string.lyrics_placeholder),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                             )
@@ -616,7 +616,7 @@ private fun LyricsEditorHeader(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "Lyrics Editor",
+                text = context.getString(R.string.lyrics_editor_title),
                 style = MaterialTheme.typography.displayMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface

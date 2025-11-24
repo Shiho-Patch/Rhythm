@@ -1499,7 +1499,7 @@ fun PlayerScreen(
                                                         )
                                                         Spacer(modifier = Modifier.height(16.dp))
                                                         Text(
-                                                            text = "Loading lyrics...",
+                                                            text = context.getString(R.string.player_loading_lyrics),
                                                             style = MaterialTheme.typography.bodyMedium,
                                                             color = MaterialTheme.colorScheme.onSurface.copy(
                                                                 alpha = 0.7f
@@ -2165,7 +2165,7 @@ fun PlayerScreen(
                                         Row {
                                             Spacer(modifier = Modifier.width(4.dp))
                                             Text(
-                                                text = "SHUFFLE",
+                                                text = context.getString(R.string.player_shuffle),
                                                 style = MaterialTheme.typography.labelMedium.copy(
                                                     fontWeight = FontWeight.Bold,
                                                     letterSpacing = 0.8.sp
@@ -2241,7 +2241,7 @@ fun PlayerScreen(
                                             Row {
                                                 Spacer(modifier = Modifier.width(4.dp))
                                                 Text(
-                                                    text = "LYRICS",
+                                                    text = context.getString(R.string.player_lyrics),
                                                     style = MaterialTheme.typography.labelMedium.copy(
                                                         fontWeight = FontWeight.Bold,
                                                         letterSpacing = 0.8.sp
@@ -2319,7 +2319,7 @@ fun PlayerScreen(
                                         Row {
                                             Spacer(modifier = Modifier.width(4.dp))
                                             Text(
-                                                text = "REPEAT",
+                                                text = context.getString(R.string.player_repeat),
                                                 style = MaterialTheme.typography.labelMedium.copy(
                                                     fontWeight = FontWeight.Bold,
                                                     letterSpacing = 0.8.sp
@@ -3170,7 +3170,7 @@ fun PlayerScreen(
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         Text(
-                                            text = "Queue",
+                                            text = context.getString(R.string.player_queue),
                                             style = MaterialTheme.typography.labelLarge.copy(
                                                 fontSize = if (isCompactHeight) 12.sp else 14.sp
                                             ),
@@ -3289,7 +3289,7 @@ fun PlaybackSpeedDialog(
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = "Playback Speed",
+                    text = context.getString(R.string.player_playback_speed),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -3298,7 +3298,7 @@ fun PlaybackSpeedDialog(
         text = {
             Column {
                 Text(
-                    text = "Adjust the speed of audio playback.",
+                    text = context.getString(R.string.player_playback_speed_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

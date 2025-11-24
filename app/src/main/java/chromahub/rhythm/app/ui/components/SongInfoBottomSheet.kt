@@ -819,7 +819,7 @@ private fun MetadataGridSection(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "No metadata available",
+                        text = context.getString(R.string.song_info_no_metadata),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1052,7 +1052,7 @@ private fun EditSongSheet(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "Edit Metadata",
+                        text = context.getString(R.string.edit_metadata),
                         style = MaterialTheme.typography.displayMedium,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
@@ -1178,7 +1178,7 @@ private fun EditSongSheet(
             
             // Metadata Fields Section
             Text(
-                text = "Song Information",
+                text = context.getString(R.string.song_info_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -1428,7 +1428,7 @@ private fun EditSongSheet(
             },
             text = {
                 Text(
-                    text = "Rhythm needs permission to modify this audio file's metadata. You may see a system dialog asking for access - please allow it to save your changes.",
+                    text = context.getString(R.string.song_info_permission),
                     style = MaterialTheme.typography.bodyMedium
                 )
             },

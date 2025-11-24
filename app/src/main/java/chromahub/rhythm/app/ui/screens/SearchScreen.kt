@@ -497,7 +497,7 @@ fun SearchScreen(
                                             modifier = Modifier.padding(16.dp)
                                         ) {
                                             Text(
-                                                text = "Filter Results",
+                                                text = context.getString(R.string.search_filter_results),
                                                 style = MaterialTheme.typography.titleMedium,
                                                 color = MaterialTheme.colorScheme.onSurface,
                                                 modifier = Modifier.padding(bottom = 12.dp)
@@ -893,7 +893,7 @@ fun SearchResults(
                     
                     Column(modifier = Modifier.padding(start = 16.dp)) {
                         Text(
-                            text = "Search Results",
+                            text = context.getString(R.string.search_results),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -928,7 +928,7 @@ fun SearchResults(
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "Songs",
+                                text = context.getString(R.string.search_songs),
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold
                             )
@@ -978,13 +978,13 @@ fun SearchResults(
                             ) {
                                 Column {
                                     Text(
-                                        text = "View All Songs",
+                                        text = context.getString(R.string.search_view_all_songs),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Medium,
                                         color = MaterialTheme.colorScheme.primary
                                     )
                                     Text(
-                                        text = "See all ${songs.size} songs",
+                                        text = context.getString(R.string.search_see_all_songs, songs.size),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -1022,7 +1022,7 @@ fun SearchResults(
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "Albums",
+                                text = context.getString(R.string.search_albums),
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold
                             )
@@ -1068,7 +1068,7 @@ fun SearchResults(
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "Artists",
+                                text = context.getString(R.string.search_artists),
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold
                             )
@@ -1116,7 +1116,7 @@ fun SearchResults(
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "Playlists",
+                                text = context.getString(R.string.search_playlists),
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold
                             )
@@ -1181,7 +1181,7 @@ fun SearchBrowseContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Recently Searched",
+                        text = context.getString(R.string.search_recently_searched),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onBackground,
@@ -1196,7 +1196,7 @@ fun SearchBrowseContent(
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                     ) {
                         Text(
-                            text = "Clear",
+                            text = context.getString(R.string.search_clear),
                             style = MaterialTheme.typography.labelMedium
                         )
                     }
@@ -1225,7 +1225,7 @@ fun SearchBrowseContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Recently Searched",
+                        text = context.getString(R.string.search_recently_searched),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onBackground,
@@ -1257,7 +1257,7 @@ fun SearchBrowseContent(
                                 .padding(bottom = 16.dp)
                         )
                         Text(
-                            text = "No recent searches",
+                            text = context.getString(R.string.search_no_recent),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                         )
@@ -1308,7 +1308,7 @@ fun SearchBrowseContent(
                         Spacer(modifier = Modifier.height(16.dp))
                         
                         Text(
-                            text = "No Recently Played",
+                            text = context.getString(R.string.search_no_recently_played),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface,
@@ -1316,7 +1316,7 @@ fun SearchBrowseContent(
                         )
                         
                         Text(
-                            text = "Songs you play will appear here",
+                            text = context.getString(R.string.search_no_recently_played_desc),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
@@ -1979,7 +1979,7 @@ private fun RecentlyPlayedSection(
                         modifier = Modifier.size(24.dp)
                     )
                     Text(
-                        text = "Recently Played",
+                        text = context.getString(R.string.search_recently_played),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
@@ -2134,7 +2134,7 @@ private fun DefaultSearchContent(
                                     modifier = Modifier.size(24.dp)
                                 )
                                 Text(
-                                    text = "Recent Searches",
+                                    text = context.getString(R.string.search_recent_searches),
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface,
@@ -2230,7 +2230,7 @@ private fun DefaultSearchContent(
                         Spacer(modifier = Modifier.height(16.dp))
                         
                         Text(
-                            text = "No Recent Searches",
+                            text = context.getString(R.string.search_no_recent_searches),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface,
@@ -2238,7 +2238,7 @@ private fun DefaultSearchContent(
                         )
                         
                         Text(
-                            text = "Your search history will appear here",
+                            text = context.getString(R.string.search_no_recent_searches_desc),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
@@ -2292,7 +2292,7 @@ private fun DefaultSearchContent(
                         Spacer(modifier = Modifier.height(16.dp))
                         
                         Text(
-                            text = "No Recently Played",
+                            text = context.getString(R.string.search_no_recently_played),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface,
@@ -2300,7 +2300,7 @@ private fun DefaultSearchContent(
                         )
                         
                         Text(
-                            text = "Songs you play will appear here",
+                            text = context.getString(R.string.search_no_recently_played_desc),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
@@ -2490,7 +2490,7 @@ private fun RecommendedForYouSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Recommended For You",
+                text = context.getString(R.string.search_recommended),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
@@ -2508,7 +2508,7 @@ private fun RecommendedForYouSection(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "Based on your listening history",
+                    text = context.getString(R.string.search_recommended_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onTertiaryContainer,
                     modifier = Modifier.padding(bottom = 16.dp)
@@ -2745,7 +2745,7 @@ fun AllSongsPage(
                 Icon(RhythmIcons.Back, contentDescription = "Back")
             }
             Text(
-                text = "All Songs (${songs.size})",
+                text = context.getString(R.string.search_all_songs, songs.size),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(start = 8.dp)
@@ -2809,7 +2809,7 @@ private fun GenreBrowseSection(
                     modifier = Modifier.size(24.dp)
                 )
                 Text(
-                    text = "Browse by Genre",
+                    text = context.getString(R.string.search_browse_by_genre),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -2837,14 +2837,14 @@ private fun GenreBrowseSection(
                         Spacer(modifier = Modifier.height(12.dp))
                         
                         Text(
-                            text = "Detecting genres...",
+                            text = context.getString(R.string.search_detecting_genres),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
                         
                         Text(
-                            text = "Genre suggestions will appear here once detected",
+                            text = context.getString(R.string.search_genre_suggestions),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                             textAlign = TextAlign.Center,
@@ -2861,7 +2861,7 @@ private fun GenreBrowseSection(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "No genres detected in your library",
+                            text = context.getString(R.string.search_no_genres),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center

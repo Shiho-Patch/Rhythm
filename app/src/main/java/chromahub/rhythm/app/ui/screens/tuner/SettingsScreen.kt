@@ -330,7 +330,7 @@ fun TunerSettingsScreen(
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "Quick Tips",
+                                text = context.getString(R.string.settings_quick_tips),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -339,11 +339,11 @@ fun TunerSettingsScreen(
 
                         TipItem(
                             icon = Icons.Default.Palette,
-                            text = "Customize your theme with colors, fonts, and festive effects"
+                            text = context.getString(R.string.settings_tip_theme)
                         )
                         TipItem(
                             icon = Icons.Default.TouchApp,
-                            text = "Enable haptic feedback for tactile responses"
+                            text = context.getString(R.string.settings_tip_haptic)
                         )
                         TipItem(
                             icon = Icons.Default.Folder,
@@ -387,7 +387,7 @@ fun TunerSettingsScreen(
                     ) {
                         Column {
                             Text(
-                                text = "Default Landing Screen",
+                                text = context.getString(R.string.settings_default_screen),
                                 style = MaterialTheme.typography.displayMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -403,7 +403,7 @@ fun TunerSettingsScreen(
                                 Text(
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                     style = MaterialTheme.typography.labelLarge,
-                                    text = "Choose your starting screen",
+                                    text = context.getString(R.string.settings_default_screen_desc),
                                     overflow = TextOverflow.Ellipsis,
                                     maxLines = 1,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -472,7 +472,7 @@ fun TunerSettingsScreen(
                             
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Home",
+                                    text = context.getString(R.string.common_home),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = if (defaultScreen == "home") 
@@ -482,7 +482,7 @@ fun TunerSettingsScreen(
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "Discover new music and recommendations",
+                                    text = context.getString(R.string.settings_home_desc),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = if (defaultScreen == "home") 
                                         MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
@@ -560,7 +560,7 @@ fun TunerSettingsScreen(
                             
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Library",
+                                    text = context.getString(R.string.common_library),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = if (defaultScreen == "library") 
@@ -570,7 +570,7 @@ fun TunerSettingsScreen(
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "Quick access to your music collection",
+                                    text = context.getString(R.string.settings_library_desc),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = if (defaultScreen == "library") 
                                         MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)

@@ -581,7 +581,7 @@ fun LibraryScreen(
                     val fontSize = (24 + (32 - 24) * (1 - collapsedFraction)).sp // Interpolate between 24sp and 32sp
 
                     Text(
-                        text = "Library",
+                        text = context.getString(R.string.library_title),
                         style = MaterialTheme.typography.headlineLarge.copy(
                             fontFamily = FontFamily.Default,
                             fontWeight = FontWeight.Bold,
@@ -1141,7 +1141,7 @@ fun LibraryScreen(
             onExport = { format, includeDefault ->
                 showBulkExportDialog = false
                 showOperationProgress = true
-                operationProgressText = "Exporting playlists..."
+                operationProgressText = context.getString(R.string.exporting_playlists)
                 
                 onExportAllPlaylists(format, includeDefault, null) { result ->
                     showOperationProgress = false
@@ -1158,7 +1158,7 @@ fun LibraryScreen(
             onExportToCustomLocation = { format, includeDefault, directoryUri ->
                 showBulkExportDialog = false
                 showOperationProgress = true
-                operationProgressText = "Exporting playlists to selected location..."
+                operationProgressText = context.getString(R.string.exporting_to_location)
                 
                 onExportAllPlaylists(format, includeDefault, directoryUri) { result ->
                     showOperationProgress = false
@@ -1184,7 +1184,7 @@ fun LibraryScreen(
             onImport = { uri, onResult, onRestartRequired ->
                 showImportDialog = false
                 showOperationProgress = true
-                operationProgressText = "Importing playlist..."
+                operationProgressText = context.getString(R.string.importing_playlist)
                 onImportPlaylist(uri, { result ->
                     showOperationProgress = false
                     result.fold(
@@ -1611,7 +1611,7 @@ fun SingleCardSongsContent(
 
     if (songs.isEmpty()) {
         EmptyState(
-            message = "No songs yet",
+            message = context.getString(R.string.library_no_songs),
             icon = RhythmIcons.Music.Song
         )
     } else {
@@ -1659,7 +1659,7 @@ fun SingleCardSongsContent(
 
                             Column {
                                 Text(
-                                    text = "Your Music",
+                                    text = context.getString(R.string.library_your_music),
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -1941,7 +1941,7 @@ fun SingleCardPlaylistsContent(
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Your Playlists",
+                                    text = context.getString(R.string.library_your_playlists),
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -2022,7 +2022,7 @@ fun SingleCardPlaylistsContent(
 
                         Column {
                             Text(
-                                text = "Your Playlists",
+                                text = context.getString(R.string.library_your_playlists),
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -2130,7 +2130,7 @@ fun SingleCardAlbumsContent(
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Your Albums",
+                                    text = context.getString(R.string.library_your_albums),
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -2210,7 +2210,7 @@ fun SingleCardAlbumsContent(
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Your Albums",
+                                    text = context.getString(R.string.library_your_albums),
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -2527,7 +2527,7 @@ fun SongsTab(
 
                     Column {
                         Text(
-                            text = "Your Music",
+                            text = context.getString(R.string.library_your_music),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -2730,7 +2730,7 @@ fun PlaylistsTab(
 
                     Column {
                         Text(
-                            text = "Your Playlists",
+                            text = context.getString(R.string.library_your_playlists),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -2846,7 +2846,7 @@ fun AlbumsTab(
 
                     Column {
                         Text(
-                            text = "Your Albums",
+                            text = context.getString(R.string.library_your_albums),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -3905,7 +3905,7 @@ fun EmptyState(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
-                    text = "Start building your music collection",
+                    text = context.getString(R.string.library_start_collection),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -4432,7 +4432,7 @@ fun SingleCardArtistsContent(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "Sort Artists By",
+                    text = context.getString(R.string.library_sort_artists),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 16.dp)
@@ -4507,7 +4507,7 @@ private fun ArtistSectionHeader(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Your Artists",
+                    text = context.getString(R.string.library_your_artists),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -4551,12 +4551,12 @@ private fun EmptyArtistsState() {
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "No artists found",
+                text = context.getString(R.string.library_no_artists),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "Add some music to see your artists here",
+                text = context.getString(R.string.library_no_artists_desc),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -5026,7 +5026,7 @@ fun SingleCardExplorerContent(
 
                     // Title
                     Text(
-                        text = "Storage Permission Required",
+                        text = context.getString(R.string.storage_permission_required),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
@@ -5035,7 +5035,7 @@ fun SingleCardExplorerContent(
 
                     // Description
                     Text(
-                        text = "To browse your music files and explore your device's storage, Rhythm needs permission to access your files and media.",
+                        text = context.getString(R.string.storage_permission_desc),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
@@ -5104,7 +5104,7 @@ fun SingleCardExplorerContent(
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Text(
-                                    text = "This allows access only to audio files and folders containing music.",
+                                    text = context.getString(R.string.storage_permission_audio_only),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     lineHeight = MaterialTheme.typography.bodySmall.lineHeight * 1.2
@@ -5341,7 +5341,7 @@ fun SingleCardExplorerContent(
 
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Explore",
+                                text = context.getString(R.string.library_explore),
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -5456,7 +5456,7 @@ fun SingleCardExplorerContent(
                             )
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
-                                text = "Storage Locations",
+                                text = context.getString(R.string.library_storage_locations),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
@@ -5534,7 +5534,7 @@ fun SingleCardExplorerContent(
                                 )
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Text(
-                                    text = "Pinned Folders",
+                                    text = context.getString(R.string.library_pinned_folders),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.secondary
@@ -5817,7 +5817,7 @@ fun SingleCardExplorerContent(
                                                     modifier = Modifier.size(16.dp)
                                                 )
                                                 Text(
-                                                    text = "Check storage permissions if files don't appear",
+                                                    text = context.getString(R.string.library_check_permissions),
                                                     style = MaterialTheme.typography.bodySmall,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
@@ -5845,7 +5845,7 @@ fun SingleCardExplorerContent(
                                             )
                                             Spacer(modifier = Modifier.width(6.dp))
                                             Text(
-                                                text = "Go Back",
+                                                text = context.getString(R.string.library_go_back),
                                                 style = MaterialTheme.typography.labelMedium
                                             )
                                         }
@@ -5943,7 +5943,7 @@ fun SingleCardExplorerContent(
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                text = "Creating playlist and adding ${folderSongsForPlaylist.size} songs...",
+                                text = context.getString(R.string.library_creating_playlist, folderSongsForPlaylist.size),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -5966,7 +5966,7 @@ fun SingleCardExplorerContent(
                             supportingText = {
                                 if (isError) {
                                     Text(
-                                        text = "Playlist name cannot be empty",
+                                        text = context.getString(R.string.library_playlist_name_empty),
                                         color = MaterialTheme.colorScheme.error
                                     )
                                 }
@@ -7111,7 +7111,7 @@ fun ExplorerBreadcrumb(
                         tint = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Text(
-                        text = "Home",
+                        text = context.getString(R.string.library_home),
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
@@ -7298,7 +7298,7 @@ fun ExplorerItemCard(
                         Spacer(modifier = Modifier.height(6.dp))
 
                         Text(
-                            text = "Tap to browse files",
+                            text = context.getString(R.string.library_tap_browse),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -7773,7 +7773,7 @@ fun BottomFloatingButtonGroup(
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Play All",
+                    text = context.getString(R.string.library_play_all),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )

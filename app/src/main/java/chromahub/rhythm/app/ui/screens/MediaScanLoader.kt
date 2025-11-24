@@ -251,8 +251,8 @@ fun MediaScanLoader(
                     )
                     Spacer(modifier = Modifier.width(3.dp))
                     Text(
-                        text = "Rhythm",
-                        style = MaterialTheme.typography.displaySmall,
+                        text = context.getString(R.string.common_rhythm),
+                        style = MaterialTheme.typography.displayMedium.copy(
                         color = MaterialTheme.colorScheme.onBackground,
                         fontWeight = FontWeight.Bold
                     )

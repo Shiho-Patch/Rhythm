@@ -121,7 +121,7 @@ fun PlayerChipOrderBottomSheet(
                 ) {
                     Column {
                         Text(
-                            text = "Player Chip Order",
+                            text = context.getString(R.string.player_chip_order_title),
                             style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -137,7 +137,7 @@ fun PlayerChipOrderBottomSheet(
                             Text(
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 style = MaterialTheme.typography.labelLarge,
-                                text = "Customize player chips",
+                                text = context.getString(R.string.player_chip_order_desc),
                                 overflow = TextOverflow.Ellipsis,
                                 maxLines = 1,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -337,7 +337,7 @@ fun PlayerChipOrderBottomSheet(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Reset to Default",
+                            text = context.getString(R.string.player_chip_reset),
                             style = MaterialTheme.typography.labelLarge
                         )
                     }

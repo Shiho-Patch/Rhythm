@@ -612,8 +612,8 @@ fun PlaylistDetailScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "Songs",
-                                    style = MaterialTheme.typography.titleLarge,
+                                    text = context.getString(R.string.common_songs),
+                                    style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onBackground
                                 )
@@ -660,7 +660,7 @@ fun PlaylistDetailScreen(
 
                             // Empty state text
                             Text(
-                                text = if (searchQuery.isNotEmpty()) "No matching songs found" else "No songs yet",
+                                text = if (searchQuery.isNotEmpty()) context.getString(R.string.nav_no_matching_songs) else context.getString(R.string.playlist_no_songs_yet),
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onBackground

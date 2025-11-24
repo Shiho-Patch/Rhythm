@@ -18,6 +18,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
+import chromahub.rhythm.app.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -166,7 +167,7 @@ private fun TunerSettingRow(item: SettingItem) {
         if (item.toggleState != null && item.onClick != null) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-                contentDescription = "Navigate",
+                contentDescription = context.getString(R.string.cd_navigate),
                 modifier = Modifier
                     .size(16.dp)
                     .padding(end = 8.dp),
@@ -202,7 +203,7 @@ private fun TunerSettingRow(item: SettingItem) {
         } else if (item.onClick != null) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-                contentDescription = "Navigate",
+                contentDescription = context.getString(R.string.cd_navigate),
                 modifier = Modifier.size(16.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -278,9 +279,10 @@ private fun TunerSettingCard(
                     )
                 )
             } else if (onClick != null) {
+                val context = LocalContext.current
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-                    contentDescription = "Navigate",
+                    contentDescription = context.getString(R.string.cd_navigate),
                     modifier = Modifier.size(16.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -297,18 +299,18 @@ fun NotificationsSettingsScreen(onBackClick: () -> Unit) {
     val useCustomNotification by appSettings.useCustomNotification.collectAsState()
 
     CollapsibleHeaderScreen(
-        title = "Notifications",
+        title = context.getString(R.string.settings_notifications),
         showBackButton = true,
         onBackClick = onBackClick
     ) { modifier ->
         val settingGroups = listOf(
             SettingGroup(
-                title = "Notification Style",
+                title = context.getString(R.string.settings_notification_style),
                 items = listOf(
                     SettingItem(
                         Icons.Default.Notifications,
-                        "Custom Notifications",
-                        "Use app's custom notification style instead of system media notification",
+                        context.getString(R.string.settings_custom_notifications),
+                        context.getString(R.string.settings_custom_notifications_desc),
                         toggleState = useCustomNotification,
                         onToggleChange = { appSettings.setUseCustomNotification(it) }
                     )
@@ -379,51 +381,51 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
     val shuffleModePersistence by appSettings.shuffleModePersistence.collectAsState()
 
     CollapsibleHeaderScreen(
-        title = "Queue & Playback",
+        title = context.getString(R.string.settings_queue_playback),
         showBackButton = true,
         onBackClick = onBackClick
     ) { modifier ->
         val settingGroups = listOf(
             SettingGroup(
-                title = "Queue Behavior",
+                title = context.getString(R.string.settings_queue_behavior),
                 items = listOf(
                     SettingItem(
                         RhythmIcons.Shuffle,
-                        "Use ExoPlayer Shuffle",
-                        "Let the media player handle shuffle (recommended: OFF for manual shuffle)",
+                        context.getString(R.string.settings_use_exoplayer_shuffle),
+                        context.getString(R.string.settings_use_exoplayer_shuffle_desc),
                         toggleState = shuffleUsesExoplayer,
                         onToggleChange = { appSettings.setShuffleUsesExoplayer(it) }
                     ),
                     SettingItem(
                         RhythmIcons.Queue,
-                        "Auto Queue",
-                        "Automatically add related songs to queue when playing",
+                        context.getString(R.string.settings_auto_queue),
+                        context.getString(R.string.settings_auto_queue_desc),
                         toggleState = autoAddToQueue,
                         onToggleChange = { appSettings.setAutoAddToQueue(it) }
                     ),
                     SettingItem(
                         RhythmIcons.Delete,
-                        "Clear Queue on New Song",
-                        "Clear the current queue when playing a new song directly",
+                        context.getString(R.string.settings_clear_queue_on_new_song),
+                        context.getString(R.string.settings_clear_queue_on_new_song_desc),
                         toggleState = clearQueueOnNewSong,
                         onToggleChange = { appSettings.setClearQueueOnNewSong(it) }
                     )
                 )
             ),
             SettingGroup(
-                title = "Playback Persistence",
+                title = context.getString(R.string.settings_playback_persistence),
                 items = listOf(
                     SettingItem(
                         RhythmIcons.Repeat,
-                        "Remember Repeat Mode",
-                        "Save repeat mode (Off/All/One) between app restarts",
+                        context.getString(R.string.settings_remember_repeat_mode),
+                        context.getString(R.string.settings_remember_repeat_mode_desc),
                         toggleState = repeatModePersistence,
                         onToggleChange = { appSettings.setRepeatModePersistence(it) }
                     ),
                     SettingItem(
                         RhythmIcons.Shuffle,
-                        "Remember Shuffle Mode",
-                        "Save shuffle on/off state between app restarts",
+                        context.getString(R.string.settings_remember_shuffle_mode),
+                        context.getString(R.string.settings_remember_shuffle_mode_desc),
                         toggleState = shuffleModePersistence,
                         onToggleChange = { appSettings.setShuffleModePersistence(it) }
                     )
@@ -490,16 +492,16 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
 
     val settingGroups = listOf(
         SettingGroup(
-            title = "Overview",
+            title = context.getString(R.string.settings_playlists_overview),
             items = listOf() // Empty items - we'll add the stat card separately
         ),
         SettingGroup(
-            title = "Management",
+            title = context.getString(R.string.settings_playlists_management),
             items = listOf(
                 SettingItem(
                     Icons.Default.AddCircle,
-                    "Create New Playlist",
-                    "Add a new custom playlist",
+                    context.getString(R.string.settings_create_new_playlist),
+                    context.getString(R.string.settings_create_new_playlist_desc),
                     onClick = {
                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                         showCreatePlaylistDialog = true
@@ -507,8 +509,8 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                 ),
                 SettingItem(
                     Icons.Default.Upload,
-                    "Import Playlists",
-                    "Import from JSON, M3U, or PLS files",
+                    context.getString(R.string.settings_import_playlists),
+                    context.getString(R.string.settings_import_playlists_desc),
                     onClick = {
                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                         showImportDialog = true
@@ -516,8 +518,8 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                 ),
                 SettingItem(
                     Icons.Default.Download,
-                    "Export All Playlists",
-                    "Backup all playlists to file",
+                    context.getString(R.string.settings_export_all_playlists),
+                    context.getString(R.string.settings_export_all_playlists_desc),
                     onClick = {
                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                         showBulkExportDialog = true
@@ -526,8 +528,8 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
             ) + if (emptyPlaylists.isNotEmpty()) listOf(
                 SettingItem(
                     Icons.Default.Delete,
-                    "Cleanup Empty Playlists",
-                    "Remove ${emptyPlaylists.size} empty playlist${if (emptyPlaylists.size > 1) "s" else ""}",
+                    context.getString(R.string.settings_cleanup_empty_playlists),
+                    context.getString(R.string.settings_cleanup_empty_playlists_desc, emptyPlaylists.size, if (emptyPlaylists.size > 1) "s" else ""),
                     onClick = {
                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                         showCleanupConfirmDialog = true
@@ -536,7 +538,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
             ) else emptyList()
         ),
         SettingGroup(
-            title = "Default Playlists",
+            title = context.getString(R.string.settings_default_playlists),
             items = if (defaultPlaylists.isNotEmpty()) {
                 defaultPlaylists.map { playlist ->
                     SettingItem(
@@ -551,15 +553,15 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                 listOf(
                     SettingItem(
                         Icons.Default.Info,
-                        "No Default Playlists",
-                        "Default playlists are automatically created",
+                        context.getString(R.string.settings_no_default_playlists),
+                        context.getString(R.string.settings_no_default_playlists_desc),
                         onClick = null
                     )
                 )
             }
         ),
         SettingGroup(
-            title = "My Playlists",
+            title = context.getString(R.string.settings_my_playlists),
             items = if (userPlaylists.isNotEmpty()) {
                 userPlaylists.map { playlist ->
                     SettingItem(
@@ -574,8 +576,8 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                 listOf(
                     SettingItem(
                         Icons.Default.Add,
-                        "No Custom Playlists",
-                        "Create your first playlist to get started",
+                        context.getString(R.string.settings_no_custom_playlists),
+                        context.getString(R.string.settings_no_custom_playlists_desc),
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                             showCreatePlaylistDialog = true
@@ -587,7 +589,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
     )
 
     CollapsibleHeaderScreen(
-        title = "Playlists",
+        title = context.getString(R.string.settings_playlists),
         showBackButton = true,
         onBackClick = {
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -613,7 +615,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
             item {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    text = "Overview",
+                    text = context.getString(R.string.settings_playlists_overview),
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
@@ -642,7 +644,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                                         fontWeight = FontWeight.Bold
                                     )
                                     Text(
-                                        text = "Total",
+                                        text = context.getString(R.string.settings_total),
                                         style = MaterialTheme.typography.bodySmall
                                     )
                                 }
@@ -661,7 +663,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                                         fontWeight = FontWeight.Bold
                                     )
                                     Text(
-                                        text = "Custom",
+                                        text = context.getString(R.string.settings_custom),
                                         style = MaterialTheme.typography.bodySmall
                                     )
                                 }
@@ -680,7 +682,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                                         fontWeight = FontWeight.Bold
                                     )
                                     Text(
-                                        text = "Default",
+                                        text = context.getString(R.string.settings_default),
                                         style = MaterialTheme.typography.bodySmall
                                     )
                                 }
@@ -690,7 +692,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                 }
             }
 
-            items(settingGroups.filter { it.title != "Overview" }) { group ->
+            items(settingGroups.filter { it.title != context.getString(R.string.settings_playlists_overview) }) { group ->
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = group.title,
@@ -748,7 +750,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
             onExport = { format, includeDefault ->
                 showBulkExportDialog = false
                 showOperationProgress = true
-                operationProgressText = "Exporting playlists..."
+                operationProgressText = context.getString(R.string.operation_exporting_playlists)
                 musicViewModel.exportAllPlaylists(format, includeDefault) { result ->
                     showOperationProgress = false
                 }
@@ -756,7 +758,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
             onExportToCustomLocation = { format, includeDefault, directoryUri ->
                 showBulkExportDialog = false
                 showOperationProgress = true
-                operationProgressText = "Exporting playlists to selected location..."
+                operationProgressText = context.getString(R.string.operation_exporting_playlists_location)
                 musicViewModel.exportAllPlaylists(format, includeDefault, directoryUri) { result ->
                     showOperationProgress = false
                 }
@@ -770,7 +772,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
             onImport = { uri, onResult, onRestartRequired ->
                 showImportDialog = false
                 showOperationProgress = true
-                operationProgressText = "Importing playlist..."
+                operationProgressText = context.getString(R.string.operation_importing_playlist)
                 musicViewModel.importPlaylist(uri, onResult, onRestartRequired)
             }
         )
@@ -795,13 +797,13 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
             },
             title = { 
                 Text(
-                    text = "Cleanup Empty Playlists?",
+                    text = context.getString(R.string.dialog_cleanup_empty_playlists_title),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
             },
             text = {
-                Text("This will permanently delete ${emptyPlaylists.size} empty playlist${if (emptyPlaylists.size > 1) "s" else ""}. This action cannot be undone.")
+                Text(context.getString(R.string.dialog_cleanup_empty_playlists_message, emptyPlaylists.size, if (emptyPlaylists.size > 1) "s" else ""))
             },
             confirmButton = {
                 Button(
@@ -822,7 +824,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Delete")
+                    Text(context.getString(R.string.dialog_delete))
                 }
             },
             dismissButton = {
@@ -833,7 +835,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Cancel")
+                    Text(context.getString(R.string.dialog_cancel))
                 }
             },
             shape = RoundedCornerShape(24.dp)
@@ -852,12 +854,12 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
             },
             title = { 
                 Text(
-                    text = "Delete Playlist?",
+                    text = context.getString(R.string.dialog_delete_playlist_title),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
             },
-            text = { Text("Are you sure you want to delete \"${playlist.name}\"? This action cannot be undone.") },
+            text = { Text(context.getString(R.string.dialog_delete_playlist_message, playlist.name)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -875,7 +877,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Delete")
+                    Text(context.getString(R.string.dialog_delete))
                 }
             },
             dismissButton = {
@@ -886,7 +888,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Cancel")
+                    Text(context.getString(R.string.dialog_cancel))
                 }
             },
             shape = RoundedCornerShape(24.dp)
@@ -1056,12 +1058,12 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
 
     val settingGroups = listOf(
         SettingGroup(
-            title = "Mode Selection",
+            title = context.getString(R.string.settings_mode_selection),
             items = listOf(
                 SettingItem(
                     Icons.Default.Block,
-                    "Blacklist Mode",
-                    "Hide specific songs and folders from your library",
+                    context.getString(R.string.settings_blacklist_mode),
+                    context.getString(R.string.settings_blacklist_mode_desc),
                     toggleState = currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST,
                     onToggleChange = { enabled ->
                         if (enabled) {
@@ -1073,8 +1075,8 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                 ),
                 SettingItem(
                     Icons.Default.CheckCircle,
-                    "Whitelist Mode",
-                    "Only show songs from selected folders",
+                    context.getString(R.string.settings_whitelist_mode),
+                    context.getString(R.string.settings_whitelist_mode_desc),
                     toggleState = currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.WHITELIST,
                     onToggleChange = { enabled ->
                         if (enabled) {
@@ -1087,12 +1089,12 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
             )
         ),
         SettingGroup(
-            title = "Song Management",
+            title = context.getString(R.string.settings_song_management),
             items = listOf(
                 SettingItem(
                     Icons.AutoMirrored.Filled.QueueMusic,
-                    "Manage Songs",
-                    "${filteredSongDetails.size} ${if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) "blocked" else "whitelisted"} songs",
+                    context.getString(R.string.settings_manage_songs),
+                    context.getString(R.string.settings_manage_songs_desc, filteredSongDetails.size, if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) context.getString(R.string.settings_blocked) else context.getString(R.string.settings_whitelisted)),
                     onClick = {
                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                         showSongsBottomSheet = true
@@ -1100,8 +1102,8 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                 ),
                 SettingItem(
                     Icons.Default.Clear,
-                    "Clear All Songs",
-                    "Remove all ${if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) "blocked" else "whitelisted"} songs",
+                    context.getString(R.string.settings_clear_all_songs),
+                    context.getString(R.string.settings_clear_all_songs_desc, if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) context.getString(R.string.settings_blocked) else context.getString(R.string.settings_whitelisted)),
                     onClick = {
                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                         if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) {
@@ -1114,12 +1116,12 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
             )
         ),
         SettingGroup(
-            title = "Folder Management",
+            title = context.getString(R.string.settings_folder_management),
             items = listOf(
                 SettingItem(
                     Icons.Default.Folder,
-                    "Manage Folders",
-                    "${filteredFoldersList.size} ${if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) "blocked" else "whitelisted"} folders",
+                    context.getString(R.string.settings_manage_folders),
+                    context.getString(R.string.settings_manage_folders_desc, filteredFoldersList.size, if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) context.getString(R.string.settings_blocked) else context.getString(R.string.settings_whitelisted)),
                     onClick = {
                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                         showFoldersBottomSheet = true
@@ -1127,8 +1129,8 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                 ),
                 SettingItem(
                     Icons.Default.Add,
-                    "Add Folder",
-                    "Select a folder to ${if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) "block" else "whitelist"}",
+                    context.getString(R.string.settings_add_folder),
+                    context.getString(R.string.settings_add_folder_desc, if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) context.getString(R.string.settings_block) else context.getString(R.string.settings_whitelist)),
                     onClick = {
                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
@@ -1137,8 +1139,8 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                 ),
                 SettingItem(
                     Icons.Default.Clear,
-                    "Clear All Folders",
-                    "Remove all ${if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) "blocked" else "whitelisted"} folders",
+                    context.getString(R.string.settings_clear_all_folders),
+                    context.getString(R.string.settings_clear_all_folders_desc, if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) context.getString(R.string.settings_blocked) else context.getString(R.string.settings_whitelisted)),
                     onClick = {
                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                         if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) {
@@ -1157,7 +1159,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
     )
 
     CollapsibleHeaderScreen(
-        title = "Media Scan",
+        title = context.getString(R.string.settings_media_scan),
         showBackButton = true,
         onBackClick = onBackClick
     ) { modifier ->
@@ -1236,7 +1238,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "Quick Tips",
+                                text = context.getString(R.string.settings_quick_tips),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -1245,15 +1247,15 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
 
                         MediaScanTipItem(
                             icon = Icons.Default.Block,
-                            text = "Blacklist mode hides specific songs and folders from your library"
+                            text = context.getString(R.string.settings_quick_tip_blacklist)
                         )
                         MediaScanTipItem(
                             icon = Icons.Default.CheckCircle,
-                            text = "Whitelist mode only shows songs from selected folders"
+                            text = context.getString(R.string.settings_quick_tip_whitelist)
                         )
                         MediaScanTipItem(
                             icon = Icons.Default.Folder,
-                            text = "Use folder management to organize your music collection"
+                            text = context.getString(R.string.settings_quick_tip_folder)
                         )
                     }
                 }
@@ -1310,7 +1312,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                 ) {
                     Column {
                         Text(
-                            text = "Manage Songs",
+                            text = context.getString(R.string.settings_manage_songs),
                             style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -1326,7 +1328,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                             Text(
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 style = MaterialTheme.typography.labelLarge,
-                                text = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) "Blocked songs" else "Whitelisted songs",
+                                text = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) context.getString(R.string.settings_blocked_songs) else context.getString(R.string.settings_whitelisted_songs),
                                 overflow = TextOverflow.Ellipsis,
                                 maxLines = 1,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -1370,7 +1372,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) "Blocked" else "Whitelisted",
+                                text = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) context.getString(R.string.settings_blocked) else context.getString(R.string.settings_whitelisted),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -1404,7 +1406,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "Total Songs",
+                                text = context.getString(R.string.settings_total_songs),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -1527,7 +1529,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Clear All ${if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) "Blocked" else "Whitelisted"} Songs")
+                        Text(context.getString(R.string.settings_clear_all_button, if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) context.getString(R.string.settings_blocked) else context.getString(R.string.settings_whitelisted)))
                     }
                 }
             }
@@ -1581,7 +1583,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                 ) {
                     Column {
                         Text(
-                            text = "Manage Folders",
+                            text = context.getString(R.string.settings_manage_folders),
                             style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -1597,7 +1599,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                             Text(
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 style = MaterialTheme.typography.labelLarge,
-                                text = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) "Blocked folders" else "Whitelisted folders",
+                                text = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) context.getString(R.string.settings_blocked_folders) else context.getString(R.string.settings_whitelisted_folders),
                                 overflow = TextOverflow.Ellipsis,
                                 maxLines = 1,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -1637,7 +1639,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) "Blocked Folders" else "Whitelisted Folders",
+                            text = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) context.getString(R.string.settings_blocked_folders) else context.getString(R.string.settings_whitelisted_folders),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -1692,7 +1694,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                                 
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = File(folder).name.ifEmpty { "Root" },
+                                        text = File(folder).name.ifEmpty { context.getString(R.string.settings_root) },
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.SemiBold,
                                         maxLines = 1,
@@ -1725,7 +1727,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Close,
-                                        contentDescription = "Remove",
+                                        contentDescription = context.getString(R.string.cd_remove),
                                         tint = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) 
                                             MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer
                                     )
@@ -1758,7 +1760,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Add Folder")
+                        Text(context.getString(R.string.settings_add_folder_button))
                     }
                     
                     if (filteredFoldersList.isNotEmpty()) {
@@ -1786,7 +1788,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Clear All")
+                            Text(context.getString(R.string.settings_clear_all_button_short))
                         }
                     }
                 }
@@ -1866,7 +1868,7 @@ fun ApiServiceRow(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = if (!isEnabled) "Disabled" else status,
+                        text = if (!isEnabled) context.getString(R.string.status_disabled) else status,
                         style = MaterialTheme.typography.labelSmall,
                         color = when {
                             !isEnabled -> MaterialTheme.colorScheme.onSurfaceVariant
@@ -1900,10 +1902,10 @@ fun ApiServiceRow(
             )
         } else {
             // Arrow icon (only for configurable services)
-            if (title == "Spotify Canvas") {
+            if (title == context.getString(R.string.settings_spotify_canvas)) {
                 Icon(
                     imageVector = RhythmIcons.Forward,
-                    contentDescription = "Configure",
+                    contentDescription = context.getString(R.string.cd_configure),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp)
                 )
@@ -1932,7 +1934,7 @@ fun SpotifyApiConfigDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Spotify API Configuration",
+                text = context.getString(R.string.settings_spotify_api_config),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -1942,7 +1944,7 @@ fun SpotifyApiConfigDialog(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    text = "Enter your Spotify API credentials to enable track search and Canvas videos.",
+                    text = context.getString(R.string.settings_spotify_api_config_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -1969,7 +1971,7 @@ fun SpotifyApiConfigDialog(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "You are currently using the app's default Spotify keys. For full functionality and to avoid rate limits, please input your own Client ID and Secret.",
+                                text = context.getString(R.string.settings_spotify_default_keys_warning),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
                             )
@@ -1983,8 +1985,8 @@ fun SpotifyApiConfigDialog(
                         clientId = it
                         testResult = null
                     },
-                    label = { Text("Client ID") },
-                    placeholder = { Text("Your Spotify Client ID") },
+                    label = { Text(context.getString(R.string.settings_spotify_client_id)) },
+                    placeholder = { Text(context.getString(R.string.settings_spotify_client_id_placeholder)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -1995,8 +1997,8 @@ fun SpotifyApiConfigDialog(
                         clientSecret = it
                         testResult = null
                     },
-                    label = { Text("Client Secret") },
-                    placeholder = { Text("Your Spotify Client Secret") },
+                    label = { Text(context.getString(R.string.settings_spotify_client_secret)) },
+                    placeholder = { Text(context.getString(R.string.settings_spotify_client_secret_placeholder)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -2023,7 +2025,7 @@ fun SpotifyApiConfigDialog(
                                         )
                                     testResult = canvasRepository.testSpotifyApiConfiguration()
                                 } catch (e: Exception) {
-                                    testResult = Pair(false, "Error: ${e.message}")
+                                    testResult = Pair(false, context.getString(R.string.settings_spotify_error, e.message ?: ""))
                                 } finally {
                                     isTestingConnection = false
                                 }
@@ -2040,7 +2042,7 @@ fun SpotifyApiConfigDialog(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                         }
-                        Text(if (isTestingConnection) "Testing..." else "Test Connection")
+                        Text(if (isTestingConnection) context.getString(R.string.settings_spotify_testing) else context.getString(R.string.settings_spotify_test_connection))
                     }
                 }
 
@@ -2083,7 +2085,7 @@ fun SpotifyApiConfigDialog(
 
                 // Help text
                 Text(
-                    text = "To get your Spotify API credentials:\n• Go to developer.spotify.com\n• Create a new app\n• Copy the Client ID and Client Secret",
+                    text = context.getString(R.string.settings_spotify_instructions),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -2172,7 +2174,7 @@ fun AboutScreen(onBackClick: () -> Unit) {
                             )
                             Spacer(modifier = Modifier.width(2.dp))
                             Text(
-                                text = "Rhythm",
+                                text = context.getString(R.string.app_name),
                                 style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
@@ -2180,7 +2182,7 @@ fun AboutScreen(onBackClick: () -> Unit) {
                         }
 
                         Text(
-                            text = "Music Player",
+                            text = context.getString(R.string.settings_about_music_player),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -2236,7 +2238,7 @@ fun AboutScreen(onBackClick: () -> Unit) {
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "Project Details",
+                                text = context.getString(R.string.settings_about_project_details),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -2251,7 +2253,7 @@ fun AboutScreen(onBackClick: () -> Unit) {
                         Spacer(modifier = Modifier.height(12.dp))
 
                         Text(
-                            text = "Built with modern Android technologies and Material Design 3",
+                            text = context.getString(R.string.settings_about_built_with),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -2284,7 +2286,7 @@ fun AboutScreen(onBackClick: () -> Unit) {
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "Credits",
+                                text = context.getString(R.string.settings_about_credits),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -2315,13 +2317,13 @@ fun AboutScreen(onBackClick: () -> Unit) {
                                 modifier = Modifier.padding(12.dp)
                             ) {
                                 Text(
-                                    text = "Team ChromaHub",
+                                    text = context.getString(R.string.settings_about_team_chromahub),
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary
                                 )
                                 Text(
-                                    text = "Passionate developers creating innovative experiences",
+                                    text = context.getString(R.string.settings_about_team_desc),
                                     style = MaterialTheme.typography.bodySmall,
                                     textAlign = TextAlign.Center,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -2333,7 +2335,7 @@ fun AboutScreen(onBackClick: () -> Unit) {
 
                         // Acknowledgments
                         Text(
-                            text = "Special Thanks",
+                            text = context.getString(R.string.special_thanks),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface,
@@ -2378,7 +2380,7 @@ fun AboutScreen(onBackClick: () -> Unit) {
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "Community",
+                                text = context.getString(R.string.settings_about_community),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -2386,7 +2388,7 @@ fun AboutScreen(onBackClick: () -> Unit) {
                         }
 
                         Text(
-                            text = "Special thanks to our amazing community members who have contributed to making Rhythm better through testing, feedback, suggestions, and collaboration.",
+                            text = context.getString(R.string.settings_about_community_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             lineHeight = 18.sp,
@@ -2445,13 +2447,13 @@ fun AboutScreen(onBackClick: () -> Unit) {
                                 )
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Text(
-                                    text = "Want to be featured here?",
+                                    text = context.getString(R.string.settings_about_want_featured),
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
                                 Text(
-                                    text = "Contribute to Rhythm through testing, feedback, or code contributions and join our amazing community!",
+                                    text = context.getString(R.string.settings_about_contribute),
                                     style = MaterialTheme.typography.bodySmall,
                                     textAlign = TextAlign.Center,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -2496,13 +2498,13 @@ fun AboutScreen(onBackClick: () -> Unit) {
                             horizontalAlignment = Alignment.Start
                         ) {
                             Text(
-                                text = "Open Source Libraries",
+                                text = context.getString(R.string.settings_about_open_source_libs),
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "View all dependencies and licenses",
+                                text = context.getString(R.string.settings_about_view_dependencies),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -2537,7 +2539,7 @@ fun AboutScreen(onBackClick: () -> Unit) {
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "Actions",
+                                text = context.getString(R.string.settings_about_actions),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -2568,7 +2570,7 @@ fun AboutScreen(onBackClick: () -> Unit) {
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "Check for Updates",
+                                    text = context.getString(R.string.settings_about_check_updates),
                                     style = MaterialTheme.typography.titleSmall
                                 )
                             }
@@ -2600,7 +2602,7 @@ fun AboutScreen(onBackClick: () -> Unit) {
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "Visit Website",
+                                    text = context.getString(R.string.settings_about_visit_website),
                                     style = MaterialTheme.typography.titleSmall
                                 )
                             }
@@ -2632,7 +2634,7 @@ fun AboutScreen(onBackClick: () -> Unit) {
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "View on GitHub",
+                                    text = context.getString(R.string.settings_about_view_github),
                                     style = MaterialTheme.typography.titleSmall
                                 )
                             }
@@ -2664,7 +2666,7 @@ fun AboutScreen(onBackClick: () -> Unit) {
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "Report Bug or Suggest Feature",
+                                    text = context.getString(R.string.settings_about_report_bug),
                                     style = MaterialTheme.typography.titleSmall
                                 )
                             }
@@ -2695,7 +2697,7 @@ fun AboutScreen(onBackClick: () -> Unit) {
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "Telegram Support Group",
+                                    text = context.getString(R.string.settings_about_telegram_support),
                                     style = MaterialTheme.typography.titleSmall
                                 )
                             }
@@ -3050,7 +3052,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                             )
                             Spacer(modifier = Modifier.width(2.dp))
                             Text(
-                                text = "Rhythm",
+                                text = context.getString(R.string.common_rhythm),
                                 style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
@@ -3088,7 +3090,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Update Check Failed",
+                                    text = context.getString(R.string.updates_check_failed),
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.error
@@ -3116,7 +3118,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                                             modifier = Modifier.size(18.dp)
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Text("Dismiss")
+                                        Text(context.getString(R.string.ui_dismiss))
                                     }
                                     Button(
                                         onClick = {
@@ -3161,14 +3163,14 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Updates Disabled",
+                                    text = context.getString(R.string.updates_disabled),
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.error
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "App updates have been disabled in settings",
+                                    text = context.getString(R.string.updates_disabled_message),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     textAlign = TextAlign.Center
@@ -3195,7 +3197,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Checking for updates...",
+                                    text = context.getString(R.string.updates_checking),
                                     style = MaterialTheme.typography.bodyLarge,
                                     textAlign = TextAlign.Center
                                 )
@@ -3224,7 +3226,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Update Available",
+                                    text = context.getString(R.string.updates_available),
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF4CAF50)
@@ -3275,7 +3277,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
                                         Text(
-                                            text = "Downloading update...",
+                                            text = context.getString(R.string.updates_downloading),
                                             style = MaterialTheme.typography.bodyLarge
                                         )
                                         Spacer(modifier = Modifier.height(8.dp))
@@ -3318,7 +3320,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
-                                        text = "Download Complete",
+                                        text = context.getString(R.string.updates_download_complete),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
@@ -3374,13 +3376,13 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
-                                        text = "Manual Check Only",
+                                        text = context.getString(R.string.updates_manual_check),
                                         style = MaterialTheme.typography.titleLarge,
                                         fontWeight = FontWeight.Bold
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
-                                        text = "Automatic update checking is disabled. You can still check manually.",
+                                        text = context.getString(R.string.updates_auto_disabled),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         textAlign = TextAlign.Center
@@ -3426,7 +3428,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
-                                        text = "You are up to date!",
+                                        text = context.getString(R.string.updates_up_to_date_message),
                                         style = MaterialTheme.typography.titleLarge,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
@@ -3460,7 +3462,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                     Column {
                         Spacer(modifier = Modifier.height(24.dp))
                         Text(
-                            text = "What's New",
+                            text = context.getString(R.string.updates_whats_new),
                             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
@@ -3524,7 +3526,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                     Column {
                         Spacer(modifier = Modifier.height(24.dp))
                         Text(
-                            text = "Known Issues",
+                            text = context.getString(R.string.updates_known_issues),
                             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
@@ -3582,7 +3584,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
             item {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    text = "Update Settings",
+                    text = context.getString(R.string.updates_settings),
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.SemiBold
                     ),
@@ -3712,14 +3714,14 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                             Spacer(modifier = Modifier.width(12.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Smart Polling Active",
+                                    text = context.getString(R.string.updates_smart_polling),
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onTertiaryContainer
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "Using efficient HTTP checks to detect updates while minimizing GitHub API calls. You'll get instant notifications when new versions are released.",
+                                    text = context.getString(R.string.updates_smart_polling_desc),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
                                 )
@@ -3746,7 +3748,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "Choose which update channel to follow:",
+                        text = context.getString(R.string.updates_channel_desc),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -3832,7 +3834,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "How often should Rhythm check for updates?",
+                        text = context.getString(R.string.updates_check_frequency),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -4010,7 +4012,7 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "More experimental features coming soon in future updates",
+                            text = context.getString(R.string.updates_experimental_coming),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -4059,7 +4061,7 @@ private fun LyricsSourceDialog(
                     ) {
                         Column {
                             Text(
-                                text = "Lyrics Source Priority",
+                                text = context.getString(R.string.lyrics_source_priority),
                                 style = MaterialTheme.typography.displayMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -4075,7 +4077,7 @@ private fun LyricsSourceDialog(
                                 Text(
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                     style = MaterialTheme.typography.labelLarge,
-                                    text = "Choose where to look for Lyrics",
+                                    text = context.getString(R.string.lyrics_choose_source),
                                     overflow = TextOverflow.Ellipsis,
                                     maxLines = 1,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -4196,7 +4198,7 @@ private fun LyricsSourceDialog(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = "Embedded lyrics are extracted from ID3v2 USLT tags in your audio files. For best results, use properly tagged MP3/FLAC files.",
+                            text = context.getString(R.string.lyrics_embedded_note),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onTertiaryContainer
                         )
@@ -4290,7 +4292,7 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "Current Cache Status",
+                                text = context.getString(R.string.cache_current_status),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -4309,7 +4311,7 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
                                 )
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Text(
-                                    text = "Calculating cache size...",
+                                    text = context.getString(R.string.cache_calculating),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -4321,7 +4323,7 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(
-                                    text = "Total Cache Size:",
+                                    text = context.getString(R.string.cache_total_size),
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.Medium
                                 )
@@ -4365,7 +4367,7 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(
-                                    text = "Cache Limit:",
+                                    text = context.getString(R.string.cache_limit),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -4405,12 +4407,12 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Maximum Cache Size",
+                                text = context.getString(R.string.cache_max_size),
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Medium
                             )
                             Text(
-                                text = "Set the storage limit for cached data",
+                                text = context.getString(R.string.cache_max_size_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -4463,12 +4465,12 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Clear Cache on Exit",
+                                text = context.getString(R.string.cache_clear_on_exit),
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Medium
                             )
                             Text(
-                                text = "Automatically clear cached data when app closes",
+                                text = context.getString(R.string.cache_clear_on_exit_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -4650,7 +4652,7 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "About Cache",
+                                text = context.getString(R.string.cache_about),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -4723,7 +4725,7 @@ fun CacheSizeDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Max Cache Size",
+                text = context.getString(R.string.cache_max_size),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -4731,7 +4733,7 @@ fun CacheSizeDialog(
         text = {
             Column {
                 Text(
-                    text = "Set the maximum size for cached audio and artwork.",
+                    text = context.getString(R.string.cache_max_size_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -4757,7 +4759,7 @@ fun CacheSizeDialog(
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Text(
-                            text = "Cache Size Limit",
+                            text = context.getString(R.string.cache_size_limit),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
@@ -5113,7 +5115,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                                     MaterialTheme.colorScheme.onErrorContainer
                             )
                             Text(
-                                text = "Last Backup",
+                                text = context.getString(R.string.last_backup),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = if (lastBackupTimestamp > 0) 
                                     MaterialTheme.colorScheme.onPrimaryContainer 
@@ -5158,7 +5160,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                                     MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = "Auto Backup",
+                                text = context.getString(R.string.auto_backup),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = if (autoBackupEnabled) 
                                     MaterialTheme.colorScheme.onTertiaryContainer 
@@ -5325,7 +5327,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "What's Included in Backup?",
+                                text = context.getString(R.string.backup_whats_included_placeholder),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -5334,15 +5336,15 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                         
                         BackupInfoItem(
                             icon = Icons.Filled.Save,
-                            text = "All settings, playlists, themes, and library customization"
+                            text = context.getString(R.string.backup_all_settings_placeholder)
                         )
                         BackupInfoItem(
                             icon = Icons.Filled.RestoreFromTrash,
-                            text = "Restore from files or clipboard with one tap"
+                            text = context.getString(R.string.backup_restore_tap_placeholder)
                         )
                         BackupInfoItem(
                             icon = Icons.Filled.Security,
-                            text = "Backups stored locally on your device for privacy"
+                            text = context.getString(R.string.backup_local_storage_placeholder)
                         )
                     }
                 }
@@ -5509,7 +5511,7 @@ fun LibraryTabOrderSettingsScreen(onBackClick: () -> Unit) {
             
             item {
                 Text(
-                    text = "Reorder tabs to customize your library experience",
+                    text = context.getString(R.string.library_reorder_tabs),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -6212,7 +6214,7 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "Good to Know",
+                                text = context.getString(R.string.theme_good_to_know),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -6221,15 +6223,15 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
 
                         ThemeTipItem(
                             icon = Icons.Filled.Palette,
-                            text = "Album Art colors adapt dynamically to your music"
+                            text = context.getString(R.string.theme_tip_album_art)
                         )
                         ThemeTipItem(
                             icon = Icons.Filled.Wallpaper,
-                            text = "Material You uses system wallpaper colors (Android 12+)"
+                            text = context.getString(R.string.theme_tip_material_you)
                         )
                         ThemeTipItem(
                             icon = Icons.Filled.FontDownload,
-                            text = "Import custom fonts to personalize typography"
+                            text = context.getString(R.string.theme_tip_custom_fonts)
                         )
                     }
                 }
@@ -6366,7 +6368,7 @@ private fun ColorSourceDialog(
                 ) {
                     Column {
                         Text(
-                            text = "Color Source",
+                            text = context.getString(R.string.theme_color_source),
                             style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -6382,7 +6384,7 @@ private fun ColorSourceDialog(
                             Text(
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 style = MaterialTheme.typography.labelLarge,
-                                text = "Choose how colors are extracted",
+                                text = context.getString(R.string.theme_color_source_desc),
                                 overflow = TextOverflow.Ellipsis,
                                 maxLines = 1,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -6559,7 +6561,7 @@ private fun FontSourceDialog(
                 ) {
                     Column {
                         Text(
-                            text = "Font Source",
+                            text = context.getString(R.string.theme_font_source),
                             style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -6575,7 +6577,7 @@ private fun FontSourceDialog(
                             Text(
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 style = MaterialTheme.typography.labelLarge,
-                                text = "Choose where to load fonts from",
+                                text = context.getString(R.string.theme_font_source_desc),
                                 overflow = TextOverflow.Ellipsis,
                                 maxLines = 1,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -6808,7 +6810,7 @@ private fun ColorSchemesDialog(
                 ) {
                     Column {
                         Text(
-                            text = "Color Schemes",
+                            text = context.getString(R.string.theme_color_schemes),
                             style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -6824,7 +6826,7 @@ private fun ColorSchemesDialog(
                             Text(
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 style = MaterialTheme.typography.labelLarge,
-                                text = "Choose from preset color schemes",
+                                text = context.getString(R.string.theme_color_schemes_desc),
                                 overflow = TextOverflow.Ellipsis,
                                 maxLines = 1,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -6848,13 +6850,13 @@ private fun ColorSchemesDialog(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "Color schemes are only available when using Custom color source.",
+                            text = context.getString(R.string.theme_color_schemes_unavailable),
                             style = MaterialTheme.typography.bodyLarge,
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Switch to Custom in the Color Source setting to access predefined schemes.",
+                            text = context.getString(R.string.theme_color_schemes_switch),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
@@ -6868,7 +6870,7 @@ private fun ColorSchemesDialog(
                         // Featured schemes
                         item {
                             Text(
-                                text = "FEATURED SCHEMES",
+                                text = context.getString(R.string.theme_featured_schemes),
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,
@@ -6895,7 +6897,7 @@ private fun ColorSchemesDialog(
                         item {
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "MORE SCHEMES",
+                                text = context.getString(R.string.theme_more_schemes),
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,
@@ -7104,7 +7106,7 @@ private fun CustomColorsDialog(
                 ) {
                     Column {
                         Text(
-                            text = "Custom Color Picker",
+                            text = context.getString(R.string.theme_custom_picker),
                             style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -7120,7 +7122,7 @@ private fun CustomColorsDialog(
                             Text(
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 style = MaterialTheme.typography.labelLarge,
-                                text = "Create your own color scheme",
+                                text = context.getString(R.string.theme_custom_picker_desc),
                                 overflow = TextOverflow.Ellipsis,
                                 maxLines = 1,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -7144,13 +7146,13 @@ private fun CustomColorsDialog(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "Custom colors are only available when using Custom color source.",
+                            text = context.getString(R.string.theme_custom_colors_unavailable),
                             style = MaterialTheme.typography.bodyLarge,
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Switch to Custom in the Color Source setting to create your own colors.",
+                            text = context.getString(R.string.theme_custom_colors_switch),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
@@ -7218,7 +7220,7 @@ private fun CustomColorsDialog(
                         // Preset colors section
                         item {
                             Text(
-                                text = "Quick Presets",
+                                text = context.getString(R.string.theme_quick_presets),
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -7642,7 +7644,7 @@ private fun ColorPickerControls(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "Advanced RGB Controls",
+                text = context.getString(R.string.theme_advanced_rgb),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -7834,7 +7836,7 @@ private fun FontSelectionDialog(
                 ) {
                     Column {
                         Text(
-                            text = "Font Selection",
+                            text = context.getString(R.string.theme_font_selection),
                             style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -7850,7 +7852,7 @@ private fun FontSelectionDialog(
                             Text(
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 style = MaterialTheme.typography.labelLarge,
-                                text = "Choose from available system fonts",
+                                text = context.getString(R.string.theme_font_selection_desc),
                                 overflow = TextOverflow.Ellipsis,
                                 maxLines = 1,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -7874,13 +7876,13 @@ private fun FontSelectionDialog(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "System fonts are only available when using System font source.",
+                            text = context.getString(R.string.theme_system_fonts_unavailable),
                             style = MaterialTheme.typography.bodyLarge,
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Switch to System in the Font Source setting to choose from available fonts.",
+                            text = context.getString(R.string.theme_system_fonts_switch),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
@@ -8041,7 +8043,7 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
             // API Services
             item {
                 Text(
-                    text = "External Services",
+                    text = context.getString(R.string.external_services),
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.SemiBold
                     ),
@@ -8202,7 +8204,7 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "API Services",
+                                text = context.getString(R.string.api_services),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -8210,7 +8212,7 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
                         }
                         
                         Text(
-                            text = "Control which external API services are active to enhance your music experience. Toggle services on/off to manage data usage and functionality.",
+                            text = context.getString(R.string.external_services_desc),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onTertiaryContainer
                         )
@@ -8514,7 +8516,7 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                                 )
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Text(
-                                    text = "Frequency Bands",
+                                    text = context.getString(R.string.frequency_bands),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -8538,7 +8540,7 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                                     modifier = Modifier.padding(16.dp)
                                 ) {
                                     Text(
-                                        text = "Frequency Response",
+                                        text = context.getString(R.string.frequency_response),
                                         style = MaterialTheme.typography.labelLarge,
                                         fontWeight = FontWeight.Medium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -8700,7 +8702,7 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                                 )
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Text(
-                                    text = "Audio Effects",
+                                    text = context.getString(R.string.audio_effects),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -8822,7 +8824,7 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
 
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(
-                                                text = "Virtualizer",
+                                                text = context.getString(R.string.virtualizer),
                                                 style = MaterialTheme.typography.titleSmall,
                                                 fontWeight = FontWeight.Medium
                                             )
@@ -8899,12 +8901,12 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = "System Equalizer",
+                                        text = context.getString(R.string.system_equalizer),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.SemiBold
                                     )
                                     Text(
-                                        text = "Access your device's built-in equalizer",
+                                        text = context.getString(R.string.system_equalizer_desc),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -8967,7 +8969,7 @@ fun SleepTimerSettingsScreen(onBackClick: () -> Unit) {
             item {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    text = "Sleep Timer",
+                    text = context.getString(R.string.sleep_timer),
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.SemiBold
                     ),
@@ -9076,7 +9078,7 @@ fun CrashLogHistorySettingsScreen(onBackClick: () -> Unit, appSettings: AppSetti
                                 )
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Text(
-                                    text = "Crash Reports",
+                                    text = context.getString(R.string.crash_reports),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -9333,7 +9335,7 @@ fun LyricsSourceSettingsScreen(onBackClick: () -> Unit) {
 
             item {
                 Text(
-                    text = "Lyrics Source Priority",
+                    text = context.getString(R.string.lyrics_source_priority_title),
                     style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.SemiBold
                     ),
@@ -9341,7 +9343,7 @@ fun LyricsSourceSettingsScreen(onBackClick: () -> Unit) {
                     modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                 )
                 Text(
-                    text = "Choose where Rhythm should look for lyrics first",
+                    text = context.getString(R.string.lyrics_source_priority_desc_placeholder),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 16.dp, bottom = 16.dp)

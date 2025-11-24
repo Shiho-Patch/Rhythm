@@ -219,7 +219,7 @@ fun BackupRestoreBottomSheet(
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
                     Text(
-                        text = "Backup & Restore",
+                        text = context.getString(R.string.backup_title),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -230,7 +230,7 @@ fun BackupRestoreBottomSheet(
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = "Safeguard your personalized settings, playlists, and preferences. Create backups manually or enable automatic weekly backups for peace of mind.",
+                text = context.getString(R.string.backup_desc),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -313,7 +313,7 @@ fun BackupRestoreBottomSheet(
                                         MaterialTheme.colorScheme.onErrorContainer
                                 )
                                 Text(
-                                    text = "Last Backup",
+                                    text = context.getString(R.string.last_backup),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = if (lastBackupTimestamp > 0) 
                                         MaterialTheme.colorScheme.onPrimaryContainer 
@@ -359,7 +359,7 @@ fun BackupRestoreBottomSheet(
                                         MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
-                                    text = "Auto Backup",
+                                    text = context.getString(R.string.auto_backup),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = if (autoBackupEnabled) 
                                         MaterialTheme.colorScheme.onTertiaryContainer 
@@ -410,7 +410,7 @@ fun BackupRestoreBottomSheet(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "MANAGE BACKUP",
+                            text = context.getString(R.string.manage_backup),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
@@ -462,12 +462,12 @@ fun BackupRestoreBottomSheet(
                             
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Auto-backup",
+                                    text = context.getString(R.string.auto_backup),
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Text(
-                                    text = "Automatically backup settings weekly",
+                                    text = context.getString(R.string.backup_auto_weekly),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -602,7 +602,7 @@ fun BackupRestoreBottomSheet(
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Text(
-                                    text = "Choose where to save your backup file",
+                                    text = context.getString(R.string.backup_choose_save_location),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -628,7 +628,7 @@ fun BackupRestoreBottomSheet(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "RESTORE BACKUP",
+                            text = context.getString(R.string.restore_backup),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
@@ -722,7 +722,7 @@ fun BackupRestoreBottomSheet(
                                     textAlign = TextAlign.Center
                                 )
                                 Text(
-                                    text = "Paste backup data",
+                                    text = context.getString(R.string.backup_paste_data),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     textAlign = TextAlign.Center
@@ -795,7 +795,7 @@ fun BackupRestoreBottomSheet(
                                     textAlign = TextAlign.Center
                                 )
                                 Text(
-                                    text = "Select backup file",
+                                    text = context.getString(R.string.backup_select_file),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     textAlign = TextAlign.Center
@@ -834,7 +834,7 @@ fun BackupRestoreBottomSheet(
                                 )
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Text(
-                                    text = "What's Included in Backup?",
+                                    text = context.getString(R.string.backup_whats_included),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onTertiaryContainer
@@ -843,15 +843,15 @@ fun BackupRestoreBottomSheet(
                             
                             BackupInfoItem(
                                 icon = Icons.Filled.Save,
-                                text = "All settings, playlists, themes, and library customization"
+                                text = context.getString(R.string.backup_included_1)
                             )
                             BackupInfoItem(
                                 icon = Icons.Filled.RestoreFromTrash,
-                                text = "Restore from files or clipboard with one tap"
+                                text = context.getString(R.string.backup_included_2)
                             )
                             BackupInfoItem(
                                 icon = Icons.Filled.Security,
-                                text = "Backups stored locally on your device for privacy"
+                                text = context.getString(R.string.backup_included_3)
                             )
                         }
                     }

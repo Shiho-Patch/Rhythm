@@ -1734,7 +1734,7 @@ fun RhythmNavigation(
                                                         Spacer(modifier = Modifier.height(24.dp))
 
                                                         Text(
-                                                            text = "No matching songs found",
+                                                            text = context.getString(R.string.nav_no_matching_songs),
                                                             style = MaterialTheme.typography.headlineSmall,
                                                             fontWeight = FontWeight.Bold,
                                                             color = MaterialTheme.colorScheme.onBackground
@@ -1743,7 +1743,7 @@ fun RhythmNavigation(
                                                         Spacer(modifier = Modifier.height(8.dp))
 
                                                         Text(
-                                                            text = "Try a different search query",
+                                                            text = context.getString(R.string.nav_try_different),
                                                             style = MaterialTheme.typography.bodyLarge,
                                                             color = MaterialTheme.colorScheme.onBackground.copy(
                                                                 alpha = 0.7f

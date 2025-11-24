@@ -60,7 +60,7 @@ fun CreatePlaylistDialog(
         },
         title = {
             Text(
-                text = "Create Playlist",
+                text = context.getString(R.string.playlist_create),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -78,7 +78,7 @@ fun CreatePlaylistDialog(
                     supportingText = {
                         if (isError) {
                             Text(
-                                text = "Playlist name cannot be empty",
+                                text = context.getString(R.string.playlist_name_empty),
                                 color = MaterialTheme.colorScheme.error
                             )
                         }

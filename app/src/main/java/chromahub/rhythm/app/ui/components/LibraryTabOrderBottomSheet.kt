@@ -116,7 +116,7 @@ fun LibraryTabOrderBottomSheet(
                 ) {
                     Column {
                         Text(
-                            text = "Library Tab Order",
+                            text = context.getString(R.string.library_tab_order_title),
                             style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -132,7 +132,7 @@ fun LibraryTabOrderBottomSheet(
                             Text(
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 style = MaterialTheme.typography.labelLarge,
-                                text = "Reorder and toggle visibility",
+                                text = context.getString(R.string.library_tab_order_desc),
                                 overflow = TextOverflow.Ellipsis,
                                 maxLines = 1,
                                 color = MaterialTheme.colorScheme.onSurface

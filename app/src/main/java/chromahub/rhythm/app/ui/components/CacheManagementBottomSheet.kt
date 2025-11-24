@@ -143,7 +143,7 @@ fun CacheManagementBottomSheet(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "Cache Management",
+                        text = context.getString(R.string.cache_management),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -153,7 +153,7 @@ fun CacheManagementBottomSheet(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
-                    text = "Manage cached data including images, temporary files, and other app data.",
+                    text = context.getString(R.string.cache_manage_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -182,7 +182,7 @@ fun CacheManagementBottomSheet(
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "Current Cache Status",
+                                text = context.getString(R.string.cache_current_status),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -201,7 +201,7 @@ fun CacheManagementBottomSheet(
                                 )
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Text(
-                                    text = "Calculating cache size...",
+                                    text = context.getString(R.string.cache_calculating),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -213,7 +213,7 @@ fun CacheManagementBottomSheet(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(
-                                    text = "Total Cache Size:",
+                                    text = context.getString(R.string.cache_total_size_label),
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.Medium
                                 )
@@ -257,7 +257,7 @@ fun CacheManagementBottomSheet(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(
-                                    text = "Cache Limit:",
+                                    text = context.getString(R.string.cache_limit_label),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -299,12 +299,12 @@ fun CacheManagementBottomSheet(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Maximum Cache Size",
+                                text = context.getString(R.string.cache_max_size),
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Medium
                             )
                             Text(
-                                text = "Set the storage limit for cached data",
+                                text = context.getString(R.string.cache_max_size_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -359,12 +359,12 @@ fun CacheManagementBottomSheet(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Clear Cache on Exit",
+                                text = context.getString(R.string.cache_clear_on_exit),
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Medium
                             )
                             Text(
-                                text = "Automatically clear cached data when app closes",
+                                text = context.getString(R.string.cache_clear_on_exit_desc),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -483,7 +483,7 @@ fun CacheManagementBottomSheet(
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "About Cache",
+                                text = context.getString(R.string.cache_about),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
