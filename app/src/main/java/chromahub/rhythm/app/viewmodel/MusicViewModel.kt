@@ -3189,14 +3189,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                     val artist = song.artist
                     val title = song.title
                     
-                    // Delete cached lyrics file
-                    val fileName = "${artist}_${title}.json".replace(Regex("[^a-zA-Z0-9._-]"), "_")
-                    val lyricsDir = File(getApplication<Application>().filesDir, "lyrics")
-                    val file = File(lyricsDir, fileName)
-                    if (file.exists()) {
-                        file.delete()
-                        Log.d(TAG, "Deleted lyrics cache for: $title by $artist")
-                    }
+                    // Clear lyrics cache (both memory and disk)
+                    repository.clearLyricsCache()
+                    Log.d(TAG, "Cleared lyrics cache for: $title by $artist")
                     
                     // Clear in-memory lyrics
                     _currentLyrics.value = null
@@ -3204,9 +3199,20 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                     // Reset time offset
                     _lyricsTimeOffset.value = 0
                     
-                    // Refetch from sources
+                    // Refetch from sources with force refresh
+                    val songUri = Uri.parse("content://media/external/audio/media/${song.id}")
+                    val lyrics = repository.fetchLyrics(
+                        artist = artist,
+                        title = title,
+                        songId = song.id,
+                        songUri = songUri,
+                        sourcePreference = appSettings.lyricsSourcePreference.value,
+                        forceRefresh = true // Force bypass cache
+                    )
+                    
                     withContext(Dispatchers.Main) {
-                        fetchLyricsForCurrentSong(0)
+                        _currentLyrics.value = lyrics
+                        _isLoadingLyrics.value = false
                     }
                 } else {
                     Log.w(TAG, "Cannot clear cache - no current song")

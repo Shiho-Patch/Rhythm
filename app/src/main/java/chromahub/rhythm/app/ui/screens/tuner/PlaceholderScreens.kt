@@ -4048,21 +4048,41 @@ private fun LyricsSourceDialog(
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 24.dp)
         ) {
-            // Header
-            Text(
-                text = "Lyrics Source Priority",
-                style = MaterialTheme.typography.displayMedium,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            
-            Text(
-                text = "Choose where to look for lyrics first",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 24.dp)
-            )
+
+                    // Header
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 0.dp, vertical = 16.dp),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(
+                                text = "Lyrics Source Priority",
+                                style = MaterialTheme.typography.displayMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .padding(top = 6.dp)
+                                    .background(
+                                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                        shape = CircleShape
+                                    )
+                            ) {
+                                Text(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    text = "Choose where to look for Lyrics",
+                                    overflow = TextOverflow.Ellipsis,
+                                    maxLines = 1,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
             
             // Options
             val sourceOptions = listOf(
@@ -4462,6 +4482,75 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
                         )
                     }
                 }
+                
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            // Clear lyrics cache button
+            item {
+                var isClearingLyricsCache by remember { mutableStateOf(false) }
+                var showClearLyricsSuccess by remember { mutableStateOf(false) }
+                
+                OutlinedButton(
+                    onClick = {
+                        if (!isClearingLyricsCache) {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            isClearingLyricsCache = true
+                            scope.launch {
+                                try {
+                                    // Clear lyrics cache AND refetch for current song
+                                    musicViewModel.clearLyricsCacheAndRefetch()
+                                    
+                                    showClearLyricsSuccess = true
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    delay(2000)
+                                    showClearLyricsSuccess = false
+                                } catch (e: Exception) {
+                                    Log.e("CacheManagement", "Error clearing lyrics cache", e)
+                                } finally {
+                                    isClearingLyricsCache = false
+                                }
+                            }
+                        }
+                    },
+                    enabled = !isClearingLyricsCache && !isCalculatingSize && !isClearingCache,
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = if (showClearLyricsSuccess)
+                            MaterialTheme.colorScheme.primary
+                        else
+                            MaterialTheme.colorScheme.onSurface
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    if (isClearingLyricsCache) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Clearing lyrics...")
+                    } else if (showClearLyricsSuccess) {
+                        Icon(
+                            imageVector = Icons.Filled.CheckCircle,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Lyrics cache cleared!")
+                    } else {
+                        Icon(
+                            imageVector = Icons.Filled.MusicNote,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Clear Lyrics Cache Only")
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(12.dp))
             }
 
             // Clear cache now button
