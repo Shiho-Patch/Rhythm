@@ -2641,6 +2641,49 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Add multiple songs to a playlist at once
+     * Returns a result with success count and playlist name
+     */
+    fun addSongsToPlaylist(songs: List<Song>, playlistId: String): Pair<Int, String> {
+        val filteredSongsSet = filteredSongs.value.map { it.id }.toSet()
+        var successCount = 0
+        var playlistName = ""
+        
+        _playlists.value = _playlists.value.map { playlist ->
+            if (playlist.id == playlistId) {
+                playlistName = playlist.name
+                val existingSongIds = playlist.songs.map { it.id }.toSet()
+                
+                // Filter songs that are not filtered out and not already in playlist
+                val songsToAdd = songs.filter { song ->
+                    filteredSongsSet.contains(song.id) && !existingSongIds.contains(song.id)
+                }
+                
+                successCount = songsToAdd.size
+                
+                if (songsToAdd.isNotEmpty()) {
+                    val updatedSongs = playlist.songs + songsToAdd
+                    playlist.copy(
+                        songs = updatedSongs,
+                        dateModified = System.currentTimeMillis()
+                    )
+                } else {
+                    playlist
+                }
+            } else {
+                playlist
+            }
+        }
+        
+        if (successCount > 0) {
+            savePlaylists()
+            Log.d(TAG, "Added $successCount songs to playlist: $playlistName")
+        }
+        
+        return Pair(successCount, playlistName)
+    }
+
     fun removeSongFromPlaylist(song: Song, playlistId: String, showSnackbar: (String) -> Unit) {
         var success = false
         _playlists.value = _playlists.value.map { playlist ->

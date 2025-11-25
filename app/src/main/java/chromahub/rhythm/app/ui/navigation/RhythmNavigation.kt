@@ -83,6 +83,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import chromahub.rhythm.app.ui.screens.AddToPlaylistBottomSheet
+import chromahub.rhythm.app.ui.screens.AddToPlaylistScreen
 import chromahub.rhythm.app.ui.components.CreatePlaylistDialog
 import chromahub.rhythm.app.ui.components.QueueActionDialog
 import chromahub.rhythm.app.ui.components.MiniPlayer
@@ -942,7 +943,10 @@ fun RhythmNavigation(
                     }
                     
                     composable(Screen.TunerAbout.route) {
-                        chromahub.rhythm.app.ui.screens.tuner.AboutScreen(onBackClick = { navController.popBackStack() })
+                        chromahub.rhythm.app.ui.screens.tuner.AboutScreen(
+                            onBackClick = { navController.popBackStack() },
+                            onNavigateToUpdates = { navController.navigate(Screen.TunerUpdates.route) }
+                        )
                     }
                     
                     composable(Screen.TunerUpdates.route) {
@@ -1547,43 +1551,19 @@ fun RhythmNavigation(
                         val targetPlaylistId = viewModel.targetPlaylistId.collectAsState().value
 
                         var searchQuery by remember { mutableStateOf("") }
-                        var showSearchBar by remember { mutableStateOf(true) }
-
-                        val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
-                            rememberTopAppBarState()
-                        )
 
                         // If we have a target playlist ID, we're adding songs to that playlist
                         if (targetPlaylistId != null) {
                             val targetPlaylist = playlists.find { it.id == targetPlaylistId }
 
                             if (targetPlaylist != null) {
-                                // Show song selection screen
-                                val availableSongs =
-                                    remember(allSongs, targetPlaylist.songs, searchQuery) {
-                                        allSongs.filter { song ->
-                                            // Filter out songs that are already in the playlist
-                                            !targetPlaylist.songs.any { it.id == song.id }
-                                        }.filter { song ->
-                                            // Apply search query filter
-                                            if (searchQuery.isBlank()) {
-                                                true
-                                            } else {
-                                                song.title.contains(
-                                                    searchQuery,
-                                                    ignoreCase = true
-                                                ) ||
-                                                        song.artist.contains(
-                                                            searchQuery,
-                                                            ignoreCase = true
-                                                        ) ||
-                                                        song.album.contains(
-                                                            searchQuery,
-                                                            ignoreCase = true
-                                                        )
-                                            }
-                                        }
+                                // Filter available songs
+                                val availableSongs = remember(allSongs, targetPlaylist.songs, searchQuery) {
+                                    allSongs.filter { song ->
+                                        // Filter out songs that are already in the playlist
+                                        !targetPlaylist.songs.any { it.id == song.id }
                                     }
+                                }
 
                                 if (availableSongs.isEmpty() && searchQuery.isBlank()) {
                                     // No songs to add and no search query
@@ -1618,251 +1598,39 @@ fun RhythmNavigation(
                                         shape = RoundedCornerShape(24.dp)
                                     )
                                 } else {
-                                    val listState = rememberLazyListState()
-
-                                    LaunchedEffect(showSearchBar) {
-                                        if (showSearchBar) {
-                                            // Scroll to the top to show the search bar
-                                            listState.animateScrollToItem(0)
-                                        }
-                                    }
-
-                                    CollapsibleHeaderScreen(
-                                        title = "Add to ${targetPlaylist.name}",
-                                        showBackButton = true,
+                                    // Show the new multi-selection screen
+                                    AddToPlaylistScreen(
+                                        targetPlaylist = targetPlaylist,
+                                        availableSongs = availableSongs,
+                                        searchQuery = searchQuery,
+                                        onSearchQueryChange = { searchQuery = it },
                                         onBackClick = {
-                                            HapticUtils.performHapticFeedback(
-                                                context,
-                                                haptic,
-                                                HapticFeedbackType.LongPress
-                                            )
-                                            if (showSearchBar) {
-                                                showSearchBar = false
-                                                searchQuery = ""
-                                            } else {
-                                                viewModel.clearTargetPlaylistForAddingSongs()
-                                                navController.popBackStack()
-                                            }
+                                            viewModel.clearTargetPlaylistForAddingSongs()
+                                            navController.popBackStack()
                                         },
-                                        actions = {
-                                            if (!showSearchBar) {
-                                                FilledIconButton(
-                                                    onClick = {
-                                                        HapticUtils.performHapticFeedback(
-                                                            context,
-                                                            haptic,
-                                                            HapticFeedbackType.LongPress
-                                                        )
-                                                        showSearchBar = true
-                                                    },
-                                                    colors = IconButtonDefaults.filledIconButtonColors(
-                                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                                    )
-                                                ) {
-                                                    Icon(
-                                                        imageVector = RhythmIcons.Search,
-                                                        contentDescription = "Search songs",
-                                                        modifier = Modifier.size(20.dp)
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    ) { modifier ->
-                                        LazyColumn(
-                                            state = listState,
-                                            modifier = modifier.padding(horizontal = 16.dp), // Added horizontal padding
-                                            contentPadding = PaddingValues(vertical = 8.dp)
-                                        ) {
-                                            if (showSearchBar) {
-                                                item {
-                                                    OutlinedTextField(
-                                                        value = searchQuery,
-                                                        onValueChange = { searchQuery = it },
-                                                        label = { Text("Search songs") },
-                                                        singleLine = true,
-                                                        modifier = Modifier
-                                                            .fillMaxWidth()
-                                                            .padding(vertical = 8.dp),
-                                                        shape = RoundedCornerShape(24.dp), // Added rounded corners
-                                                        trailingIcon = {
-                                                            if (searchQuery.isNotEmpty()) {
-                                                                IconButton(onClick = {
-                                                                    HapticUtils.performHapticFeedback(
-                                                                        context,
-                                                                        haptic,
-                                                                        HapticFeedbackType.TextHandleMove
-                                                                    )
-                                                                    searchQuery = ""
-                                                                }) {
-                                                                    Icon(
-                                                                        imageVector = RhythmIcons.Close,
-                                                                        contentDescription = "Clear search"
-                                                                    )
-                                                                }
-                                                            }
-                                                        }
-                                                    )
-                                                }
-                                            }
-
-                                            if (availableSongs.isEmpty() && searchQuery.isNotEmpty()) {
-                                                item {
-                                                    Column(
-                                                        modifier = Modifier
-                                                            .fillMaxWidth()
-                                                            .padding(32.dp),
-                                                        horizontalAlignment = Alignment.CenterHorizontally
-                                                    ) {
-                                                        Surface(
-                                                            modifier = Modifier.size(80.dp),
-                                                            shape = CircleShape,
-                                                            color = MaterialTheme.colorScheme.surfaceVariant,
-                                                            tonalElevation = 4.dp
-                                                        ) {
-                                                            Box(
-                                                                contentAlignment = Alignment.Center
-                                                            ) {
-                                                                Icon(
-                                                                    imageVector = RhythmIcons.MusicNote,
-                                                                    contentDescription = null,
-                                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                                    modifier = Modifier.size(40.dp)
-                                                                )
-                                                            }
-                                                        }
-
-                                                        Spacer(modifier = Modifier.height(24.dp))
-
-                                                        Text(
-                                                            text = context.getString(R.string.nav_no_matching_songs),
-                                                            style = MaterialTheme.typography.headlineSmall,
-                                                            fontWeight = FontWeight.Bold,
-                                                            color = MaterialTheme.colorScheme.onBackground
-                                                        )
-
-                                                        Spacer(modifier = Modifier.height(8.dp))
-
-                                                        Text(
-                                                            text = context.getString(R.string.nav_try_different),
-                                                            style = MaterialTheme.typography.bodyLarge,
-                                                            color = MaterialTheme.colorScheme.onBackground.copy(
-                                                                alpha = 0.7f
-                                                            ),
-                                                            textAlign = TextAlign.Center
-                                                        )
+                                        onAddSongsToPlaylist = { songs ->
+                                            // Add multiple songs to the playlist using batch operation
+                                            if (songs.size == 1) {
+                                                // Single song - use original method for individual feedback
+                                                viewModel.addSongToPlaylist(songs[0], targetPlaylistId) { message ->
+                                                    coroutineScope.launch {
+                                                        snackbarHostState.showSnackbar(message)
                                                     }
                                                 }
                                             } else {
-                                                items(availableSongs) { song ->
-                                                    Surface(
-                                                        onClick = {
-                                                            HapticUtils.performHapticFeedback(
-                                                                context,
-                                                                haptic,
-                                                                HapticFeedbackType.TextHandleMove
-                                                            )
-                                                            viewModel.addSongToPlaylist(
-                                                                song,
-                                                                targetPlaylistId
-                                                            ) { message ->
-                                                                coroutineScope.launch {
-                                                                    snackbarHostState.showSnackbar(
-                                                                        message
-                                                                    )
-                                                                }
-                                                            }
-                                                            // Show a snackbar or some feedback
-                                                        },
-                                                        color = MaterialTheme.colorScheme.surfaceContainer,
-                                                        shape = RoundedCornerShape(12.dp),
-                                                        tonalElevation = 1.dp,
-                                                        modifier = Modifier
-                                                            .fillMaxWidth()
-                                                            .padding(vertical = 4.dp) // Removed horizontal padding here as it's now on LazyColumn
-                                                    ) {
-                                                        AnimateIn {
-                                                            Row(
-                                                                modifier = Modifier
-                                                                    .fillMaxWidth()
-                                                                    .padding(12.dp),
-                                                                verticalAlignment = Alignment.CenterVertically
-                                                            ) {
-                                                                // Album art
-                                                                Box(
-                                                                    modifier = Modifier
-                                                                        .size(48.dp)
-                                                                        .clip(RoundedCornerShape(8.dp))
-                                                                ) {
-                                                                    AsyncImage(
-                                                                        model = song.artworkUri,
-                                                                        contentDescription = null,
-                                                                        modifier = Modifier.fillMaxSize(),
-                                                                        contentScale = ContentScale.Crop
-                                                                    )
-                                                                }
-
-                                                                // Song info
-                                                                Column(
-                                                                    modifier = Modifier
-                                                                        .weight(1f)
-                                                                        .padding(horizontal = 12.dp)
-                                                                ) {
-                                                                    Text(
-                                                                        text = song.title,
-                                                                        style = MaterialTheme.typography.bodyLarge,
-                                                                        maxLines = 1,
-                                                                        overflow = TextOverflow.Ellipsis
-                                                                    )
-
-                                                                    Text(
-                                                                        text = "${song.artist} • ${song.album}",
-                                                                        style = MaterialTheme.typography.bodySmall,
-                                                                        color = MaterialTheme.colorScheme.onSurface.copy(
-                                                                            alpha = 0.7f
-                                                                        ),
-                                                                        maxLines = 1,
-                                                                        overflow = TextOverflow.Ellipsis
-                                                                    )
-                                                                }
-
-                                                                // Add button
-                                                                FilledIconButton(
-                                                                    onClick = {
-                                                                        HapticUtils.performHapticFeedback(
-                                                                            context,
-                                                                            haptic,
-                                                                            HapticFeedbackType.TextHandleMove
-                                                                        )
-                                                                        viewModel.addSongToPlaylist(
-                                                                            song,
-                                                                            targetPlaylistId
-                                                                        ) { message ->
-                                                                            coroutineScope.launch {
-                                                                                snackbarHostState.showSnackbar(
-                                                                                    message
-                                                                                )
-                                                                            }
-                                                                        }
-                                                                        // Show a snackbar or some feedback
-                                                                    },
-                                                                    colors = IconButtonDefaults.filledIconButtonColors(
-                                                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                                                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                                                    )
-                                                                ) {
-                                                                    Icon(
-                                                                        imageVector = RhythmIcons.Add,
-                                                                        contentDescription = "Add to playlist"
-                                                                    )
-                                                                }
-                                                            }
-                                                        }
+                                                // Multiple songs - use batch operation
+                                                val (successCount, playlistName) = viewModel.addSongsToPlaylist(songs, targetPlaylistId)
+                                                coroutineScope.launch {
+                                                    val message = when {
+                                                        successCount == 0 -> "No songs added - they may already be in the playlist"
+                                                        successCount == songs.size -> "Added $successCount songs to $playlistName"
+                                                        else -> "Added $successCount of ${songs.size} songs to $playlistName"
                                                     }
+                                                    snackbarHostState.showSnackbar(message)
                                                 }
                                             }
                                         }
-                                    }
+                                    )
                                 }
                             } else {
                                 // Playlist not found, go back

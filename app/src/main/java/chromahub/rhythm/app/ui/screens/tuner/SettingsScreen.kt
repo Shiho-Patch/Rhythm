@@ -768,7 +768,10 @@ fun SettingsScreen(onBack: () -> Unit, appSettings: chromahub.rhythm.app.data.Ap
             SettingsRoutes.NOTIFICATIONS -> NotificationsSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.PLAYLISTS -> PlaylistsSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.MEDIA_SCAN -> MediaScanSettingsScreen(onBackClick = { currentRoute = null })
-            SettingsRoutes.ABOUT -> chromahub.rhythm.app.ui.screens.tuner.AboutScreen(onBackClick = { currentRoute = null })
+            SettingsRoutes.ABOUT -> chromahub.rhythm.app.ui.screens.tuner.AboutScreen(
+                onBackClick = { currentRoute = null },
+                onNavigateToUpdates = { currentRoute = SettingsRoutes.UPDATES }
+            )
             SettingsRoutes.UPDATES -> UpdatesSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.EXPERIMENTAL_FEATURES -> ExperimentalFeaturesScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.API_MANAGEMENT -> ApiManagementSettingsScreen(onBackClick = { currentRoute = null })

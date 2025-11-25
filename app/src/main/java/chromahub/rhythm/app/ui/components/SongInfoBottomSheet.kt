@@ -413,96 +413,96 @@ fun SongInfoBottomSheet(
                             }
                         }
                         
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            // Whitelist/Remove from whitelist Song
-                            FilledTonalButton(
-                                onClick = {
-                                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    isLoadingWhitelist = true
+                        // Row(
+                        //     modifier = Modifier.fillMaxWidth(),
+                        //     horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        // ) {
+                        //     // Whitelist/Remove from whitelist Song
+                        //     FilledTonalButton(
+                        //         onClick = {
+                        //             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        //             isLoadingWhitelist = true
                                     
-                                    song?.let { songToWhitelist ->
-                                        if (isWhitelisted) {
-                                            appSettings.removeFromWhitelist(songToWhitelist.id)
-                                        } else {
-                                            appSettings.addToWhitelist(songToWhitelist.id)
-                                        }
+                        //             song?.let { songToWhitelist ->
+                        //                 if (isWhitelisted) {
+                        //                     appSettings.removeFromWhitelist(songToWhitelist.id)
+                        //                 } else {
+                        //                     appSettings.addToWhitelist(songToWhitelist.id)
+                        //                 }
                                         
-                                        isLoadingWhitelist = false
-                                        val message = if (isWhitelisted) "Song removed from whitelist" else "Song added to whitelist" 
-                                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                                    }
-                                },
-                                enabled = !isLoadingWhitelist,
-                                modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.filledTonalButtonColors(
-                                    containerColor = if (isWhitelisted) 
-                                        MaterialTheme.colorScheme.primaryContainer 
-                                    else 
-                                        MaterialTheme.colorScheme.secondaryContainer
-                                )
-                            ) {
-                                if (isLoadingWhitelist) {
-                                    SimpleCircularLoader(
-                                        size = 16.dp,
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                                    )
-                                } else {
-                                    Icon(
-                                        imageVector = if (isWhitelisted) Icons.Rounded.CheckCircle else Icons.Rounded.Add,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(if (isWhitelisted) "Un-Whitelist Track" else "Whitelist Track")
-                            }
+                        //                 isLoadingWhitelist = false
+                        //                 val message = if (isWhitelisted) "Song removed from whitelist" else "Song added to whitelist" 
+                        //                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                        //             }
+                        //         },
+                        //         enabled = !isLoadingWhitelist,
+                        //         modifier = Modifier.weight(1f),
+                        //         colors = ButtonDefaults.filledTonalButtonColors(
+                        //             containerColor = if (isWhitelisted) 
+                        //                 MaterialTheme.colorScheme.primaryContainer 
+                        //             else 
+                        //                 MaterialTheme.colorScheme.secondaryContainer
+                        //         )
+                        //     ) {
+                        //         if (isLoadingWhitelist) {
+                        //             SimpleCircularLoader(
+                        //                 size = 16.dp,
+                        //                 color = MaterialTheme.colorScheme.onSecondaryContainer
+                        //             )
+                        //         } else {
+                        //             Icon(
+                        //                 imageVector = if (isWhitelisted) Icons.Rounded.CheckCircle else Icons.Rounded.Add,
+                        //                 contentDescription = null,
+                        //                 modifier = Modifier.size(16.dp)
+                        //             )
+                        //         }
+                        //         Spacer(modifier = Modifier.width(8.dp))
+                        //         Text(if (isWhitelisted) "Un-Whitelist Track" else "Whitelist Track")
+                        //     }
                             
-                            // Whitelist/Remove from whitelist Folder
-                            if (folderPath != null) {
-                                FilledTonalButton(
-                                    onClick = {
-                                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        isLoadingWhitelist = true
+                        //     // Whitelist/Remove from whitelist Folder
+                        //     if (folderPath != null) {
+                        //         FilledTonalButton(
+                        //             onClick = {
+                        //                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        //                 isLoadingWhitelist = true
                                         
-                                        if (isInWhitelistedFolder) {
-                                            appSettings.removeFolderFromWhitelist(folderPath)
-                                        } else {
-                                            appSettings.addFolderToWhitelist(folderPath)
-                                        }
+                        //                 if (isInWhitelistedFolder) {
+                        //                     appSettings.removeFolderFromWhitelist(folderPath)
+                        //                 } else {
+                        //                     appSettings.addFolderToWhitelist(folderPath)
+                        //                 }
                                         
-                                        isLoadingWhitelist = false
-                                        val message = if (isInWhitelistedFolder) "Folder removed from whitelist" else "Folder added to whitelist"
-                                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                                    },
-                                    enabled = !isLoadingWhitelist,
-                                    modifier = Modifier.weight(1f),
-                                    colors = ButtonDefaults.filledTonalButtonColors(
-                                        containerColor = if (isInWhitelistedFolder) 
-                                            MaterialTheme.colorScheme.primaryContainer 
-                                        else 
-                                            MaterialTheme.colorScheme.tertiaryContainer
-                                    )
-                                ) {
-                                    if (isLoadingWhitelist) {
-                                        SimpleCircularLoader(
-                                            size = 16.dp,
-                                            color = MaterialTheme.colorScheme.onTertiaryContainer
-                                        )
-                                    } else {
-                                        Icon(
-                                            imageVector = if (isInWhitelistedFolder) Icons.Rounded.FolderOff else Icons.Rounded.Folder,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(if (isInWhitelistedFolder) "Un-Whitelist Folder" else "Whitelist Folder")
-                                }
-                            }
-                        }
+                        //                 isLoadingWhitelist = false
+                        //                 val message = if (isInWhitelistedFolder) "Folder removed from whitelist" else "Folder added to whitelist"
+                        //                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                        //             },
+                        //             enabled = !isLoadingWhitelist,
+                        //             modifier = Modifier.weight(1f),
+                        //             colors = ButtonDefaults.filledTonalButtonColors(
+                        //                 containerColor = if (isInWhitelistedFolder) 
+                        //                     MaterialTheme.colorScheme.primaryContainer 
+                        //                 else 
+                        //                     MaterialTheme.colorScheme.tertiaryContainer
+                        //             )
+                        //         ) {
+                        //             if (isLoadingWhitelist) {
+                        //                 SimpleCircularLoader(
+                        //                     size = 16.dp,
+                        //                     color = MaterialTheme.colorScheme.onTertiaryContainer
+                        //                 )
+                        //             } else {
+                        //                 Icon(
+                        //                     imageVector = if (isInWhitelistedFolder) Icons.Rounded.FolderOff else Icons.Rounded.Folder,
+                        //                     contentDescription = null,
+                        //                     modifier = Modifier.size(16.dp)
+                        //                 )
+                        //             }
+                        //             Spacer(modifier = Modifier.width(8.dp))
+                        //             Text(if (isInWhitelistedFolder) "Un-Whitelist Folder" else "Whitelist Folder")
+                        //         }
+                        //     }
+                        // }
                     }
                 }
             }

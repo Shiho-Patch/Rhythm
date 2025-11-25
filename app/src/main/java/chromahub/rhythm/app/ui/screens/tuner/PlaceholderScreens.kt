@@ -2123,7 +2123,10 @@ fun SpotifyApiConfigDialog(
 }
 
 @Composable
-fun AboutScreen(onBackClick: () -> Unit) {
+fun AboutScreen(
+    onBackClick: () -> Unit,
+    onNavigateToUpdates: (() -> Unit)? = null
+) {
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
     val appUpdaterViewModel: AppUpdaterViewModel = viewModel()
@@ -2550,6 +2553,7 @@ fun AboutScreen(onBackClick: () -> Unit) {
                             onClick = {
                                 HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
                                 appUpdaterViewModel.checkForUpdates(force = true)
+                                onNavigateToUpdates?.invoke()
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,

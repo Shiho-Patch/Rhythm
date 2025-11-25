@@ -2616,6 +2616,8 @@ fun EnhancedUpdaterContent(
 ) {
     val context = LocalContext.current
     val autoCheckForUpdates by appSettings.autoCheckForUpdates.collectAsState()
+    val updateNotificationsEnabled by appSettings.updateNotificationsEnabled.collectAsState()
+    val useSmartUpdatePolling by appSettings.useSmartUpdatePolling.collectAsState()
     val updateChannel by appSettings.updateChannel.collectAsState()
     val updateCheckIntervalHours by appSettings.updateCheckIntervalHours.collectAsState()
     val updatesEnabled by appSettings.updatesEnabled.collectAsState() // NEW
@@ -2860,17 +2862,37 @@ fun EnhancedUpdaterContent(
                             }
                         }
                     )
-                    /*                    // Show update interval dropdown when auto-check is enabled
-                    AnimatedVisibility(
-                        visible = autoCheckForUpdates,
-                        enter = expandVertically() + fadeIn(),
-                        exit = shrinkVertically() + fadeOut()
-                    ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    // Update check interval dropdown
+                    
+                    // Update Notifications toggle
+                    EnhancedUpdateOption(
+                        icon = Icons.Filled.Notifications,
+                        title = "Update Notifications",
+                        description = "Get notified when new versions are available",
+                        isEnabled = updateNotificationsEnabled,
+                        onToggle = { enabled ->
+                            scope.launch {
+                                appSettings.setUpdateNotificationsEnabled(enabled)
+                            }
+                        }
+                    )
+                    
+                    // Smart Polling toggle
+                    EnhancedUpdateOption(
+                        icon = Icons.Filled.CloudSync,
+                        title = "Smart Polling",
+                        description = "Use efficient checks to save GitHub API calls",
+                        isEnabled = useSmartUpdatePolling,
+                        onToggle = { enabled ->
+                            scope.launch {
+                                appSettings.setUseSmartUpdatePolling(enabled)
+                            }
+                        }
+                    )
+                    
+                    // Check Interval dropdown
                     SettingsDropdownItem(
-                        title = "Check Frequency",
-                        description = "How often to check for updates.",
+                        title = "Check Interval",
+                        description = "How often to check for updates",
                         selectedOption = when (updateCheckIntervalHours) {
                             1 -> "Every Hour"
                             3 -> "Every 3 Hours"
@@ -2879,7 +2901,7 @@ fun EnhancedUpdaterContent(
                             24 -> "Daily"
                             else -> "Every 6 Hours"
                         },
-                        icon = Icons.Filled.AccessTime,
+                        icon = Icons.Filled.Schedule,
                         options = listOf(
                             "Every Hour",
                             "Every 3 Hours", 
@@ -2900,7 +2922,7 @@ fun EnhancedUpdaterContent(
                                 appSettings.setUpdateCheckIntervalHours(hours)
                             }
                         }
-                    )*/
+                    )
 
                             // Update channel selection dropdown
                     SettingsDropdownItem(
