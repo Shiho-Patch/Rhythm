@@ -16,8 +16,8 @@ android {
         applicationId = "chromahub.rhythm.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 31260751
-        versionName = "3.1.260.751 Beta"
+        versionCode = 31263758
+        versionName = "3.1.263.758 Beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -87,6 +87,7 @@ dependencies {
     implementation("androidx.core:core:1.17.0") // Downgrade core dependency for compatibility
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+    implementation("androidx.appcompat:appcompat:1.7.1") // For AppCompatDelegate locale support
     
     // Compose dependencies
     implementation(platform(libs.androidx.compose.bom))

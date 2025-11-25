@@ -131,6 +131,7 @@ import chromahub.rhythm.app.data.AppSettings
 import chromahub.rhythm.app.ui.components.M3LinearLoader
 import chromahub.rhythm.app.ui.components.M3FourColorCircularLoader
 import chromahub.rhythm.app.ui.components.RhythmIcons
+import chromahub.rhythm.app.ui.components.LanguageSwitcherDialog
 import chromahub.rhythm.app.ui.screens.onboarding.OnboardingStep
 import chromahub.rhythm.app.ui.screens.onboarding.PermissionScreenState
 import chromahub.rhythm.app.viewmodel.AppUpdaterViewModel
@@ -624,12 +625,37 @@ private fun OnboardingCard(
 fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
+    var showLanguageSwitcher by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
             .fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
+        // Language switcher button at top-right
+        FilledTonalButton(
+            onClick = { showLanguageSwitcher = true },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 16.dp, end = 16.dp),
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                contentColor = MaterialTheme.colorScheme.onSurface
+            ),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Public,
+                contentDescription = "Change Language",
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Language",
+                style = MaterialTheme.typography.labelLarge
+            )
+        }
+        
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -828,6 +854,13 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
                     textAlign = TextAlign.Center
                 )
             }
+        }
+        
+        // Language switcher dialog
+        if (showLanguageSwitcher) {
+            LanguageSwitcherDialog(
+                onDismiss = { showLanguageSwitcher = false }
+            )
         }
     }
 }

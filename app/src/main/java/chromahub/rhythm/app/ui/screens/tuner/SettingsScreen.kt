@@ -50,6 +50,7 @@ import androidx.compose.material.icons.filled.Lyrics
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Reorder
 import androidx.compose.material.icons.filled.Science
@@ -93,6 +94,7 @@ import chromahub.rhythm.app.ui.components.CollapsibleHeaderScreen
 import chromahub.rhythm.app.ui.components.RhythmIcons
 import chromahub.rhythm.app.ui.utils.LazyListStateSaver
 import chromahub.rhythm.app.data.AppSettings
+import chromahub.rhythm.app.ui.components.LanguageSwitcherDialog
 import android.content.Context
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.ui.platform.LocalContext
@@ -156,6 +158,7 @@ fun TunerSettingsScreen(
     val defaultScreen by appSettings.defaultScreen.collectAsState()
     
     var showDefaultScreenDialog by remember { mutableStateOf(false) }
+    var showLanguageSwitcher by remember { mutableStateOf(false) }
 
     CollapsibleHeaderScreen(
         title = "Tuner",
@@ -181,6 +184,12 @@ fun TunerSettingsScreen(
                         "Default Landing Screen",
                         if (defaultScreen == "library") "Library" else "Home",
                         onClick = { showDefaultScreenDialog = true }
+                    ),
+                    SettingItem(
+                        Icons.Default.Public,
+                        "Language",
+                        "Change app language",
+                        onClick = { showLanguageSwitcher = true }
                     ),
                     SettingItem(
                         Icons.Default.TouchApp, 
@@ -594,6 +603,13 @@ fun TunerSettingsScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
             }
+        }
+        
+        // Language switcher dialog
+        if (showLanguageSwitcher) {
+            LanguageSwitcherDialog(
+                onDismiss = { showLanguageSwitcher = false }
+            )
         }
     }
 }
