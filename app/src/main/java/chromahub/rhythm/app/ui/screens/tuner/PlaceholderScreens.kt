@@ -4608,9 +4608,9 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
             item {
                 Card(
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
                     ),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(18.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
@@ -4623,7 +4623,7 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
                             Icon(
                                 imageVector = Icons.Filled.Info,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
                                 modifier = Modifier.size(24.dp)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
@@ -4631,7 +4631,7 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
                                 text = context.getString(R.string.cache_about),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
 
@@ -4649,13 +4649,13 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
                                     imageVector = Icons.Filled.FiberManualRecord,
                                     contentDescription = null,
                                     modifier = Modifier.size(8.dp),
-                                    tint = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                                 )
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Text(
                                     text = info,
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                             }
                         }

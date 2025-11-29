@@ -285,7 +285,7 @@ class AppSettings private constructor(context: Context) {
             val onlineOnly = prefs.getBoolean(KEY_ONLINE_ONLY_LYRICS, true)
             if (onlineOnly) LyricsSourcePreference.API_FIRST.ordinal else LyricsSourcePreference.EMBEDDED_FIRST.ordinal
         } else {
-            prefs.getInt(KEY_LYRICS_SOURCE_PREFERENCE, LyricsSourcePreference.API_FIRST.ordinal)
+            prefs.getInt(KEY_LYRICS_SOURCE_PREFERENCE, LyricsSourcePreference.LOCAL_FIRST.ordinal)
         }
     }
     
