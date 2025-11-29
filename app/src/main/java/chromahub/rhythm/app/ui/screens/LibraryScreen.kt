@@ -964,8 +964,10 @@ fun LibraryScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
+                            // Get the actual tab ID from the visible tabs list
+                            val currentTabId = tabOrder.filter { !hiddenTabs.contains(it) }.getOrNull(index)
                             Icon(
-                                imageVector = when (tabOrder.getOrNull(index)) {
+                                imageVector = when (currentTabId) {
                                     "SONGS" -> RhythmIcons.Relax
                                     "PLAYLISTS" -> RhythmIcons.PlaylistFilled
                                     "ALBUMS" -> RhythmIcons.Music.Album

@@ -1217,23 +1217,22 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
             item {
                 Spacer(modifier = Modifier.height(24.dp))
                 Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
-                    ),
+                    modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(18.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                    )
                 ) {
                     Column(
                         modifier = Modifier.padding(20.dp)
                     ) {
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(bottom = 12.dp)
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.Lightbulb,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
                                 modifier = Modifier.size(24.dp)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
@@ -1241,9 +1240,10 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                                 text = context.getString(R.string.settings_quick_tips),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         MediaScanTipItem(
                             icon = Icons.Default.Block,
@@ -4386,173 +4386,145 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
                 }
             }
 
-            // Max cache size setting
+            // Cache Settings
             item {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Cache Settings",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
                 Card(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable {
-                            showCacheSizeDialog = true
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                        }
+                    shape = RoundedCornerShape(18.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.DataUsage,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
+                    Column {
+                        SettingRow(
+                            icon = Icons.Filled.DataUsage,
+                            title = context.getString(R.string.cache_max_size),
+                            description = "${String.format("%.1f", maxCacheSize / (1024f * 1024f))} MB",
+                            onClick = { showCacheSizeDialog = true }
                         )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = context.getString(R.string.cache_max_size),
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Text(
-                                text = context.getString(R.string.cache_max_size_desc),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Surface(
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text(
-                                text = "${String.format("%.1f", maxCacheSize / (1024f * 1024f))} MB",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Icon(
-                            imageVector = Icons.Filled.ChevronRight,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        SettingRow(
+                            icon = Icons.Filled.AutoDelete,
+                            title = context.getString(R.string.cache_clear_on_exit),
+                            description = "Automatically clear cache when exiting app",
+                            toggleState = clearCacheOnExit,
+                            onToggleChange = { appSettings.setClearCacheOnExit(it) }
                         )
                     }
                 }
             }
-
-            // Clear cache on exit toggle
+            
+            // Cache Actions
             item {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Cache Actions",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
                 Card(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable {
-                            appSettings.setClearCacheOnExit(!clearCacheOnExit)
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                        }
+                    shape = RoundedCornerShape(18.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                            contentDescription = null,
-                            tint = if (clearCacheOnExit) MaterialTheme.colorScheme.primary
-                                  else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = context.getString(R.string.cache_clear_on_exit),
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Text(
-                                text = context.getString(R.string.cache_clear_on_exit_desc),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Switch(
-                            checked = clearCacheOnExit,
-                            onCheckedChange = {
-                                appSettings.setClearCacheOnExit(it)
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                            }
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-
-            // Clear lyrics cache button
-            item {
-                var isClearingLyricsCache by remember { mutableStateOf(false) }
-                var showClearLyricsSuccess by remember { mutableStateOf(false) }
-                
-                OutlinedButton(
-                    onClick = {
-                        if (!isClearingLyricsCache) {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                            isClearingLyricsCache = true
-                            scope.launch {
-                                try {
-                                    // Clear lyrics cache AND refetch for current song
-                                    musicViewModel.clearLyricsCacheAndRefetch()
-                                    
-                                    showClearLyricsSuccess = true
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                    delay(2000)
-                                    showClearLyricsSuccess = false
-                                } catch (e: Exception) {
-                                    Log.e("CacheManagement", "Error clearing lyrics cache", e)
-                                } finally {
-                                    isClearingLyricsCache = false
+                    Column {
+                        SettingRow(
+                            icon = Icons.Filled.MusicNote,
+                            title = "Clear Lyrics Cache",
+                            description = "Remove all cached lyrics data",
+                            onClick = {
+                                scope.launch {
+                                    try {
+                                        isClearingCache = true
+                                        musicViewModel.clearLyricsCacheAndRefetch()
+                                        currentCacheSize = chromahub.rhythm.app.util.CacheManager.getCacheSize(context, canvasRepository)
+                                        cacheDetails = chromahub.rhythm.app.util.CacheManager.getDetailedCacheSize(context, canvasRepository)
+                                        Toast.makeText(context, "Lyrics cache cleared", Toast.LENGTH_SHORT).show()
+                                    } catch (e: Exception) {
+                                        Log.e("CacheManagement", "Error clearing lyrics cache", e)
+                                        Toast.makeText(context, "Failed to clear lyrics cache", Toast.LENGTH_SHORT).show()
+                                    } finally {
+                                        isClearingCache = false
+                                    }
                                 }
                             }
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    scope.launch {
+                                        try {
+                                            isClearingCache = true
+                                            chromahub.rhythm.app.util.CacheManager.clearAllCache(context, null, canvasRepository)
+                                            musicViewModel.getMusicRepository().clearInMemoryCaches()
+                                            currentCacheSize = chromahub.rhythm.app.util.CacheManager.getCacheSize(context, canvasRepository)
+                                            cacheDetails = chromahub.rhythm.app.util.CacheManager.getDetailedCacheSize(context, canvasRepository)
+                                            showClearCacheSuccess = true
+                                            Toast.makeText(context, "All cache cleared", Toast.LENGTH_SHORT).show()
+                                        } catch (e: Exception) {
+                                            Log.e("CacheManagement", "Error clearing cache", e)
+                                            Toast.makeText(context, "Failed to clear cache", Toast.LENGTH_SHORT).show()
+                                        } finally {
+                                            isClearingCache = false
+                                        }
+                                    }
+                                }
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.DeleteSweep,
+                                contentDescription = "Clear All Cache",
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(50))
+                                    .padding(8.dp),
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Clear All Cache",
+                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                                Text(
+                                    text = "Remove all cached data",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            if (isClearingCache) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                                    contentDescription = "Clear",
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
-                    },
-                    enabled = !isClearingLyricsCache && !isCalculatingSize && !isClearingCache,
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = if (showClearLyricsSuccess)
-                            MaterialTheme.colorScheme.primary
-                        else
-                            MaterialTheme.colorScheme.onSurface
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    if (isClearingLyricsCache) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Clearing lyrics...")
-                    } else if (showClearLyricsSuccess) {
-                        Icon(
-                            imageVector = Icons.Filled.CheckCircle,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Lyrics cache cleared!")
-                    } else {
-                        Icon(
-                            imageVector = Icons.Filled.MusicNote,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Clear Lyrics Cache Only")
                     }
                 }
                 
@@ -4911,14 +4883,14 @@ private fun BackupInfoItem(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f),
+            tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
             modifier = Modifier.size(18.dp)
         )
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onTertiaryContainer
+            color = MaterialTheme.colorScheme.onPrimaryContainer
         )
     }
 }
@@ -5310,23 +5282,22 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
             item {
                 Spacer(modifier = Modifier.height(24.dp))
                 Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
-                    ),
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth()
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                    )
                 ) {
                     Column(
                         modifier = Modifier.padding(20.dp)
                     ) {
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(bottom = 12.dp)
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.Lightbulb,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
                                 modifier = Modifier.size(24.dp)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
@@ -5334,9 +5305,10 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                                 text = context.getString(R.string.backup_whats_included_placeholder),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
+                        Spacer(modifier = Modifier.height(12.dp))
                         
                         BackupInfoItem(
                             icon = Icons.Filled.Save,
@@ -5696,6 +5668,295 @@ fun LibraryTabOrderSettingsScreen(onBackClick: () -> Unit) {
             
             item { Spacer(modifier = Modifier.height(8.dp)) }
         }
+    }
+}
+
+// Player Customization Screen
+@Composable
+fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
+    val context = LocalContext.current
+    val appSettings = AppSettings.getInstance(context)
+    val haptics = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
+    
+    // State variables
+    val showLyrics by appSettings.showLyrics.collectAsState()
+    val canvasApiEnabled by appSettings.canvasApiEnabled.collectAsState()
+    
+    var showChipOrderBottomSheet by remember { mutableStateOf(false) }
+    
+    CollapsibleHeaderScreen(
+        title = "Player Customization",
+        showBackButton = true,
+        onBackClick = onBackClick
+    ) { modifier ->
+        LazyColumn(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp)
+        ) {
+            
+            // Player Controls Section
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Player Controls",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column {
+                        SettingRow(
+                            icon = Icons.Default.Reorder,
+                            title = "Chip Order & Visibility",
+                            description = "Customize and reorder player action chips",
+                            onClick = { showChipOrderBottomSheet = true }
+                        )
+                    }
+                }
+            }
+            
+            // Display Options Section
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Display Options",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column {
+                        SettingRow(
+                            icon = Icons.Rounded.Lyrics,
+                            title = "Show Lyrics",
+                            description = "Display synchronized lyrics in player",
+                            toggleState = showLyrics,
+                            onToggleChange = { appSettings.setShowLyrics(it) }
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        SettingRow(
+                            icon = Icons.Default.VideoLibrary,
+                            title = "Canvas Backgrounds",
+                            description = "Show animated backgrounds for supported songs",
+                            toggleState = canvasApiEnabled,
+                            onToggleChange = { appSettings.setCanvasApiEnabled(it) }
+                        )
+                    }
+                }
+            }
+
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+
+            // Description Card
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "Player Screen",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Personalize your player experience with custom chip layouts, visual effects, and display preferences.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+            }
+            
+            // Tips Card
+            // item {
+            //     Spacer(modifier = Modifier.height(24.dp))
+            //     Card(
+            //         modifier = Modifier.fillMaxWidth(),
+            //         shape = RoundedCornerShape(18.dp),
+            //         colors = CardDefaults.cardColors(
+            //             containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+            //         )
+            //     ) {
+            //         Column(
+            //             modifier = Modifier.padding(20.dp)
+            //         ) {
+            //             Row(
+            //                 verticalAlignment = Alignment.CenterVertically
+            //             ) {
+            //                 Icon(
+            //                     imageVector = Icons.Filled.Lightbulb,
+            //                     contentDescription = null,
+            //                     tint = MaterialTheme.colorScheme.onPrimaryContainer,
+            //                     modifier = Modifier.size(24.dp)
+            //                 )
+            //                 Spacer(modifier = Modifier.width(12.dp))
+            //                 Text(
+            //                     text = "Player Tips",
+            //                     style = MaterialTheme.typography.titleMedium,
+            //                     fontWeight = FontWeight.Bold,
+            //                     color = MaterialTheme.colorScheme.onPrimaryContainer
+            //                 )
+            //             }
+            //             Spacer(modifier = Modifier.height(12.dp))
+                        
+            //             PlayerTipItem(
+            //                 icon = Icons.Default.Reorder,
+            //                 text = "Tap 'Chip Order & Visibility' to customize action chips"
+            //             )
+            //             PlayerTipItem(
+            //                 icon = Icons.Rounded.Lyrics,
+            //                 text = "Enable lyrics to see synchronized lyrics while playing"
+            //             )
+            //             PlayerTipItem(
+            //                 icon = Icons.Default.VideoLibrary,
+            //                 text = "Canvas backgrounds add animated visuals to supported songs"
+            //             )
+            //         }
+            //     }
+            // }
+            
+            item { Spacer(modifier = Modifier.height(24.dp)) }
+        }
+    }
+    
+    // Show chip order bottom sheet
+    if (showChipOrderBottomSheet) {
+        chromahub.rhythm.app.ui.screens.PlayerChipOrderBottomSheet(
+            onDismiss = { showChipOrderBottomSheet = false },
+            appSettings = appSettings,
+            haptics = haptics
+        )
+    }
+}
+
+@Composable
+private fun SettingRow(
+    icon: ImageVector,
+    title: String,
+    description: String,
+    onClick: (() -> Unit)? = null,
+    toggleState: Boolean? = null,
+    onToggleChange: ((Boolean) -> Unit)? = null
+) {
+    val context = LocalContext.current
+    val haptics = LocalHapticFeedback.current
+    
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (onClick != null) Modifier.clickable { 
+                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                    onClick()
+                }
+                else Modifier
+            )
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = title,
+            modifier = Modifier
+                .size(40.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(50))
+                .padding(8.dp),
+            tint = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        
+        if (toggleState != null && onToggleChange != null) {
+            Switch(
+                checked = toggleState,
+                onCheckedChange = {
+                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                    onToggleChange(it)
+                },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = MaterialTheme.colorScheme.primary,
+                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
+                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            )
+        } else if (onClick != null) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                contentDescription = "Navigate",
+                modifier = Modifier.size(16.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun PlayerTipItem(
+    icon: ImageVector,
+    text: String
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 6.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
     }
 }
 
@@ -6197,23 +6458,22 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
             item {
                 Spacer(modifier = Modifier.height(24.dp))
                 Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
-                    ),
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth()
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                    )
                 ) {
                     Column(
                         modifier = Modifier.padding(20.dp)
                     ) {
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(bottom = 12.dp)
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.Lightbulb,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
                                 modifier = Modifier.size(24.dp)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
@@ -6221,9 +6481,10 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                 text = context.getString(R.string.theme_good_to_know),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         ThemeTipItem(
                             icon = Icons.Filled.Palette,
@@ -9253,14 +9514,14 @@ private fun ThemeTipItem(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f),
+            tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
             modifier = Modifier.size(18.dp)
         )
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onTertiaryContainer
+            color = MaterialTheme.colorScheme.onPrimaryContainer
         )
     }
 }
@@ -9277,14 +9538,14 @@ private fun MediaScanTipItem(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f),
+            tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
             modifier = Modifier.size(18.dp)
         )
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onTertiaryContainer
+            color = MaterialTheme.colorScheme.onPrimaryContainer
         )
     }
 }

@@ -96,6 +96,7 @@ import chromahub.rhythm.app.ui.utils.LazyListStateSaver
 import chromahub.rhythm.app.data.AppSettings
 import chromahub.rhythm.app.ui.components.LanguageSwitcherDialog
 import android.content.Context
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.ui.platform.LocalContext
@@ -117,6 +118,7 @@ object SettingsRoutes {
     const val BACKUP_RESTORE = "backup_restore_settings"
     const val LIBRARY_TAB_ORDER = "library_tab_order_settings"
     const val THEME_CUSTOMIZATION = "theme_customization_settings"
+    const val PLAYER_CUSTOMIZATION = "player_customization_settings"
     const val EQUALIZER = "equalizer_settings"
     const val SLEEP_TIMER = "sleep_timer_settings"
     const val CRASH_LOG_HISTORY = "crash_log_history_settings"
@@ -175,7 +177,8 @@ fun SettingsScreen(
                 title = "Appearance",
                 items = listOf(
                     SettingItem(Icons.Default.Palette, "Theme Customization", "Customize colors, fonts, and appearance", onClick = { onNavigateTo(SettingsRoutes.THEME_CUSTOMIZATION) }),
-                    SettingItem(Icons.Default.Widgets, "Widget Settings", "Customize home screen widgets", onClick = { onNavigateTo(SettingsRoutes.WIDGET) }),
+                    SettingItem(Icons.Default.Widgets, "Widget Customization", "Customize home screen widgets", onClick = { onNavigateTo(SettingsRoutes.WIDGET) }),
+                    SettingItem(Icons.Default.MusicNote, "Player Customization", "Customize player screen chips and layout", onClick = { onNavigateTo(SettingsRoutes.PLAYER_CUSTOMIZATION) }),
                     // SettingItem(Icons.Default.Reorder, "Library Tab Order", "Reorder tabs in the library", onClick = { onNavigateTo(SettingsRoutes.LIBRARY_TAB_ORDER) })
                 )
             ),
@@ -213,13 +216,13 @@ fun SettingsScreen(
                         toggleState = useSystemVolume,
                         onToggleChange = { appSettings.setUseSystemVolume(it) }
                     ),
-                    SettingItem(
-                        Icons.Default.Lyrics, 
-                        "Show Lyrics", 
-                        "Display lyrics when available", 
-                        toggleState = showLyrics,
-                        onToggleChange = { appSettings.setShowLyrics(it) }
-                    ),
+                    // SettingItem(
+                    //     Icons.Default.Lyrics, 
+                    //     "Show Lyrics", 
+                    //     "Display lyrics when available", 
+                    //     toggleState = showLyrics,
+                    //     onToggleChange = { appSettings.setShowLyrics(it) }
+                    // ),
                     SettingItem(Icons.Default.QueueMusic, "Queue & Playback", "Configure queue and playback behavior", onClick = { onNavigateTo(SettingsRoutes.QUEUE_PLAYBACK) }),
                     SettingItem(Icons.Default.GraphicEq, "Equalizer", "Adjust audio frequencies and effects", onClick = { onNavigateTo(SettingsRoutes.EQUALIZER) }),
                     // SettingItem(Icons.Default.AccessTime, "Sleep Timer", "Auto-stop playback after set time", onClick = { onNavigateTo(SettingsRoutes.SLEEP_TIMER) })
@@ -322,23 +325,22 @@ fun SettingsScreen(
             item {
                 Spacer(modifier = Modifier.height(24.dp))
                 Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
-                    ),
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth()
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                    )
                 ) {
                     Column(
                         modifier = Modifier.padding(20.dp)
                     ) {
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(bottom = 12.dp)
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.Lightbulb,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
                                 modifier = Modifier.size(24.dp)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
@@ -346,9 +348,10 @@ fun SettingsScreen(
                                 text = context.getString(R.string.settings_quick_tips),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         TipItem(
                             icon = Icons.Default.Palette,
@@ -798,6 +801,7 @@ fun SettingsScreenWrapper(onBack: () -> Unit, appSettings: chromahub.rhythm.app.
             SettingsRoutes.BACKUP_RESTORE -> BackupRestoreSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.LIBRARY_TAB_ORDER -> LibraryTabOrderSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.THEME_CUSTOMIZATION -> ThemeCustomizationSettingsScreen(onBackClick = { currentRoute = null })
+            SettingsRoutes.PLAYER_CUSTOMIZATION -> PlayerCustomizationSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.EQUALIZER -> EqualizerSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.SLEEP_TIMER -> SleepTimerSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.CRASH_LOG_HISTORY -> CrashLogHistorySettingsScreen(onBackClick = { currentRoute = null }, appSettings = appSettings)
@@ -825,14 +829,14 @@ private fun TipItem(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f),
+            tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
             modifier = Modifier.size(18.dp)
         )
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onTertiaryContainer
+            color = MaterialTheme.colorScheme.onPrimaryContainer
         )
     }
 }
