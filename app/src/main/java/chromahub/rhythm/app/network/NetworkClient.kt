@@ -25,14 +25,12 @@ object NetworkClient {
     
     // API Keys - Only set by developer
     private const val SPOTIFY_CANVAS_API_KEY = "sk-paxsenix-fwM2gVBOGKQAiUDkJrlRyzJCiiBWH_ZXvGo_SwdXLsGD9bjR"
-    private const val APPLE_MUSIC_API_KEY = "sk-paxsenix-fwM2gVBOGKQAiUDkJrlRyzJCiiBWH_ZXvGo_SwdXLsGD9bjR"
     
     private const val LRCLIB_BASE_URL = "https://lrclib.net/"
     private const val DEEZER_BASE_URL = "https://api.deezer.com/"
     private const val CANVAS_BASE_URL = "https://api.paxsenix.org/spotify/"
     private const val YTMUSIC_BASE_URL = "https://music.youtube.com/"
     private const val SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1/"
-    private const val APPLEMUSIC_BASE_URL = "https://paxsenix.alwaysdata.net/"
     
     // Connection timeouts
     private const val CONNECT_TIMEOUT = 30L
@@ -226,34 +224,11 @@ object NetworkClient {
         .addConverterFactory(GsonConverterFactory.create())
         .build()
     
-    private val appleMusicHttpClient = OkHttpClient.Builder()
-        .addInterceptor { chain ->
-            val request = chain.request().newBuilder()
-                .addHeader("Authorization", "Bearer $APPLE_MUSIC_API_KEY")
-                .build()
-            chain.proceed(request)
-        }
-        .addInterceptor(deezerHeadersInterceptor())
-        .addInterceptor(loggingInterceptor)
-        .addInterceptor(retryInterceptor)
-        .connectTimeout(CONNECT_TIMEOUT, TimeUnit.SECONDS)
-        .readTimeout(READ_TIMEOUT, TimeUnit.SECONDS)
-        .writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS)
-        .connectionPool(connectionPool)
-        .build()
-    
-    private val appleMusicRetrofit = Retrofit.Builder()
-        .baseUrl(APPLEMUSIC_BASE_URL)
-        .client(appleMusicHttpClient)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-    
     val deezerApiService: DeezerApiService = deezerRetrofit.create(DeezerApiService::class.java)
     val canvasApiService: SpotifyCanvasApiService = canvasRetrofit.create(SpotifyCanvasApiService::class.java)
     val lrclibApiService: LRCLibApiService = lrclibRetrofit.create(LRCLibApiService::class.java)
     val ytmusicApiService: YTMusicApiService = ytmusicRetrofit.create(YTMusicApiService::class.java)
     val spotifySearchApiService: SpotifySearchApiService = spotifyRetrofit.create(SpotifySearchApiService::class.java)
-    val appleMusicApiService: AppleMusicApiService = appleMusicRetrofit.create(AppleMusicApiService::class.java)
     
     // Generic OkHttp client for one-off requests (e.g., Wikidata JSON). Reuses header interceptor.
     val genericHttpClient: OkHttpClient = OkHttpClient.Builder()
@@ -267,7 +242,6 @@ object NetworkClient {
     fun isLrcLibApiEnabled(): Boolean = appSettings?.lrclibApiEnabled?.value ?: true
     fun isYTMusicApiEnabled(): Boolean = appSettings?.ytMusicApiEnabled?.value ?: true
     fun isSpotifyApiEnabled(): Boolean = appSettings?.spotifyApiEnabled?.value ?: false
-    fun isAppleMusicApiEnabled(): Boolean = appSettings?.appleMusicApiEnabled?.value ?: true
     
     // Get Spotify API credentials
     fun getSpotifyClientId(): String = appSettings?.spotifyClientId?.value ?: ""

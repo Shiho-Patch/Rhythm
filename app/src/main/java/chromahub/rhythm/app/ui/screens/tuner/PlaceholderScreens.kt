@@ -8022,7 +8022,6 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
     val spotifyApiEnabled by appSettings.spotifyApiEnabled.collectAsState()
     val spotifyClientId by appSettings.spotifyClientId.collectAsState()
     val spotifyClientSecret by appSettings.spotifyClientSecret.collectAsState()
-    val appleMusicApiEnabled by appSettings.appleMusicApiEnabled.collectAsState()
     
     // Spotify API dialog state
     var showSpotifyConfigDialog by remember { mutableStateOf(false) }
@@ -8114,23 +8113,6 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
                             onClick = { 
                                 showSpotifyConfigDialog = true 
                             }
-                        )
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 20.dp),
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                        )
-                        
-                        // Apple Music API
-                        ApiServiceRow(
-                            title = "Apple Music",
-                            description = "Word-by-word synchronized lyrics (Highest Quality)",
-                            status = "Ready",
-                            isConfigured = true,
-                            isEnabled = appleMusicApiEnabled,
-                            icon = RhythmIcons.Queue,
-                            showToggle = true,
-                            onToggle = { enabled -> appSettings.setAppleMusicApiEnabled(enabled) },
-                            onClick = { /* No configuration needed */ }
                         )
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 20.dp),

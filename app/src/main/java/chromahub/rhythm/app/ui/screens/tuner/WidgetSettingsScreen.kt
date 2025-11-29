@@ -299,29 +299,50 @@ fun WidgetSettingsScreen(
                     BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.primary)
                 },
                 shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                containerColor = MaterialTheme.colorScheme.surfaceContainer
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp, vertical = 16.dp)
                 ) {
-                    Text(
-                        text = "Corner Radius",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
+                    // Header
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.RoundedCorner,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text(
+                                text = "Corner Radius",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "${tempRadius}dp",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "${tempRadius}dp",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    
                     Slider(
                         value = tempRadius.toFloat(),
                         onValueChange = { tempRadius = it.toInt() },
                         onValueChangeFinished = {
+                            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
                             appSettings.setWidgetCornerRadius(tempRadius)
                             updateAllWidgets(context)
                         },
@@ -332,6 +353,16 @@ fun WidgetSettingsScreen(
                             activeTrackColor = MaterialTheme.colorScheme.primary
                         )
                     )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Text(
+                        text = "Applies to Glance widgets only",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                    
                     Spacer(modifier = Modifier.height(24.dp))
                 }
             }

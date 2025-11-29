@@ -134,7 +134,6 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_SPOTIFY_API_ENABLED = "spotify_api_enabled"
         private const val KEY_SPOTIFY_CLIENT_ID = "spotify_client_id"
         private const val KEY_SPOTIFY_CLIENT_SECRET = "spotify_client_secret"
-        private const val KEY_APPLEMUSIC_API_ENABLED = "applemusic_api_enabled"
         
         // Enhanced User Preferences
         private const val KEY_FAVORITE_GENRES = "favorite_genres"
@@ -564,9 +563,6 @@ class AppSettings private constructor(context: Context) {
     
     private val _spotifyClientSecret = MutableStateFlow(prefs.getString(KEY_SPOTIFY_CLIENT_SECRET, "") ?: "")
     val spotifyClientSecret: StateFlow<String> = _spotifyClientSecret.asStateFlow()
-    
-    private val _appleMusicApiEnabled = MutableStateFlow(prefs.getBoolean(KEY_APPLEMUSIC_API_ENABLED, true))
-    val appleMusicApiEnabled: StateFlow<Boolean> = _appleMusicApiEnabled.asStateFlow()
 
     // Enhanced User Preferences
     private val _favoriteGenres = MutableStateFlow<Map<String, Int>>(
@@ -1220,11 +1216,6 @@ class AppSettings private constructor(context: Context) {
     fun setSpotifyApiEnabled(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_SPOTIFY_API_ENABLED, enabled).apply()
         _spotifyApiEnabled.value = enabled
-    }
-    
-    fun setAppleMusicApiEnabled(enabled: Boolean) {
-        prefs.edit().putBoolean(KEY_APPLEMUSIC_API_ENABLED, enabled).apply()
-        _appleMusicApiEnabled.value = enabled
     }
     
     fun setSpotifyClientId(clientId: String) {
@@ -2175,7 +2166,6 @@ class AppSettings private constructor(context: Context) {
         _lrclibApiEnabled.value = prefs.getBoolean(KEY_LRCLIB_API_ENABLED, true)
         _ytMusicApiEnabled.value = prefs.getBoolean(KEY_YTMUSIC_API_ENABLED, true)
         _spotifyApiEnabled.value = prefs.getBoolean(KEY_SPOTIFY_API_ENABLED, false)
-        _appleMusicApiEnabled.value = prefs.getBoolean(KEY_APPLEMUSIC_API_ENABLED, true)
         _spotifyClientId.value = prefs.getString(KEY_SPOTIFY_CLIENT_ID, "") ?: ""
         _spotifyClientSecret.value = prefs.getString(KEY_SPOTIFY_CLIENT_SECRET, "") ?: ""
         

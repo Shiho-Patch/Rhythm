@@ -47,7 +47,7 @@ import chromahub.rhythm.app.util.AudioFormatDetector
 import chromahub.rhythm.app.util.LyricsParser
 import chromahub.rhythm.app.util.EnhancedLyricLine
 import chromahub.rhythm.app.util.EnhancedWord
-import chromahub.rhythm.app.util.AppleMusicLyricsParser
+// AppleMusicLyricsParser import removed - kept for future re-implementation
 import android.content.SharedPreferences
 
 /**
@@ -150,7 +150,7 @@ class MusicRepository(context: Context) {
     private val deezerApiService = NetworkClient.deezerApiService
     private val lrclibApiService = NetworkClient.lrclibApiService
     private val ytmusicApiService = NetworkClient.ytmusicApiService
-    private val appleMusicApiService = NetworkClient.appleMusicApiService
+    // Apple Music API service removed - can be re-added in future
     private val genericHttpClient = NetworkClient.genericHttpClient
 
     /**
@@ -2611,25 +2611,35 @@ class MusicRepository(context: Context) {
      * @return Enhanced LRC formatted string, or null if not available
      */
     fun exportToEnhancedLRC(lyricsData: LyricsData): String? {
-        // TODO: Parse word-by-word JSON and convert to Enhanced LRC
         val wordByWordJson = lyricsData.wordByWordLyrics ?: return null
         
         try {
-            val parsedLines = AppleMusicLyricsParser.parseWordByWordLyrics(wordByWordJson)
+            // Parse the word-by-word JSON directly
+            val gson = com.google.gson.Gson()
+            val listType = object : com.google.gson.reflect.TypeToken<List<Map<String, Any>>>() {}.type
+            val parsedLines: List<Map<String, Any>> = gson.fromJson(wordByWordJson, listType)
+            
             if (parsedLines.isEmpty()) return null
             
-            // Convert to Enhanced LRC format using LyricsParser utility
-            val enhancedLines = parsedLines.map { line ->
+            // Convert to Enhanced LRC format
+            val enhancedLines = parsedLines.mapNotNull { lineMap ->
+                @Suppress("UNCHECKED_CAST")
+                val wordsData = lineMap["text"] as? List<Map<String, Any>> ?: return@mapNotNull null
+                val lineTimestamp = (lineMap["timestamp"] as? Number)?.toLong() ?: 0L
+                val lineEndtime = (lineMap["endtime"] as? Number)?.toLong() ?: 0L
+                
+                val words = wordsData.map { wordMap ->
+                    EnhancedWord(
+                        text = wordMap["text"] as? String ?: "",
+                        timestamp = (wordMap["timestamp"] as? Number)?.toLong() ?: 0L,
+                        endtime = (wordMap["endtime"] as? Number)?.toLong() ?: 0L
+                    )
+                }
+                
                 EnhancedLyricLine(
-                    words = line.words.map { word ->
-                        EnhancedWord(
-                            text = word.text,
-                            timestamp = word.timestamp,
-                            endtime = word.endtime
-                        )
-                    },
-                    lineTimestamp = line.lineTimestamp,
-                    lineEndtime = line.lineEndtime
+                    words = words,
+                    lineTimestamp = lineTimestamp,
+                    lineEndtime = lineEndtime
                 )
             }
             
@@ -2764,7 +2774,7 @@ class MusicRepository(context: Context) {
     }
     
     /**
-     * Fetches lyrics from online APIs (Apple Music, LRCLib, etc.)
+     * Fetches lyrics from online APIs (LRCLib, etc.)
      * Extracted as a separate method for cleaner code
      */
     private suspend fun fetchLyricsFromAPIs(artist: String, title: String): LyricsData? {
@@ -2774,116 +2784,6 @@ class MusicRepository(context: Context) {
         var plainLyrics: String? = null
         var syncedLyrics: String? = null
         var wordByWordLyrics: String? = null
-
-            // ---- Apple Music (Word-by-word synchronized lyrics - highest priority) ----
-            if (NetworkClient.isAppleMusicApiEnabled()) {
-                try {
-                    Log.d(TAG, "Attempting Apple Music lyrics search for: $cleanTitle by $cleanArtist")
-                    
-                    // Try multiple search strategies
-                    var searchResults = appleMusicApiService.searchSongs("$cleanTitle $cleanArtist")
-                    
-                    // If no results, try with simplified names (remove featuring artists)
-                    if (searchResults.isEmpty()) {
-                        val simplifiedArtist = cleanArtist.split(" feat.", " ft.", " featuring", " &", " x ", " X ").first().trim()
-                        val simplifiedTitle = cleanTitle.split(" feat.", " ft.", " featuring", " \\(", " \\[").first().trim()
-                        searchResults = appleMusicApiService.searchSongs("$simplifiedTitle $simplifiedArtist")
-                        Log.d(TAG, "Trying simplified search: $simplifiedTitle by $simplifiedArtist")
-                    }
-                    
-                    // If still no results, try title only
-                    if (searchResults.isEmpty()) {
-                        searchResults = appleMusicApiService.searchSongs(cleanTitle)
-                        Log.d(TAG, "Trying title-only search: $cleanTitle")
-                    }
-                    
-                    if (searchResults.isNotEmpty()) {
-                        // Find best match using improved similarity scoring
-                        fun calculateSimilarity(str1: String, str2: String): Double {
-                            val s1 = str1.lowercase().trim()
-                            val s2 = str2.lowercase().trim()
-                            
-                            // Exact match
-                            if (s1 == s2) return 1.0
-                            
-                            // Contains match
-                            if (s1.contains(s2) || s2.contains(s1)) return 0.8
-                            
-                            // Word overlap
-                            val words1 = s1.split(" ", "-", "_").filter { it.length > 2 }
-                            val words2 = s2.split(" ", "-", "_").filter { it.length > 2 }
-                            val commonWords = words1.intersect(words2.toSet()).size
-                            val totalWords = maxOf(words1.size, words2.size)
-                            
-                            return if (totalWords > 0) commonWords.toDouble() / totalWords else 0.0
-                        }
-                        
-                        val bestMatch = searchResults.maxByOrNull { result ->
-                            val artistSim = calculateSimilarity(result.artistName ?: "", cleanArtist)
-                            val titleSim = calculateSimilarity(result.songName ?: "", cleanTitle)
-                            // Weight title similarity more heavily
-                            (titleSim * 0.6) + (artistSim * 0.4)
-                        }
-                        
-                        bestMatch?.let { match ->
-                            Log.d(TAG, "Found Apple Music match: ${match.songName} by ${match.artistName} (ID: ${match.id})")
-                            try {
-                                val lyricsResponse = appleMusicApiService.getLyrics(match.id)
-                                
-                                // Check if track has time-synced lyrics flag
-                                val hasTimeSyncedLyrics = lyricsResponse.track?.hasTimeSyncedLyrics == true
-                                Log.d(TAG, "Apple Music track hasTimeSyncedLyrics: $hasTimeSyncedLyrics, type: ${lyricsResponse.type}")
-                                
-                                // Check if we have word-by-word lyrics (Syllable type) or line-synced lyrics
-                                if (!lyricsResponse.content.isNullOrEmpty() && hasTimeSyncedLyrics) {
-                                    
-                                    // Extract plain text from lyrics content
-                                    val plainText = lyricsResponse.content.mapNotNull { line ->
-                                        line.text?.joinToString(" ") { word -> word.text }
-                                    }.joinToString("\n")
-                                    
-                                    if (plainText.isNotEmpty()) {
-                                        plainLyrics = plainText
-                                    }
-                                    
-                                    // Check for word-by-word (Syllable) lyrics
-                                    if (lyricsResponse.type == "Syllable") {
-                                        // Convert to JSON string to store in LyricsData
-                                        wordByWordLyrics = com.google.gson.Gson().toJson(lyricsResponse.content)
-                                        Log.d(TAG, "Apple Music word-by-word lyrics found (${lyricsResponse.content.size} lines)")
-                                    } else {
-                                        // Fall back to line-synced lyrics format
-                                        val syncedLyricsText = lyricsResponse.content.mapNotNull { line ->
-                                            val timestamp = line.timestamp ?: return@mapNotNull null
-                                            val text = line.text?.joinToString(" ") { word -> word.text } ?: return@mapNotNull null
-                                            val minutes = timestamp / 60000
-                                            val seconds = (timestamp % 60000) / 1000
-                                            val millis = (timestamp % 1000) / 10
-                                            String.format("[%02d:%02d.%02d]%s", minutes, seconds, millis, text)
-                                        }.joinToString("\n")
-                                        
-                                        if (syncedLyricsText.isNotEmpty()) {
-                                            syncedLyrics = syncedLyricsText
-                                            Log.d(TAG, "Apple Music line-synced lyrics found (${lyricsResponse.content.size} lines)")
-                                        }
-                                    }
-                                    
-                                    val lyricsData = LyricsData(plainLyrics, syncedLyrics, wordByWordLyrics)
-                                    return lyricsData
-                                } else {
-                                    Log.d(TAG, "Apple Music lyrics not time-synced or empty for: ${match.songName}")
-                                }
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Error fetching Apple Music lyrics for ID ${match.id}: ${e.message}", e)
-                            }
-                        }
-                    } else {
-                        Log.d(TAG, "No Apple Music results found for: $cleanTitle by $cleanArtist")
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Apple Music lyrics search failed: ${e.message}", e)
-                }
-            }
 
             // ---- LRCLib (Enhanced search with multiple strategies - line-by-line synced) ----
             if (NetworkClient.isLrcLibApiEnabled()) {
