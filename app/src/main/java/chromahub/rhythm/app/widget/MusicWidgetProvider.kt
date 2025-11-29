@@ -130,9 +130,22 @@ class MusicWidgetProvider : AppWidgetProvider() {
         val artworkUriString = prefs.getString("artwork_uri", null)
         val isPlaying = prefs.getBoolean("is_playing", false)
         
+        // Get widget settings from SharedPreferences directly (avoid blocking StateFlow)
+        val settingsPrefs = context.getSharedPreferences("rhythm_preferences", Context.MODE_PRIVATE)
+        val showArtist = settingsPrefs.getBoolean("widget_show_artist", true)
+        val showAlbum = settingsPrefs.getBoolean("widget_show_album", true)
+        val showAlbumArt = settingsPrefs.getBoolean("widget_show_album_art", true)
+        
         // Update text views
         views.setTextViewText(R.id.widget_song_title, songTitle)
-        views.setTextViewText(R.id.widget_artist_name, artistName)
+        
+        // Update artist name visibility
+        if (showArtist) {
+            views.setTextViewText(R.id.widget_artist_name, artistName)
+            views.setViewVisibility(R.id.widget_artist_name, android.view.View.VISIBLE)
+        } else {
+            views.setViewVisibility(R.id.widget_artist_name, android.view.View.GONE)
+        }
         
         // Update album name if widget layout supports it
         try {
@@ -140,14 +153,27 @@ class MusicWidgetProvider : AppWidgetProvider() {
                 layoutId == R.layout.widget_music_medium ||
                 layoutId == R.layout.widget_music_wide ||
                 layoutId == R.layout.widget_music_extra_large) {
-                views.setTextViewText(R.id.widget_album_name, albumName)
+                if (showAlbum) {
+                    views.setTextViewText(R.id.widget_album_name, albumName)
+                    views.setViewVisibility(R.id.widget_album_name, android.view.View.VISIBLE)
+                } else {
+                    views.setViewVisibility(R.id.widget_album_name, android.view.View.GONE)
+                }
             }
         } catch (e: Exception) {
             // Some layouts might not have album_name view
         }
         
+        // Note: Transparency/alpha settings are not applied to RemoteViews widgets
+        // as they don't support dynamic alpha changes on FrameLayout backgrounds
+        
         // Update artwork
-        if (artworkUriString != null) {
+        if (showAlbumArt && artworkUriString != null) {
+            // First update widget with default state
+            views.setImageViewResource(R.id.widget_album_art, R.drawable.ic_music_note)
+            views.setViewVisibility(R.id.widget_album_art, android.view.View.VISIBLE)
+            
+            // Then load actual artwork asynchronously
             scope.launch {
                 try {
                     val artworkUri = Uri.parse(artworkUriString)
@@ -163,13 +189,14 @@ class MusicWidgetProvider : AppWidgetProvider() {
                         .build()
                     imageLoader.enqueue(request)
                 } catch (e: Exception) {
-                    // Fallback to default icon
-                    views.setImageViewResource(R.id.widget_album_art, R.drawable.ic_music_note)
-                    appWidgetManager.updateAppWidget(appWidgetId, views)
+                    // Keep default icon on error
                 }
             }
-        } else {
+        } else if (showAlbumArt) {
             views.setImageViewResource(R.id.widget_album_art, R.drawable.ic_music_note)
+            views.setViewVisibility(R.id.widget_album_art, android.view.View.VISIBLE)
+        } else {
+            views.setViewVisibility(R.id.widget_album_art, android.view.View.GONE)
         }
         
         // Update play/pause button icon
@@ -183,7 +210,7 @@ class MusicWidgetProvider : AppWidgetProvider() {
         // Set up click intents
         setupClickIntents(context, views, appWidgetId)
         
-        // Update the widget
+        // Update the widget immediately
         appWidgetManager.updateAppWidget(appWidgetId, views)
     }
 

@@ -97,6 +97,7 @@ import chromahub.rhythm.app.data.AppSettings
 import chromahub.rhythm.app.ui.components.LanguageSwitcherDialog
 import android.content.Context
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -121,6 +122,7 @@ object SettingsRoutes {
     const val CRASH_LOG_HISTORY = "crash_log_history_settings"
     const val QUEUE_PLAYBACK = "queue_playback_settings"
     const val LYRICS_SOURCE = "lyrics_source_settings"
+    const val WIDGET = "widget_settings"
 }
 
 data class SettingItem(
@@ -173,6 +175,7 @@ fun SettingsScreen(
                 title = "Appearance",
                 items = listOf(
                     SettingItem(Icons.Default.Palette, "Theme Customization", "Customize colors, fonts, and appearance", onClick = { onNavigateTo(SettingsRoutes.THEME_CUSTOMIZATION) }),
+                    SettingItem(Icons.Default.Widgets, "Widget Settings", "Customize home screen widgets", onClick = { onNavigateTo(SettingsRoutes.WIDGET) }),
                     // SettingItem(Icons.Default.Reorder, "Library Tab Order", "Reorder tabs in the library", onClick = { onNavigateTo(SettingsRoutes.LIBRARY_TAB_ORDER) })
                 )
             ),
@@ -800,6 +803,7 @@ fun SettingsScreenWrapper(onBack: () -> Unit, appSettings: chromahub.rhythm.app.
             SettingsRoutes.CRASH_LOG_HISTORY -> CrashLogHistorySettingsScreen(onBackClick = { currentRoute = null }, appSettings = appSettings)
             SettingsRoutes.QUEUE_PLAYBACK -> QueuePlaybackSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.LYRICS_SOURCE -> LyricsSourceSettingsScreen(onBackClick = { currentRoute = null })
+            SettingsRoutes.WIDGET -> WidgetSettingsScreen(onBackClick = { currentRoute = null })
             else -> SettingsScreen(
                 onBackClick = handleBack,
                 onNavigateTo = { route -> currentRoute = route },

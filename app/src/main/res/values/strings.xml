@@ -17,6 +17,35 @@
     <string name="skip_next">Skip Next</string>
     <string name="skip_previous">Skip Previous</string>
     
+    <!-- Widget Settings -->
+    <string name="settings_widget">Widget Settings</string>
+    <string name="settings_widget_desc">Customize home screen widgets</string>
+    <string name="widget_preview_title">Widget Preview</string>
+    <string name="widget_preview_desc">Changes will be applied to all active widgets on your home screen. Long-press the widget to resize it and see different layouts.</string>
+    <string name="widget_refresh_all">Refresh All Widgets</string>
+    <string name="widget_display_options">Display Options</string>
+    <string name="widget_show_album_art">Show Album Art</string>
+    <string name="widget_show_album_art_desc">Display album artwork in widget</string>
+    <string name="widget_show_artist">Show Artist Name</string>
+    <string name="widget_show_artist_desc">Display artist information</string>
+    <string name="widget_show_album">Show Album Name</string>
+    <string name="widget_show_album_desc">Display album information</string>
+    <string name="widget_appearance">Appearance</string>
+    <string name="widget_use_system_colors">Use System Colors</string>
+    <string name="widget_use_system_colors_desc">Follow Material You color scheme</string>
+    <string name="widget_background_blur">Background Blur</string>
+    <string name="widget_background_blur_desc">Apply blur effect to widget background</string>
+    <string name="widget_corner_radius">Corner Radius</string>
+    <string name="widget_transparency">Transparency</string>
+    <string name="widget_behavior">Behavior</string>
+    <string name="widget_auto_update">Auto Update</string>
+    <string name="widget_auto_update_desc">Automatically update widget when song changes</string>
+    <string name="widget_tips_title">Widget Tips</string>
+    <string name="widget_tip_sizes">Rhythm supports multiple widget sizes from 2x1 to 5x5</string>
+    <string name="widget_tip_types">Both legacy and modern Glance widgets are available</string>
+    <string name="widget_tip_controls">Tap the widget to open the app, buttons control playback</string>
+    <string name="widget_tip_resize">Long-press and resize for different layouts</string>
+    
     <!-- Content Descriptions -->
     <string name="cd_navigate">Navigate</string>
     <string name="cd_configure">Configure</string>

@@ -221,6 +221,13 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_SAVED_REPEAT_MODE = "saved_repeat_mode"
         private const val KEY_PLAYBACK_SPEED = "playback_speed"
         
+        // Widget Settings
+        private const val KEY_WIDGET_SHOW_ALBUM_ART = "widget_show_album_art"
+        private const val KEY_WIDGET_SHOW_ARTIST = "widget_show_artist"
+        private const val KEY_WIDGET_SHOW_ALBUM = "widget_show_album"
+        private const val KEY_WIDGET_CORNER_RADIUS = "widget_corner_radius"
+        private const val KEY_WIDGET_AUTO_UPDATE = "widget_auto_update"
+        
         @Volatile
         private var INSTANCE: AppSettings? = null
         
@@ -2243,5 +2250,51 @@ class AppSettings private constructor(context: Context) {
             val json = prefs.getString(KEY_PINNED_FOLDERS, null)
             if (json != null) Gson().fromJson(json, object : TypeToken<List<String>>() {}.type) else emptyList()
         } catch (e: Exception) { emptyList() }
+        
+        // Widget Settings
+        _widgetShowAlbumArt.value = prefs.getBoolean(KEY_WIDGET_SHOW_ALBUM_ART, true)
+        _widgetShowArtist.value = prefs.getBoolean(KEY_WIDGET_SHOW_ARTIST, true)
+        _widgetShowAlbum.value = prefs.getBoolean(KEY_WIDGET_SHOW_ALBUM, true)
+        _widgetCornerRadius.value = prefs.getInt(KEY_WIDGET_CORNER_RADIUS, 24)
+        _widgetAutoUpdate.value = prefs.getBoolean(KEY_WIDGET_AUTO_UPDATE, true)
+    }
+    
+    // ==================== Widget Settings ====================
+    
+    private val _widgetShowAlbumArt = MutableStateFlow(prefs.getBoolean(KEY_WIDGET_SHOW_ALBUM_ART, true))
+    val widgetShowAlbumArt: StateFlow<Boolean> = _widgetShowAlbumArt.asStateFlow()
+    fun setWidgetShowAlbumArt(value: Boolean) {
+        _widgetShowAlbumArt.value = value
+        prefs.edit().putBoolean(KEY_WIDGET_SHOW_ALBUM_ART, value).apply()
+    }
+    
+    private val _widgetShowArtist = MutableStateFlow(prefs.getBoolean(KEY_WIDGET_SHOW_ARTIST, true))
+    val widgetShowArtist: StateFlow<Boolean> = _widgetShowArtist.asStateFlow()
+    fun setWidgetShowArtist(value: Boolean) {
+        _widgetShowArtist.value = value
+        prefs.edit().putBoolean(KEY_WIDGET_SHOW_ARTIST, value).apply()
+    }
+    
+    private val _widgetShowAlbum = MutableStateFlow(prefs.getBoolean(KEY_WIDGET_SHOW_ALBUM, true))
+    val widgetShowAlbum: StateFlow<Boolean> = _widgetShowAlbum.asStateFlow()
+    fun setWidgetShowAlbum(value: Boolean) {
+        _widgetShowAlbum.value = value
+        prefs.edit().putBoolean(KEY_WIDGET_SHOW_ALBUM, value).apply()
+    }
+    
+    private val _widgetCornerRadius = MutableStateFlow(prefs.getInt(KEY_WIDGET_CORNER_RADIUS, 24))
+    val widgetCornerRadius: StateFlow<Int> = _widgetCornerRadius.asStateFlow()
+    fun setWidgetCornerRadius(value: Int) {
+        if (value in 0..40) {
+            _widgetCornerRadius.value = value
+            prefs.edit().putInt(KEY_WIDGET_CORNER_RADIUS, value).apply()
+        }
+    }
+    
+    private val _widgetAutoUpdate = MutableStateFlow(prefs.getBoolean(KEY_WIDGET_AUTO_UPDATE, true))
+    val widgetAutoUpdate: StateFlow<Boolean> = _widgetAutoUpdate.asStateFlow()
+    fun setWidgetAutoUpdate(value: Boolean) {
+        _widgetAutoUpdate.value = value
+        prefs.edit().putBoolean(KEY_WIDGET_AUTO_UPDATE, value).apply()
     }
 }

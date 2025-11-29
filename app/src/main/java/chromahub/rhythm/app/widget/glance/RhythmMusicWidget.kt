@@ -83,7 +83,8 @@ class RhythmMusicWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {
             val prefs = currentState<Preferences>()
-            val widgetData = getWidgetData(prefs)
+            val appSettings = chromahub.rhythm.app.data.AppSettings.getInstance(context)
+            val widgetData = getWidgetData(prefs, appSettings)
             GlanceTheme {
                 ResponsiveWidgetContent(widgetData)
             }
@@ -110,7 +111,7 @@ class RhythmMusicWidget : GlanceAppWidget() {
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(GlanceTheme.colors.widgetBackground)
-                .cornerRadius(24.dp)
+                .cornerRadius(data.cornerRadius.dp)
                 .clickable(actionStartActivity<MainActivity>())
         ) {
             // Content with padding
@@ -122,29 +123,31 @@ class RhythmMusicWidget : GlanceAppWidget() {
                 horizontalAlignment = Alignment.Start
             ) {
                 // Compact album art
-                Box(
-                    modifier = GlanceModifier
-                        .size(40.dp)
-                        .cornerRadius(12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (data.artworkUri != null) {
-                        Image(
-                            provider = AppWidgetImageProvider(data.artworkUri),
-                            contentDescription = "Album Art",
-                            modifier = GlanceModifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Image(
-                            provider = ImageProvider(R.drawable.ic_music_note),
-                            contentDescription = "Music",
-                            modifier = GlanceModifier.size(20.dp)
-                        )
+                if (data.showAlbumArt) {
+                    Box(
+                        modifier = GlanceModifier
+                            .size(40.dp)
+                            .cornerRadius(12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (data.artworkUri != null) {
+                            Image(
+                                provider = AppWidgetImageProvider(data.artworkUri),
+                                contentDescription = "Album Art",
+                                modifier = GlanceModifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Image(
+                                provider = ImageProvider(R.drawable.ic_music_note),
+                                contentDescription = "Music",
+                                modifier = GlanceModifier.size(20.dp)
+                            )
+                        }
                     }
+                    
+                    Spacer(modifier = GlanceModifier.width(8.dp))
                 }
-                
-                Spacer(modifier = GlanceModifier.width(8.dp))
                 
                 // Song info - ultra compact
                 Column(
@@ -159,14 +162,16 @@ class RhythmMusicWidget : GlanceAppWidget() {
                         ),
                         maxLines = 1
                     )
-                    Text(
-                        text = data.artistName,
-                        style = TextStyle(
-                            fontSize = 9.sp,
-                            color = GlanceTheme.colors.onSurfaceVariant
-                        ),
-                        maxLines = 1
-                    )
+                    if (data.showArtist) {
+                        Text(
+                            text = data.artistName,
+                            style = TextStyle(
+                                fontSize = 9.sp,
+                                color = GlanceTheme.colors.onSurfaceVariant
+                            ),
+                            maxLines = 1
+                        )
+                    }
                 }
                 
                 Spacer(modifier = GlanceModifier.width(4.dp))
@@ -198,7 +203,7 @@ class RhythmMusicWidget : GlanceAppWidget() {
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(GlanceTheme.colors.widgetBackground)
-                .cornerRadius(32.dp)
+                .cornerRadius(data.cornerRadius.dp)
                 .clickable(actionStartActivity<MainActivity>())
         ) {
             // Content with padding
@@ -210,29 +215,31 @@ class RhythmMusicWidget : GlanceAppWidget() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Album art with expressive squircle design
-                Box(
-                    modifier = GlanceModifier
-                        .size(64.dp)
-                        .cornerRadius(20.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (data.artworkUri != null) {
-                        Image(
-                            provider = AppWidgetImageProvider(data.artworkUri),
-                            contentDescription = "Album Art",
-                            modifier = GlanceModifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Image(
-                            provider = ImageProvider(R.drawable.ic_music_note),
-                            contentDescription = "Default Music Icon",
-                            modifier = GlanceModifier.size(36.dp)
-                        )
+                if (data.showAlbumArt) {
+                    Box(
+                        modifier = GlanceModifier
+                            .size(64.dp)
+                            .cornerRadius(20.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (data.artworkUri != null) {
+                            Image(
+                                provider = AppWidgetImageProvider(data.artworkUri),
+                                contentDescription = "Album Art",
+                                modifier = GlanceModifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Image(
+                                provider = ImageProvider(R.drawable.ic_music_note),
+                                contentDescription = "Default Music Icon",
+                                modifier = GlanceModifier.size(36.dp)
+                            )
+                        }
                     }
+                    
+                    Spacer(modifier = GlanceModifier.height(8.dp))
                 }
-                
-                Spacer(modifier = GlanceModifier.height(8.dp))
                 
                 // Song info - compact and centered
                 Text(
@@ -245,16 +252,18 @@ class RhythmMusicWidget : GlanceAppWidget() {
                     maxLines = 1
                 )
                 
-                Spacer(modifier = GlanceModifier.height(2.dp))
-                
-                Text(
-                    text = data.artistName,
-                    style = TextStyle(
-                        fontSize = 11.sp,
-                        color = GlanceTheme.colors.onSurfaceVariant
-                    ),
-                    maxLines = 1
-                )
+                if (data.showArtist) {
+                    Spacer(modifier = GlanceModifier.height(2.dp))
+                    
+                    Text(
+                        text = data.artistName,
+                        style = TextStyle(
+                            fontSize = 11.sp,
+                            color = GlanceTheme.colors.onSurfaceVariant
+                        ),
+                        maxLines = 1
+                    )
+                }
                 
                 Spacer(modifier = GlanceModifier.height(12.dp))
                 
@@ -327,7 +336,7 @@ class RhythmMusicWidget : GlanceAppWidget() {
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(GlanceTheme.colors.widgetBackground)
-                .cornerRadius(32.dp)
+                .cornerRadius(data.cornerRadius.dp)
                 .clickable(actionStartActivity<MainActivity>())
         ) {
             // Content with padding
@@ -463,7 +472,7 @@ class RhythmMusicWidget : GlanceAppWidget() {
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(GlanceTheme.colors.widgetBackground)
-                .cornerRadius(32.dp)
+                .cornerRadius(data.cornerRadius.dp)
                 .clickable(actionStartActivity<MainActivity>())
         ) {
             // Content with padding
@@ -611,7 +620,7 @@ class RhythmMusicWidget : GlanceAppWidget() {
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(GlanceTheme.colors.widgetBackground)
-                .cornerRadius(36.dp)
+                .cornerRadius(data.cornerRadius.dp)
                 .clickable(actionStartActivity<MainActivity>())
         ) {
             // Content with padding
@@ -758,7 +767,7 @@ class RhythmMusicWidget : GlanceAppWidget() {
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(GlanceTheme.colors.widgetBackground)
-                .cornerRadius(40.dp)
+                .cornerRadius(data.cornerRadius.dp)
                 .clickable(actionStartActivity<MainActivity>())
         ) {
             // Content with padding
@@ -899,7 +908,7 @@ class RhythmMusicWidget : GlanceAppWidget() {
         }
     }
     
-    private fun getWidgetData(prefs: Preferences): WidgetData {
+    private fun getWidgetData(prefs: Preferences, appSettings: chromahub.rhythm.app.data.AppSettings): WidgetData {
         return WidgetData(
             songTitle = prefs[stringPreferencesKey(KEY_SONG_TITLE)] ?: "No song playing",
             artistName = prefs[stringPreferencesKey(KEY_ARTIST_NAME)] ?: "Unknown artist",
@@ -907,7 +916,11 @@ class RhythmMusicWidget : GlanceAppWidget() {
             isPlaying = prefs[booleanPreferencesKey(KEY_IS_PLAYING)] ?: false,
             artworkUri = prefs[stringPreferencesKey(KEY_ARTWORK_URI)]?.let { android.net.Uri.parse(it) },
             hasPrevious = prefs[booleanPreferencesKey(KEY_HAS_PREVIOUS)] ?: false,
-            hasNext = prefs[booleanPreferencesKey(KEY_HAS_NEXT)] ?: false
+            hasNext = prefs[booleanPreferencesKey(KEY_HAS_NEXT)] ?: false,
+            showAlbumArt = appSettings.widgetShowAlbumArt.value,
+            showArtist = appSettings.widgetShowArtist.value,
+            showAlbum = appSettings.widgetShowAlbum.value,
+            cornerRadius = appSettings.widgetCornerRadius.value
         )
     }
 }
@@ -922,7 +935,12 @@ data class WidgetData(
     val isPlaying: Boolean,
     val artworkUri: android.net.Uri?,
     val hasPrevious: Boolean,
-    val hasNext: Boolean
+    val hasNext: Boolean,
+    val showAlbumArt: Boolean = true,
+    val showArtist: Boolean = true,
+    val showAlbum: Boolean = true,
+    val cornerRadius: Int = 24,
+    val transparency: Int = 85
 )
 
 /**
