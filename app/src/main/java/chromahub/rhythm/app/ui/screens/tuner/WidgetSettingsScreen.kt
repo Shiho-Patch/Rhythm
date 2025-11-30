@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -19,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import chromahub.rhythm.app.data.AppSettings
@@ -305,38 +307,44 @@ fun WidgetSettingsScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 16.dp)
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 24.dp)
                 ) {
                     // Header
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 16.dp)
+                            .padding(horizontal = 0.dp, vertical = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.RoundedCorner,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(32.dp)
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
                         Column {
                             Text(
                                 text = "Corner Radius",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.displayMedium,
+                                fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
-                            Text(
-                                text = "${tempRadius}dp",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .padding(top = 6.dp)
+                                    .background(
+                                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                        shape = CircleShape
+                                    )
+                            ) {
+                                Text(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    text = "${tempRadius}dp",
+                                    overflow = TextOverflow.Ellipsis,
+                                    maxLines = 1,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
                         }
                     }
                     
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     
                     Slider(
                         value = tempRadius.toFloat(),
@@ -354,16 +362,36 @@ fun WidgetSettingsScreen(
                         )
                     )
                     
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     
-                    Text(
-                        text = "Applies to Glance widgets only",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    )
+                    // Info card
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.tertiary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "Applies to Glance widgets only",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                     
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
         }

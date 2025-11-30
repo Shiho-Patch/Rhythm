@@ -1726,6 +1726,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
 
         val shouldClearQueue = clearQueueOnNewSong.value
         val shouldAutoAddToQueue = autoAddToQueue.value
+        val shouldShowQueueDialog = appSettings.showQueueDialog.value
         val currentQueueSongs = _currentQueue.value.songs.toMutableList()
         val songIndexInQueue = currentQueueSongs.indexOfFirst { it.id == song.id }
 
@@ -1739,9 +1740,17 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             
             // Check if queue is not empty and song is not in queue - ask user
             if (currentQueueSongs.isNotEmpty() && songIndexInQueue == -1) {
-                Log.d(TAG, "Queue exists with ${currentQueueSongs.size} songs, requesting user action")
-                _queueActionRequest.value = QueueActionRequest(song)
-                return
+                if (shouldShowQueueDialog) {
+                    // Show dialog to ask user what to do
+                    Log.d(TAG, "Queue exists with ${currentQueueSongs.size} songs, requesting user action")
+                    _queueActionRequest.value = QueueActionRequest(song)
+                    return
+                } else {
+                    // Default behavior when dialog is disabled - add to queue
+                    Log.d(TAG, "Queue exists with ${currentQueueSongs.size} songs, adding to queue (dialog disabled)")
+                    handleQueueActionChoice(song, clearQueue = false)
+                    return
+                }
             }
             
             if (songIndexInQueue != -1) {

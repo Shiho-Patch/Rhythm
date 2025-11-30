@@ -162,6 +162,7 @@ fun SettingsScreen(
     val defaultScreen by appSettings.defaultScreen.collectAsState()
     
     var showDefaultScreenDialog by remember { mutableStateOf(false) }
+    var showLyricsSourceDialog by remember { mutableStateOf(false) }
     var showLanguageSwitcher by remember { mutableStateOf(false) }
 
     CollapsibleHeaderScreen(
@@ -223,6 +224,10 @@ fun SettingsScreen(
                     //     toggleState = showLyrics,
                     //     onToggleChange = { appSettings.setShowLyrics(it) }
                     // ),
+                    SettingItem(Icons.Default.Lyrics, "Lyrics Source Priority", "Configure embedded vs online lyrics", onClick = { 
+                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                        showLyricsSourceDialog = true 
+                    }),
                     SettingItem(Icons.Default.QueueMusic, "Queue & Playback", "Configure queue and playback behavior", onClick = { onNavigateTo(SettingsRoutes.QUEUE_PLAYBACK) }),
                     SettingItem(Icons.Default.GraphicEq, "Equalizer", "Adjust audio frequencies and effects", onClick = { onNavigateTo(SettingsRoutes.EQUALIZER) }),
                     // SettingItem(Icons.Default.AccessTime, "Sleep Timer", "Auto-stop playback after set time", onClick = { onNavigateTo(SettingsRoutes.SLEEP_TIMER) })
@@ -391,7 +396,8 @@ fun SettingsScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 16.dp)
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 24.dp)
                 ) {
                     // Header
                     Row(
@@ -428,61 +434,39 @@ fun SettingsScreen(
                         }
                     }
                     
-                    Spacer(modifier = Modifier.height(24.dp))
-                    
-                    Spacer(modifier = Modifier.height(24.dp))
-                    
                     // Home option
                     Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp)
-                            .clickable {
-                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
-                                appSettings.setDefaultScreen("home")
-                                showDefaultScreenDialog = false
-                            },
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                            appSettings.setDefaultScreen("home")
+                            showDefaultScreenDialog = false
+                        },
                         colors = CardDefaults.cardColors(
                             containerColor = if (defaultScreen == "home") 
                                 MaterialTheme.colorScheme.primaryContainer 
                             else 
                                 MaterialTheme.colorScheme.surfaceContainerHigh
                         ),
-                        shape = RoundedCornerShape(20.dp),
-                        border = BorderStroke(
-                            2.dp,
-                            if (defaultScreen == "home") MaterialTheme.colorScheme.primary else Color.Transparent
-                        )
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp)
                     ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp),
+                                .padding(20.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Surface(
-                                shape = CircleShape,
-                                color = if (defaultScreen == "home") 
-                                    MaterialTheme.colorScheme.primary
+                            Icon(
+                                imageVector = Icons.Default.Home,
+                                contentDescription = null,
+                                tint = if (defaultScreen == "home") 
+                                    MaterialTheme.colorScheme.onPrimaryContainer
                                 else
-                                    MaterialTheme.colorScheme.surfaceVariant,
-                                modifier = Modifier.size(48.dp)
-                            ) {
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier = Modifier.fillMaxSize()
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Home,
-                                        contentDescription = null,
-                                        tint = if (defaultScreen == "home")
-                                            MaterialTheme.colorScheme.onPrimary
-                                        else
-                                            MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-                            }
+                                    MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(32.dp)
+                            )
                             
                             Spacer(modifier = Modifier.width(16.dp))
                             
@@ -496,12 +480,11 @@ fun SettingsScreen(
                                     else 
                                         MaterialTheme.colorScheme.onSurface
                                 )
-                                Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = context.getString(R.string.settings_home_desc),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = if (defaultScreen == "home") 
-                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                                     else 
                                         MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -512,65 +495,45 @@ fun SettingsScreen(
                                     imageVector = Icons.Default.CheckCircle,
                                     contentDescription = "Selected",
                                     tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(28.dp)
+                                    modifier = Modifier.size(24.dp)
                                 )
                             }
                         }
                     }
                     
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
                     // Library option
                     Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp)
-                            .clickable {
-                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
-                                appSettings.setDefaultScreen("library")
-                                showDefaultScreenDialog = false
-                            },
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                            appSettings.setDefaultScreen("library")
+                            showDefaultScreenDialog = false
+                        },
                         colors = CardDefaults.cardColors(
                             containerColor = if (defaultScreen == "library") 
                                 MaterialTheme.colorScheme.primaryContainer 
                             else 
                                 MaterialTheme.colorScheme.surfaceContainerHigh
                         ),
-                        shape = RoundedCornerShape(20.dp),
-                        border = BorderStroke(
-                            2.dp,
-                            if (defaultScreen == "library") MaterialTheme.colorScheme.primary else Color.Transparent
-                        )
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp)
                     ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp),
+                                .padding(20.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Surface(
-                                shape = CircleShape,
-                                color = if (defaultScreen == "library") 
-                                    MaterialTheme.colorScheme.primary
+                            Icon(
+                                imageVector = chromahub.rhythm.app.ui.components.RhythmIcons.Library,
+                                contentDescription = null,
+                                tint = if (defaultScreen == "library")
+                                    MaterialTheme.colorScheme.onPrimaryContainer
                                 else
-                                    MaterialTheme.colorScheme.surfaceVariant,
-                                modifier = Modifier.size(48.dp)
-                            ) {
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier = Modifier.fillMaxSize()
-                                ) {
-                                    Icon(
-                                        imageVector = chromahub.rhythm.app.ui.components.RhythmIcons.Library,
-                                        contentDescription = null,
-                                        tint = if (defaultScreen == "library")
-                                            MaterialTheme.colorScheme.onPrimary
-                                        else
-                                            MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-                            }
+                                    MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(32.dp)
+                            )
                             
                             Spacer(modifier = Modifier.width(16.dp))
                             
@@ -584,12 +547,11 @@ fun SettingsScreen(
                                     else 
                                         MaterialTheme.colorScheme.onSurface
                                 )
-                                Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = context.getString(R.string.settings_library_desc),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = if (defaultScreen == "library") 
-                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                                     else 
                                         MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -600,7 +562,7 @@ fun SettingsScreen(
                                     imageVector = Icons.Default.CheckCircle,
                                     contentDescription = "Selected",
                                     tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(28.dp)
+                                    modifier = Modifier.size(24.dp)
                                 )
                             }
                         }
@@ -609,6 +571,16 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
             }
+        }
+        
+        // Lyrics source priority dialog
+        if (showLyricsSourceDialog) {
+            LyricsSourceDialog(
+                onDismiss = { showLyricsSourceDialog = false },
+                appSettings = appSettings,
+                context = context,
+                haptic = hapticFeedback
+            )
         }
         
         // Language switcher dialog

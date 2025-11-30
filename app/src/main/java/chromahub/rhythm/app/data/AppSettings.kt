@@ -214,6 +214,7 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_SHUFFLE_USES_EXOPLAYER = "shuffle_uses_exoplayer"
         private const val KEY_AUTO_ADD_TO_QUEUE = "auto_add_to_queue"
         private const val KEY_CLEAR_QUEUE_ON_NEW_SONG = "clear_queue_on_new_song"
+        private const val KEY_SHOW_QUEUE_DIALOG = "show_queue_dialog"
         private const val KEY_REPEAT_MODE_PERSISTENCE = "repeat_mode_persistence"
         private const val KEY_SHUFFLE_MODE_PERSISTENCE = "shuffle_mode_persistence"
         private const val KEY_SAVED_SHUFFLE_STATE = "saved_shuffle_state"
@@ -452,6 +453,9 @@ class AppSettings private constructor(context: Context) {
     
     private val _clearQueueOnNewSong = MutableStateFlow(prefs.getBoolean(KEY_CLEAR_QUEUE_ON_NEW_SONG, false))
     val clearQueueOnNewSong: StateFlow<Boolean> = _clearQueueOnNewSong.asStateFlow()
+    
+    private val _showQueueDialog = MutableStateFlow(prefs.getBoolean(KEY_SHOW_QUEUE_DIALOG, true))
+    val showQueueDialog: StateFlow<Boolean> = _showQueueDialog.asStateFlow()
     
     private val _repeatModePersistence = MutableStateFlow(prefs.getBoolean(KEY_REPEAT_MODE_PERSISTENCE, true))
     val repeatModePersistence: StateFlow<Boolean> = _repeatModePersistence.asStateFlow()
@@ -1080,6 +1084,11 @@ class AppSettings private constructor(context: Context) {
     fun setClearQueueOnNewSong(clearQueue: Boolean) {
         prefs.edit().putBoolean(KEY_CLEAR_QUEUE_ON_NEW_SONG, clearQueue).apply()
         _clearQueueOnNewSong.value = clearQueue
+    }
+    
+    fun setShowQueueDialog(show: Boolean) {
+        prefs.edit().putBoolean(KEY_SHOW_QUEUE_DIALOG, show).apply()
+        _showQueueDialog.value = show
     }
     
     fun setRepeatModePersistence(persist: Boolean) {

@@ -377,6 +377,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
     val shuffleUsesExoplayer by appSettings.shuffleUsesExoplayer.collectAsState()
     val autoAddToQueue by appSettings.autoAddToQueue.collectAsState()
     val clearQueueOnNewSong by appSettings.clearQueueOnNewSong.collectAsState()
+    val showQueueDialog by appSettings.showQueueDialog.collectAsState()
     val repeatModePersistence by appSettings.repeatModePersistence.collectAsState()
     val shuffleModePersistence by appSettings.shuffleModePersistence.collectAsState()
 
@@ -409,6 +410,13 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                         context.getString(R.string.settings_clear_queue_on_new_song_desc),
                         toggleState = clearQueueOnNewSong,
                         onToggleChange = { appSettings.setClearQueueOnNewSong(it) }
+                    ),
+                    SettingItem(
+                        RhythmIcons.Queue,
+                        "Show Queue Dialog",
+                        "Ask what to do when playing a song while queue is not empty",
+                        toggleState = showQueueDialog,
+                        onToggleChange = { appSettings.setShowQueueDialog(it) }
                     )
                 )
             ),
@@ -3921,8 +3929,6 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
         showBackButton = true,
         onBackClick = onBackClick
     ) { modifier ->
-        var showLyricsSourceDialog by remember { mutableStateOf(false) }
-        
         val settingGroups = listOf(
             SettingGroup(
                 title = "Library Organization",
@@ -3935,31 +3941,8 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                         onToggleChange = { appSettings.setGroupByAlbumArtist(it) }
                     )
                 )
-            ),
-            SettingGroup(
-                title = "Lyrics",
-                items = listOf(
-                    SettingItem(
-                        Icons.Default.Lyrics,
-                        "Lyrics Source Priority",
-                        "Configure embedded vs online lyrics",
-                        onClick = { 
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                            showLyricsSourceDialog = true 
-                        }
-                    )
-                )
             )
         )
-        
-        if (showLyricsSourceDialog) {
-            LyricsSourceDialog(
-                onDismiss = { showLyricsSourceDialog = false },
-                appSettings = appSettings,
-                context = context,
-                haptic = haptic
-            )
-        }
 
         LazyColumn(
             modifier = modifier
@@ -4029,7 +4012,7 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LyricsSourceDialog(
+fun LyricsSourceDialog(
     onDismiss: () -> Unit,
     appSettings: AppSettings,
     context: Context,
