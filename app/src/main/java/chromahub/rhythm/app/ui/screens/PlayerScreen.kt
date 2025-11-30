@@ -238,6 +238,7 @@ fun PlayerScreen(
     playlists: List<Playlist> = emptyList(),
     queue: List<Song> = emptyList(),
     onSongClick: (Song) -> Unit = {},
+    onSongClickAtIndex: (Int) -> Unit = { _ -> }, // New parameter for index-based queue clicks
     onRemoveFromQueue: (Song) -> Unit = {},
     onMoveQueueItem: (Int, Int) -> Unit = { _, _ -> },
     onAddSongsToQueue: () -> Unit = {},
@@ -645,6 +646,10 @@ fun PlayerScreen(
             currentQueueIndex = queuePosition - 1,
             onSongClick = { selectedSong ->
                 onSongClick(selectedSong)
+                showQueueSheet = false
+            },
+            onSongClickAtIndex = { index ->
+                onSongClickAtIndex(index)
                 showQueueSheet = false
             },
             onDismiss = { showQueueSheet = false },

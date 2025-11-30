@@ -1372,8 +1372,12 @@ fun RhythmNavigation(
                             playlists = playlists,
                             queue = viewModel.currentQueue.collectAsState().value.songs,
                             onSongClick = { song ->
-                                // Play the selected song from the queue
+                                // Play the selected song from the queue (fallback for non-indexed clicks)
                                 viewModel.playSong(song)
+                            },
+                            onSongClickAtIndex = { index ->
+                                // Play song at specific index to handle duplicates correctly
+                                viewModel.playSongAtIndex(index)
                             },
                             onRemoveFromQueue = { song ->
                                 viewModel.removeFromQueue(song)

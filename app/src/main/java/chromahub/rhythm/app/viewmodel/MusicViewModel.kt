@@ -1715,6 +1715,39 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             .build()
     }
 
+    /**
+     * Play a song from the queue at a specific index
+     * Use this when clicking a song from the queue UI to avoid issues with duplicate songs
+     */
+    fun playSongAtIndex(index: Int) {
+        if (index < 0 || index >= _currentQueue.value.songs.size) {
+            Log.e(TAG, "Invalid queue index: $index (queue size: ${_currentQueue.value.songs.size})")
+            return
+        }
+        
+        val song = _currentQueue.value.songs[index]
+        Log.d(TAG, "Playing song at index $index: ${song.title}")
+        
+        mediaController?.let { controller ->
+            controller.seekToDefaultPosition(index)
+            _currentQueue.value = _currentQueue.value.copy(currentIndex = index)
+            _currentSong.value = song
+            _isPlaying.value = true
+            _isFavorite.value = _favoriteSongs.value.contains(song.id)
+            
+            controller.prepare()
+            controller.play()
+            startProgressUpdates()
+            
+            // Track song play for statistics
+            updateRecentlyPlayed(song)
+            trackSongPlay(song)
+        }
+    }
+
+    /**
+     * Play a song - finds it in the queue or adds it
+     */
     fun playSong(song: Song) {
         Log.d(TAG, "Playing song: ${song.title}")
 

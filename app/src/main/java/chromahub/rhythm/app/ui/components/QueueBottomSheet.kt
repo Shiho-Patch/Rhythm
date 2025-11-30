@@ -98,6 +98,7 @@ fun QueueBottomSheet(
     queue: List<Song>,
     currentQueueIndex: Int = 0,
     onSongClick: (Song) -> Unit,
+    onSongClickAtIndex: (Int) -> Unit = { _ -> }, // New parameter for index-based clicking
     onDismiss: () -> Unit,
     onRemoveSong: (Song) -> Unit = {},
     onMoveQueueItem: (Int, Int) -> Unit = { _, _ -> },
@@ -279,7 +280,10 @@ fun QueueBottomSheet(
                                     song = song,
                                     index = actualQueuePosition,
                                     isDragging = isDragging,
-                                    onSongClick = { onSongClick(song) },
+                                    onSongClick = { 
+                                        // Use index-based click to handle duplicate songs correctly
+                                        onSongClickAtIndex(actualQueuePosition)
+                                    },
                                     onRemove = { 
                                         try {
                                             val indexToRemove = mutableQueue.indexOf(song)
