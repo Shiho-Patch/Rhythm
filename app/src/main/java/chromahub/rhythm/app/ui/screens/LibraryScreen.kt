@@ -254,10 +254,15 @@ fun LibraryScreen(
             }
     }
     
-    // Find initial tab index based on the reordered tabs
-    val initialTabIndex = remember(tabOrder, initialTab) {
+    // Create a list of visible tab IDs (after filtering hidden tabs)
+    val visibleTabIds = remember(tabOrder, hiddenTabs) {
+        tabOrder.filter { !hiddenTabs.contains(it) }
+    }
+    
+    // Find initial tab index based on the visible tabs
+    val initialTabIndex = remember(visibleTabIds, initialTab) {
         val tabId = initialTab.name
-        tabOrder.indexOf(tabId).takeIf { it >= 0 } ?: 0
+        visibleTabIds.indexOf(tabId).takeIf { it >= 0 } ?: 0
     }
     
     var selectedTabIndex by rememberSaveable { mutableStateOf(initialTabIndex) }
@@ -265,6 +270,20 @@ fun LibraryScreen(
     val tabRowState = rememberLazyListState()
     val scope = rememberCoroutineScope()
     val haptics = LocalHapticFeedback.current
+    
+    // Sync pager with selected tab when tabs change (hide/unhide)
+    LaunchedEffect(tabs.size, visibleTabIds) {
+        // If current selected tab is out of bounds, reset to first tab
+        if (selectedTabIndex >= tabs.size) {
+            selectedTabIndex = 0
+            pagerState.scrollToPage(0)
+        }
+    }
+    
+    // Sync pager state with selected tab index
+    LaunchedEffect(pagerState.currentPage) {
+        selectedTabIndex = pagerState.currentPage
+    }
     
     // Auto-scroll tab row to show selected tab when returning to this screen
     LaunchedEffect(selectedTabIndex) {
@@ -560,7 +579,7 @@ fun LibraryScreen(
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                             // If on Explorer tab, reload explorer; otherwise, trigger media scan
-                            if (tabOrder.getOrNull(selectedTabIndex) == "EXPLORER") {
+                            if (visibleTabIds.getOrNull(selectedTabIndex) == "EXPLORER") {
                                 explorerReloadTrigger++
                             } else {
                                 onRefreshClick()
@@ -593,7 +612,7 @@ fun LibraryScreen(
                 },
                 actions = {
                     // Tab-specific actions moved from section headers
-                    when (tabOrder.getOrNull(selectedTabIndex)) {
+                    when (visibleTabIds.getOrNull(selectedTabIndex)) {
                         "ALBUMS" -> {
                             // Enhanced Album view toggle
                             val albumViewType by appSettings.albumViewType.collectAsState()
@@ -712,7 +731,7 @@ fun LibraryScreen(
                     }
                     
                     // Sort dropdown like AlbumBottomSheet (only show for Songs and Albums)
-                    val currentTabId = tabOrder.getOrNull(selectedTabIndex)
+                    val currentTabId = visibleTabIds.getOrNull(selectedTabIndex)
                     if (currentTabId == "SONGS" || currentTabId == "ALBUMS") {
                         var showSortMenu by remember { mutableStateOf(false) }
                         var pendingSortOrder by remember { mutableStateOf<MusicViewModel.SortOrder?>(null) }
@@ -884,7 +903,7 @@ fun LibraryScreen(
         bottomBar = {},
         floatingActionButton = {
             // Only show FAB on playlists tab
-            if (tabOrder.getOrNull(selectedTabIndex) == "PLAYLISTS") {
+            if (visibleTabIds.getOrNull(selectedTabIndex) == "PLAYLISTS") {
                 PlaylistFabMenu(
                     expanded = showPlaylistFabMenu,
                     onCreatePlaylist = onCreatePlaylistFromFab,
@@ -910,7 +929,10 @@ fun LibraryScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(horizontal = 4.dp)
             ) {
-                items(tabs.size) { index ->
+                items(
+                    count = tabs.size,
+                    key = { index -> tabOrder.getOrNull(index) ?: "tab_$index" }
+                ) { index ->
                     val isSelected = selectedTabIndex == index
                     val animatedScale by animateFloatAsState(
                         targetValue = if (isSelected) 1.05f else 1f,
@@ -965,7 +987,7 @@ fun LibraryScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             // Get the actual tab ID from the visible tabs list
-                            val currentTabId = tabOrder.filter { !hiddenTabs.contains(it) }.getOrNull(index)
+                            val currentTabId = visibleTabIds.getOrNull(index)
                             Icon(
                                 imageVector = when (currentTabId) {
                                     "SONGS" -> RhythmIcons.Relax
@@ -1036,8 +1058,8 @@ fun LibraryScreen(
                         .fillMaxSize()
                         .padding(top = 16.dp)
                 ) { page ->
-                    // Dynamically show tab content based on tab order
-                    when (tabOrder.getOrNull(page)) {
+                    // Dynamically show tab content based on visible tab order (filtered)
+                    when (visibleTabIds.getOrNull(page)) {
                         "SONGS" -> {
                             // Sort songs according to current sort order
                             val sortedSongs = remember(songs, sortOrder) {
@@ -1716,7 +1738,10 @@ fun SingleCardSongsContent(
                                 contentPadding = PaddingValues(horizontal = 28.dp, vertical = 8.dp),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                items(categories) { category ->
+                                items(
+                                    items = categories,
+                                    key = { it }
+                                ) { category ->
                                     val isSelected = selectedCategory == category
 
                                     val containerColor by animateColorAsState(
@@ -2608,7 +2633,10 @@ fun SongsTab(
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp), // Added horizontal padding
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    items(categories) { category ->
+                    items(
+                        items = categories,
+                        key = { it }
+                    ) { category ->
                         val isSelected = selectedCategory == category
 
                         val containerColor by animateColorAsState(

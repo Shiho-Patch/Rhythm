@@ -9,6 +9,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -734,25 +736,75 @@ fun SettingsScreenWrapper(onBack: () -> Unit, appSettings: chromahub.rhythm.app.
         targetState = currentRoute,
         transitionSpec = {
             if (targetState != null) {
-                // Slide in from right when navigating to a screen
+                // Enhanced slide in from right when navigating to a screen
                 slideInHorizontally(
                     initialOffsetX = { it },
-                    animationSpec = tween(300, easing = FastOutSlowInEasing)
-                ) + fadeIn(animationSpec = tween(300)) togetherWith
+                    animationSpec = tween(
+                        durationMillis = 400,
+                        easing = androidx.compose.animation.core.EaseOutCubic
+                    )
+                ) + fadeIn(
+                    animationSpec = tween(
+                        durationMillis = 350,
+                        delayMillis = 50
+                    )
+                ) + scaleIn(
+                    initialScale = 0.92f,
+                    animationSpec = tween(
+                        durationMillis = 400,
+                        easing = androidx.compose.animation.core.EaseOutCubic
+                    )
+                ) togetherWith
                 slideOutHorizontally(
-                    targetOffsetX = { -it / 3 },
-                    animationSpec = tween(300, easing = FastOutSlowInEasing)
-                ) + fadeOut(animationSpec = tween(300))
+                    targetOffsetX = { -it / 4 },
+                    animationSpec = tween(
+                        durationMillis = 350,
+                        easing = androidx.compose.animation.core.EaseInCubic
+                    )
+                ) + fadeOut(
+                    animationSpec = tween(durationMillis = 250)
+                ) + scaleOut(
+                    targetScale = 0.95f,
+                    animationSpec = tween(
+                        durationMillis = 350,
+                        easing = androidx.compose.animation.core.EaseInCubic
+                    )
+                )
             } else {
-                // Slide in from left when going back
+                // Enhanced slide in from left when going back
                 slideInHorizontally(
-                    initialOffsetX = { -it / 3 },
-                    animationSpec = tween(300, easing = FastOutSlowInEasing)
-                ) + fadeIn(animationSpec = tween(300)) togetherWith
+                    initialOffsetX = { -it / 4 },
+                    animationSpec = tween(
+                        durationMillis = 400,
+                        easing = androidx.compose.animation.core.EaseOutCubic
+                    )
+                ) + fadeIn(
+                    animationSpec = tween(
+                        durationMillis = 350,
+                        delayMillis = 50
+                    )
+                ) + scaleIn(
+                    initialScale = 0.95f,
+                    animationSpec = tween(
+                        durationMillis = 400,
+                        easing = androidx.compose.animation.core.EaseOutCubic
+                    )
+                ) togetherWith
                 slideOutHorizontally(
                     targetOffsetX = { it },
-                    animationSpec = tween(300, easing = FastOutSlowInEasing)
-                ) + fadeOut(animationSpec = tween(300))
+                    animationSpec = tween(
+                        durationMillis = 350,
+                        easing = androidx.compose.animation.core.EaseInCubic
+                    )
+                ) + fadeOut(
+                    animationSpec = tween(durationMillis = 250)
+                ) + scaleOut(
+                    targetScale = 0.92f,
+                    animationSpec = tween(
+                        durationMillis = 350,
+                        easing = androidx.compose.animation.core.EaseInCubic
+                    )
+                )
             }
         },
         label = "settings_navigation",

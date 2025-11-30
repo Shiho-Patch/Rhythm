@@ -24,6 +24,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,6 +41,10 @@ import chromahub.rhythm.app.ui.theme.RhythmTheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.graphicsLayer
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,6 +62,25 @@ fun CollapsibleHeaderScreen(
         canScroll = { true }
     )
 
+    // Entrance animation state
+    var showContent by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(Unit) {
+        delay(50) // Small delay for smoother transition
+        showContent = true
+    }
+    
+    val contentAlpha by animateFloatAsState(
+        targetValue = if (showContent) 1f else 0f,
+        animationSpec = tween(durationMillis = 400),
+        label = "contentAlpha"
+    )
+    
+    val contentOffset by animateFloatAsState(
+        targetValue = if (showContent) 0f else 30f,
+        animationSpec = tween(durationMillis = 450),
+        label = "contentOffset"
+    )
 
     val lazyListState = rememberLazyListState()
 
@@ -100,7 +128,10 @@ fun CollapsibleHeaderScreen(
                         }
                     },
                     actions = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(end = 8.dp) // Match left-side padding
+                        ) {
                             filterDropdown() // Place the filter dropdown here
                             actions()
                         }
@@ -118,6 +149,10 @@ fun CollapsibleHeaderScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .graphicsLayer {
+                    alpha = contentAlpha
+                    translationY = contentOffset
+                }
         ) {
             content(Modifier.fillMaxSize())
         }
