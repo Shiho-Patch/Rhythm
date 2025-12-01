@@ -299,7 +299,7 @@ fun SettingsScreen(
                 .background(MaterialTheme.colorScheme.background) // Ensure background color for the scrollable content
                 .padding(horizontal = 24.dp)
         ) {
-            items(settingGroups) { group ->
+            items(settingGroups, key = { "setting_${it.title}" }) { group ->
                 Spacer(modifier = Modifier.height(24.dp)) // Increased space between groups
                 Text(
                     text = group.title,

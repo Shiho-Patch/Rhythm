@@ -1039,7 +1039,7 @@ fun SearchResults(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         contentPadding = PaddingValues(horizontal = 4.dp)
                     ) {
-                        items(albums.take(10), key = { it.id }) { album ->
+                        items(albums.take(10), key = { "album_${it.id}_${albums.take(10).indexOf(it)}" }) { album ->
                             SearchAlbumItem(
                                 album = album,
                                 onClick = { onAlbumBottomSheetClick(album) } // Use the new lambda
@@ -1085,7 +1085,7 @@ fun SearchResults(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         contentPadding = PaddingValues(horizontal = 4.dp)
                     ) {
-                        items(artists.take(10), key = { it.id }) { artist ->
+                        items(artists.take(10), key = { "artist_${it.id}_${artists.take(10).indexOf(it)}" }) { artist ->
                             SearchArtistItem(
                                 artist = artist,
                                 onClick = {
@@ -1133,7 +1133,7 @@ fun SearchResults(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         contentPadding = PaddingValues(horizontal = 4.dp)
                     ) {
-                        items(playlists.take(10), key = { it.id }) { playlist ->
+                        items(playlists.take(10), key = { "playlist_${it.id}_${playlists.take(10).indexOf(it)}" }) { playlist ->
                             SearchPlaylistItem(
                                 playlist = playlist,
                                 onClick = { onPlaylistClick(playlist) }
@@ -2014,7 +2014,7 @@ private fun RecentlyPlayedSection(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(vertical = 4.dp)
             ) {
-                items(recentlyPlayed.take(8), key = { it.id }) { song ->
+                items(recentlyPlayed.take(8), key = { "recent_${it.id}_${recentlyPlayed.take(8).indexOf(it)}" }) { song ->
                     EnhancedRecentChip(song = song, onClick = { onSongClick(song) })
                 }
             }
@@ -2684,7 +2684,7 @@ private fun MoodPlaylistCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(vertical = 8.dp)
                 ) {
-                    items(songs.take(5), key = { it.id }) { song ->
+                    items(songs.take(5), key = { "mood_${it.id}_${songs.take(5).indexOf(it)}" }) { song ->
                         Card(
                             onClick = {
                                 HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
@@ -2772,7 +2772,7 @@ fun AllSongsPage(
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 16.dp + 80.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(songs, key = { it.id }) { song ->
+            items(songs, key = { "song_${it.id}_${songs.indexOf(it)}" }) { song ->
                 AnimateIn {
                     SearchSongItem(
                         song = song,
@@ -2900,7 +2900,7 @@ private fun GenreBrowseSection(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.height((rowCount * 90).dp) // Calculate height based on rows
                     ) {
-                        items(genres, key = { it }) { genre ->
+                        items(genres, key = { "genre_${it}_${genres.indexOf(it)}" }) { genre ->
                             val songCount = songs.count { it.genre?.equals(genre, ignoreCase = true) == true }
                             
                             Card(

@@ -106,7 +106,7 @@ fun LanguageSwitcherDialog(
                     .fillMaxWidth()
                     .heightIn(max = 400.dp)
             ) {
-                items(LanguageHelper.supportedLanguages) { language ->
+                items(LanguageHelper.supportedLanguages, key = { "lang_${it.code}" }) { language ->
                     LanguageItem(
                         language = language,
                         isSelected = currentLanguage == language.code,

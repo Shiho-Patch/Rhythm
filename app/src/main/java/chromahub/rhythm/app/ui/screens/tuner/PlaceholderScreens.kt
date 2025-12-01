@@ -332,7 +332,7 @@ fun NotificationsSettingsScreen(onBackClick: () -> Unit) {
                 .background(MaterialTheme.colorScheme.background)
                 .padding(horizontal = 24.dp)
         ) {
-            items(settingGroups) { group ->
+            items(settingGroups, key = { "setting_${it.title}_${settingGroups.indexOf(it)}" }) { group ->
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = group.title,
@@ -447,7 +447,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                 .background(MaterialTheme.colorScheme.background)
                 .padding(horizontal = 24.dp)
         ) {
-            items(settingGroups) { group ->
+            items(settingGroups, key = { "setting_${it.title}_${settingGroups.indexOf(it)}" }) { group ->
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = group.title,
@@ -1432,7 +1432,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                         .heightIn(max = 400.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(filteredSongDetails, key = { it.id }) { song ->
+                    items(filteredSongDetails, key = { "filtered_${it.id}_${filteredSongDetails.indexOf(it)}" }) { song ->
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(
@@ -1664,7 +1664,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                         .heightIn(max = 400.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(filteredFoldersList) { folder ->
+                    items(filteredFoldersList, key = { "folder_${it.hashCode()}" }) { folder ->
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(
@@ -3950,7 +3950,7 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                 .background(MaterialTheme.colorScheme.background)
                 .padding(horizontal = 24.dp)
         ) {
-            items(settingGroups) { group ->
+            items(settingGroups, key = { "setting_${it.title}_${settingGroups.indexOf(it)}" }) { group ->
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = group.title,
@@ -5233,7 +5233,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                 )
             )
 
-            items(settingGroups) { group ->
+            items(settingGroups, key = { "setting_${it.title}_${settingGroups.indexOf(it)}" }) { group ->
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = group.title,
@@ -6377,7 +6377,7 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                 .background(MaterialTheme.colorScheme.background)
                 .padding(horizontal = 24.dp)
         ) {
-            items(settingGroups) { group ->
+            items(settingGroups, key = { "setting_${it.title}_${settingGroups.indexOf(it)}" }) { group ->
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
                     text = group.title,
@@ -7130,7 +7130,7 @@ private fun ColorSchemesDialog(
                             it.name in listOf("Default", "Warm", "Cool", "Forest", "Rose", "Monochrome")
                         }
 
-                        items(featuredSchemes) { option ->
+                        items(featuredSchemes, key = { "featured_${it.name}" }) { option ->
                             ColorSchemeCard(
                                 option = option,
                                 isSelected = currentScheme == option.name,
@@ -7157,7 +7157,7 @@ private fun ColorSchemesDialog(
                             it.name !in listOf("Default", "Warm", "Cool", "Forest", "Rose", "Monochrome")
                         }
 
-                        items(otherSchemes) { option ->
+                        items(otherSchemes, key = { "other_${it.name}" }) { option ->
                             ColorSchemeCard(
                                 option = option,
                                 isSelected = currentScheme == option.name,
@@ -8142,7 +8142,7 @@ private fun FontSelectionDialog(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        items(fontOptions) { option ->
+                        items(fontOptions, key = { "font_${it.name}" }) { option ->
                             FontCard(
                                 option = option,
                                 isSelected = currentFont == option.name,
@@ -8671,7 +8671,7 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 contentPadding = PaddingValues(horizontal = 4.dp)
                             ) {
-                                items(presets) { preset ->
+                                items(presets, key = { "preset_${it.name}" }) { preset ->
                                     val isSelected = selectedPreset == preset.name
 
                                     Card(
@@ -9594,7 +9594,7 @@ fun LyricsSourceSettingsScreen(onBackClick: () -> Unit) {
                 )
             )
 
-            items(sourceOptions) { (preference, info) ->
+            items(sourceOptions, key = { (pref, _) -> "source_${pref.name}" }) { (preference, info) ->
                 val (title, description, icon) = info
                 val isSelected = lyricsSourcePreference == preference
 

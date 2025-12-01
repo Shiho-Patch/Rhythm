@@ -385,7 +385,7 @@ fun SleepTimerBottomSheetNew(
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 contentPadding = PaddingValues(horizontal = 4.dp)
                             ) {
-                                items(timerOptions) { option ->
+                                items(timerOptions, key = { "timer_${it.minutes}" }) { option ->
                                     val isTimerAvailable = isPlaying && serviceConnected && currentSong != null
                                     Card(
                                         onClick = { if (isTimerAvailable) startTimer(option.minutes) },

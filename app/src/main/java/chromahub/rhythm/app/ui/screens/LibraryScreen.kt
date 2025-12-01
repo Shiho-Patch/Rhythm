@@ -4433,7 +4433,7 @@ fun SingleCardArtistsContent(
             }
             
             if (sortedArtists.isNotEmpty()) {
-                items(sortedArtists, key = { it.id }) { artist ->
+                items(sortedArtists, key = { "gridartist_${it.id}_${sortedArtists.indexOf(it)}" }) { artist ->
                     AnimateIn {
                         Surface(
                             color = MaterialTheme.colorScheme.surfaceContainer,
@@ -4480,7 +4480,7 @@ fun SingleCardArtistsContent(
             }
             
             if (sortedArtists.isNotEmpty()) {
-                items(sortedArtists, key = { it.id }) { artist ->
+                items(sortedArtists, key = { "listartist_${it.id}_${sortedArtists.indexOf(it)}" }) { artist ->
                     AnimateIn {
                         Surface(
                             color = MaterialTheme.colorScheme.surfaceContainer,

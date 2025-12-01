@@ -289,7 +289,7 @@ fun AddToPlaylistScreen(
                     // Song items
                     items(
                         items = filteredSongs,
-                        key = { it.id }
+                        key = { "addsong_${it.id}_${filteredSongs.indexOf(it)}" }
                     ) { song ->
                         SongSelectionItem(
                             song = song,

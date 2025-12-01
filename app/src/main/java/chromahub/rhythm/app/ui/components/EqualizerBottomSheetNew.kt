@@ -290,7 +290,7 @@ fun EqualizerBottomSheetNew(
                                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                                     contentPadding = PaddingValues(horizontal = 4.dp)
                                 ) {
-                                    items(presets) { preset ->
+                                    items(presets, key = { "eqpreset_${it.name}" }) { preset ->
                                         val isSelected = selectedPreset == preset.name
                                         
                                         // Animated scale for selected preset

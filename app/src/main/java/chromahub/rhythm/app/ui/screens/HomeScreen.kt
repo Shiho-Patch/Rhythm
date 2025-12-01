@@ -759,7 +759,7 @@ private fun ModernScrollableContent(
                             contentPadding = PaddingValues(horizontal = 8.dp),
                             horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            items(newReleases, key = { it.id }) { album ->
+                            items(newReleases, key = { "newrelease_${it.id}_${newReleases.indexOf(it)}" }) { album ->
                                 ModernAlbumCard(
                                     album = album,
                                     onClick = { onAlbumClick(album) }
@@ -819,7 +819,7 @@ private fun ModernScrollableContent(
                             contentPadding = PaddingValues(horizontal = 8.dp),
                             horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            items(recentlyAddedAlbums, key = { it.id }) { album ->
+                            items(recentlyAddedAlbums, key = { "recentalbum_${it.id}_${recentlyAddedAlbums.indexOf(it)}" }) { album ->
                                 ModernAlbumCard(
                                     album = album,
                                     onClick = { onAlbumClick(album) }
@@ -1152,7 +1152,7 @@ private fun ModernRecentlyPlayedSection(
                 contentPadding = PaddingValues(horizontal = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp) // More spacing between items
             ) {
-                items(recentlyPlayed, key = { it.id }) { song ->
+                items(recentlyPlayed, key = { "recentplay_${it.id}_${recentlyPlayed.indexOf(it)}" }) { song ->
                     ModernRecentSongCard(
                         song = song,
                         onClick = { onSongClick(song) }
@@ -1736,7 +1736,7 @@ private fun ModernArtistsSection(
             contentPadding = PaddingValues(horizontal = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            items(artists, key = { it.id }) { artist ->
+            items(artists, key = { "artist_${it.id}_${artists.indexOf(it)}" }) { artist ->
                 ModernArtistCard(
                     artist = artist,
                     songs = songs,
