@@ -135,9 +135,9 @@ class CanvasRepository(context: Context, private val appSettings: AppSettings) {
         try {
             Log.d(TAG, "Making API call to fetch canvas for track: $spotifyTrackId")
             val response = canvasApiService.getCanvas(spotifyTrackId)
-            Log.d(TAG, "Canvas API response received: data=${response.data}")
+            Log.d(TAG, "Canvas API response received: ${response.canvases.size} canvases")
             
-            val canvas = response.data?.canvases?.firstOrNull()
+            val canvas = response.canvases.firstOrNull()
             Log.d(TAG, "First canvas from response: $canvas")
             
             if (canvas != null && canvas.canvasUrl.isNotBlank()) {

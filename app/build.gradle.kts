@@ -18,8 +18,8 @@ android {
         applicationId = "chromahub.rhythm.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 31268770
-        versionName = "3.1.268.770"
+        versionCode = 31269773
+        versionName = "3.1.269.773"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -36,39 +36,7 @@ android {
         signingConfigs.getByName("debug")
     }
 
-    // Load private properties for API keys
-    val privateProperties = getProperties("private.properties")
-
     defaultConfig {
-        // Add Canvas API key to BuildConfig
-        buildConfigField(
-            "String",
-            "CANVAS_API_KEY",
-            "\"${privateProperties?.getProperty("CANVAS_API_KEY") ?: ""}\""
-        )
-        
-        // Add build date and time
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd")
-        val timestampFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-        val buildTime = Date()
-        
-        buildConfigField(
-            "String",
-            "BUILD_DATE",
-            "\"${dateFormat.format(buildTime)}\""
-        )
-        
-        buildConfigField(
-            "String",
-            "BUILD_TIMESTAMP",
-            "\"${timestampFormat.format(buildTime)}\""
-        )
-        
-        buildConfigField(
-            "long",
-            "BUILD_TIME",
-            "${buildTime.time}L"
-        )
     }
 
     buildTypes {

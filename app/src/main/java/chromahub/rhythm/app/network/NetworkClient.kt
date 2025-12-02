@@ -25,7 +25,7 @@ object NetworkClient {
     
     private const val LRCLIB_BASE_URL = "https://lrclib.net/"
     private const val DEEZER_BASE_URL = "https://api.deezer.com/"
-    private const val CANVAS_BASE_URL = "https://api.paxsenix.org/spotify/"
+    private const val CANVAS_BASE_URL = "https://rhythm-spc.koyeb.app/"
     private const val YTMUSIC_BASE_URL = "https://music.youtube.com/"
     private const val SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1/"
     
@@ -155,12 +155,6 @@ object NetworkClient {
         .build()
     
     private val canvasHttpClient = OkHttpClient.Builder()
-        .addInterceptor { chain ->
-            val request = chain.request().newBuilder()
-                .addHeader("Authorization", "Bearer ${BuildConfig.CANVAS_API_KEY}")
-                .build()
-            chain.proceed(request)
-        }
         .addInterceptor(deezerHeadersInterceptor())
         .addInterceptor(loggingInterceptor)
         .addInterceptor(retryInterceptor)

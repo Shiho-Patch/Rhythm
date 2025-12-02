@@ -51,7 +51,7 @@ jobs:
         if [ -n "$PRIVATE_PROPERTIES" ]; then
           echo $PRIVATE_PROPERTIES | base64 -di > ./private.properties
         else
-          echo "CANVAS_API_KEY=" > ./private.properties
+          touch ./private.properties
         fi
 
     - name: Build with Gradle

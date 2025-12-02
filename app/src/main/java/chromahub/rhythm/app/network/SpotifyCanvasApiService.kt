@@ -9,17 +9,13 @@ import retrofit2.http.Query
  * Fetches canvas video data (looping visual videos) for Spotify tracks
  */
 interface SpotifyCanvasApiService {
-    @GET("canvas")
-    suspend fun getCanvas(@Query("id") trackId: String): SpotifyCanvasResponse
+    @GET("api/canvas")
+    suspend fun getCanvas(@Query("trackId") trackId: String): SpotifyCanvasResponse
 }
 
 // ---------- DTOs ----------
 
 data class SpotifyCanvasResponse(
-    val data: SpotifyCanvasData?
-)
-
-data class SpotifyCanvasData(
     @SerializedName("canvasesList") val canvases: List<SpotifyCanvas> = emptyList()
 )
 
