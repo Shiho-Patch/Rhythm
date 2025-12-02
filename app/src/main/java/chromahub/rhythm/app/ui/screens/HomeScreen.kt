@@ -291,7 +291,9 @@ fun HomeScreen(
             },
             onPlayerClick = onPlayerClick,
             sheetState = artistSheetState,
-            haptics = haptics
+            haptics = haptics,
+            currentSong = currentSong,
+            isPlaying = isPlaying
         )
     }
 
@@ -338,7 +340,9 @@ fun HomeScreen(
             },
             onPlayerClick = onPlayerClick,
             haptics = LocalHapticFeedback.current,
-            sheetState = albumSheetState
+            sheetState = albumSheetState,
+            currentSong = currentSong,
+            isPlaying = isPlaying
         )
     }
 

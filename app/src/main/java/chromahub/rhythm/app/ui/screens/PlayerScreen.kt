@@ -796,7 +796,9 @@ fun PlayerScreen(
             onAddToBlacklist = { song ->
                 appSettings.addToBlacklist(song.id)
                 Toast.makeText(context, "${song.title} added to blacklist", Toast.LENGTH_SHORT).show()
-            }
+            },
+            currentSong = song,
+            isPlaying = isPlaying
         )
     }
 
@@ -840,7 +842,9 @@ fun PlayerScreen(
             onAddToBlacklist = { song ->
                 appSettings.addToBlacklist(song.id)
                 Toast.makeText(context, "${song.title} added to blacklist", Toast.LENGTH_SHORT).show()
-            }
+            },
+            currentSong = song,
+            isPlaying = isPlaying
         )
     }
 

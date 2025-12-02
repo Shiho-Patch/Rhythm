@@ -1,6 +1,9 @@
 package chromahub.rhythm.app.ui.screens
 
 import android.content.Context
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -12,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -100,6 +104,8 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.runtime.collectAsState
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -113,6 +119,7 @@ fun PlaylistDetailScreen(
     onPlayAll: () -> Unit,
     onShufflePlay: () -> Unit = {},
     onSongClick: (Song) -> Unit,
+    onPlaySongFromPlaylist: ((Song, List<Song>) -> Unit)? = null,
     onBack: () -> Unit,
     onRemoveSong: (Song, String) -> Unit = { _, _ -> },
     onRenamePlaylist: (String) -> Unit = {},
@@ -135,10 +142,172 @@ fun PlaylistDetailScreen(
     var newPlaylistName by remember { mutableStateOf(playlist.name) }
     var searchQuery by remember { mutableStateOf("") }
     var showSearchBar by remember { mutableStateOf(false) }
+    var showQueueOptionsDialog by remember { mutableStateOf(false) }
+    var selectedSongForQueue by remember { mutableStateOf<Song?>(null) }
 
     val haptics = LocalHapticFeedback.current
     val context = LocalContext.current
+    val appSettings = remember { chromahub.rhythm.app.data.AppSettings.getInstance(context) }
+    val playlistClickBehavior by appSettings.playlistClickBehavior.collectAsState(initial = "ask")
 
+    // Queue Options Dialog - matches app-wide dialog design
+    if (showQueueOptionsDialog && selectedSongForQueue != null) {
+        AlertDialog(
+            onDismissRequest = { 
+                showQueueOptionsDialog = false
+                selectedSongForQueue = null
+            },
+            icon = {
+                Icon(
+                    imageVector = androidx.compose.material.icons.Icons.AutoMirrored.Filled.QueueMusic,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = { 
+                Text(
+                    "Play from Playlist",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // Song info
+                    Text(
+                        selectedSongForQueue!!.title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        "${selectedSongForQueue!!.artist} • ${playlist.name}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
+                    // Option 1: Load Playlist & Play
+                    Surface(
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            onPlaySongFromPlaylist?.invoke(selectedSongForQueue!!, playlist.songs)
+                            showQueueOptionsDialog = false
+                            selectedSongForQueue = null
+                        },
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = androidx.compose.material.icons.Icons.AutoMirrored.Filled.QueueMusic,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    "Load Playlist & Play",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                                Text(
+                                    "Replace queue with playlist",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Option 2: Play This Song Only
+                    Surface(
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            onSongClick(selectedSongForQueue!!)
+                            showQueueOptionsDialog = false
+                            selectedSongForQueue = null
+                        },
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.secondary,
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = RhythmIcons.Play,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSecondary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    "Play This Song Only",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    "Don't change the queue",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                OutlinedButton(
+                    onClick = {
+                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                        showQueueOptionsDialog = false
+                        selectedSongForQueue = null
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Cancel")
+                }
+            },
+            shape = RoundedCornerShape(24.dp)
+        )
+    }
+    
     if (showRenameDialog) {
         AlertDialog(
             onDismissRequest = { showRenameDialog = false },
@@ -707,9 +876,25 @@ fun PlaylistDetailScreen(
                                 song = song,
                                 onClick = {
                                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                    onSongClick(song)
+                                    when (playlistClickBehavior) {
+                                        "play_all" -> {
+                                            // Load entire playlist and play from selected song
+                                            onPlaySongFromPlaylist?.invoke(song, playlist.songs) ?: onSongClick(song)
+                                        }
+                                        "play_one" -> {
+                                            // Play only this song
+                                            onSongClick(song)
+                                        }
+                                        else -> {
+                                            // "ask" - Show dialog
+                                            selectedSongForQueue = song
+                                            showQueueOptionsDialog = true
+                                        }
+                                    }
                                 },
-                                onRemove = { message -> onRemoveSong(song, message) }
+                                onRemove = { message -> onRemoveSong(song, message) },
+                                currentSong = currentSong,
+                                isPlaying = isPlaying
                             )
                         }
                     }
@@ -782,11 +967,31 @@ private fun AnimateIn(
 fun PlaylistSongItem(
     song: Song,
     onClick: () -> Unit,
-    onRemove: (String) -> Unit = {}
+    onRemove: (String) -> Unit = {},
+    currentSong: Song? = null,
+    isPlaying: Boolean = false
 ) {
     val context = LocalContext.current
     var showRemoveDialog by remember { mutableStateOf(false) }
     val haptics = LocalHapticFeedback.current // Capture haptics here
+    val isCurrentSong = currentSong?.id == song.id
+    
+    // Animated colors for current song
+    val titleColor by animateColorAsState(
+        targetValue = if (isCurrentSong) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+        animationSpec = tween(300),
+        label = "titleColor"
+    )
+    val artistColor by animateColorAsState(
+        targetValue = if (isCurrentSong) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+        animationSpec = tween(300),
+        label = "artistColor"
+    )
+    val containerColor by animateColorAsState(
+        targetValue = if (isCurrentSong) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface,
+        animationSpec = tween(300),
+        label = "containerColor"
+    )
     
     // Remove confirmation dialog
     if (showRemoveDialog) {
@@ -841,7 +1046,7 @@ fun PlaylistSongItem(
     
     Surface(
         onClick = onClick,
-        color = MaterialTheme.colorScheme.surface,
+        color = containerColor,
         shape = RoundedCornerShape(16.dp),
         tonalElevation = 2.dp,
         shadowElevation = 0.dp, // Remove shadow as requested
@@ -856,24 +1061,46 @@ fun PlaylistSongItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Enhanced album art with better styling
-            Surface(
-                modifier = Modifier.size(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                tonalElevation = 4.dp
-            ) {
-                AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .apply(ImageUtils.buildImageRequest(
-                            song.artworkUri,
-                            song.title,
-                            context.cacheDir,
-                            M3PlaceholderType.TRACK
-                        ))
-                        .build(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
+            Box {
+                Surface(
+                    modifier = Modifier.size(56.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    tonalElevation = 4.dp
+                ) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .apply(ImageUtils.buildImageRequest(
+                                song.artworkUri,
+                                song.title,
+                                context.cacheDir,
+                                M3PlaceholderType.TRACK
+                            ))
+                            .build(),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+                if (isCurrentSong && isPlaying) {
+                    Surface(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .size(20.dp)
+                            .offset(x = 4.dp, y = 4.dp),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary,
+                        shadowElevation = 2.dp
+                    ) {
+                        Icon(
+                            imageVector = RhythmIcons.Play,
+                            contentDescription = "Playing",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(4.dp)
+                        )
+                    }
+                }
             }
             
             // Enhanced song info with better typography
@@ -882,21 +1109,34 @@ fun PlaylistSongItem(
                     .weight(1f)
                     .padding(horizontal = 16.dp)
             ) {
-                Text(
-                    text = song.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = song.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = if (isCurrentSong) FontWeight.Bold else FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = titleColor
+                    )
+                    if (isCurrentSong && isPlaying) {
+                        Icon(
+                            imageVector = RhythmIcons.Player.Equalizer,
+                            contentDescription = "Now playing",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
                 
                 Spacer(modifier = Modifier.height(4.dp))
                 
                 Text(
                     text = song.artist,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    color = artistColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )

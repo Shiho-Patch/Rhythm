@@ -4,6 +4,8 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -71,7 +73,9 @@ fun AlbumBottomSheet(
     onToggleFavorite: (Song) -> Unit = {},
     favoriteSongs: Set<String> = emptySet(),
     onShowSongInfo: (Song) -> Unit = {},
-    onAddToBlacklist: (Song) -> Unit = {}
+    onAddToBlacklist: (Song) -> Unit = {},
+    currentSong: Song? = null, // Add current song parameter
+    isPlaying: Boolean = false // Add playing state
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -564,6 +568,8 @@ fun AlbumBottomSheet(
                                     isFavorite = favoriteSongs.contains(song.id),
                                     onShowSongInfo = { onShowSongInfo(song) },
                                     onAddToBlacklist = { onAddToBlacklist(song) },
+                                    currentSong = currentSong,
+                                    isPlaying = isPlaying,
                                     modifier = Modifier
                                         .animateItem(), // Keep item placement animation
                                     haptics = haptics
@@ -624,10 +630,25 @@ fun EnhancedAlbumSongItem(
     onToggleFavorite: () -> Unit = {},
     isFavorite: Boolean = false,
     onShowSongInfo: () -> Unit = {},
-    onAddToBlacklist: () -> Unit = {}
+    onAddToBlacklist: () -> Unit = {},
+    currentSong: Song? = null, // Add current song parameter
+    isPlaying: Boolean = false // Add playing state
 ) {
     val context = LocalContext.current
     var showDropdown by remember { mutableStateOf(false) }
+    val isCurrentSong = currentSong?.id == song.id
+    
+    // Animated colors for current song
+    val titleColor by animateColorAsState(
+        targetValue = if (isCurrentSong) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+        animationSpec = tween(300),
+        label = "titleColor"
+    )
+    val containerColor by animateColorAsState(
+        targetValue = if (isCurrentSong) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.6f),
+        animationSpec = tween(300),
+        label = "containerColor"
+    )
     
     Surface(
         onClick = {
@@ -638,19 +659,32 @@ fun EnhancedAlbumSongItem(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp), // Reduced vertical padding
         shape = RoundedCornerShape(12.dp), // Reduced corner radius
-        color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.6f),
+        color = containerColor,
         tonalElevation = 1.dp
     ) {
         ListItem(
             headlineContent = {
-                Text(
-                    text = song.title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = song.title,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = if (isCurrentSong) FontWeight.Bold else FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = titleColor
+                    )
+                    if (isCurrentSong && isPlaying) {
+                        Icon(
+                            imageVector = RhythmIcons.Player.Equalizer,
+                            contentDescription = "Now playing",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
             },
             supportingContent = {
                 Row(
@@ -685,25 +719,48 @@ fun EnhancedAlbumSongItem(
                 }
             },
             leadingContent = {
-                Surface(
-                    shape = RoundedCornerShape(8.dp), // Reduced corner radius
-                    modifier = Modifier.size(48.dp), // Reduced size
-                    tonalElevation = 2.dp
-                ) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(context)
-                            .apply(ImageUtils.buildImageRequest(
-                                song.artworkUri,
-                                song.title,
-                                context.cacheDir,
-                                M3PlaceholderType.TRACK
-                            ))
+                Box {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp), // Reduced corner radius
+                        modifier = Modifier.size(48.dp), // Reduced size
+                        tonalElevation = 2.dp
+                    ) {
+                        AsyncImage(
+                            model = ImageRequest.Builder(context)
+                                .apply(ImageUtils.buildImageRequest(
+                                    song.artworkUri,
+                                    song.title,
+                                    context.cacheDir,
+                                    M3PlaceholderType.TRACK
+                                ))
                             .build(),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
+                
+                if (isCurrentSong && isPlaying) {
+                    Surface(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .size(20.dp)
+                            .offset(x = 4.dp, y = 4.dp),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary,
+                        shadowElevation = 2.dp
+                    ) {
+                        Icon(
+                            imageVector = RhythmIcons.Play,
+                            contentDescription = "Playing",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(4.dp)
+                        )
+                    }
+                }
+            }
             },
             trailingContent = {
                 FilledIconButton(

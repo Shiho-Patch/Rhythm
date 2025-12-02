@@ -1,6 +1,4 @@
 import java.util.Properties
-import java.text.SimpleDateFormat
-import java.util.Date
 
 plugins {
     alias(libs.plugins.android.application)
@@ -18,8 +16,8 @@ android {
         applicationId = "chromahub.rhythm.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 31269773
-        versionName = "3.1.269.773"
+        versionCode = 32269774
+        versionName = "3.2.269.774"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

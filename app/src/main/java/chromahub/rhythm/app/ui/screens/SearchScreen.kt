@@ -772,7 +772,9 @@ fun SearchScreen(
             },
             onPlayerClick = onPlayerClick,
             haptics = LocalHapticFeedback.current,
-            sheetState = albumBottomSheetState
+            sheetState = albumBottomSheetState,
+            currentSong = currentSong,
+            isPlaying = isPlaying
         )
     }
     
@@ -815,7 +817,9 @@ fun SearchScreen(
             },
             onPlayerClick = onPlayerClick,
             sheetState = artistBottomSheetState,
-            haptics = haptics
+            haptics = haptics,
+            currentSong = currentSong,
+            isPlaying = isPlaying
         )
     }
     

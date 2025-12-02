@@ -380,6 +380,10 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
     val showQueueDialog by appSettings.showQueueDialog.collectAsState()
     val repeatModePersistence by appSettings.repeatModePersistence.collectAsState()
     val shuffleModePersistence by appSettings.shuffleModePersistence.collectAsState()
+    val playlistClickBehavior by appSettings.playlistClickBehavior.collectAsState(initial = "ask")
+    
+    var showPlaylistBehaviorDialog by remember { mutableStateOf(false) }
+    var showQueueDialogSettingDialog by remember { mutableStateOf(false) }
 
     CollapsibleHeaderScreen(
         title = context.getString(R.string.settings_queue_playback),
@@ -413,10 +417,19 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                     ),
                     SettingItem(
                         RhythmIcons.Queue,
-                        "Show Queue Dialog",
-                        "Ask what to do when playing a song while queue is not empty",
-                        toggleState = showQueueDialog,
-                        onToggleChange = { appSettings.setShowQueueDialog(it) }
+                        "Queue Action Dialog",
+                        if (showQueueDialog) "Ask what to do when queue is not empty" else "Always add to queue when playing songs",
+                        onClick = { showQueueDialogSettingDialog = true }
+                    ),
+                    SettingItem(
+                        androidx.compose.material.icons.Icons.AutoMirrored.Filled.QueueMusic,
+                        "Playlist Action Dialog",
+                        when (playlistClickBehavior) {
+                            "play_all" -> "Load entire playlist to queue"
+                            "play_one" -> "Play only selected song"
+                            else -> "Ask each time"
+                        },
+                        onClick = { showPlaylistBehaviorDialog = true }
                     )
                 )
             ),
@@ -475,6 +488,401 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                 }
             }
         }
+    }
+    
+    // Playlist Click Behavior Dialog
+    if (showPlaylistBehaviorDialog) {
+        val haptic = LocalHapticFeedback.current
+        val scope = rememberCoroutineScope()
+        
+        AlertDialog(
+            onDismissRequest = { showPlaylistBehaviorDialog = false },
+            icon = {
+                Icon(
+                    imageVector = androidx.compose.material.icons.Icons.AutoMirrored.Filled.QueueMusic,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = { 
+                Text(
+                    "Playlist Action Dialog",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                ) 
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Choose what happens when you tap a song in a playlist:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Option 1: Ask each time
+                    Surface(
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            scope.launch {
+                                appSettings.setPlaylistClickBehavior("ask")
+                                showPlaylistBehaviorDialog = false
+                            }
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (playlistClickBehavior == "ask") 
+                            MaterialTheme.colorScheme.primaryContainer 
+                        else 
+                            MaterialTheme.colorScheme.surfaceVariant,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = RhythmIcons.Queue,
+                                contentDescription = null,
+                                tint = if (playlistClickBehavior == "ask") 
+                                    MaterialTheme.colorScheme.onPrimaryContainer 
+                                else 
+                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    "Ask each time",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium,
+                                    color = if (playlistClickBehavior == "ask") 
+                                        MaterialTheme.colorScheme.onPrimaryContainer 
+                                    else 
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    "Show dialog with options",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (playlistClickBehavior == "ask") 
+                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                    else 
+                                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                            }
+                            if (playlistClickBehavior == "ask") {
+                                Icon(
+                                    imageVector = RhythmIcons.Check,
+                                    contentDescription = "Selected",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Option 2: Load playlist to queue
+                    Surface(
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            scope.launch {
+                                appSettings.setPlaylistClickBehavior("play_all")
+                                showPlaylistBehaviorDialog = false
+                            }
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (playlistClickBehavior == "play_all") 
+                            MaterialTheme.colorScheme.primaryContainer 
+                        else 
+                            MaterialTheme.colorScheme.surfaceVariant,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = androidx.compose.material.icons.Icons.AutoMirrored.Filled.QueueMusic,
+                                contentDescription = null,
+                                tint = if (playlistClickBehavior == "play_all") 
+                                    MaterialTheme.colorScheme.onPrimaryContainer 
+                                else 
+                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    "Load entire playlist",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium,
+                                    color = if (playlistClickBehavior == "play_all") 
+                                        MaterialTheme.colorScheme.onPrimaryContainer 
+                                    else 
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    "Replace queue and play from selected song",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (playlistClickBehavior == "play_all") 
+                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                    else 
+                                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                            }
+                            if (playlistClickBehavior == "play_all") {
+                                Icon(
+                                    imageVector = RhythmIcons.Check,
+                                    contentDescription = "Selected",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Option 3: Play only this song
+                    Surface(
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            scope.launch {
+                                appSettings.setPlaylistClickBehavior("play_one")
+                                showPlaylistBehaviorDialog = false
+                            }
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (playlistClickBehavior == "play_one") 
+                            MaterialTheme.colorScheme.primaryContainer 
+                        else 
+                            MaterialTheme.colorScheme.surfaceVariant,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = RhythmIcons.Play,
+                                contentDescription = null,
+                                tint = if (playlistClickBehavior == "play_one") 
+                                    MaterialTheme.colorScheme.onPrimaryContainer 
+                                else 
+                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    "Play only this song",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium,
+                                    color = if (playlistClickBehavior == "play_one") 
+                                        MaterialTheme.colorScheme.onPrimaryContainer 
+                                    else 
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    "Don't change the queue",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (playlistClickBehavior == "play_one") 
+                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                    else 
+                                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                            }
+                            if (playlistClickBehavior == "play_one") {
+                                Icon(
+                                    imageVector = RhythmIcons.Check,
+                                    contentDescription = "Selected",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                Button(
+                    onClick = { showPlaylistBehaviorDialog = false }
+                ) {
+                    Icon(
+                        imageVector = androidx.compose.material.icons.Icons.Filled.Check,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Done")
+                }
+            },
+            shape = RoundedCornerShape(24.dp)
+        )
+    }
+    
+    // Show Queue Dialog Setting Dialog
+    if (showQueueDialogSettingDialog) {
+        val haptic = LocalHapticFeedback.current
+        val scope = rememberCoroutineScope()
+        
+        AlertDialog(
+            onDismissRequest = { showQueueDialogSettingDialog = false },
+            icon = {
+                Icon(
+                    imageVector = RhythmIcons.Queue,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = { 
+                Text(
+                    "Queue Action",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                ) 
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Choose what happens when you play a song while the queue is not empty:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Option 1: Ask each time (show dialog)
+                    Surface(
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            scope.launch {
+                                appSettings.setShowQueueDialog(true)
+                                showQueueDialogSettingDialog = false
+                            }
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (showQueueDialog) 
+                            MaterialTheme.colorScheme.primaryContainer 
+                        else 
+                            MaterialTheme.colorScheme.surfaceVariant,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Help,
+                                contentDescription = null,
+                                tint = if (showQueueDialog) 
+                                    MaterialTheme.colorScheme.onPrimaryContainer 
+                                else 
+                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    "Ask each time",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium,
+                                    color = if (showQueueDialog) 
+                                        MaterialTheme.colorScheme.onPrimaryContainer 
+                                    else 
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    "Show dialog with Clear & Play and Add to Queue options",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (showQueueDialog) 
+                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                    else 
+                                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                            }
+                            if (showQueueDialog) {
+                                Icon(
+                                    imageVector = RhythmIcons.Check,
+                                    contentDescription = "Selected",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Option 2: Always add to queue
+                    Surface(
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            scope.launch {
+                                appSettings.setShowQueueDialog(false)
+                                showQueueDialogSettingDialog = false
+                            }
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (!showQueueDialog) 
+                            MaterialTheme.colorScheme.primaryContainer 
+                        else 
+                            MaterialTheme.colorScheme.surfaceVariant,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PlaylistAdd,
+                                contentDescription = null,
+                                tint = if (!showQueueDialog) 
+                                    MaterialTheme.colorScheme.onPrimaryContainer 
+                                else 
+                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    "Always add to queue",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium,
+                                    color = if (!showQueueDialog) 
+                                        MaterialTheme.colorScheme.onPrimaryContainer 
+                                    else 
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    "Automatically add songs to queue without asking",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (!showQueueDialog) 
+                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                    else 
+                                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                            }
+                            if (!showQueueDialog) {
+                                Icon(
+                                    imageVector = RhythmIcons.Check,
+                                    contentDescription = "Selected",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                Button(
+                    onClick = { showQueueDialogSettingDialog = false }
+                ) {
+                    Icon(
+                        imageVector = androidx.compose.material.icons.Icons.Filled.Check,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Done")
+                }
+            },
+            shape = RoundedCornerShape(24.dp)
+        )
     }
 }
 

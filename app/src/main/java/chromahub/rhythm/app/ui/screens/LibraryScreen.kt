@@ -516,7 +516,9 @@ fun LibraryScreen(
             },
             onAddToBlacklist = { song ->
                 appSettings.addToBlacklist(song.id)
-            }
+            },
+            currentSong = currentSong,
+            isPlaying = isPlaying
         )
     }
     
@@ -561,7 +563,9 @@ fun LibraryScreen(
             },
             onAddToBlacklist = { song ->
                 appSettings.addToBlacklist(song.id)
-            }
+            },
+            currentSong = currentSong,
+            isPlaying = isPlaying
         )
     }
 
@@ -1098,6 +1102,8 @@ fun LibraryScreen(
                             },
                             onPlayQueue = onPlayQueue,
                             onShuffleQueue = onShuffleQueue,
+                            currentSong = currentSong,
+                            isPlaying = isPlaying,
                             haptics = haptics
                         )
                         }
@@ -1119,7 +1125,9 @@ fun LibraryScreen(
                                 showAlbumBottomSheet = true
                             },
                             haptics = haptics,
-                            appSettings = appSettings
+                            appSettings = appSettings,
+                            onPlayQueue = onPlayQueue,
+                            onShuffleQueue = onShuffleQueue
                         )
                         "ARTISTS" -> SingleCardArtistsContent(
                             artists = artists,
@@ -1127,7 +1135,9 @@ fun LibraryScreen(
                                 selectedArtist = artist
                                 showArtistBottomSheet = true
                             },
-                            haptics = haptics
+                            haptics = haptics,
+                            onPlayQueue = onPlayQueue,
+                            onShuffleQueue = onShuffleQueue
                         )
                         "EXPLORER" -> SingleCardExplorerContent(
                             songs = songs,
@@ -1147,7 +1157,9 @@ fun LibraryScreen(
                             appSettings = appSettings,
                             reloadTrigger = explorerReloadTrigger,
                             onCreatePlaylist = onCreatePlaylist,
-                            musicViewModel = musicViewModel
+                            musicViewModel = musicViewModel,
+                            currentSong = currentSong,
+                            isPlaying = isPlaying
                         )
                     }
                 }
@@ -1350,6 +1362,8 @@ fun SingleCardSongsContent(
     onAddToBlacklist: (Song) -> Unit,
     onPlayQueue: (List<Song>) -> Unit = { _ -> },
     onShuffleQueue: (List<Song>) -> Unit = { _ -> },
+    currentSong: Song? = null, // Add current song parameter
+    isPlaying: Boolean = false, // Add playing state
     haptics: androidx.compose.ui.hapticfeedback.HapticFeedback
 ) {
     val context = LocalContext.current
@@ -1657,20 +1671,19 @@ fun SingleCardSongsContent(
             icon = RhythmIcons.Music.Song
         )
     } else {
-        Box(modifier = Modifier.fillMaxSize()) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    bottom = 96.dp // Space for floating button group (avoid overlap)
-                ),
-                verticalArrangement = Arrangement.spacedBy(0.dp)
-            ) {
-                // Sticky Section Header
-                stickyHeader {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 8.dp),
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                bottom = 16.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(0.dp)
+        ) {
+            // Section Header (Scrollable, not sticky)
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
                         shape = RoundedCornerShape(20.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
@@ -1699,7 +1712,7 @@ fun SingleCardSongsContent(
 
                             Spacer(modifier = Modifier.width(16.dp))
 
-                            Column {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = context.getString(R.string.library_your_music),
                                     style = MaterialTheme.typography.titleLarge,
@@ -1713,22 +1726,54 @@ fun SingleCardSongsContent(
                                 )
                             }
 
-                            Spacer(modifier = Modifier.weight(1f))
+                            // Play All Button
+                            if (filteredSongs.isNotEmpty()) {
+                                FilledTonalIconButton(
+                                    onClick = {
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        onPlayQueue(filteredSongs)
+                                    },
+                                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                        contentColor = MaterialTheme.colorScheme.primary
+                                    ),
+                                    modifier = Modifier.size(44.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.PlayArrow,
+                                        contentDescription = "Play All",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
 
-                            Surface(
-                                modifier = Modifier
-                                    .height(2.dp)
-                                    .width(60.dp),
-                                shape = RoundedCornerShape(1.dp),
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f)
-                            ) {}
+                                Spacer(modifier = Modifier.width(10.dp))
+
+                                // Shuffle Button
+                                FilledIconButton(
+                                    onClick = {
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        onShuffleQueue(filteredSongs)
+                                    },
+                                    colors = IconButtonDefaults.filledIconButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
+                                    ),
+                                    modifier = Modifier.size(44.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Shuffle,
+                                        contentDescription = "Shuffle All",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
                         }
                     }
-                }
+            }
 
-                // Sticky Filter Chips
-                if (categories.size > 1) {
-                    stickyHeader {
+            // Sticky Filter Chips
+            if (categories.size > 1) {
+                stickyHeader {
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
                             color = MaterialTheme.colorScheme.surfaceContainer
@@ -1829,13 +1874,13 @@ fun SingleCardSongsContent(
                     }
                 }
 
-                // Songs Items
-                items(
-                    items = filteredSongs,
-                    key = { it.id }
-                ) { song ->
+            // Songs Items
+            items(
+                items = filteredSongs,
+                key = { it.id }
+            ) { song ->
                     AnimateIn {
-                        LibrarySongItem(
+                        LibrarySongItemWrapper(
                             song = song,
                             onClick = { onSongClick(song) },
                             onMoreClick = { onAddToPlaylist(song) },
@@ -1866,65 +1911,13 @@ fun SingleCardSongsContent(
                                 }
                                 album?.let { onGoToAlbum(it) }
                             },
-                            onShowSongInfo = { onShowSongInfo(song) },
-                            onAddToBlacklist = { onAddToBlacklist(song) },
-                            haptics = haptics
-                        )
-                    }
+                        onShowSongInfo = { onShowSongInfo(song) },
+                        onAddToBlacklist = { onAddToBlacklist(song) },
+                        currentSong = currentSong,
+                        isPlaying = isPlaying,
+                        haptics = haptics
+                    )
                 }
-            }
-
-            // Bottom Floating Button Group with animations
-            AnimatedVisibility(
-                visible = filteredSongs.isNotEmpty(),
-                enter = slideInVertically(
-                    initialOffsetY = { it },
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMedium
-                    )
-                ) + fadeIn(
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMedium
-                    )
-                ),
-                exit = slideOutVertically(
-                    targetOffsetY = { it },
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMedium
-                    )
-                ) + fadeOut(
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMedium
-                    )
-                ),
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-            ) {
-                BottomFloatingButtonGroup(
-                    modifier = Modifier
-                        .padding(bottom = 16.dp), // Simple fixed spacing from bottom
-                    onPlayAll = {
-                        HapticUtils.performHapticFeedback(
-                            context,
-                            haptics,
-                            HapticFeedbackType.LongPress
-                        )
-                        onPlayQueue(filteredSongs)
-                    },
-                    onShuffle = {
-                        HapticUtils.performHapticFeedback(
-                            context,
-                            haptics,
-                            HapticFeedbackType.LongPress
-                        )
-                        onShuffleQueue(filteredSongs)
-                    },
-                    haptics = haptics
-                )
             }
         }
     }
@@ -2076,7 +2069,7 @@ fun SingleCardPlaylistsContent(
 
                         Spacer(modifier = Modifier.width(16.dp))
 
-                        Column {
+                        Column (modifier = Modifier.weight(1f)) {
                             Text(
                                 text = context.getString(R.string.library_your_playlists),
                                 style = MaterialTheme.typography.titleLarge,
@@ -2089,16 +2082,6 @@ fun SingleCardPlaylistsContent(
                                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                             )
                         }
-
-                        Spacer(modifier = Modifier.weight(1f))
-
-                        Surface(
-                            modifier = Modifier
-                                .height(2.dp)
-                                .width(60.dp),
-                            shape = RoundedCornerShape(1.dp),
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f)
-                        ) {}
                     }
                 }
             }
@@ -2128,7 +2111,9 @@ fun SingleCardAlbumsContent(
     onSongClick: (Song) -> Unit,
     onAlbumBottomSheetClick: (Album) -> Unit = {},
     haptics: androidx.compose.ui.hapticfeedback.HapticFeedback,
-    appSettings: AppSettings
+    appSettings: AppSettings,
+    onPlayQueue: (List<Song>) -> Unit = { _ -> },
+    onShuffleQueue: (List<Song>) -> Unit = { _ -> }
 ) {
     val context = LocalContext.current
     val albumViewType by appSettings.albumViewType.collectAsState()
@@ -2199,13 +2184,53 @@ fun SingleCardAlbumsContent(
                                 )
                             }
 
-                            Surface(
-                                modifier = Modifier
-                                    .height(2.dp)
-                                    .width(60.dp),
-                                shape = RoundedCornerShape(1.dp),
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f)
-                            ) {}
+                            // Play All Button
+                            FilledTonalIconButton(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    val allSongs = albums.flatMap { it.songs }
+                                    if (allSongs.isNotEmpty()) {
+                                        onPlayQueue(allSongs)
+                                    }
+                                },
+                                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                ),
+                                modifier = Modifier.size(40.dp),
+                                enabled = albums.isNotEmpty()
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.PlayArrow,
+                                    contentDescription = "Play All Albums",
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            // Shuffle Button
+                            FilledIconButton(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    val allSongs = albums.flatMap { it.songs }
+                                    if (allSongs.isNotEmpty()) {
+                                        onShuffleQueue(allSongs)
+                                    }
+                                },
+                                colors = IconButtonDefaults.filledIconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                ),
+                                modifier = Modifier.size(40.dp),
+                                enabled = albums.isNotEmpty()
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Shuffle,
+                                    contentDescription = "Shuffle All Albums",
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
                         }
                     }
                 }                // Album Grid Items
@@ -2279,13 +2304,53 @@ fun SingleCardAlbumsContent(
                                 )
                             }
 
-                            Surface(
-                                modifier = Modifier
-                                    .height(2.dp)
-                                    .width(60.dp),
-                                shape = RoundedCornerShape(1.dp),
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f)
-                            ) {}
+                            // Play All Button
+                            if (albums.isNotEmpty()) {
+                                FilledTonalIconButton(
+                                    onClick = {
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        val allSongs = albums.flatMap { it.songs }
+                                        if (allSongs.isNotEmpty()) {
+                                            onPlayQueue(allSongs)
+                                        }
+                                    },
+                                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                        contentColor = MaterialTheme.colorScheme.primary
+                                    ),
+                                    modifier = Modifier.size(44.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.PlayArrow,
+                                        contentDescription = "Play All Albums",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(10.dp))
+
+                                // Shuffle Button
+                                FilledIconButton(
+                                    onClick = {
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        val allSongs = albums.flatMap { it.songs }
+                                        if (allSongs.isNotEmpty()) {
+                                            onShuffleQueue(allSongs)
+                                        }
+                                    },
+                                    colors = IconButtonDefaults.filledIconButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
+                                    ),
+                                    modifier = Modifier.size(44.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Shuffle,
+                                        contentDescription = "Shuffle All Albums",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -2325,7 +2390,11 @@ fun SongsTab(
     onGoToAlbum: (Album) -> Unit = {},
     onShowSongInfo: (Song) -> Unit,
     onAddToBlacklist: (Song) -> Unit,
-    haptics: androidx.compose.ui.hapticfeedback.HapticFeedback
+    haptics: androidx.compose.ui.hapticfeedback.HapticFeedback,
+    onPlayQueue: (List<Song>) -> Unit = { _ -> },
+    onShuffleQueue: (List<Song>) -> Unit = { _ -> },
+    currentSong: Song? = null, // Add current song parameter
+    isPlaying: Boolean = false // Add playing state
 ) {
     val context = LocalContext.current
     val appSettings = remember { AppSettings.getInstance(context) }
@@ -2561,13 +2630,19 @@ fun SongsTab(
             icon = RhythmIcons.Music.Song
         )
     } else {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 20.dp, vertical = 8.dp)
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = 20.dp,
+                top = 8.dp,
+                end = 20.dp,
+                bottom = 16.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
-            // Enhanced Songs Section Header (Sticky)
-            Card(
+            // Enhanced Songs Section Header (Scrollable)
+            item {
+                Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
@@ -2599,7 +2674,7 @@ fun SongsTab(
 
                     Spacer(modifier = Modifier.width(16.dp))
 
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = context.getString(R.string.library_your_music),
                             style = MaterialTheme.typography.titleLarge,
@@ -2614,21 +2689,55 @@ fun SongsTab(
                         )
                     }
 
-                    Spacer(modifier = Modifier.weight(1f))
+                    // Play All Button
+                    if (filteredSongs.isNotEmpty()) {
+                        FilledTonalIconButton(
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                onPlayQueue(filteredSongs)
+                            },
+                            colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                contentColor = MaterialTheme.colorScheme.primary
+                            ),
+                            modifier = Modifier.size(44.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PlayArrow,
+                                contentDescription = "Play All",
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
 
-                    Surface(
-                        modifier = Modifier
-                            .height(2.dp)
-                            .width(60.dp),
-                        shape = RoundedCornerShape(1.dp),
-                        color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.3f)
-                    ) {}
+                        Spacer(modifier = Modifier.width(10.dp))
+
+                        // Shuffle Button
+                        FilledIconButton(
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                onShuffleQueue(filteredSongs)
+                            },
+                            colors = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ),
+                            modifier = Modifier.size(44.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Shuffle,
+                                contentDescription = "Shuffle All",
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
                 }
             }
+            }
 
-            // Category chips (Sticky)
+            // Category chips
             if (categories.size > 1) {
-                LazyRow(
+                item {
+                    LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp), // Added horizontal padding
                     modifier = Modifier.fillMaxWidth()
@@ -2699,64 +2808,52 @@ fun SongsTab(
                         )
                     }
                 }
+                }
             }
-            // Scrollable Songs List
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceContainer,
-                shape = RoundedCornerShape(20.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f) // Take remaining space
-            ) {
-                LazyColumn(
-                    contentPadding = PaddingValues(
-                        top = 8.dp, // Start below the sticky elements
-                        bottom = 16.dp // Simple spacing - Scaffold handles rest
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(0.dp)
-                ) {
-                    items(
-                        items = filteredSongs,
-                        key = { it.id }
-                    ) { song ->
-                        AnimateIn {
-                            LibrarySongItem(
-                                song = song,
-                                onClick = { onSongClick(song) },
-                                onMoreClick = { onAddToPlaylist(song) },
-                                onAddToQueue = { onAddToQueue(song) },
-                                onPlayNext = { onPlayNext(song) },
-                                onToggleFavorite = { onToggleFavorite(song) },
-                                isFavorite = favoriteSongs.contains(song.id),
-                                onGoToArtist = { 
-                                    // Find the artist from the list - respect groupByAlbumArtist setting
-                                    val artist = if (groupByAlbumArtist) {
-                                        // When grouping by album artist, match against albumArtist (with fallback to artist)
-                                        val songArtistName = (song.albumArtist?.takeIf { it.isNotBlank() } ?: song.artist).trim()
-                                        artists.find { it.name.equals(songArtistName, ignoreCase = true) }
-                                    } else {
-                                        // When not grouping, check if any split artist name matches
-                                        val songArtistNames = splitArtistNames(song.artist)
-                                        artists.find { artist ->
-                                            songArtistNames.any { it.equals(artist.name, ignoreCase = true) }
-                                        }
-                                    }
-                                    artist?.let { onGoToArtist(it) }
-                                },
-                                onGoToAlbum = { 
-                                    // Find the album from the list
-                                    val album = albums.find { 
-                                        it.title.equals(song.album, ignoreCase = true) && 
-                                        it.artist.equals(song.artist, ignoreCase = true)
-                                    }
-                                    album?.let { onGoToAlbum(it) }
-                                },
-                                onShowSongInfo = { onShowSongInfo(song) },
-                                onAddToBlacklist = { onAddToBlacklist(song) },
-                                haptics = haptics // Pass haptics
-                            )
-                        }
-                    }
+
+            // Songs Items
+            items(
+                items = filteredSongs,
+                key = { it.id }
+            ) { song ->
+                AnimateIn {
+                    LibrarySongItemWrapper(
+                        song = song,
+                        onClick = { onSongClick(song) },
+                        onMoreClick = { onAddToPlaylist(song) },
+                        onAddToQueue = { onAddToQueue(song) },
+                        onPlayNext = { onPlayNext(song) },
+                        onToggleFavorite = { onToggleFavorite(song) },
+                        isFavorite = favoriteSongs.contains(song.id),
+                        onGoToArtist = { 
+                            // Find the artist from the list - respect groupByAlbumArtist setting
+                            val artist = if (groupByAlbumArtist) {
+                                // When grouping by album artist, match against albumArtist (with fallback to artist)
+                                val songArtistName = (song.albumArtist?.takeIf { it.isNotBlank() } ?: song.artist).trim()
+                                artists.find { it.name.equals(songArtistName, ignoreCase = true) }
+                            } else {
+                                // When not grouping, check if any split artist name matches
+                                val songArtistNames = splitArtistNames(song.artist)
+                                artists.find { artist ->
+                                    songArtistNames.any { it.equals(artist.name, ignoreCase = true) }
+                                }
+                            }
+                            artist?.let { onGoToArtist(it) }
+                        },
+                        onGoToAlbum = { 
+                            // Find the album from the list
+                            val album = albums.find { 
+                                it.title.equals(song.album, ignoreCase = true) && 
+                                it.artist.equals(song.artist, ignoreCase = true)
+                            }
+                            album?.let { onGoToAlbum(it) }
+                        },
+                        onShowSongInfo = { onShowSongInfo(song) },
+                        onAddToBlacklist = { onAddToBlacklist(song) },
+                        currentSong = currentSong,
+                        isPlaying = isPlaying,
+                        haptics = haptics
+                    )
                 }
             }
         }
@@ -3043,20 +3140,49 @@ fun LibrarySongItem(
     onGoToAlbum: () -> Unit = {},
     onShowSongInfo: () -> Unit,
     onAddToBlacklist: () -> Unit, // Add blacklist callback
+    currentSong: Song? = null, // Add current song parameter
+    isPlaying: Boolean = false, // Add playing state
     haptics: androidx.compose.ui.hapticfeedback.HapticFeedback
 ) {
     val context = LocalContext.current
     var showDropdown by remember { mutableStateOf(false) }
+    val isCurrentSong = currentSong?.id == song.id
+
+    // Animated colors for text
+    val titleColor by animateColorAsState(
+        targetValue = if (isCurrentSong) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+        animationSpec = tween(300),
+        label = "titleColor"
+    )
+    val supportingColor by animateColorAsState(
+        targetValue = if (isCurrentSong) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = tween(300),
+        label = "supportingColor"
+    )
 
     ListItem(
         headlineContent = {
-            Text(
-                text = song.title,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = song.title,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = if (isCurrentSong) FontWeight.Bold else FontWeight.Medium,
+                    color = titleColor
+                )
+                if (isCurrentSong && isPlaying) {
+                    Icon(
+                        imageVector = RhythmIcons.Player.Equalizer,
+                        contentDescription = "Now playing",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
         },
         supportingContent = {
             Text(
@@ -3066,21 +3192,44 @@ fun LibrarySongItem(
                     append(song.album)
                 },
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = supportingColor,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
         },
         leadingContent = {
-            Surface(
-                shape = MaterialTheme.shapes.large,
-                modifier = Modifier.size(56.dp)
-            ) {
-                M3ImageUtils.TrackImage(
-                    imageUrl = song.artworkUri,
-                    trackName = song.title,
-                    modifier = Modifier.fillMaxSize()
-                )
+            Box {
+                Surface(
+                    shape = MaterialTheme.shapes.large,
+                    modifier = Modifier.size(56.dp),
+                    border = if (isCurrentSong) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
+                ) {
+                    M3ImageUtils.TrackImage(
+                        imageUrl = song.artworkUri,
+                        trackName = song.title,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+                if (isCurrentSong && isPlaying) {
+                    Surface(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .size(20.dp)
+                            .offset(x = 4.dp, y = 4.dp),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary,
+                        shadowElevation = 2.dp
+                    ) {
+                        Icon(
+                            imageVector = RhythmIcons.Play,
+                            contentDescription = "Playing",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(4.dp)
+                        )
+                    }
+                }
             }
         },
         trailingContent = {
@@ -3450,12 +3599,66 @@ fun LibrarySongItem(
         ),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = {
-                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                onClick()
-            })
-            .padding(horizontal = 16.dp, vertical = 4.dp)
     )
+}
+
+/**
+ * Wrapper composable for LibrarySongItem with rounded corners and border for active song
+ */
+@Composable
+fun LibrarySongItemWrapper(
+    song: Song,
+    onClick: () -> Unit,
+    onMoreClick: () -> Unit,
+    onAddToQueue: () -> Unit,
+    onPlayNext: () -> Unit = {},
+    onToggleFavorite: () -> Unit = {},
+    isFavorite: Boolean = false,
+    onGoToArtist: () -> Unit = {},
+    onGoToAlbum: () -> Unit = {},
+    onShowSongInfo: () -> Unit,
+    onAddToBlacklist: () -> Unit,
+    currentSong: Song? = null,
+    isPlaying: Boolean = false,
+    haptics: androidx.compose.ui.hapticfeedback.HapticFeedback
+) {
+    val context = LocalContext.current
+    val isCurrentSong = currentSong?.id == song.id
+    
+    // Animated colors
+    val containerColor by animateColorAsState(
+        targetValue = if (isCurrentSong) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f) else Color.Transparent,
+        animationSpec = tween(300),
+        label = "containerColor"
+    )
+    Surface(
+        onClick = {
+            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+            onClick()
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        shape = RoundedCornerShape(12.dp),
+        color = containerColor
+    ) {
+        LibrarySongItem(
+            song = song,
+            onClick = {}, // Click handled by Surface
+            onMoreClick = onMoreClick,
+            onAddToQueue = onAddToQueue,
+            onPlayNext = onPlayNext,
+            onToggleFavorite = onToggleFavorite,
+            isFavorite = isFavorite,
+            onGoToArtist = onGoToArtist,
+            onGoToAlbum = onGoToAlbum,
+            onShowSongInfo = onShowSongInfo,
+            onAddToBlacklist = onAddToBlacklist,
+            currentSong = currentSong,
+            isPlaying = isPlaying,
+            haptics = haptics
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -4380,7 +4583,9 @@ fun AlbumGridItem(
 fun SingleCardArtistsContent(
     artists: List<Artist>,
     onArtistClick: (Artist) -> Unit,
-    haptics: androidx.compose.ui.hapticfeedback.HapticFeedback
+    haptics: androidx.compose.ui.hapticfeedback.HapticFeedback,
+    onPlayQueue: (List<Song>) -> Unit = { _ -> },
+    onShuffleQueue: (List<Song>) -> Unit = { _ -> }
 ) {
     val context = LocalContext.current
     val viewModel = viewModel<chromahub.rhythm.app.viewmodel.MusicViewModel>()
@@ -4428,7 +4633,21 @@ fun SingleCardArtistsContent(
             // Sticky header for grid view
             item(span = { GridItemSpan(maxLineSpan) }) {
                 ArtistSectionHeader(
-                    artistCount = sortedArtists.size
+                    artistCount = sortedArtists.size,
+                    artists = sortedArtists,
+                    onPlayAll = {
+                        val allSongs = sortedArtists.flatMap { it.songs }
+                        if (allSongs.isNotEmpty()) {
+                            onPlayQueue(allSongs)
+                        }
+                    },
+                    onShuffleAll = {
+                        val allSongs = sortedArtists.flatMap { it.songs }
+                        if (allSongs.isNotEmpty()) {
+                            onShuffleQueue(allSongs)
+                        }
+                    },
+                    haptics = haptics
                 )
             }
             
@@ -4475,7 +4694,21 @@ fun SingleCardArtistsContent(
             // Sticky header for list view
             stickyHeader {
                 ArtistSectionHeader(
-                    artistCount = sortedArtists.size
+                    artistCount = sortedArtists.size,
+                    artists = sortedArtists,
+                    onPlayAll = {
+                        val allSongs = sortedArtists.flatMap { it.songs }
+                        if (allSongs.isNotEmpty()) {
+                            onPlayQueue(allSongs)
+                        }
+                    },
+                    onShuffleAll = {
+                        val allSongs = sortedArtists.flatMap { it.songs }
+                        if (allSongs.isNotEmpty()) {
+                            onShuffleQueue(allSongs)
+                        }
+                    },
+                    haptics = haptics
                 )
             }
             
@@ -4562,7 +4795,11 @@ fun SingleCardArtistsContent(
 
 @Composable
 private fun ArtistSectionHeader(
-    artistCount: Int
+    artistCount: Int,
+    artists: List<Artist> = emptyList(),
+    onPlayAll: () -> Unit = {},
+    onShuffleAll: () -> Unit = {},
+    haptics: androidx.compose.ui.hapticfeedback.HapticFeedback? = null
 ) {
     val context = LocalContext.current
     
@@ -4609,16 +4846,6 @@ private fun ArtistSectionHeader(
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                 )
             }
-
-
-
-            Surface(
-                modifier = Modifier
-                    .height(2.dp)
-                    .width(60.dp),
-                shape = RoundedCornerShape(1.dp),
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f)
-            ) {}
         }
     }
 }
@@ -5024,7 +5251,9 @@ fun SingleCardExplorerContent(
     appSettings: AppSettings,
     reloadTrigger: Int = 0,
     onCreatePlaylist: (String) -> Unit = { _ -> },
-    musicViewModel: MusicViewModel
+    musicViewModel: MusicViewModel,
+    currentSong: Song? = null, // Add current song parameter
+    isPlaying: Boolean = false // Add playing state
 ) {
     val context = LocalContext.current
     val activity = context as Activity
@@ -5400,7 +5629,7 @@ fun SingleCardExplorerContent(
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
-                bottom = 96.dp // Space for floating buttons
+                bottom = 16.dp
             ),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
@@ -5457,7 +5686,49 @@ fun SingleCardExplorerContent(
                             )
                         }
 
-                        Spacer(modifier = Modifier.weight(1f))
+                        // Play All Button (only show if current folder has songs)
+                        if (currentPath != null && currentFolderSongs.isNotEmpty()) {
+                            FilledTonalIconButton(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    onPlayQueue(currentFolderSongs)
+                                },
+                                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                    contentColor = MaterialTheme.colorScheme.primary
+                                ),
+                                modifier = Modifier.size(44.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.PlayArrow,
+                                    contentDescription = "Play All in Folder",
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(10.dp))
+
+                            // Shuffle Button (only show if current folder has songs)
+                            FilledIconButton(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    onShuffleQueue(currentFolderSongs)
+                                },
+                                colors = IconButtonDefaults.filledIconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                ),
+                                modifier = Modifier.size(44.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Shuffle,
+                                    contentDescription = "Shuffle All in Folder",
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(10.dp))
+                        }
 
                         // Back button if not at root
                         if (currentPath != null) {
@@ -5584,7 +5855,9 @@ fun SingleCardExplorerContent(
                                 isPinned = false, // Storages can't be pinned
                                 onPinToggle = null, // No pin toggle for storages
                                 onPlayFolder = null, // Storages don't have play option
-                                onAddFolderToQueue = null // Storages don't have queue option
+                                onAddFolderToQueue = null, // Storages don't have queue option
+                                currentSong = currentSong,
+                                isPlaying = isPlaying
                             )
                         }
                     }
@@ -5696,7 +5969,9 @@ fun SingleCardExplorerContent(
                                         if (folderSongs.isNotEmpty()) {
                                             folderSongs.forEach { song -> onAddToQueue(song) }
                                         }
-                                    }
+                                    },
+                                    currentSong = currentSong,
+                                    isPlaying = isPlaying
                                 )
                             }
                         }
@@ -5785,7 +6060,9 @@ fun SingleCardExplorerContent(
                                             folderSongs.forEach { song -> onAddToQueue(song) }
                                         }
                                     }
-                                } else null
+                                } else null,
+                                currentSong = currentSong,
+                                isPlaying = isPlaying
                             )
                         }
                     }
@@ -5986,17 +6263,7 @@ fun SingleCardExplorerContent(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
         ) {
-            BottomFloatingButtonGroup(
-                modifier = Modifier
-                    .padding(bottom = 16.dp), // Simple fixed spacing
-                onPlayAll = {
-                    onPlayQueue(currentFolderSongs)
-                },
-                onShuffle = {
-                    onShuffleQueue(currentFolderSongs)
-                },
-                haptics = haptics
-            )
+            // Floating button group removed - buttons now in section header
         }
     }
     
@@ -7323,7 +7590,9 @@ fun ExplorerItemCard(
     isPinned: Boolean = false,
     onPinToggle: (() -> Unit)? = null,
     onPlayFolder: ((ExplorerItem) -> Unit)? = null,
-    onAddFolderToQueue: ((ExplorerItem) -> Unit)? = null
+    onAddFolderToQueue: ((ExplorerItem) -> Unit)? = null,
+    currentSong: Song? = null, // Add current song parameter
+    isPlaying: Boolean = false // Add playing state
 ) {
     val context = LocalContext.current
 
@@ -7678,14 +7947,16 @@ fun ExplorerItemCard(
         ExplorerItemType.FILE -> {
             val song = item.song
             if (song != null) {
-                // Use the existing LibrarySongItem for files
-                LibrarySongItem(
+                // Use the existing LibrarySongItemWrapper for files
+                LibrarySongItemWrapper(
                     song = song,
                     onClick = { onSongClick(song) },
                     onMoreClick = { onAddToPlaylist(song) },
                     onAddToQueue = { onAddToQueue(song) },
                     onShowSongInfo = { onShowSongInfo(song) },
                     onAddToBlacklist = { /* Files in explorer don't have blacklist functionality */ },
+                    currentSong = currentSong,
+                    isPlaying = isPlaying,
                     haptics = haptics
                 )
             }

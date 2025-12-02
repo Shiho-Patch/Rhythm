@@ -4,6 +4,8 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -69,7 +71,9 @@ fun ArtistBottomSheet(
     onToggleFavorite: (Song) -> Unit = {},
     favoriteSongs: Set<String> = emptySet(),
     onShowSongInfo: (Song) -> Unit = {},
-    onAddToBlacklist: (Song) -> Unit = {}
+    onAddToBlacklist: (Song) -> Unit = {},
+    currentSong: Song? = null,
+    isPlaying: Boolean = false
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -507,6 +511,8 @@ fun ArtistBottomSheet(
                                             HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
                                             onAddToBlacklist(song)
                                         },
+                                        currentSong = currentSong,
+                                        isPlaying = isPlaying,
                                         modifier = Modifier
                                             .graphicsLayer {
                                                 alpha = contentAlpha
@@ -643,74 +649,137 @@ private fun EnhancedArtistSongItem(
     onToggleFavorite: () -> Unit = {},
     isFavorite: Boolean = false,
     onShowSongInfo: () -> Unit = {},
-    onAddToBlacklist: () -> Unit = {}
+    onAddToBlacklist: () -> Unit = {},
+    currentSong: Song? = null,
+    isPlaying: Boolean = false
 ) {
     val context = LocalContext.current
     var showDropdown by remember { mutableStateOf(false) }
     
-    ListItem(
-        headlineContent = {
-            Text(
-                text = song.title,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        },
-        supportingContent = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Display album name instead of artist for better clarity in artist context
-                Text(
-                    text = song.album,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false)
-                )
-                
-                if (song.duration > 0) {
+    val isCurrentSong = currentSong?.id == song.id
+    
+    val titleColor by animateColorAsState(
+        targetValue = if (isCurrentSong) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+        animationSpec = tween(300), label = "titleColor"
+    )
+    
+    val artistColor by animateColorAsState(
+        targetValue = if (isCurrentSong) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = tween(300), label = "artistColor"
+    )
+    
+    val containerColor by animateColorAsState(
+        targetValue = if (isCurrentSong) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else Color.Transparent,
+        animationSpec = tween(300), label = "containerColor"
+    )
+    
+    Surface(
+        modifier = modifier.clip(RoundedCornerShape(12.dp)),
+        color = containerColor,
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        ListItem(
+            headlineContent = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Text(
-                        text = " • ",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = song.title,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = titleColor,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
                     
-                    val durationText = formatDuration(song.duration)
-                    Text(
-                        text = durationText,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    if (isCurrentSong && isPlaying) {
+                        Icon(
+                            imageVector = RhythmIcons.Player.Equalizer,
+                            contentDescription = "Now playing",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
-            }
-        },
-        leadingContent = {
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.size(48.dp)
-            ) {
-                AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .apply(ImageUtils.buildImageRequest(
-                            song.artworkUri,
-                            song.title,
-                            context.cacheDir,
-                            M3PlaceholderType.TRACK
-                        ))
-                        .build(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-        },
+            },
+            supportingContent = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Display album name instead of artist for better clarity in artist context
+                    Text(
+                        text = song.album,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = artistColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    
+                    if (song.duration > 0) {
+                        Text(
+                            text = " • ",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = artistColor
+                        )
+                        
+                        val durationText = formatDuration(song.duration)
+                        Text(
+                            text = durationText,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = artistColor,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            },
+            leadingContent = {
+                Box {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.size(48.dp),
+                        tonalElevation = 2.dp
+                    ) {
+                        AsyncImage(
+                            model = ImageRequest.Builder(context)
+                                .apply(ImageUtils.buildImageRequest(
+                                    song.artworkUri,
+                                    song.title,
+                                    context.cacheDir,
+                                    M3PlaceholderType.TRACK
+                                ))
+                                .build(),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                    
+                    if (isCurrentSong && isPlaying) {
+                        Surface(
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .size(20.dp)
+                                .offset(x = 4.dp, y = 4.dp),
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.primary,
+                            shadowElevation = 2.dp
+                        ) {
+                            Icon(
+                                imageVector = RhythmIcons.Play,
+                                contentDescription = "Playing",
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(4.dp)
+                            )
+                        }
+                    }
+                }
+            },
         trailingContent = {
             FilledIconButton(
                 onClick = {
@@ -999,6 +1068,7 @@ private fun EnhancedArtistSongItem(
             containerColor = Color.Transparent
         )
     )
+    }
 }
 
 // Helper function to format duration

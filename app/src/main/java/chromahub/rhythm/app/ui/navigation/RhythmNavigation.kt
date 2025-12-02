@@ -1505,6 +1505,9 @@ fun RhythmNavigation(
                                     onPlayPlaylistShuffled(playlist)
                                 },
                                 onSongClick = onPlaySong,
+                                onPlaySongFromPlaylist = { song, playlistSongs ->
+                                    viewModel.playSongFromContext(song, playlistSongs, playlist.name)
+                                },
                                 onBack = {
                                     navController.popBackStack()
                                 },

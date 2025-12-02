@@ -1,6 +1,7 @@
 package chromahub.rhythm.app.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -23,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -32,13 +35,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import chromahub.rhythm.app.R
 import chromahub.rhythm.app.data.Song
 import chromahub.rhythm.app.ui.components.RhythmIcons
+import chromahub.rhythm.app.util.HapticUtils
 
 @Composable
 fun CreatePlaylistDialog(
@@ -159,6 +165,9 @@ fun QueueActionDialog(
     onClearAndPlay: () -> Unit,
     onAddToQueue: () -> Unit
 ) {
+    val context = LocalContext.current
+    val haptics = LocalHapticFeedback.current
+    
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = {
@@ -176,74 +185,127 @@ fun QueueActionDialog(
             )
         },
         text = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
                     text = "You have $queueSize song${if (queueSize > 1) "s" else ""} in the current queue.",
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
                     text = "How would you like to play \"${song.title}\"?",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 
-                // Clear & Play button
-                Button(
-                    onClick = onClearAndPlay,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.PlaylistPlay,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(2.dp))
-                    Text("Clear & Play", style = MaterialTheme.typography.labelLarge)
-                }
-                
-                // Add to Queue button
-                FilledTonalButton(
-                    onClick = onAddToQueue,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.PlaylistAdd,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(2.dp))
-                    Text("Add to Queue", style = MaterialTheme.typography.labelLarge)
-                }
-                
-                // Cancel button
-                OutlinedButton(
-                    onClick = onDismiss,
+                // Option 1: Clear & Play
+                Surface(
+                    onClick = {
+                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                        onClearAndPlay()
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(2.dp))
-                    Text("Cancel", style = MaterialTheme.typography.labelLarge)
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.PlaylistPlay,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "Clear & Play",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Text(
+                                "Replace queue and play this song",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                }
+                
+                // Option 2: Add to Queue
+                Surface(
+                    onClick = {
+                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                        onAddToQueue()
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.PlaylistAdd,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSecondary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "Add to Queue",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                "Keep current queue and add song",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
                 }
             }
         },
-        confirmButton = { },
-        dismissButton = { },
+        confirmButton = {},
+        dismissButton = {
+            OutlinedButton(
+                onClick = {
+                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                    onDismiss()
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Cancel")
+            }
+        },
         shape = RoundedCornerShape(24.dp)
     )
 } 

@@ -188,6 +188,9 @@ class AppSettings private constructor(context: Context) {
         // Pinned Folders (Explorer)
         private const val KEY_PINNED_FOLDERS = "pinned_folders"
         
+        // Playlist Playback Behavior
+        private const val KEY_PLAYLIST_CLICK_BEHAVIOR = "playlist_click_behavior" // "ask", "play_all", "play_one"
+        
         // Backup and Restore
         private const val KEY_LAST_BACKUP_TIMESTAMP = "last_backup_timestamp"
         private const val KEY_AUTO_BACKUP_ENABLED = "auto_backup_enabled"
@@ -782,6 +785,10 @@ class AppSettings private constructor(context: Context) {
         }
     )
     val pinnedFolders: StateFlow<List<String>> = _pinnedFolders.asStateFlow()
+
+    // Playlist Click Behavior
+    private val _playlistClickBehavior = MutableStateFlow(prefs.getString(KEY_PLAYLIST_CLICK_BEHAVIOR, "ask") ?: "ask")
+    val playlistClickBehavior: StateFlow<String> = _playlistClickBehavior.asStateFlow()
 
     // Backup and Restore Settings
     private val _lastBackupTimestamp = MutableStateFlow(safeLong(KEY_LAST_BACKUP_TIMESTAMP, 0L))
@@ -1602,6 +1609,14 @@ class AppSettings private constructor(context: Context) {
     fun clearPinnedFolders() {
         prefs.edit().remove(KEY_PINNED_FOLDERS).apply()
         _pinnedFolders.value = emptyList()
+    }
+    
+    // Playlist Click Behavior Methods
+    fun setPlaylistClickBehavior(behavior: String) {
+        if (behavior in listOf("ask", "play_all", "play_one")) {
+            prefs.edit().putString(KEY_PLAYLIST_CLICK_BEHAVIOR, behavior).apply()
+            _playlistClickBehavior.value = behavior
+        }
     }
     
     // Helper method to check if a song would be filtered by current whitelist rules
