@@ -1413,6 +1413,11 @@ fun SingleCardSongsContent(
     val groupByAlbumArtist by appSettings.groupByAlbumArtist.collectAsState()
     var selectedCategory by remember { mutableStateOf("All") }
     
+    // Loading state for async category computation
+    var isLoading by remember { mutableStateOf(true) }
+    var preparedSongs by remember { mutableStateOf<List<Song>>(emptyList()) }
+    var categories by remember { mutableStateOf<List<String>>(listOf("All")) }
+    
     // Helper function to split artist names
     val splitArtistNames: (String) -> List<String> = remember {
         { artistName ->
@@ -1612,102 +1617,137 @@ fun SingleCardSongsContent(
                codec.contains("DTS")
     }
 
-    // Define categories based on song properties with audio quality filters
-    val categories = remember(songs) {
-        val allCategories = mutableListOf("All")
+    // Async category computation to avoid blocking UI on tab switch
+    LaunchedEffect(songs) {
+        isLoading = true
+        val result = withContext(Dispatchers.Default) {
+            val allCategories = mutableListOf("All")
 
-        android.util.Log.d("SongsTab", "Recomputing categories for ${songs.size} songs")
+            android.util.Log.d("SongsTab", "Recomputing categories for ${songs.size} songs")
 
-        // Audio Quality Filters (Mutually Exclusive) - Most specific first
+            // Audio Quality Filters (Mutually Exclusive) - Most specific first
 
-        // Hi-Res Lossless (≥48 kHz + 24-bit lossless)
-        val hiResLosslessSongs = songs.filter { isHiResLossless(it) && !isDolbyOrSurround(it) }
-        android.util.Log.d("SongsTab", "Found ${hiResLosslessSongs.size} Hi-Res Lossless songs")
-        if (hiResLosslessSongs.isNotEmpty()) allCategories.add("Hi-Res Lossless")
+            // Hi-Res Lossless (≥48 kHz + 24-bit lossless)
+            val hiResLosslessSongs = songs.filter { isHiResLossless(it) && !isDolbyOrSurround(it) }
+            android.util.Log.d("SongsTab", "Found ${hiResLosslessSongs.size} Hi-Res Lossless songs")
+            if (hiResLosslessSongs.isNotEmpty()) allCategories.add("Hi-Res Lossless")
 
-        // Regular Lossless (CD quality: 44.1kHz/16-bit or 48kHz/16-bit)
-        val regularLosslessSongs = songs.filter { isRegularLossless(it) && !isDolbyOrSurround(it) }
-        android.util.Log.d("SongsTab", "Found ${regularLosslessSongs.size} Lossless (CD Quality) songs")
-        if (regularLosslessSongs.isNotEmpty()) allCategories.add("Lossless")
+            // Regular Lossless (CD quality: 44.1kHz/16-bit or 48kHz/16-bit)
+            val regularLosslessSongs = songs.filter { isRegularLossless(it) && !isDolbyOrSurround(it) }
+            android.util.Log.d("SongsTab", "Found ${regularLosslessSongs.size} Lossless (CD Quality) songs")
+            if (regularLosslessSongs.isNotEmpty()) allCategories.add("Lossless")
 
-        // Dolby (includes AC-3, E-AC-3/D+, TrueHD, Atmos, DTS in 5.1, 7.1, etc.)
-        val dolbySongs = songs.filter { isDolbyOrSurround(it) }
-        android.util.Log.d("SongsTab", "Found ${dolbySongs.size} Dolby/Surround songs")
-        if (dolbySongs.isNotEmpty()) allCategories.add("Dolby")        // Stereo (standard 2-channel, non-quality filtered) - HIDDEN per user request
-        val stereoSongs = songs.filter { song ->
-            (song.channels ?: 2) == 2 && !isDolbyOrSurround(song)
-        }
-        android.util.Log.d("SongsTab", "Found ${stereoSongs.size} Stereo songs")
-        // if (stereoSongs.isNotEmpty()) allCategories.add("Stereo")  // HIDDEN - user requested to hide stereo filter
-        
-        val monoSongs = songs.filter { song ->
-            (song.channels ?: 2) == 1
-        }
-        android.util.Log.d("SongsTab", "Found ${monoSongs.size} Mono songs")
-        if (monoSongs.isNotEmpty()) allCategories.add("Mono")
-        
-        // Log sample metadata for debugging
-        if (songs.isNotEmpty()) {
-            val sampleSong = songs.first()
-            android.util.Log.d("SongsTab", "Sample song metadata: ${sampleSong.title} - bitrate=${sampleSong.bitrate}, sampleRate=${sampleSong.sampleRate}, channels=${sampleSong.channels}, codec=${sampleSong.codec}")
-        }
-
-        // Quality-based categories for lossy audio
-        val highQualitySongs = songs.filter { song ->
-            val bitrate = song.bitrate ?: 0
-            bitrate >= 320000 && !isLosslessAudio(song) && !isDolbyOrSurround(song)
-        }
-        if (highQualitySongs.isNotEmpty()) allCategories.add("High Quality")
-
-        val standardSongs = songs.filter { song ->
-            val bitrate = song.bitrate ?: 0
-            bitrate in 128000..319999 && !isLosslessAudio(song) && !isDolbyOrSurround(song)
-        }
-        if (standardSongs.isNotEmpty()) allCategories.add("Standard")
-
-        // Duration-based categories
-        val shortSongs = songs.filter { it.duration < 3 * 60 * 1000 }
-        if (shortSongs.isNotEmpty()) allCategories.add("Short (< 3 min)")
-
-        val mediumSongs = songs.filter { it.duration in (3 * 60 * 1000)..(5 * 60 * 1000) }
-        if (mediumSongs.isNotEmpty()) allCategories.add("Medium (3-5 min)")
-
-        val longSongs = songs.filter { it.duration > 5 * 60 * 1000 }
-        if (longSongs.isNotEmpty()) allCategories.add("Long (> 5 min)")
-
-        allCategories
-    }
-
-    // Filter songs based on selected category
-    val filteredSongs = remember(songs, selectedCategory) {
-        when (selectedCategory) {
-            "All" -> songs
-            "Short (< 3 min)" -> songs.filter { it.duration < 3 * 60 * 1000 }
-            "Medium (3-5 min)" -> songs.filter { it.duration in (3 * 60 * 1000)..(5 * 60 * 1000) }
-            "Long (> 5 min)" -> songs.filter { it.duration > 5 * 60 * 1000 }
-
-            // Audio Quality Filters (Mutually Exclusive)
-            "Hi-Res Lossless" -> songs.filter { isHiResLossless(it) && !isDolbyOrSurround(it) }
-            "Lossless" -> songs.filter { isRegularLossless(it) && !isDolbyOrSurround(it) }
-            "Dolby" -> songs.filter { isDolbyOrSurround(it) }
-            "Stereo" -> songs.filter { (it.channels ?: 2) == 2 && !isDolbyOrSurround(it) }
-            "Mono" -> songs.filter { (it.channels ?: 2) == 1 }
+            // Dolby (includes AC-3, E-AC-3/D+, TrueHD, Atmos, DTS in 5.1, 7.1, etc.)
+            val dolbySongs = songs.filter { isDolbyOrSurround(it) }
+            android.util.Log.d("SongsTab", "Found ${dolbySongs.size} Dolby/Surround songs")
+            if (dolbySongs.isNotEmpty()) allCategories.add("Dolby")
             
-            "High Quality" -> songs.filter { song ->
+            // Stereo (standard 2-channel, non-quality filtered) - HIDDEN per user request
+            val stereoSongs = songs.filter { song ->
+                (song.channels ?: 2) == 2 && !isDolbyOrSurround(song)
+            }
+            android.util.Log.d("SongsTab", "Found ${stereoSongs.size} Stereo songs")
+            // if (stereoSongs.isNotEmpty()) allCategories.add("Stereo")  // HIDDEN - user requested to hide stereo filter
+            
+            val monoSongs = songs.filter { song ->
+                (song.channels ?: 2) == 1
+            }
+            android.util.Log.d("SongsTab", "Found ${monoSongs.size} Mono songs")
+            if (monoSongs.isNotEmpty()) allCategories.add("Mono")
+            
+            // Log sample metadata for debugging
+            if (songs.isNotEmpty()) {
+                val sampleSong = songs.first()
+                android.util.Log.d("SongsTab", "Sample song metadata: ${sampleSong.title} - bitrate=${sampleSong.bitrate}, sampleRate=${sampleSong.sampleRate}, channels=${sampleSong.channels}, codec=${sampleSong.codec}")
+            }
+
+            // Quality-based categories for lossy audio
+            val highQualitySongs = songs.filter { song ->
                 val bitrate = song.bitrate ?: 0
                 bitrate >= 320000 && !isLosslessAudio(song) && !isDolbyOrSurround(song)
             }
+            if (highQualitySongs.isNotEmpty()) allCategories.add("High Quality")
 
-            "Standard" -> songs.filter { song ->
+            val standardSongs = songs.filter { song ->
                 val bitrate = song.bitrate ?: 0
                 bitrate in 128000..319999 && !isLosslessAudio(song) && !isDolbyOrSurround(song)
             }
+            if (standardSongs.isNotEmpty()) allCategories.add("Standard")
 
-            else -> songs // Default to showing all songs for any unrecognized category
+            // Duration-based categories
+            val shortSongs = songs.filter { it.duration < 3 * 60 * 1000 }
+            if (shortSongs.isNotEmpty()) allCategories.add("Short (< 3 min)")
+
+            val mediumSongs = songs.filter { it.duration in (3 * 60 * 1000)..(5 * 60 * 1000) }
+            if (mediumSongs.isNotEmpty()) allCategories.add("Medium (3-5 min)")
+
+            val longSongs = songs.filter { it.duration > 5 * 60 * 1000 }
+            if (longSongs.isNotEmpty()) allCategories.add("Long (> 5 min)")
+
+            allCategories
         }
+        categories = result
+        preparedSongs = songs
+        isLoading = false
     }
 
-    if (songs.isEmpty()) {
+    // Filter songs based on selected category - computed asynchronously
+    var filteredSongs by remember { mutableStateOf<List<Song>>(emptyList()) }
+    
+    LaunchedEffect(preparedSongs, selectedCategory) {
+        filteredSongs = withContext(Dispatchers.Default) {
+            when (selectedCategory) {
+                "All" -> preparedSongs
+                "Short (< 3 min)" -> preparedSongs.filter { it.duration < 3 * 60 * 1000 }
+                "Medium (3-5 min)" -> preparedSongs.filter { it.duration in (3 * 60 * 1000)..(5 * 60 * 1000) }
+                "Long (> 5 min)" -> preparedSongs.filter { it.duration > 5 * 60 * 1000 }
+
+                // Audio Quality Filters (Mutually Exclusive)
+                "Hi-Res Lossless" -> preparedSongs.filter { isHiResLossless(it) && !isDolbyOrSurround(it) }
+                "Lossless" -> preparedSongs.filter { isRegularLossless(it) && !isDolbyOrSurround(it) }
+                "Dolby" -> preparedSongs.filter { isDolbyOrSurround(it) }
+                "Stereo" -> preparedSongs.filter { (it.channels ?: 2) == 2 && !isDolbyOrSurround(it) }
+                "Mono" -> preparedSongs.filter { (it.channels ?: 2) == 1 }
+                
+                "High Quality" -> preparedSongs.filter { song ->
+                    val bitrate = song.bitrate ?: 0
+                    bitrate >= 320000 && !isLosslessAudio(song) && !isDolbyOrSurround(song)
+                }
+
+                "Standard" -> preparedSongs.filter { song ->
+                    val bitrate = song.bitrate ?: 0
+                    bitrate in 128000..319999 && !isLosslessAudio(song) && !isDolbyOrSurround(song)
+                }
+
+                else -> preparedSongs // Default to showing all songs for any unrecognized category
+            }
+        }
+    }
+    
+    // Show loading indicator while preparing
+    if (isLoading && preparedSongs.isEmpty()) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                M3FourColorCircularLoader(
+                    modifier = Modifier.size(48.dp)
+                )
+                Text(
+                    text = context.getString(R.string.library_loading_songs),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        return
+    }
+
+    if (preparedSongs.isEmpty()) {
         EmptyState(
             message = context.getString(R.string.library_no_songs),
             icon = RhythmIcons.Music.Song
@@ -1762,7 +1802,7 @@ fun SingleCardSongsContent(
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                                 Text(
-                                    text = "${filteredSongs.size} of ${songs.size} tracks",
+                                    text = "${filteredSongs.size} of ${preparedSongs.size} tracks",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                                 )
@@ -1977,8 +2017,45 @@ fun SingleCardPlaylistsContent(
 ) {
     val context = LocalContext.current
     val playlistViewType by appSettings.playlistViewType.collectAsState()
+    
+    // Loading state for initial render
+    var isLoading by remember { mutableStateOf(true) }
+    var preparedPlaylists by remember { mutableStateOf<List<Playlist>>(emptyList()) }
+    
+    // Prepare playlists asynchronously to avoid blocking UI on tab switch
+    LaunchedEffect(playlists) {
+        isLoading = true
+        preparedPlaylists = withContext(Dispatchers.Default) {
+            // Pre-process playlists in background
+            playlists.toList()
+        }
+        isLoading = false
+    }
+    
+    // Show loading indicator while preparing
+    if (isLoading && preparedPlaylists.isEmpty()) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                M3FourColorCircularLoader(
+                    modifier = Modifier.size(48.dp)
+                )
+                Text(
+                    text = context.getString(R.string.library_loading_playlists),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        return
+    }
 
-    if (playlists.isEmpty()) {
+    if (preparedPlaylists.isEmpty()) {
         EmptyState(
             message = "No playlists yet\nCreate your first playlist using the + button",
             icon = RhythmIcons.Music.Playlist
@@ -2038,7 +2115,7 @@ fun SingleCardPlaylistsContent(
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                                 Text(
-                                    text = "${playlists.size} ${if (playlists.size == 1) "playlist" else "playlists"}",
+                                    text = "${preparedPlaylists.size} ${if (preparedPlaylists.size == 1) "playlist" else "playlists"}",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                                 )
@@ -2057,7 +2134,7 @@ fun SingleCardPlaylistsContent(
                 
                 // Playlist Grid Items
                 items(
-                    items = playlists,
+                    items = preparedPlaylists,
                     key = { it.id }
                 ) { playlist ->
                     AnimateIn {
@@ -2119,7 +2196,7 @@ fun SingleCardPlaylistsContent(
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                             Text(
-                                text = "${playlists.size} ${if (playlists.size == 1) "playlist" else "playlists"}",
+                                text = "${preparedPlaylists.size} ${if (preparedPlaylists.size == 1) "playlist" else "playlists"}",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                             )
@@ -2130,7 +2207,7 @@ fun SingleCardPlaylistsContent(
 
             // Playlist Items
             items(
-                items = playlists,
+                items = preparedPlaylists,
                 key = { it.id }
             ) { playlist ->
                 AnimateIn {
@@ -2159,8 +2236,45 @@ fun SingleCardAlbumsContent(
 ) {
     val context = LocalContext.current
     val albumViewType by appSettings.albumViewType.collectAsState()
+    
+    // Loading state for initial render
+    var isLoading by remember { mutableStateOf(true) }
+    var preparedAlbums by remember { mutableStateOf<List<Album>>(emptyList()) }
+    
+    // Prepare albums asynchronously to avoid blocking UI on tab switch
+    LaunchedEffect(albums) {
+        isLoading = true
+        preparedAlbums = withContext(Dispatchers.Default) {
+            // Pre-process albums (sorting, etc.) in background
+            albums.toList()
+        }
+        isLoading = false
+    }
+    
+    // Show loading indicator while preparing
+    if (isLoading && preparedAlbums.isEmpty()) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                M3FourColorCircularLoader(
+                    modifier = Modifier.size(48.dp)
+                )
+                Text(
+                    text = context.getString(R.string.library_loading_albums),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        return
+    }
 
-    if (albums.isEmpty()) {
+    if (preparedAlbums.isEmpty()) {
         EmptyState(
             message = "No albums yet",
             icon = RhythmIcons.Music.Album
@@ -2220,7 +2334,7 @@ fun SingleCardAlbumsContent(
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                                 Text(
-                                    text = "${albums.size} ${if (albums.size == 1) "album" else "albums"}",
+                                    text = "${preparedAlbums.size} ${if (preparedAlbums.size == 1) "album" else "albums"}",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                                 )
@@ -2230,7 +2344,7 @@ fun SingleCardAlbumsContent(
                             FilledTonalIconButton(
                                 onClick = {
                                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                    val allSongs = albums.flatMap { it.songs }
+                                    val allSongs = preparedAlbums.flatMap { it.songs }
                                     if (allSongs.isNotEmpty()) {
                                         onPlayQueue(allSongs)
                                     }
@@ -2240,7 +2354,7 @@ fun SingleCardAlbumsContent(
                                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                                 ),
                                 modifier = Modifier.size(40.dp),
-                                enabled = albums.isNotEmpty()
+                                enabled = preparedAlbums.isNotEmpty()
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.PlayArrow,
@@ -2255,7 +2369,7 @@ fun SingleCardAlbumsContent(
                             FilledIconButton(
                                 onClick = {
                                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                    val allSongs = albums.flatMap { it.songs }
+                                    val allSongs = preparedAlbums.flatMap { it.songs }
                                     if (allSongs.isNotEmpty()) {
                                         onShuffleQueue(allSongs)
                                     }
@@ -2265,7 +2379,7 @@ fun SingleCardAlbumsContent(
                                     contentColor = MaterialTheme.colorScheme.onPrimary
                                 ),
                                 modifier = Modifier.size(40.dp),
-                                enabled = albums.isNotEmpty()
+                                enabled = preparedAlbums.isNotEmpty()
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Shuffle,
@@ -2277,7 +2391,7 @@ fun SingleCardAlbumsContent(
                     }
                 }                // Album Grid Items
                 items(
-                    items = albums,
+                    items = preparedAlbums,
                     key = { it.id }
                 ) { album ->
                     AnimateIn {
@@ -2340,18 +2454,18 @@ fun SingleCardAlbumsContent(
                                     color = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                                 Text(
-                                    text = "${albums.size} ${if (albums.size == 1) "album" else "albums"}",
+                                    text = "${preparedAlbums.size} ${if (preparedAlbums.size == 1) "album" else "albums"}",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                                 )
                             }
 
                             // Play All Button
-                            if (albums.isNotEmpty()) {
+                            if (preparedAlbums.isNotEmpty()) {
                                 FilledTonalIconButton(
                                     onClick = {
                                         HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                        val allSongs = albums.flatMap { it.songs }
+                                        val allSongs = preparedAlbums.flatMap { it.songs }
                                         if (allSongs.isNotEmpty()) {
                                             onPlayQueue(allSongs)
                                         }
@@ -2375,7 +2489,7 @@ fun SingleCardAlbumsContent(
                                 FilledIconButton(
                                     onClick = {
                                         HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                        val allSongs = albums.flatMap { it.songs }
+                                        val allSongs = preparedAlbums.flatMap { it.songs }
                                         if (allSongs.isNotEmpty()) {
                                             onShuffleQueue(allSongs)
                                         }
@@ -2399,7 +2513,7 @@ fun SingleCardAlbumsContent(
 
                 // Album List Items
                 items(
-                    items = albums,
+                    items = preparedAlbums,
                     key = { it.id }
                 ) { album ->
                     AnimateIn {
@@ -4640,23 +4754,54 @@ fun SingleCardArtistsContent(
     var currentSortOption by remember { mutableStateOf(ArtistSortOption.NAME_ASC) }
     var showSortOptions by remember { mutableStateOf(false) }
     
+    // Loading state for async sorting
+    var isLoading by remember { mutableStateOf(true) }
+    var sortedArtists by remember { mutableStateOf<List<Artist>>(emptyList()) }
+    
     // Define categories for artists
     val categories = remember(artists) {
         listOf("All")
     }
     
-    // Sort artists based on selected option
-    val sortedArtists = remember(artists, currentSortOption) {
-        when (currentSortOption) {
-            ArtistSortOption.NAME_ASC -> artists.sortedBy { it.name.lowercase() }
-            ArtistSortOption.NAME_DESC -> artists.sortedByDescending { it.name.lowercase() }
-            ArtistSortOption.TRACK_COUNT_DESC -> artists.sortedByDescending { it.numberOfTracks }
-            ArtistSortOption.ALBUM_COUNT_DESC -> artists.sortedByDescending { it.numberOfAlbums }
+    // Sort artists asynchronously to avoid blocking UI
+    LaunchedEffect(artists, currentSortOption) {
+        isLoading = true
+        sortedArtists = withContext(Dispatchers.Default) {
+            when (currentSortOption) {
+                ArtistSortOption.NAME_ASC -> artists.sortedBy { it.name.lowercase() }
+                ArtistSortOption.NAME_DESC -> artists.sortedByDescending { it.name.lowercase() }
+                ArtistSortOption.TRACK_COUNT_DESC -> artists.sortedByDescending { it.numberOfTracks }
+                ArtistSortOption.ALBUM_COUNT_DESC -> artists.sortedByDescending { it.numberOfAlbums }
+            }
         }
+        isLoading = false
     }
     
     // Determine if we should use grid or list view
     val isGridView = artistViewType == ArtistViewType.GRID
+    
+    // Show loading indicator while sorting
+    if (isLoading && sortedArtists.isEmpty()) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                M3FourColorCircularLoader(
+                    modifier = Modifier.size(48.dp)
+                )
+                Text(
+                    text = context.getString(R.string.library_loading_artists),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        return
+    }
     
     if (isGridView) {
         // Grid view using LazyVerticalGrid as main container
@@ -5488,21 +5633,37 @@ fun SingleCardExplorerContent(
         setOf("mp3", "flac", "m4a", "aac", "ogg", "wav", "wma", "aiff", "opus")
     }
 
-    // Pre-compute song path map for fast lookups (computed once, reused for all directory loads)
-    val songPathMap = remember(songs) {
-        val map = mutableMapOf<String, Song>()
-        songs.forEach { song ->
-            try {
-                val path = getFilePathFromUri(song.uri, context)
-                if (path != null) {
-                    map[path.replace("//", "/")] = song
+    // Pre-compute song path map for fast lookups (computed asynchronously to avoid blocking UI)
+    var songPathMap by remember { mutableStateOf<Map<String, Song>>(emptyMap()) }
+    var isPathMapLoading by remember { mutableStateOf(true) }
+    var songPathMapVersion by remember { mutableStateOf(0) } // Track version for cache invalidation
+    
+    LaunchedEffect(songs) {
+        isPathMapLoading = true
+        songPathMap = withContext(Dispatchers.Default) {
+            val map = mutableMapOf<String, Song>()
+            songs.forEach { song ->
+                try {
+                    val path = getFilePathFromUri(song.uri, context)
+                    if (path != null && path.isNotEmpty()) {
+                        // Normalize path: remove double slashes and trailing slashes
+                        val normalizedPath = path.replace("//", "/").trimEnd('/')
+                        map[normalizedPath] = song
+                    }
+                } catch (e: Exception) {
+                    // Skip problematic songs
                 }
-            } catch (e: Exception) {
-                // Skip problematic songs
             }
+            android.util.Log.d("LibraryScreen", "Pre-computed path map with ${map.size} songs out of ${songs.size} total")
+            if (map.isNotEmpty()) {
+                // Log a sample path for debugging
+                val samplePath = map.keys.firstOrNull()
+                android.util.Log.d("LibraryScreen", "Sample path in map: $samplePath")
+            }
+            map
         }
-        android.util.Log.d("LibraryScreen", "Pre-computed path map with ${map.size} songs")
-        map
+        songPathMapVersion++ // Increment version when map changes
+        isPathMapLoading = false
     }
 
     // Directory items state - loaded asynchronously to prevent ANR
@@ -5527,6 +5688,7 @@ fun SingleCardExplorerContent(
 
     // Cache for directory contents to improve performance
     val directoryCache = remember { mutableMapOf<String?, List<ExplorerItem>>() }
+    var lastCacheVersion by remember { mutableStateOf(-1) } // Track which songPathMap version the cache was built from
     
     // Debounce key to prevent rapid recompositions causing ANR
     var debounceJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
@@ -5551,6 +5713,12 @@ fun SingleCardExplorerContent(
                 directoryCache[cacheKey] = storageItems
                 isLoadingDirectory = false
             } else {
+                // Wait for songPathMap computation to complete
+                if (isPathMapLoading) {
+                    isLoadingDirectory = true
+                    return@LaunchedEffect
+                }
+                
                 isLoadingDirectory = true
                 try {
                     val items = withContext(Dispatchers.IO) {
@@ -5573,7 +5741,8 @@ fun SingleCardExplorerContent(
     }
 
     // Load directory contents asynchronously with caching and debouncing
-    LaunchedEffect(currentPath) {
+    // CRITICAL: Must depend on songPathMap to reload when path map is ready
+    LaunchedEffect(currentPath, songPathMap) {
         // Cancel any pending load operation
         debounceJob?.cancel()
         
@@ -5590,6 +5759,23 @@ fun SingleCardExplorerContent(
             isLoadingDirectory = false
             isInitialLoading = false
         } else {
+            // Wait for songPathMap computation to complete before loading directory contents
+            // This prevents showing empty folders when the path map hasn't loaded yet
+            // Note: We check isPathMapLoading, not isEmpty(), because user might have no songs
+            if (isPathMapLoading) {
+                isLoadingDirectory = true
+                // Don't proceed - the effect will re-run when songPathMap changes
+                return@LaunchedEffect
+            }
+            
+            // Clear entire cache when songPathMap version changes (songs were reloaded)
+            // This ensures we get fresh data with the new song list
+            if (lastCacheVersion != songPathMapVersion) {
+                android.util.Log.d("LibraryScreen", "SongPathMap version changed from $lastCacheVersion to $songPathMapVersion, clearing cache")
+                directoryCache.clear()
+                lastCacheVersion = songPathMapVersion
+            }
+            
             // Check cache first to avoid unnecessary reloads
             // Use cache if it exists (even if empty, as it might be a legitimately empty folder)
             val cached = directoryCache[cacheKey]
@@ -5817,7 +6003,8 @@ fun SingleCardExplorerContent(
 
                 // Single unified loading indicator
                 // Show "Initializing" only at root on first load, otherwise show "Loading directory"
-                if ((isLoadingDirectory || isInitialLoading) && currentItems.isEmpty()) {
+                // Also show when pathMap is loading (required to show directory contents)
+                if ((isLoadingDirectory || isInitialLoading || (isPathMapLoading && currentPath != null)) && currentItems.isEmpty()) {
                     item {
                         Box(
                             modifier = Modifier
@@ -5836,6 +6023,8 @@ fun SingleCardExplorerContent(
                                 Text(
                                     text = if (isInitialLoading && currentPath == null) {
                                         "Initializing Explorer..."
+                                    } else if (isPathMapLoading) {
+                                        "Indexing music files..."
                                     } else {
                                         "Loading directory..."
                                     },
@@ -6663,23 +6852,28 @@ fun getDirectoryContentsOptimized(directoryPath: String, songPathMap: Map<String
     
     val items = mutableListOf<ExplorerItem>()
     val normalizedDirPath = directoryPath.replace("//", "/").trimEnd('/')
+    val audioExtensions = setOf("mp3", "flac", "m4a", "aac", "ogg", "wav", "wma", "aiff", "opus")
     
-    // Build maps for fast lookups - group songs by their immediate parent directory
-    val songsByDirectory = mutableMapOf<String, MutableList<Song>>()
-    val subdirectories = mutableSetOf<String>()
+    // Pre-compute song counts for subdirectories from songPathMap for fast lookup
+    // This includes ALL nested songs (recursive count)
     val subdirectorySongCounts = mutableMapOf<String, Int>()
     
-    // Process pre-computed song paths - MUCH faster than parsing URIs repeatedly
+    // Also build a set of all directories that contain songs (directly or nested)
+    val directoriesWithSongs = mutableSetOf<String>()
+    
+    // Songs directly in the current directory
+    val songsInCurrentDir = mutableListOf<Pair<String, Song>>()
+    
     songPathMap.forEach { (normalizedSongPath, song) ->
         try {
-            val parentDir = File(normalizedSongPath).parent?.replace("//", "/") ?: return@forEach
+            val parentDir = File(normalizedSongPath).parent?.replace("//", "/")?.trimEnd('/') ?: return@forEach
             
-            // Check if this song is in the current directory or a subdirectory
+            // Check if this song is directly in the current directory
             if (parentDir == normalizedDirPath) {
-                // Song is directly in this directory
-                songsByDirectory.getOrPut(normalizedDirPath) { mutableListOf() }.add(song)
-            } else if (parentDir.startsWith("$normalizedDirPath/")) {
-                // Song is in a subdirectory - extract immediate child directory
+                songsInCurrentDir.add(normalizedSongPath to song)
+            }
+            // Check if this song is in a subdirectory of current path
+            else if (parentDir.startsWith("$normalizedDirPath/")) {
                 val relativePath = parentDir.removePrefix("$normalizedDirPath/")
                 val firstSlash = relativePath.indexOf('/')
                 val immediateChild = if (firstSlash > 0) {
@@ -6687,43 +6881,182 @@ fun getDirectoryContentsOptimized(directoryPath: String, songPathMap: Map<String
                 } else {
                     relativePath
                 }
-                
                 val childPath = "$normalizedDirPath/$immediateChild"
-                subdirectories.add(childPath)
-                
-                // Increment count for this subdirectory (including nested songs)
                 subdirectorySongCounts[childPath] = (subdirectorySongCounts[childPath] ?: 0) + 1
+                directoriesWithSongs.add(childPath)
             }
         } catch (e: Exception) {
-            // Skip problematic songs
+            // Skip problematic paths
         }
     }
     
-    // Add subdirectories with pre-computed counts
-    subdirectories.sorted().forEach { subdirPath ->
-        val subdirName = File(subdirPath).name
-        val songCount = subdirectorySongCounts[subdirPath] ?: 0
-        
-        items.add(ExplorerItem(
-            name = subdirName,
-            path = subdirPath,
-            isDirectory = true,
-            itemCount = songCount,
-            type = ExplorerItemType.FOLDER,
-            song = null
-        ))
-    }
+    android.util.Log.d("LibraryScreen", "Found ${songsInCurrentDir.size} songs in current dir, ${subdirectorySongCounts.size} subdirs with songs")
     
-    // Add songs in current directory
-    songsByDirectory[normalizedDirPath]?.sortedBy { it.title.lowercase() }?.forEach { song ->
-        items.add(ExplorerItem(
-            name = song.title,
-            path = songPathMap.entries.find { it.value == song }?.key ?: "",
-            isDirectory = false,
-            itemCount = 1,
-            type = ExplorerItemType.FILE,
-            song = song
-        ))
+    try {
+        val directory = File(directoryPath)
+        if (!directory.exists()) {
+            android.util.Log.d("LibraryScreen", "Directory does not exist: $directoryPath")
+            return items
+        }
+        
+        // Try to list files from file system
+        val files = try {
+            directory.listFiles()
+        } catch (e: SecurityException) {
+            android.util.Log.d("LibraryScreen", "Cannot list files for $directoryPath due to permissions, using MediaStore fallback")
+            null
+        }
+        
+        if (files != null) {
+            // Normal file system listing succeeded
+            files.forEach { file ->
+                try {
+                    if (file.isDirectory) {
+                        // Skip hidden directories
+                        if (!file.name.startsWith(".")) {
+                            val folderPath = file.absolutePath.replace("//", "/").trimEnd('/')
+                            // Get pre-computed song count for this subdirectory (includes nested)
+                            var audioCount = subdirectorySongCounts[folderPath] ?: 0
+                            
+                            // If not found with exact path, try canonical path
+                            if (audioCount == 0) {
+                                try {
+                                    val canonicalPath = file.canonicalPath.replace("//", "/").trimEnd('/')
+                                    audioCount = subdirectorySongCounts[canonicalPath] ?: 0
+                                } catch (e: Exception) {
+                                    // Ignore canonical path errors
+                                }
+                            }
+                            
+                            // If still not found, check if any song paths start with this folder
+                            // This handles cases where path normalization differs
+                            if (audioCount == 0) {
+                                val folderPrefix = "$folderPath/"
+                                audioCount = songPathMap.keys.count { it.startsWith(folderPrefix) }
+                            }
+                            
+                            // Only show folders that have songs (directly or nested)
+                            if (audioCount > 0) {
+                                items.add(ExplorerItem(
+                                    name = file.name,
+                                    path = file.absolutePath,
+                                    isDirectory = true,
+                                    itemCount = audioCount,
+                                    type = ExplorerItemType.FOLDER,
+                                    song = null
+                                ))
+                            }
+                        }
+                    } else if (file.isFile) {
+                        val extension = file.extension.lowercase()
+                        if (extension in audioExtensions) {
+                            val normalizedPath = file.absolutePath.replace("//", "/")
+                            // Look up song in pre-computed map - try multiple path formats
+                            var song = songPathMap[normalizedPath]
+                            
+                            // Also try without trailing slash normalization
+                            if (song == null) {
+                                song = songPathMap[file.absolutePath]
+                            }
+                            
+                            // Try case-insensitive lookup as fallback
+                            if (song == null) {
+                                val lowercasePath = normalizedPath.lowercase()
+                                song = songPathMap.entries.find { 
+                                    it.key.lowercase() == lowercasePath 
+                                }?.value
+                            }
+                            
+                            if (song != null) {
+                                items.add(ExplorerItem(
+                                    name = song.title, // Use actual metadata title
+                                    path = file.absolutePath,
+                                    isDirectory = false,
+                                    itemCount = 1,
+                                    type = ExplorerItemType.FILE,
+                                    song = song
+                                ))
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.d("LibraryScreen", "Skipping file ${file.name}: ${e.message}")
+                }
+            }
+            
+            // If file system scan found no songs but we know songs exist in this directory,
+            // use the pre-computed songs list (handles permission edge cases)
+            if (items.none { !it.isDirectory } && songsInCurrentDir.isNotEmpty()) {
+                android.util.Log.d("LibraryScreen", "File system scan missed songs, using pre-computed list")
+                songsInCurrentDir.forEach { (path, song) ->
+                    items.add(ExplorerItem(
+                        name = song.title,
+                        path = path,
+                        isDirectory = false,
+                        itemCount = 1,
+                        type = ExplorerItemType.FILE,
+                        song = song
+                    ))
+                }
+            }
+            
+            // Also add any folders with songs that might have been missed by file system scan
+            // (handles symlinks, mount points, and path normalization differences)
+            val existingFolderPaths = items.filter { it.isDirectory }.map { it.path.replace("//", "/").trimEnd('/') }.toSet()
+            directoriesWithSongs.forEach { subdirPath ->
+                val normalizedSubdirPath = subdirPath.replace("//", "/").trimEnd('/')
+                if (normalizedSubdirPath !in existingFolderPaths) {
+                    val subdirName = File(subdirPath).name
+                    val songCount = subdirectorySongCounts[subdirPath] ?: 0
+                    if (songCount > 0) {
+                        android.util.Log.d("LibraryScreen", "Adding missed folder: $subdirPath with $songCount songs")
+                        items.add(ExplorerItem(
+                            name = subdirName,
+                            path = subdirPath,
+                            isDirectory = true,
+                            itemCount = songCount,
+                            type = ExplorerItemType.FOLDER,
+                            song = null
+                        ))
+                    }
+                }
+            }
+        } else {
+            // MediaStore fallback for restricted directories (e.g., SD card root)
+            android.util.Log.d("LibraryScreen", "Using MediaStore fallback for $directoryPath")
+            
+            // Add songs directly in this directory
+            songsInCurrentDir.forEach { (path, song) ->
+                items.add(ExplorerItem(
+                    name = song.title,
+                    path = path,
+                    isDirectory = false,
+                    itemCount = 1,
+                    type = ExplorerItemType.FILE,
+                    song = song
+                ))
+            }
+            
+            // Add subdirectories that have songs (from pre-computed data)
+            directoriesWithSongs.sorted().forEach { subdirPath ->
+                val subdirName = File(subdirPath).name
+                val songCount = subdirectorySongCounts[subdirPath] ?: 0
+                
+                // Only show folders with songs
+                if (songCount > 0) {
+                    items.add(ExplorerItem(
+                        name = subdirName,
+                        path = subdirPath,
+                        isDirectory = true,
+                        itemCount = songCount,
+                        type = ExplorerItemType.FOLDER,
+                        song = null
+                    ))
+                }
+            }
+        }
+    } catch (e: Exception) {
+        android.util.Log.e("LibraryScreen", "Error reading directory: $directoryPath", e)
     }
     
     val elapsed = System.currentTimeMillis() - startTime
