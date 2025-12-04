@@ -175,16 +175,17 @@ fun SideDecorations(
         label = "sway"
     )
     
-    // Generate simple ornament decorations
+    // Generate simple ornament decorations with random distances
     val decorations = remember(screenHeight, intensity) {
-        val count = (5 + (intensity * 3).toInt()).coerceIn(5, 8)
+        val count = (8 + (intensity * 5).toInt()).coerceIn(8, 15)
         val startY = 180f
         val endY = screenHeight - 300f
-        val spacing = (endY - startY) / (count - 1)
         
         List(count) { index ->
-            val y = startY + (spacing * index)
-            val size = 0.8f + Random.nextFloat() * 0.4f // Size variation 0.8-1.2
+            // Random Y position instead of evenly spaced
+            val y = startY + Random.nextFloat() * (endY - startY)
+            // Larger size variation 1.5-2.5x
+            val size = 1.5f + Random.nextFloat() * 1.0f
             val colorIndex = index % 5
             val color = when (colorIndex) {
                 0 -> Color(0xFFE63946) // Red
@@ -195,18 +196,18 @@ fun SideDecorations(
                 else -> Color(0xFFFF6B6B)
             }
             Triple(y, size, color)
-        }
+        }.sortedBy { it.first } // Sort by Y position for better visual flow
     }
     
     Canvas(modifier = modifier.fillMaxSize()) {
-        val leftX = 15f
-        val rightX = size.width - 15f
+        val leftX = 30f  // More inward for better visibility
+        val rightX = size.width - 30f
         
         // Left side - vertical garland with ornaments
         drawVerticalGarland(leftX, 150f, screenHeight - 280f, sway)
         
-        // Add bow at top of left garland
-        drawBow(Offset(leftX + sway * 0.3f, 130f), Color(0xFFE63946), 1.2f)
+        // Add larger bow at top of left garland
+        drawBow(Offset(leftX + sway * 0.3f, 130f), Color(0xFFE63946), 2.0f)
         
         decorations.forEachIndexed { index, (y, scale, color) ->
             val swayOffset = sway * (0.5f + scale * 0.5f)
@@ -232,8 +233,8 @@ fun SideDecorations(
         // Right side - vertical garland with ornaments
         drawVerticalGarland(rightX, 150f, screenHeight - 280f, -sway)
         
-        // Add bow at top of right garland
-        drawBow(Offset(rightX - sway * 0.3f, 130f), Color(0xFFFFD700), 1.2f)
+        // Add larger bow at top of right garland
+        drawBow(Offset(rightX - sway * 0.3f, 130f), Color(0xFFFFD700), 2.0f)
         
         decorations.forEachIndexed { index, (y, scale, _) ->
             val colorIndex = (index + 2) % 5

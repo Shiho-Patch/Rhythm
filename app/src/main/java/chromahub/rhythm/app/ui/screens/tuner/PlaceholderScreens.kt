@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package chromahub.rhythm.app.ui.screens.tuner
 
 import android.app.Activity
@@ -494,35 +496,82 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
     if (showPlaylistBehaviorDialog) {
         val haptic = LocalHapticFeedback.current
         val scope = rememberCoroutineScope()
+        val playlistSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         
-        AlertDialog(
+        // Animation states
+        var showContent by remember { mutableStateOf(false) }
+
+        val contentAlpha by animateFloatAsState(
+            targetValue = if (showContent) 1f else 0f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            ),
+            label = "contentAlpha"
+        )
+
+        LaunchedEffect(Unit) {
+            delay(100)
+            showContent = true
+        }
+        
+        ModalBottomSheet(
             onDismissRequest = { showPlaylistBehaviorDialog = false },
-            icon = {
-                Icon(
-                    imageVector = androidx.compose.material.icons.Icons.AutoMirrored.Filled.QueueMusic,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
+            sheetState = playlistSheetState,
+            dragHandle = { 
+                BottomSheetDefaults.DragHandle(
+                    color = MaterialTheme.colorScheme.primary
                 )
             },
-            title = { 
-                Text(
-                    "Playlist Action Dialog",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                ) 
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        "Choose what happens when you tap a song in a playlist:",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+                    .graphicsLayer(alpha = contentAlpha)
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 0.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                            text = "Playlist Action",
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 6.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    shape = CircleShape
+                                )
+                        ) {
+                            Text(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.labelLarge,
+                                text = "Choose default behavior",
+                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 1,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     // Option 1: Ask each time
-                    Surface(
+                    Card(
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                             scope.launch {
@@ -530,58 +579,86 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                                 showPlaylistBehaviorDialog = false
                             }
                         },
-                        shape = RoundedCornerShape(12.dp),
-                        color = if (playlistClickBehavior == "ask") 
-                            MaterialTheme.colorScheme.primaryContainer 
-                        else 
-                            MaterialTheme.colorScheme.surfaceVariant,
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (playlistClickBehavior == "ask")
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
+                                MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        shape = RoundedCornerShape(16.dp),
+                        border = if (playlistClickBehavior == "ask") {
+                            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                        } else {
+                            null
+                        },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
-                            modifier = Modifier.padding(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = RhythmIcons.Queue,
-                                contentDescription = null,
-                                tint = if (playlistClickBehavior == "ask") 
-                                    MaterialTheme.colorScheme.onPrimaryContainer 
-                                else 
-                                    MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
+                            Surface(
+                                shape = CircleShape,
+                                color = if (playlistClickBehavior == "ask")
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.surfaceVariant,
+                                modifier = Modifier.size(44.dp)
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Help,
+                                        contentDescription = null,
+                                        tint = if (playlistClickBehavior == "ask")
+                                            MaterialTheme.colorScheme.onPrimary
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    "Ask each time",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium,
-                                    color = if (playlistClickBehavior == "ask") 
-                                        MaterialTheme.colorScheme.onPrimaryContainer 
-                                    else 
+                                    text = "Ask each time",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (playlistClickBehavior == "ask")
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Show dialog with options",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (playlistClickBehavior == "ask")
+                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                    else
                                         MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                Text(
-                                    "Show dialog with options",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = if (playlistClickBehavior == "ask") 
-                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                                    else 
-                                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                                )
                             }
+
                             if (playlistClickBehavior == "ask") {
                                 Icon(
-                                    imageVector = RhythmIcons.Check,
+                                    imageVector = Icons.Filled.CheckCircle,
                                     contentDescription = "Selected",
-                                    tint = MaterialTheme.colorScheme.primary
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(28.dp)
                                 )
                             }
                         }
                     }
-                    
-                    // Option 2: Load playlist to queue
-                    Surface(
+
+                    // Option 2: Load entire playlist
+                    Card(
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                             scope.launch {
@@ -589,58 +666,86 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                                 showPlaylistBehaviorDialog = false
                             }
                         },
-                        shape = RoundedCornerShape(12.dp),
-                        color = if (playlistClickBehavior == "play_all") 
-                            MaterialTheme.colorScheme.primaryContainer 
-                        else 
-                            MaterialTheme.colorScheme.surfaceVariant,
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (playlistClickBehavior == "play_all")
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
+                                MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        shape = RoundedCornerShape(16.dp),
+                        border = if (playlistClickBehavior == "play_all") {
+                            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                        } else {
+                            null
+                        },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
-                            modifier = Modifier.padding(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = androidx.compose.material.icons.Icons.AutoMirrored.Filled.QueueMusic,
-                                contentDescription = null,
-                                tint = if (playlistClickBehavior == "play_all") 
-                                    MaterialTheme.colorScheme.onPrimaryContainer 
-                                else 
-                                    MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
+                            Surface(
+                                shape = CircleShape,
+                                color = if (playlistClickBehavior == "play_all")
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.surfaceVariant,
+                                modifier = Modifier.size(44.dp)
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    Icon(
+                                        imageVector = androidx.compose.material.icons.Icons.AutoMirrored.Filled.QueueMusic,
+                                        contentDescription = null,
+                                        tint = if (playlistClickBehavior == "play_all")
+                                            MaterialTheme.colorScheme.onPrimary
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    "Load entire playlist",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium,
-                                    color = if (playlistClickBehavior == "play_all") 
-                                        MaterialTheme.colorScheme.onPrimaryContainer 
-                                    else 
+                                    text = "Load entire playlist",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (playlistClickBehavior == "play_all")
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Replace queue and play from selected song",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (playlistClickBehavior == "play_all")
+                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                    else
                                         MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                Text(
-                                    "Replace queue and play from selected song",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = if (playlistClickBehavior == "play_all") 
-                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                                    else 
-                                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                                )
                             }
+
                             if (playlistClickBehavior == "play_all") {
                                 Icon(
-                                    imageVector = RhythmIcons.Check,
+                                    imageVector = Icons.Filled.CheckCircle,
                                     contentDescription = "Selected",
-                                    tint = MaterialTheme.colorScheme.primary
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(28.dp)
                                 )
                             }
                         }
                     }
-                    
+
                     // Option 3: Play only this song
-                    Surface(
+                    Card(
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                             scope.launch {
@@ -648,108 +753,168 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                                 showPlaylistBehaviorDialog = false
                             }
                         },
-                        shape = RoundedCornerShape(12.dp),
-                        color = if (playlistClickBehavior == "play_one") 
-                            MaterialTheme.colorScheme.primaryContainer 
-                        else 
-                            MaterialTheme.colorScheme.surfaceVariant,
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (playlistClickBehavior == "play_one")
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
+                                MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        shape = RoundedCornerShape(16.dp),
+                        border = if (playlistClickBehavior == "play_one") {
+                            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                        } else {
+                            null
+                        },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
-                            modifier = Modifier.padding(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = RhythmIcons.Play,
-                                contentDescription = null,
-                                tint = if (playlistClickBehavior == "play_one") 
-                                    MaterialTheme.colorScheme.onPrimaryContainer 
-                                else 
-                                    MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
+                            Surface(
+                                shape = CircleShape,
+                                color = if (playlistClickBehavior == "play_one")
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.surfaceVariant,
+                                modifier = Modifier.size(44.dp)
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    Icon(
+                                        imageVector = RhythmIcons.Play,
+                                        contentDescription = null,
+                                        tint = if (playlistClickBehavior == "play_one")
+                                            MaterialTheme.colorScheme.onPrimary
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    "Play only this song",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium,
-                                    color = if (playlistClickBehavior == "play_one") 
-                                        MaterialTheme.colorScheme.onPrimaryContainer 
-                                    else 
+                                    text = "Play only this song",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (playlistClickBehavior == "play_one")
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Don't change the queue",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (playlistClickBehavior == "play_one")
+                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                    else
                                         MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                Text(
-                                    "Don't change the queue",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = if (playlistClickBehavior == "play_one") 
-                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                                    else 
-                                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                                )
                             }
+
                             if (playlistClickBehavior == "play_one") {
                                 Icon(
-                                    imageVector = RhythmIcons.Check,
+                                    imageVector = Icons.Filled.CheckCircle,
                                     contentDescription = "Selected",
-                                    tint = MaterialTheme.colorScheme.primary
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(28.dp)
                                 )
                             }
                         }
                     }
                 }
-            },
-            confirmButton = {},
-            dismissButton = {
-                Button(
-                    onClick = { showPlaylistBehaviorDialog = false }
-                ) {
-                    Icon(
-                        imageVector = androidx.compose.material.icons.Icons.Filled.Check,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Done")
-                }
-            },
-            shape = RoundedCornerShape(24.dp)
-        )
+            }
+        }
     }
     
     // Show Queue Dialog Setting Dialog
     if (showQueueDialogSettingDialog) {
         val haptic = LocalHapticFeedback.current
         val scope = rememberCoroutineScope()
+        val queueSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         
-        AlertDialog(
+        // Animation states
+        var showContent by remember { mutableStateOf(false) }
+
+        val contentAlpha by animateFloatAsState(
+            targetValue = if (showContent) 1f else 0f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            ),
+            label = "contentAlpha"
+        )
+
+        LaunchedEffect(Unit) {
+            delay(100)
+            showContent = true
+        }
+        
+        ModalBottomSheet(
             onDismissRequest = { showQueueDialogSettingDialog = false },
-            icon = {
-                Icon(
-                    imageVector = RhythmIcons.Queue,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
+            sheetState = queueSheetState,
+            dragHandle = { 
+                BottomSheetDefaults.DragHandle(
+                    color = MaterialTheme.colorScheme.primary
                 )
             },
-            title = { 
-                Text(
-                    "Queue Action",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                ) 
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        "Choose what happens when you play a song while the queue is not empty:",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+                    .graphicsLayer(alpha = contentAlpha)
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 0.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                            text = "Queue Action",
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 6.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    shape = CircleShape
+                                )
+                        ) {
+                            Text(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.labelLarge,
+                                text = "Choose default behavior",
+                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 1,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     // Option 1: Ask each time (show dialog)
-                    Surface(
+                    Card(
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                             scope.launch {
@@ -757,58 +922,86 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                                 showQueueDialogSettingDialog = false
                             }
                         },
-                        shape = RoundedCornerShape(12.dp),
-                        color = if (showQueueDialog) 
-                            MaterialTheme.colorScheme.primaryContainer 
-                        else 
-                            MaterialTheme.colorScheme.surfaceVariant,
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (showQueueDialog)
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
+                                MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        shape = RoundedCornerShape(16.dp),
+                        border = if (showQueueDialog) {
+                            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                        } else {
+                            null
+                        },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
-                            modifier = Modifier.padding(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Help,
-                                contentDescription = null,
-                                tint = if (showQueueDialog) 
-                                    MaterialTheme.colorScheme.onPrimaryContainer 
-                                else 
-                                    MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
+                            Surface(
+                                shape = CircleShape,
+                                color = if (showQueueDialog)
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.surfaceVariant,
+                                modifier = Modifier.size(44.dp)
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Help,
+                                        contentDescription = null,
+                                        tint = if (showQueueDialog)
+                                            MaterialTheme.colorScheme.onPrimary
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    "Ask each time",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium,
-                                    color = if (showQueueDialog) 
-                                        MaterialTheme.colorScheme.onPrimaryContainer 
-                                    else 
+                                    text = "Ask each time",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (showQueueDialog)
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Show dialog with Clear & Play and Add to Queue options",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (showQueueDialog)
+                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                    else
                                         MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                Text(
-                                    "Show dialog with Clear & Play and Add to Queue options",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = if (showQueueDialog) 
-                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                                    else 
-                                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                                )
                             }
+
                             if (showQueueDialog) {
                                 Icon(
-                                    imageVector = RhythmIcons.Check,
+                                    imageVector = Icons.Filled.CheckCircle,
                                     contentDescription = "Selected",
-                                    tint = MaterialTheme.colorScheme.primary
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(28.dp)
                                 )
                             }
                         }
                     }
-                    
+
                     // Option 2: Always add to queue
-                    Surface(
+                    Card(
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                             scope.launch {
@@ -816,73 +1009,86 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                                 showQueueDialogSettingDialog = false
                             }
                         },
-                        shape = RoundedCornerShape(12.dp),
-                        color = if (!showQueueDialog) 
-                            MaterialTheme.colorScheme.primaryContainer 
-                        else 
-                            MaterialTheme.colorScheme.surfaceVariant,
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (!showQueueDialog)
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
+                                MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        shape = RoundedCornerShape(16.dp),
+                        border = if (!showQueueDialog) {
+                            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                        } else {
+                            null
+                        },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
-                            modifier = Modifier.padding(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.PlaylistAdd,
-                                contentDescription = null,
-                                tint = if (!showQueueDialog) 
-                                    MaterialTheme.colorScheme.onPrimaryContainer 
-                                else 
-                                    MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
+                            Surface(
+                                shape = CircleShape,
+                                color = if (!showQueueDialog)
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.surfaceVariant,
+                                modifier = Modifier.size(44.dp)
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.PlaylistAdd,
+                                        contentDescription = null,
+                                        tint = if (!showQueueDialog)
+                                            MaterialTheme.colorScheme.onPrimary
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    "Always add to queue",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium,
-                                    color = if (!showQueueDialog) 
-                                        MaterialTheme.colorScheme.onPrimaryContainer 
-                                    else 
+                                    text = "Always add to queue",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (!showQueueDialog)
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Automatically add songs to queue without asking",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (!showQueueDialog)
+                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                    else
                                         MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                Text(
-                                    "Automatically add songs to queue without asking",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = if (!showQueueDialog) 
-                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                                    else 
-                                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                                )
                             }
+
                             if (!showQueueDialog) {
                                 Icon(
-                                    imageVector = RhythmIcons.Check,
+                                    imageVector = Icons.Filled.CheckCircle,
                                     contentDescription = "Selected",
-                                    tint = MaterialTheme.colorScheme.primary
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(28.dp)
                                 )
                             }
                         }
                     }
                 }
-            },
-            confirmButton = {},
-            dismissButton = {
-                Button(
-                    onClick = { showQueueDialogSettingDialog = false }
-                ) {
-                    Icon(
-                        imageVector = androidx.compose.material.icons.Icons.Filled.Check,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Done")
-                }
-            },
-            shape = RoundedCornerShape(24.dp)
-        )
+            }
+        }
     }
 }
 
@@ -7117,13 +7323,6 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                 title = "Display Mode",
                 items = listOf(
                     SettingItem(
-                        Icons.Default.Brightness6,
-                        "Dynamic Colors (Material You)",
-                        "Extract colors from your wallpaper",
-                        toggleState = useDynamicColors,
-                        onToggleChange = { appSettings.setUseDynamicColors(it) }
-                    ),
-                    SettingItem(
                         Icons.Default.Settings,
                         "Follow System Theme",
                         "Automatically switch between light and dark mode",
@@ -7253,16 +7452,10 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     Column {
                         when (group.title) {
                             "Display Mode" -> {
-                                // First item: Dynamic Colors
+                                // First item: Follow System Theme
                                 TunerSettingRow(item = group.items[0])
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(horizontal = 20.dp),
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                                )
-                                // Second item: Follow System Theme
-                                TunerSettingRow(item = group.items[1])
                                 
-                                // Third item: Dark Mode with AnimatedVisibility
+                                // Second item: Dark Mode with AnimatedVisibility
                                 AnimatedVisibility(
                                     visible = !useSystemTheme,
                                     enter = fadeIn(animationSpec = tween(300)) + expandVertically(animationSpec = tween(300)),
@@ -7273,7 +7466,7 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                             modifier = Modifier.padding(horizontal = 20.dp),
                                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                                         )
-                                        TunerSettingRow(item = group.items[2])
+                                        TunerSettingRow(item = group.items[1])
                                     }
                                 }
                             }

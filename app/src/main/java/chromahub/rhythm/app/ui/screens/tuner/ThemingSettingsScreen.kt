@@ -29,7 +29,7 @@ fun ThemingSettingsScreen(
     
     val useSystemTheme by appSettings.useSystemTheme.collectAsState()
     val darkMode by appSettings.darkMode.collectAsState()
-    val useDynamicColors by appSettings.useDynamicColors.collectAsState()
+    // Removed useDynamicColors as it's now controlled by colorSource
 
     CollapsibleHeaderScreen(
         title = "Theming",
@@ -84,19 +84,6 @@ fun ThemingSettingsScreen(
                             checked = darkMode,
                             enabled = !useSystemTheme,
                             onCheckedChange = { appSettings.setDarkMode(it) }
-                        )
-                        
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 20.dp),
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                        )
-                        
-                        ThemeSettingRow(
-                            icon = Icons.Default.Palette,
-                            title = "Dynamic Colors",
-                            description = "Use colors from your wallpaper",
-                            checked = useDynamicColors,
-                            onCheckedChange = { appSettings.setUseDynamicColors(it) }
                         )
                     }
                 }

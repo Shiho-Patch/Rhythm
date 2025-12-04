@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import chromahub.rhythm.app.R
 import chromahub.rhythm.app.data.AppSettings
+import chromahub.rhythm.app.ui.theme.festive.ChristmasDecorations
 import chromahub.rhythm.app.ui.theme.festive.FestiveConfig
 import chromahub.rhythm.app.ui.theme.festive.FestiveSplashGreeting
 import chromahub.rhythm.app.ui.theme.festive.FestiveThemeEngine
@@ -210,32 +211,9 @@ fun SplashScreen(
             },
         contentAlignment = Alignment.Center
     ) {
-        // Festive greeting overlay - positioned at bottom
-//        if (festiveEnabled && showLogo) {
-//            FestiveSplashGreeting(
-//                festiveType = activeFestiveTheme,
-//                modifier = Modifier
-//                    .align(Alignment.BottomCenter)
-//                    .padding(bottom = 100.dp)
-//            )
-//        }
-        
-        // Background particles using the drawable
-//        AnimatedVisibility(
-//            visible = showContent,
-//            enter = fadeIn(animationSpec = tween(1000))
-//        ) {
-//            Image(
-//                painter = painterResource(id = R.drawable.splash_particles),
-//                contentDescription = null,
-//                modifier = Modifier
-//                    .size(300.dp)
-//                    .graphicsLayer {
-//                        alpha = 0.3f
-//                        scaleX = logoScale * 1.2f
-//                        scaleY = logoScale * 1.2f
-//                    }
-//            )
+        // Christmas decorations - visible and larger
+//        if (festiveEnabled && activeFestiveTheme == FestiveThemeType.CHRISTMAS && showLogo) {
+//            ChristmasDecorations(intensity = 0.8f)
 //        }
 
         // Main content with dramatic text reveal
@@ -340,6 +318,26 @@ fun SplashScreen(
                                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f),
                                         textAlign = TextAlign.Center
                                     )
+                                    
+                                    // Festive greeting below tagline
+                                    if (festiveEnabled && activeFestiveTheme != FestiveThemeType.NONE) {
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        Text(
+                                            text = when (activeFestiveTheme) {
+                                                FestiveThemeType.CHRISTMAS -> "🎄 Merry Christmas! 🎅"
+                                                FestiveThemeType.NEW_YEAR -> "🎆 Happy New Year! 🎉"
+                                                FestiveThemeType.HALLOWEEN -> "🎃 Happy Halloween! 👻"
+                                                FestiveThemeType.VALENTINES -> "💝 Happy Valentine's Day! 💕"
+                                                else -> ""
+                                            },
+                                            style = MaterialTheme.typography.bodyLarge.copy(
+                                                fontWeight = FontWeight.Medium,
+                                                letterSpacing = 0.5.sp
+                                            ),
+                                            color = MaterialTheme.colorScheme.primary,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
                                 }
                             }
                         }
