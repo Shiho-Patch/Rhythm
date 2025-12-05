@@ -183,6 +183,7 @@ sealed class Screen(val route: String) {
     object TunerSleepTimer : Screen("tuner_sleep_timer_settings")
     object TunerCrashLogHistory : Screen("tuner_crash_log_history_settings")
     object TunerQueuePlayback : Screen("tuner_queue_playback_settings")
+    object TunerHomeScreen : Screen("tuner_home_screen_settings")
 }
 
 @Composable
@@ -994,6 +995,10 @@ fun RhythmNavigation(
                     
                     composable(Screen.TunerQueuePlayback.route) {
                         QueuePlaybackSettingsScreen(onBackClick = { navController.popBackStack() })
+                    }
+                    
+                    composable(Screen.TunerHomeScreen.route) {
+                        HomeScreenCustomizationSettingsScreen(onBackClick = { navController.popBackStack() })
                     }
 
                     composable(

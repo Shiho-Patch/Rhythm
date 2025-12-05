@@ -127,6 +127,7 @@ object SettingsRoutes {
     const val QUEUE_PLAYBACK = "queue_playback_settings"
     const val LYRICS_SOURCE = "lyrics_source_settings"
     const val WIDGET = "widget_settings"
+    const val HOME_SCREEN = "home_screen_settings"
 }
 
 data class SettingItem(
@@ -179,9 +180,10 @@ fun SettingsScreen(
             SettingGroup(
                 title = "Appearance",
                 items = listOf(
-                    SettingItem(Icons.Default.Palette, "Theme Customization", "Customize colors, fonts, and appearance", onClick = { onNavigateTo(SettingsRoutes.THEME_CUSTOMIZATION) }),
-                    SettingItem(Icons.Default.Widgets, "Widget Customization", "Customize home screen widgets", onClick = { onNavigateTo(SettingsRoutes.WIDGET) }),
-                    SettingItem(Icons.Default.MusicNote, "Player Customization", "Customize player screen chips and layout", onClick = { onNavigateTo(SettingsRoutes.PLAYER_CUSTOMIZATION) }),
+                    SettingItem(Icons.Default.Palette, "Theme", "Customize colors, fonts, and appearance", onClick = { onNavigateTo(SettingsRoutes.THEME_CUSTOMIZATION) }),
+                    SettingItem(Icons.Default.Home, "Home", "Customize home screen sections", onClick = { onNavigateTo(SettingsRoutes.HOME_SCREEN) }),
+                    SettingItem(Icons.Default.Widgets, "Widget", "Customize home screen widgets", onClick = { onNavigateTo(SettingsRoutes.WIDGET) }),
+                    SettingItem(Icons.Default.MusicNote, "Player", "Customize player screen chips and layout", onClick = { onNavigateTo(SettingsRoutes.PLAYER_CUSTOMIZATION) }),
                     // SettingItem(Icons.Default.Reorder, "Library Tab Order", "Reorder tabs in the library", onClick = { onNavigateTo(SettingsRoutes.LIBRARY_TAB_ORDER) })
                 )
             ),
@@ -832,6 +834,7 @@ fun SettingsScreenWrapper(onBack: () -> Unit, appSettings: chromahub.rhythm.app.
             SettingsRoutes.QUEUE_PLAYBACK -> QueuePlaybackSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.LYRICS_SOURCE -> LyricsSourceSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.WIDGET -> WidgetSettingsScreen(onBackClick = { currentRoute = null })
+            SettingsRoutes.HOME_SCREEN -> HomeScreenCustomizationSettingsScreen(onBackClick = { currentRoute = null })
             else -> SettingsScreen(
                 onBackClick = handleBack,
                 onNavigateTo = { route -> currentRoute = route },

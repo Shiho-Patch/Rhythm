@@ -6916,7 +6916,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
     var showChipOrderBottomSheet by remember { mutableStateOf(false) }
     
     CollapsibleHeaderScreen(
-        title = "Player Customization",
+        title = "Player",
         showBackButton = true,
         onBackClick = onBackClick
     ) { modifier ->
@@ -7190,7 +7190,6 @@ private fun PlayerTipItem(
     }
 }
 
-// ✅ FULLY INTEGRATED Theme Customization Screen
 // Data classes and enums for theme customization
 data class ColorSchemeOption(
     val name: String,
@@ -7498,7 +7497,7 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
     var showFontSelectionDialog by remember { mutableStateOf(false) }
 
     CollapsibleHeaderScreen(
-        title = "Theme Customization",
+        title = "Theme",
         showBackButton = true,
         onBackClick = onBackClick
     ) { modifier ->
@@ -11168,6 +11167,666 @@ fun LyricsSourceSettingsScreen(onBackClick: () -> Unit) {
 
             item { Spacer(modifier = Modifier.height(8.dp)) }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
+    val context = LocalContext.current
+    val appSettings = AppSettings.getInstance(context)
+    val haptic = LocalHapticFeedback.current
+    
+    // Collect all home screen settings
+    val showGreeting by appSettings.homeShowGreeting.collectAsState()
+    val showRecentlyPlayed by appSettings.homeShowRecentlyPlayed.collectAsState()
+    val showDiscoverCarousel by appSettings.homeShowDiscoverCarousel.collectAsState()
+    val showArtists by appSettings.homeShowArtists.collectAsState()
+    val showNewReleases by appSettings.homeShowNewReleases.collectAsState()
+    val showRecentlyAdded by appSettings.homeShowRecentlyAdded.collectAsState()
+    val showRecommended by appSettings.homeShowRecommended.collectAsState()
+    val showListeningStats by appSettings.homeShowListeningStats.collectAsState()
+    val showMoodSections by appSettings.homeShowMoodSections.collectAsState()
+    val discoverAutoScroll by appSettings.homeDiscoverAutoScroll.collectAsState()
+    val discoverAutoScrollInterval by appSettings.homeDiscoverAutoScrollInterval.collectAsState()
+    val discoverItemCount by appSettings.homeDiscoverItemCount.collectAsState()
+    val recentlyPlayedCount by appSettings.homeRecentlyPlayedCount.collectAsState()
+    val artistsCount by appSettings.homeArtistsCount.collectAsState()
+    val newReleasesCount by appSettings.homeNewReleasesCount.collectAsState()
+    val recentlyAddedCount by appSettings.homeRecentlyAddedCount.collectAsState()
+    val recommendedCount by appSettings.homeRecommendedCount.collectAsState()
+    val carouselHeight by appSettings.homeCarouselHeight.collectAsState()
+    
+    // Discover Widget visibility settings
+    val discoverShowAlbumName by appSettings.homeDiscoverShowAlbumName.collectAsState()
+    val discoverShowArtistName by appSettings.homeDiscoverShowArtistName.collectAsState()
+    val discoverShowYear by appSettings.homeDiscoverShowYear.collectAsState()
+    val discoverShowPlayButton by appSettings.homeDiscoverShowPlayButton.collectAsState()
+    val discoverShowGradient by appSettings.homeDiscoverShowGradient.collectAsState()
+    
+    CollapsibleHeaderScreen(
+        title = "Home",
+        showBackButton = true,
+        onBackClick = {
+            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+            onBackClick()
+        }
+    ) { modifier ->
+        val lazyListState = rememberSaveable(
+            key = "home_screen_settings_scroll_state",
+            saver = LazyListStateSaver
+        ) {
+            androidx.compose.foundation.lazy.LazyListState()
+        }
+
+        LazyColumn(
+            state = lazyListState,
+            modifier = modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(horizontal = 24.dp)
+        ) {
+            // ==================== WIDGET VISIBILITY ====================
+            item(key = "widget_visibility_header", contentType = "section_header") {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Widget Visibility",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+            }
+            
+            item(key = "widget_visibility_settings", contentType = "settings_card") {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column {
+                        TunerSettingRow(
+                            item = SettingItem(
+                                Icons.Rounded.WavingHand,
+                                "Greeting",
+                                "Personalized greeting with time of day",
+                                toggleState = showGreeting,
+                                onToggleChange = { appSettings.setHomeShowGreeting(it) }
+                            )
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        TunerSettingRow(
+                            item = SettingItem(
+                                Icons.Rounded.Album,
+                                "Discover Albums",
+                                "Featured albums carousel",
+                                toggleState = showDiscoverCarousel,
+                                onToggleChange = { appSettings.setHomeShowDiscoverCarousel(it) }
+                            )
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        TunerSettingRow(
+                            item = SettingItem(
+                                Icons.Rounded.History,
+                                "Recently Played",
+                                "Songs you recently listened to",
+                                toggleState = showRecentlyPlayed,
+                                onToggleChange = { appSettings.setHomeShowRecentlyPlayed(it) }
+                            )
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        TunerSettingRow(
+                            item = SettingItem(
+                                Icons.Rounded.People,
+                                "Top Artists",
+                                "Your most played artists",
+                                toggleState = showArtists,
+                                onToggleChange = { appSettings.setHomeShowArtists(it) }
+                            )
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        TunerSettingRow(
+                            item = SettingItem(
+                                Icons.Rounded.NewReleases,
+                                "New Releases",
+                                "Recently added albums",
+                                toggleState = showNewReleases,
+                                onToggleChange = { appSettings.setHomeShowNewReleases(it) }
+                            )
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        TunerSettingRow(
+                            item = SettingItem(
+                                Icons.Rounded.LibraryAdd,
+                                "Recently Added",
+                                "Recently added songs",
+                                toggleState = showRecentlyAdded,
+                                onToggleChange = { appSettings.setHomeShowRecentlyAdded(it) }
+                            )
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        TunerSettingRow(
+                            item = SettingItem(
+                                Icons.Rounded.Recommend,
+                                "Recommended",
+                                "Personalized recommendations",
+                                toggleState = showRecommended,
+                                onToggleChange = { appSettings.setHomeShowRecommended(it) }
+                            )
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        TunerSettingRow(
+                            item = SettingItem(
+                                Icons.Rounded.BarChart,
+                                "Listening Stats",
+                                "Your listening statistics",
+                                toggleState = showListeningStats,
+                                onToggleChange = { appSettings.setHomeShowListeningStats(it) }
+                            )
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        TunerSettingRow(
+                            item = SettingItem(
+                                Icons.Rounded.Mood,
+                                "Mood & Moments",
+                                "Focus, energetic, and relaxing sections",
+                                toggleState = showMoodSections,
+                                onToggleChange = { appSettings.setHomeShowMoodSections(it) }
+                            )
+                        )
+                    }
+                }
+            }
+            
+            // ==================== WIDGET ITEM COUNTS ====================
+            item(key = "widget_counts_header", contentType = "section_header") {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Widget Item Counts",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+            }
+            
+            item(key = "widget_counts_settings", contentType = "slider_group") {
+                Column {
+                    AnimatedVisibility(visible = showRecentlyPlayed) {
+                        Column {
+                            HomeSettingsSliderCard(
+                                icon = Icons.Rounded.History,
+                                title = "Recently Played",
+                                description = "$recentlyPlayedCount songs",
+                                value = recentlyPlayedCount.toFloat(),
+                                valueRange = 3f..12f,
+                                steps = 8,
+                                onValueChange = { appSettings.setHomeRecentlyPlayedCount(it.toInt()) }
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
+                    
+                    AnimatedVisibility(visible = showArtists) {
+                        Column {
+                            HomeSettingsSliderCard(
+                                icon = Icons.Rounded.People,
+                                title = "Top Artists",
+                                description = "$artistsCount artists",
+                                value = artistsCount.toFloat(),
+                                valueRange = 4f..20f,
+                                steps = 15,
+                                onValueChange = { appSettings.setHomeArtistsCount(it.toInt()) }
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
+                    
+                    AnimatedVisibility(visible = showNewReleases) {
+                        Column {
+                            HomeSettingsSliderCard(
+                                icon = Icons.Rounded.NewReleases,
+                                title = "New Releases",
+                                description = "$newReleasesCount albums",
+                                value = newReleasesCount.toFloat(),
+                                valueRange = 4f..20f,
+                                steps = 15,
+                                onValueChange = { appSettings.setHomeNewReleasesCount(it.toInt()) }
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
+                    
+                    AnimatedVisibility(visible = showRecentlyAdded) {
+                        Column {
+                            HomeSettingsSliderCard(
+                                icon = Icons.Rounded.LibraryAdd,
+                                title = "Recently Added",
+                                description = "$recentlyAddedCount albums",
+                                value = recentlyAddedCount.toFloat(),
+                                valueRange = 4f..20f,
+                                steps = 15,
+                                onValueChange = { appSettings.setHomeRecentlyAddedCount(it.toInt()) }
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
+                    
+                    AnimatedVisibility(visible = showRecommended) {
+                        HomeSettingsSliderCard(
+                            icon = Icons.Rounded.Recommend,
+                            title = "Recommended",
+                            description = "$recommendedCount songs",
+                            value = recommendedCount.toFloat(),
+                            valueRange = 2f..8f,
+                            steps = 5,
+                            onValueChange = { appSettings.setHomeRecommendedCount(it.toInt()) }
+                        )
+                    }
+                }
+            }
+            
+            // ==================== DISCOVER CAROUSEL SETTINGS ====================
+            item(key = "discover_carousel_header", contentType = "section_header") {
+                AnimatedVisibility(visible = showDiscoverCarousel) {
+                    Column {
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Text(
+                            text = "Discover Carousel",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                        )
+                    }
+                }
+            }
+            
+            item(key = "discover_carousel_behavior", contentType = "settings_card") {
+                AnimatedVisibility(visible = showDiscoverCarousel) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column {
+                            TunerSettingRow(
+                                item = SettingItem(
+                                    Icons.Rounded.PlayCircle,
+                                    "Auto-Scroll",
+                                    "Automatically cycle through albums",
+                                    toggleState = discoverAutoScroll,
+                                    onToggleChange = { appSettings.setHomeDiscoverAutoScroll(it) }
+                                )
+                            )
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 20.dp),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                            )
+                            TunerSettingRow(
+                                item = SettingItem(
+                                    Icons.Rounded.Album,
+                                    "Album Name",
+                                    "Show album title on card",
+                                    toggleState = discoverShowAlbumName,
+                                    onToggleChange = { appSettings.setHomeDiscoverShowAlbumName(it) }
+                                )
+                            )
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 20.dp),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                            )
+                            TunerSettingRow(
+                                item = SettingItem(
+                                    Icons.Rounded.Person,
+                                    "Artist Name",
+                                    "Show artist name on card",
+                                    toggleState = discoverShowArtistName,
+                                    onToggleChange = { appSettings.setHomeDiscoverShowArtistName(it) }
+                                )
+                            )
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 20.dp),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                            )
+                            TunerSettingRow(
+                                item = SettingItem(
+                                    Icons.Rounded.CalendarToday,
+                                    "Release Year",
+                                    "Show album release year",
+                                    toggleState = discoverShowYear,
+                                    onToggleChange = { appSettings.setHomeDiscoverShowYear(it) }
+                                )
+                            )
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 20.dp),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                            )
+                            TunerSettingRow(
+                                item = SettingItem(
+                                    Icons.Rounded.PlayArrow,
+                                    "Play Button",
+                                    "Show quick play button",
+                                    toggleState = discoverShowPlayButton,
+                                    onToggleChange = { appSettings.setHomeDiscoverShowPlayButton(it) }
+                                )
+                            )
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 20.dp),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                            )
+                            TunerSettingRow(
+                                item = SettingItem(
+                                    Icons.Rounded.Gradient,
+                                    "Gradient Overlay",
+                                    "Show gradient behind text",
+                                    toggleState = discoverShowGradient,
+                                    onToggleChange = { appSettings.setHomeDiscoverShowGradient(it) }
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+            
+            item(key = "discover_carousel_sliders", contentType = "slider_group") {
+                AnimatedVisibility(visible = showDiscoverCarousel) {
+                    Column {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        AnimatedVisibility(visible = discoverAutoScroll) {
+                            Column {
+                                HomeSettingsSliderCard(
+                                    icon = Icons.Rounded.Timer,
+                                    title = "Auto-Scroll Interval",
+                                    description = "$discoverAutoScrollInterval seconds",
+                                    value = discoverAutoScrollInterval.toFloat(),
+                                    valueRange = 2f..15f,
+                                    steps = 12,
+                                    onValueChange = { appSettings.setHomeDiscoverAutoScrollInterval(it.toInt()) }
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+                        }
+                        
+                        HomeSettingsSliderCard(
+                            icon = Icons.Rounded.ViewCarousel,
+                            title = "Album Count",
+                            description = "$discoverItemCount albums",
+                            value = discoverItemCount.toFloat(),
+                            valueRange = 3f..12f,
+                            steps = 8,
+                            onValueChange = { appSettings.setHomeDiscoverItemCount(it.toInt()) }
+                        )
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        HomeSettingsSliderCard(
+                            icon = Icons.Rounded.Height,
+                            title = "Carousel Height",
+                            description = "${carouselHeight}dp",
+                            value = carouselHeight.toFloat(),
+                            valueRange = 180f..320f,
+                            steps = 13,
+                            onValueChange = { appSettings.setHomeCarouselHeight(it.toInt()) }
+                        )
+                    }
+                }
+            }
+            
+            // Quick Tips Card
+            item(key = "tips_card", contentType = "tips") {
+                Spacer(modifier = Modifier.height(24.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Lightbulb,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "Quick Tips",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        HomeScreenTipItem(
+                            icon = Icons.Default.Visibility,
+                            text = "Toggle widgets to customize your home screen"
+                        )
+                        HomeScreenTipItem(
+                            icon = Icons.Default.Speed,
+                            text = "Disable unused sections for faster loading"
+                        )
+                        HomeScreenTipItem(
+                            icon = Icons.Default.Album,
+                            text = "Discover carousel showcases featured albums"
+                        )
+                        HomeScreenTipItem(
+                            icon = Icons.Default.TrendingUp,
+                            text = "Statistics update based on listening habits"
+                        )
+                    }
+                }
+            }
+            
+            item(key = "bottom_spacer") { Spacer(modifier = Modifier.height(24.dp)) }
+        }
+    }
+}
+
+@Composable
+private fun HomeScreenTipItem(
+    icon: ImageVector,
+    text: String
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 6.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+    }
+}
+
+@Composable
+private fun HomeSettingsSliderCard(
+    icon: ImageVector,
+    title: String,
+    description: String,
+    value: Float,
+    valueRange: ClosedFloatingPointRange<Float>,
+    steps: Int,
+    onValueChange: (Float) -> Unit
+) {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(50))
+                        .padding(8.dp),
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+                
+                Spacer(modifier = Modifier.width(16.dp))
+                
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            Slider(
+                value = value,
+                onValueChange = {
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onValueChange(it)
+                },
+                valueRange = valueRange,
+                steps = steps,
+                colors = SliderDefaults.colors(
+                    thumbColor = MaterialTheme.colorScheme.primary,
+                    activeTrackColor = MaterialTheme.colorScheme.primary,
+                    inactiveTrackColor = MaterialTheme.colorScheme.primaryContainer
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun HomeSettingsSliderRow(
+    icon: ImageVector,
+    title: String,
+    description: String,
+    value: Float,
+    valueRange: ClosedFloatingPointRange<Float>,
+    steps: Int,
+    onValueChange: (Float) -> Unit
+) {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(50))
+                    .padding(8.dp),
+                tint = MaterialTheme.colorScheme.onSurface
+            )
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        
+        Slider(
+            value = value,
+            onValueChange = {
+                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                onValueChange(it)
+            },
+            valueRange = valueRange,
+            steps = steps,
+            colors = SliderDefaults.colors(
+                thumbColor = MaterialTheme.colorScheme.primary,
+                activeTrackColor = MaterialTheme.colorScheme.primary,
+                inactiveTrackColor = MaterialTheme.colorScheme.primaryContainer
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 56.dp)
+        )
+        
+        HorizontalDivider(
+            modifier = Modifier.padding(top = 8.dp, start = 56.dp),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+        )
     }
 }
 

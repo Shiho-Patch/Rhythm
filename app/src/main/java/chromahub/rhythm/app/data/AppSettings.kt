@@ -248,6 +248,40 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_WIDGET_CORNER_RADIUS = "widget_corner_radius"
         private const val KEY_WIDGET_AUTO_UPDATE = "widget_auto_update"
         
+        // Home Screen Customization Settings - Section Visibility
+        private const val KEY_HOME_SHOW_GREETING = "home_show_greeting"
+        private const val KEY_HOME_SHOW_RECENTLY_PLAYED = "home_show_recently_played"
+        private const val KEY_HOME_SHOW_DISCOVER_CAROUSEL = "home_show_discover_carousel"
+        private const val KEY_HOME_SHOW_ARTISTS = "home_show_artists"
+        private const val KEY_HOME_SHOW_NEW_RELEASES = "home_show_new_releases"
+        private const val KEY_HOME_SHOW_RECENTLY_ADDED = "home_show_recently_added"
+        private const val KEY_HOME_SHOW_RECOMMENDED = "home_show_recommended"
+        private const val KEY_HOME_SHOW_LISTENING_STATS = "home_show_listening_stats"
+        private const val KEY_HOME_SHOW_MOOD_SECTIONS = "home_show_mood_sections"
+        
+        // Home Screen Customization Settings - Discover Widget
+        private const val KEY_HOME_DISCOVER_AUTO_SCROLL = "home_discover_auto_scroll"
+        private const val KEY_HOME_DISCOVER_AUTO_SCROLL_INTERVAL = "home_discover_auto_scroll_interval"
+        private const val KEY_HOME_DISCOVER_ITEM_COUNT = "home_discover_item_count"
+        private const val KEY_HOME_CAROUSEL_HEIGHT = "home_carousel_height"
+        private const val KEY_HOME_DISCOVER_SHOW_ALBUM_NAME = "home_discover_show_album_name"
+        private const val KEY_HOME_DISCOVER_SHOW_ARTIST_NAME = "home_discover_show_artist_name"
+        private const val KEY_HOME_DISCOVER_SHOW_YEAR = "home_discover_show_year"
+        private const val KEY_HOME_DISCOVER_SHOW_PLAY_BUTTON = "home_discover_show_play_button"
+        private const val KEY_HOME_DISCOVER_SHOW_GRADIENT = "home_discover_show_gradient"
+        
+        // Home Screen Customization Settings - Section Item Counts
+        private const val KEY_HOME_RECENTLY_PLAYED_COUNT = "home_recently_played_count"
+        private const val KEY_HOME_ARTISTS_COUNT = "home_artists_count"
+        private const val KEY_HOME_NEW_RELEASES_COUNT = "home_new_releases_count"
+        private const val KEY_HOME_RECENTLY_ADDED_COUNT = "home_recently_added_count"
+        private const val KEY_HOME_RECOMMENDED_COUNT = "home_recommended_count"
+        
+        // Home Screen Customization Settings - Card Appearance
+        private const val KEY_HOME_COMPACT_CARDS = "home_compact_cards"
+        private const val KEY_HOME_SHOW_PLAY_BUTTONS = "home_show_play_buttons"
+        private const val KEY_HOME_SECTION_ORDER = "home_section_order"
+        
         @Volatile
         private var INSTANCE: AppSettings? = null
         
@@ -2421,5 +2455,217 @@ class AppSettings private constructor(context: Context) {
     fun setWidgetAutoUpdate(value: Boolean) {
         _widgetAutoUpdate.value = value
         prefs.edit().putBoolean(KEY_WIDGET_AUTO_UPDATE, value).apply()
+    }
+    
+    // ==================== Home Screen Customization Settings ====================
+    
+    private val _homeShowGreeting = MutableStateFlow(prefs.getBoolean(KEY_HOME_SHOW_GREETING, true))
+    val homeShowGreeting: StateFlow<Boolean> = _homeShowGreeting.asStateFlow()
+    fun setHomeShowGreeting(value: Boolean) {
+        _homeShowGreeting.value = value
+        prefs.edit().putBoolean(KEY_HOME_SHOW_GREETING, value).apply()
+    }
+    
+    private val _homeShowRecentlyPlayed = MutableStateFlow(prefs.getBoolean(KEY_HOME_SHOW_RECENTLY_PLAYED, true))
+    val homeShowRecentlyPlayed: StateFlow<Boolean> = _homeShowRecentlyPlayed.asStateFlow()
+    fun setHomeShowRecentlyPlayed(value: Boolean) {
+        _homeShowRecentlyPlayed.value = value
+        prefs.edit().putBoolean(KEY_HOME_SHOW_RECENTLY_PLAYED, value).apply()
+    }
+    
+    private val _homeShowDiscoverCarousel = MutableStateFlow(prefs.getBoolean(KEY_HOME_SHOW_DISCOVER_CAROUSEL, true))
+    val homeShowDiscoverCarousel: StateFlow<Boolean> = _homeShowDiscoverCarousel.asStateFlow()
+    fun setHomeShowDiscoverCarousel(value: Boolean) {
+        _homeShowDiscoverCarousel.value = value
+        prefs.edit().putBoolean(KEY_HOME_SHOW_DISCOVER_CAROUSEL, value).apply()
+    }
+    
+    private val _homeShowArtists = MutableStateFlow(prefs.getBoolean(KEY_HOME_SHOW_ARTISTS, true))
+    val homeShowArtists: StateFlow<Boolean> = _homeShowArtists.asStateFlow()
+    fun setHomeShowArtists(value: Boolean) {
+        _homeShowArtists.value = value
+        prefs.edit().putBoolean(KEY_HOME_SHOW_ARTISTS, value).apply()
+    }
+    
+    private val _homeShowNewReleases = MutableStateFlow(prefs.getBoolean(KEY_HOME_SHOW_NEW_RELEASES, true))
+    val homeShowNewReleases: StateFlow<Boolean> = _homeShowNewReleases.asStateFlow()
+    fun setHomeShowNewReleases(value: Boolean) {
+        _homeShowNewReleases.value = value
+        prefs.edit().putBoolean(KEY_HOME_SHOW_NEW_RELEASES, value).apply()
+    }
+    
+    private val _homeShowRecentlyAdded = MutableStateFlow(prefs.getBoolean(KEY_HOME_SHOW_RECENTLY_ADDED, true))
+    val homeShowRecentlyAdded: StateFlow<Boolean> = _homeShowRecentlyAdded.asStateFlow()
+    fun setHomeShowRecentlyAdded(value: Boolean) {
+        _homeShowRecentlyAdded.value = value
+        prefs.edit().putBoolean(KEY_HOME_SHOW_RECENTLY_ADDED, value).apply()
+    }
+    
+    private val _homeShowRecommended = MutableStateFlow(prefs.getBoolean(KEY_HOME_SHOW_RECOMMENDED, true))
+    val homeShowRecommended: StateFlow<Boolean> = _homeShowRecommended.asStateFlow()
+    fun setHomeShowRecommended(value: Boolean) {
+        _homeShowRecommended.value = value
+        prefs.edit().putBoolean(KEY_HOME_SHOW_RECOMMENDED, value).apply()
+    }
+    
+    private val _homeShowListeningStats = MutableStateFlow(prefs.getBoolean(KEY_HOME_SHOW_LISTENING_STATS, true))
+    val homeShowListeningStats: StateFlow<Boolean> = _homeShowListeningStats.asStateFlow()
+    fun setHomeShowListeningStats(value: Boolean) {
+        _homeShowListeningStats.value = value
+        prefs.edit().putBoolean(KEY_HOME_SHOW_LISTENING_STATS, value).apply()
+    }
+    
+    private val _homeShowMoodSections = MutableStateFlow(prefs.getBoolean(KEY_HOME_SHOW_MOOD_SECTIONS, true))
+    val homeShowMoodSections: StateFlow<Boolean> = _homeShowMoodSections.asStateFlow()
+    fun setHomeShowMoodSections(value: Boolean) {
+        _homeShowMoodSections.value = value
+        prefs.edit().putBoolean(KEY_HOME_SHOW_MOOD_SECTIONS, value).apply()
+    }
+    
+    private val _homeDiscoverAutoScroll = MutableStateFlow(prefs.getBoolean(KEY_HOME_DISCOVER_AUTO_SCROLL, true))
+    val homeDiscoverAutoScroll: StateFlow<Boolean> = _homeDiscoverAutoScroll.asStateFlow()
+    fun setHomeDiscoverAutoScroll(value: Boolean) {
+        _homeDiscoverAutoScroll.value = value
+        prefs.edit().putBoolean(KEY_HOME_DISCOVER_AUTO_SCROLL, value).apply()
+    }
+    
+    private val _homeDiscoverAutoScrollInterval = MutableStateFlow(prefs.getInt(KEY_HOME_DISCOVER_AUTO_SCROLL_INTERVAL, 5))
+    val homeDiscoverAutoScrollInterval: StateFlow<Int> = _homeDiscoverAutoScrollInterval.asStateFlow()
+    fun setHomeDiscoverAutoScrollInterval(value: Int) {
+        if (value in 2..15) {
+            _homeDiscoverAutoScrollInterval.value = value
+            prefs.edit().putInt(KEY_HOME_DISCOVER_AUTO_SCROLL_INTERVAL, value).apply()
+        }
+    }
+    
+    private val _homeDiscoverItemCount = MutableStateFlow(prefs.getInt(KEY_HOME_DISCOVER_ITEM_COUNT, 6))
+    val homeDiscoverItemCount: StateFlow<Int> = _homeDiscoverItemCount.asStateFlow()
+    fun setHomeDiscoverItemCount(value: Int) {
+        if (value in 3..12) {
+            _homeDiscoverItemCount.value = value
+            prefs.edit().putInt(KEY_HOME_DISCOVER_ITEM_COUNT, value).apply()
+        }
+    }
+    
+    private val _homeRecentlyPlayedCount = MutableStateFlow(prefs.getInt(KEY_HOME_RECENTLY_PLAYED_COUNT, 6))
+    val homeRecentlyPlayedCount: StateFlow<Int> = _homeRecentlyPlayedCount.asStateFlow()
+    fun setHomeRecentlyPlayedCount(value: Int) {
+        if (value in 3..12) {
+            _homeRecentlyPlayedCount.value = value
+            prefs.edit().putInt(KEY_HOME_RECENTLY_PLAYED_COUNT, value).apply()
+        }
+    }
+    
+    private val _homeArtistsCount = MutableStateFlow(prefs.getInt(KEY_HOME_ARTISTS_COUNT, 10))
+    val homeArtistsCount: StateFlow<Int> = _homeArtistsCount.asStateFlow()
+    fun setHomeArtistsCount(value: Int) {
+        if (value in 4..20) {
+            _homeArtistsCount.value = value
+            prefs.edit().putInt(KEY_HOME_ARTISTS_COUNT, value).apply()
+        }
+    }
+    
+    private val _homeNewReleasesCount = MutableStateFlow(prefs.getInt(KEY_HOME_NEW_RELEASES_COUNT, 10))
+    val homeNewReleasesCount: StateFlow<Int> = _homeNewReleasesCount.asStateFlow()
+    fun setHomeNewReleasesCount(value: Int) {
+        if (value in 4..20) {
+            _homeNewReleasesCount.value = value
+            prefs.edit().putInt(KEY_HOME_NEW_RELEASES_COUNT, value).apply()
+        }
+    }
+    
+    private val _homeRecentlyAddedCount = MutableStateFlow(prefs.getInt(KEY_HOME_RECENTLY_ADDED_COUNT, 10))
+    val homeRecentlyAddedCount: StateFlow<Int> = _homeRecentlyAddedCount.asStateFlow()
+    fun setHomeRecentlyAddedCount(value: Int) {
+        if (value in 4..20) {
+            _homeRecentlyAddedCount.value = value
+            prefs.edit().putInt(KEY_HOME_RECENTLY_ADDED_COUNT, value).apply()
+        }
+    }
+    
+    private val _homeRecommendedCount = MutableStateFlow(prefs.getInt(KEY_HOME_RECOMMENDED_COUNT, 4))
+    val homeRecommendedCount: StateFlow<Int> = _homeRecommendedCount.asStateFlow()
+    fun setHomeRecommendedCount(value: Int) {
+        if (value in 2..8) {
+            _homeRecommendedCount.value = value
+            prefs.edit().putInt(KEY_HOME_RECOMMENDED_COUNT, value).apply()
+        }
+    }
+    
+    private val _homeCompactCards = MutableStateFlow(prefs.getBoolean(KEY_HOME_COMPACT_CARDS, false))
+    val homeCompactCards: StateFlow<Boolean> = _homeCompactCards.asStateFlow()
+    fun setHomeCompactCards(value: Boolean) {
+        _homeCompactCards.value = value
+        prefs.edit().putBoolean(KEY_HOME_COMPACT_CARDS, value).apply()
+    }
+    
+    private val _homeShowPlayButtons = MutableStateFlow(prefs.getBoolean(KEY_HOME_SHOW_PLAY_BUTTONS, true))
+    val homeShowPlayButtons: StateFlow<Boolean> = _homeShowPlayButtons.asStateFlow()
+    fun setHomeShowPlayButtons(value: Boolean) {
+        _homeShowPlayButtons.value = value
+        prefs.edit().putBoolean(KEY_HOME_SHOW_PLAY_BUTTONS, value).apply()
+    }
+    
+    private val _homeCarouselHeight = MutableStateFlow(prefs.getInt(KEY_HOME_CAROUSEL_HEIGHT, 260))
+    val homeCarouselHeight: StateFlow<Int> = _homeCarouselHeight.asStateFlow()
+    fun setHomeCarouselHeight(value: Int) {
+        if (value in 180..320) {
+            _homeCarouselHeight.value = value
+            prefs.edit().putInt(KEY_HOME_CAROUSEL_HEIGHT, value).apply()
+        }
+    }
+    
+    // Discover Widget - Content Visibility Settings
+    private val _homeDiscoverShowAlbumName = MutableStateFlow(prefs.getBoolean(KEY_HOME_DISCOVER_SHOW_ALBUM_NAME, true))
+    val homeDiscoverShowAlbumName: StateFlow<Boolean> = _homeDiscoverShowAlbumName.asStateFlow()
+    fun setHomeDiscoverShowAlbumName(value: Boolean) {
+        _homeDiscoverShowAlbumName.value = value
+        prefs.edit().putBoolean(KEY_HOME_DISCOVER_SHOW_ALBUM_NAME, value).apply()
+    }
+    
+    private val _homeDiscoverShowArtistName = MutableStateFlow(prefs.getBoolean(KEY_HOME_DISCOVER_SHOW_ARTIST_NAME, true))
+    val homeDiscoverShowArtistName: StateFlow<Boolean> = _homeDiscoverShowArtistName.asStateFlow()
+    fun setHomeDiscoverShowArtistName(value: Boolean) {
+        _homeDiscoverShowArtistName.value = value
+        prefs.edit().putBoolean(KEY_HOME_DISCOVER_SHOW_ARTIST_NAME, value).apply()
+    }
+    
+    private val _homeDiscoverShowYear = MutableStateFlow(prefs.getBoolean(KEY_HOME_DISCOVER_SHOW_YEAR, true))
+    val homeDiscoverShowYear: StateFlow<Boolean> = _homeDiscoverShowYear.asStateFlow()
+    fun setHomeDiscoverShowYear(value: Boolean) {
+        _homeDiscoverShowYear.value = value
+        prefs.edit().putBoolean(KEY_HOME_DISCOVER_SHOW_YEAR, value).apply()
+    }
+    
+    private val _homeDiscoverShowPlayButton = MutableStateFlow(prefs.getBoolean(KEY_HOME_DISCOVER_SHOW_PLAY_BUTTON, true))
+    val homeDiscoverShowPlayButton: StateFlow<Boolean> = _homeDiscoverShowPlayButton.asStateFlow()
+    fun setHomeDiscoverShowPlayButton(value: Boolean) {
+        _homeDiscoverShowPlayButton.value = value
+        prefs.edit().putBoolean(KEY_HOME_DISCOVER_SHOW_PLAY_BUTTON, value).apply()
+    }
+    
+    private val _homeDiscoverShowGradient = MutableStateFlow(prefs.getBoolean(KEY_HOME_DISCOVER_SHOW_GRADIENT, true))
+    val homeDiscoverShowGradient: StateFlow<Boolean> = _homeDiscoverShowGradient.asStateFlow()
+    fun setHomeDiscoverShowGradient(value: Boolean) {
+        _homeDiscoverShowGradient.value = value
+        prefs.edit().putBoolean(KEY_HOME_DISCOVER_SHOW_GRADIENT, value).apply()
+    }
+    
+    // Default section order for home screen
+    private val defaultHomeSectionOrder = listOf(
+        "GREETING", "RECENTLY_PLAYED", "DISCOVER", "ARTISTS", 
+        "NEW_RELEASES", "RECENTLY_ADDED", "RECOMMENDED", "STATS", "MOOD"
+    )
+    private val _homeSectionOrder = MutableStateFlow(
+        prefs.getString(KEY_HOME_SECTION_ORDER, null)
+            ?.split(",")
+            ?.filter { it.isNotBlank() }
+            ?.takeIf { it.isNotEmpty() }
+            ?: defaultHomeSectionOrder
+    )
+    val homeSectionOrder: StateFlow<List<String>> = _homeSectionOrder.asStateFlow()
+    fun setHomeSectionOrder(value: List<String>) {
+        _homeSectionOrder.value = value
+        prefs.edit().putString(KEY_HOME_SECTION_ORDER, value.joinToString(",")).apply()
     }
 }
