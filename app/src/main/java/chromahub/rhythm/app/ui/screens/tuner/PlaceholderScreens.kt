@@ -11196,6 +11196,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
     val recentlyAddedCount by appSettings.homeRecentlyAddedCount.collectAsState()
     val recommendedCount by appSettings.homeRecommendedCount.collectAsState()
     val carouselHeight by appSettings.homeCarouselHeight.collectAsState()
+    val discoverCarouselStyle by appSettings.homeDiscoverCarouselStyle.collectAsState()
     
     // Discover Widget visibility settings
     val discoverShowAlbumName by appSettings.homeDiscoverShowAlbumName.collectAsState()
@@ -11464,6 +11465,20 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                 }
             }
             
+            // Carousel Style Selector
+            item(key = "discover_carousel_style", contentType = "style_selector") {
+                AnimatedVisibility(visible = showDiscoverCarousel) {
+                    Column {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        CarouselStyleSelector(
+                            selectedStyle = discoverCarouselStyle,
+                            onStyleSelected = { appSettings.setHomeDiscoverCarouselStyle(it) }
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            }
+            
             item(key = "discover_carousel_behavior", contentType = "settings_card") {
                 AnimatedVisibility(visible = showDiscoverCarousel) {
                     Card(
@@ -11675,6 +11690,113 @@ private fun HomeScreenTipItem(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onPrimaryContainer
         )
+    }
+}
+
+@Composable
+private fun CarouselStyleSelector(
+    selectedStyle: Int,
+    onStyleSelected: (Int) -> Unit
+) {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    
+    val styles = listOf(
+        Triple(0, "Default", "2 side peek albums"),
+        Triple(1, "Hero", "1 side peek album")
+    )
+    
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.ViewCarousel,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(50))
+                        .padding(8.dp),
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Column {
+                    Text(
+                        text = "Carousel Style",
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Choose how albums are displayed",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                styles.forEach { (style, title, description) ->
+                    val isSelected = selectedStyle == style
+                    
+                    Card(
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            onStyleSelected(style)
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isSelected) 
+                                MaterialTheme.colorScheme.primaryContainer 
+                            else 
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        ),
+                        border = if (isSelected) 
+                            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                        else 
+                            null
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = when (style) {
+                                    0 -> Icons.Rounded.ViewColumn
+                                    else -> Icons.Rounded.CenterFocusWeak
+                                },
+                                contentDescription = null,
+                                tint = if (isSelected) 
+                                    MaterialTheme.colorScheme.onPrimaryContainer 
+                                else 
+                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = title,
+                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                                color = if (isSelected) 
+                                    MaterialTheme.colorScheme.onPrimaryContainer 
+                                else 
+                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

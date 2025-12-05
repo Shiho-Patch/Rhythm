@@ -55,6 +55,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.carousel.HorizontalCenteredHeroCarousel
+import androidx.compose.material3.carousel.HorizontalUncontainedCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.material3.carousel.CarouselDefaults
 import androidx.compose.material.icons.Icons
@@ -511,6 +512,7 @@ private fun ModernScrollableContent(
     val recentlyAddedCount by appSettings.homeRecentlyAddedCount.collectAsState()
     val recommendedCount by appSettings.homeRecommendedCount.collectAsState()
     val carouselHeight by appSettings.homeCarouselHeight.collectAsState()
+    val discoverCarouselStyle by appSettings.homeDiscoverCarouselStyle.collectAsState()
     
     // Discover widget card content visibility settings
     val discoverShowAlbumName by appSettings.homeDiscoverShowAlbumName.collectAsState()
@@ -747,7 +749,8 @@ private fun ModernScrollableContent(
                                 showYear = discoverShowYear,
                                 showPlayButton = discoverShowPlayButton,
                                 showGradient = discoverShowGradient,
-                                carouselHeight = carouselHeight
+                                carouselHeight = carouselHeight,
+                                carouselStyle = discoverCarouselStyle
                             )
                         } else {
                             ModernEmptyState(
@@ -1551,36 +1554,66 @@ private fun ModernFeaturedSection(
     showYear: Boolean = true,
     showPlayButton: Boolean = true,
     showGradient: Boolean = true,
-    carouselHeight: Int = 260
+    carouselHeight: Int = 260,
+    carouselStyle: Int = 0 // 0=Hero, 1=MultiBrowse, 2=Uncontained
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     
     Column(modifier = Modifier.fillMaxWidth()) {
-        // Material 3 HorizontalCenteredHeroCarousel
-        HorizontalCenteredHeroCarousel(
-            state = carouselState,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(carouselHeight.dp)
-                .padding(vertical = 8.dp),
-            itemSpacing = 16.dp,
-            contentPadding = PaddingValues(horizontal = 32.dp),
-            flingBehavior = CarouselDefaults.singleAdvanceFlingBehavior(state = carouselState)
-        ) { itemIndex ->
-            val album = albums[itemIndex]
-            HeroCarouselCard(
-                album = album,
-                onClick = { onAlbumClick(album) },
-                modifier = Modifier
-                    .maskClip(MaterialTheme.shapes.extraLarge),
-                showAlbumName = showAlbumName,
-                showArtistName = showArtistName,
-                showYear = showYear,
-                showPlayButton = showPlayButton,
-                showGradient = showGradient
-            )
+        when (carouselStyle) {
+            0 -> {
+                // Default - Centered Hero Carousel with 2 side peeks
+                HorizontalCenteredHeroCarousel(
+                    state = carouselState,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(carouselHeight.dp)
+                        .padding(vertical = 8.dp),
+                    itemSpacing = 16.dp,
+                    contentPadding = PaddingValues(horizontal = 32.dp),
+                    flingBehavior = CarouselDefaults.singleAdvanceFlingBehavior(state = carouselState)
+                ) { itemIndex ->
+                    val album = albums[itemIndex]
+                    HeroCarouselCard(
+                        album = album,
+                        onClick = { onAlbumClick(album) },
+                        modifier = Modifier.maskClip(MaterialTheme.shapes.extraLarge),
+                        showAlbumName = showAlbumName,
+                        showArtistName = showArtistName,
+                        showYear = showYear,
+                        showPlayButton = showPlayButton,
+                        showGradient = showGradient
+                    )
+                }
+            }
+            else -> {
+                // Hero - Uncontained Carousel with 1 peek (larger centered item)
+                HorizontalUncontainedCarousel(
+                    state = carouselState,
+                    itemWidth = 300.dp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(carouselHeight.dp)
+                        .padding(vertical = 8.dp),
+                    itemSpacing = 12.dp,
+                    contentPadding = PaddingValues(horizontal = 40.dp),
+                    flingBehavior = CarouselDefaults.singleAdvanceFlingBehavior(state = carouselState)
+                ) { itemIndex ->
+                    val album = albums[itemIndex]
+                    HeroCarouselCard(
+                        album = album,
+                        onClick = { onAlbumClick(album) },
+                        modifier = Modifier.maskClip(MaterialTheme.shapes.extraLarge),
+                        showAlbumName = showAlbumName,
+                        showArtistName = showArtistName,
+                        showYear = showYear,
+                        showPlayButton = showPlayButton,
+                        showGradient = showGradient
+                    )
+                }
+            }
         }
         
         // Modern page indicators

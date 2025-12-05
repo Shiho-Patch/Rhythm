@@ -264,6 +264,7 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_HOME_DISCOVER_AUTO_SCROLL_INTERVAL = "home_discover_auto_scroll_interval"
         private const val KEY_HOME_DISCOVER_ITEM_COUNT = "home_discover_item_count"
         private const val KEY_HOME_CAROUSEL_HEIGHT = "home_carousel_height"
+        private const val KEY_HOME_DISCOVER_CAROUSEL_STYLE = "home_discover_carousel_style" // 0=Default (2 side peeks), 1=Hero (1 side peek)
         private const val KEY_HOME_DISCOVER_SHOW_ALBUM_NAME = "home_discover_show_album_name"
         private const val KEY_HOME_DISCOVER_SHOW_ARTIST_NAME = "home_discover_show_artist_name"
         private const val KEY_HOME_DISCOVER_SHOW_YEAR = "home_discover_show_year"
@@ -2612,6 +2613,16 @@ class AppSettings private constructor(context: Context) {
         if (value in 180..320) {
             _homeCarouselHeight.value = value
             prefs.edit().putInt(KEY_HOME_CAROUSEL_HEIGHT, value).apply()
+        }
+    }
+    
+    // Carousel Style: 0=Default (CenteredHero, 2 side peeks), 1=Hero (Uncontained, 1 side peek)
+    private val _homeDiscoverCarouselStyle = MutableStateFlow(prefs.getInt(KEY_HOME_DISCOVER_CAROUSEL_STYLE, 0))
+    val homeDiscoverCarouselStyle: StateFlow<Int> = _homeDiscoverCarouselStyle.asStateFlow()
+    fun setHomeDiscoverCarouselStyle(value: Int) {
+        if (value in 0..1) {
+            _homeDiscoverCarouselStyle.value = value
+            prefs.edit().putInt(KEY_HOME_DISCOVER_CAROUSEL_STYLE, value).apply()
         }
     }
     
