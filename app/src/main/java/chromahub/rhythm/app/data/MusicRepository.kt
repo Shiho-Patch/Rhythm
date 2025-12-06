@@ -1046,8 +1046,8 @@ class MusicRepository(context: Context) {
 
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColumn)
-                val title = cursor.getString(albumColumn)
-                val artist = cursor.getString(artistColumn)
+                val title = cursor.getString(albumColumn) ?: continue // Skip if null
+                val artist = cursor.getString(artistColumn) ?: "Unknown Artist"
                 val songsCount = cursor.getInt(songsCountColumn)
                 val year = cursor.getInt(yearColumn)
 

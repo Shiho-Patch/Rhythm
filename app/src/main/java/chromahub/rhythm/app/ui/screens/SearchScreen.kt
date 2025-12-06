@@ -107,7 +107,7 @@ import coil.request.ImageRequest
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-
+import chromahub.rhythm.app.data.AppSettings
 import androidx.compose.material3.rememberModalBottomSheetState
 import chromahub.rhythm.app.ui.screens.AddToPlaylistBottomSheet
 import chromahub.rhythm.app.ui.components.CreatePlaylistDialog
