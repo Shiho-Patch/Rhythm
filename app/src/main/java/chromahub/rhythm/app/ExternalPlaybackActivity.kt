@@ -185,7 +185,7 @@ fun ExternalPlaybackBottomSheet(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp),
+                    .padding(horizontal = 32.dp, vertical = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Drag handle
@@ -205,7 +205,6 @@ fun ExternalPlaybackBottomSheet(
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
                 ) {
                     Surface(
                         modifier = Modifier.size(56.dp),
@@ -249,9 +248,9 @@ fun ExternalPlaybackBottomSheet(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
+                            .padding(20.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        horizontalArrangement = Arrangement.spacedBy(20.dp)
                     ) {
                         // Album Art with shadow
                         currentSong?.artworkUri?.let { artUri ->
@@ -314,51 +313,62 @@ fun ExternalPlaybackBottomSheet(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Progress Slider with Time - Enhanced styling
-                currentSong?.let { song ->
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Slider(
-                            value = progress,
-                            onValueChange = { newProgress ->
-                                val positionMs = (song.duration * newProgress).toLong()
-                                musicViewModel.seekTo(positionMs)
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = SliderDefaults.colors(
-                                thumbColor = MaterialTheme.colorScheme.primary,
-                                activeTrackColor = MaterialTheme.colorScheme.primary,
-                                inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
-                            )
-                        )
-                        
-                        Spacer(modifier = Modifier.height(4.dp))
-                        
-                        // Time Row with better design
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                // Progress Section with better spacing
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f),
+                    tonalElevation = 1.dp
+                ) {
+                    currentSong?.let { song ->
+                        Column(
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
                         ) {
-                            Text(
-                                text = formatTime((song.duration * progress).toLong()),
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.primary
+                            Slider(
+                                value = progress,
+                                onValueChange = { newProgress ->
+                                    val positionMs = (song.duration * newProgress).toLong()
+                                    musicViewModel.seekTo(positionMs)
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = SliderDefaults.colors(
+                                    thumbColor = MaterialTheme.colorScheme.primary,
+                                    activeTrackColor = MaterialTheme.colorScheme.primary,
+                                    inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                                )
                             )
-                            Text(
-                                text = formatTime(song.duration),
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            
+                            Spacer(modifier = Modifier.height(4.dp))
+                            
+                            // Time Row with better design
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = formatTime((song.duration * progress).toLong()),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    text = formatTime(song.duration),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(28.dp))
 
                 // Playback Controls Row - Enhanced with better visual hierarchy
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -458,7 +468,7 @@ fun ExternalPlaybackBottomSheet(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Open Full Player Button - Enhanced design
+                // Open Rhythm Button - Enhanced design
                 FilledTonalButton(
                     onClick = onOpenFullPlayer,
                     modifier = Modifier
@@ -471,7 +481,7 @@ fun ExternalPlaybackBottomSheet(
                     )
                 ) {
                     Text(
-                        text = "Open full player",
+                        text = "Open Rhythm",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )

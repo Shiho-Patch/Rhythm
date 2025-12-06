@@ -2156,8 +2156,8 @@ fun SingleCardPlaylistsContent(
             ),
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
-            // Sticky Section Header
-            stickyHeader {
+            // Section Header (not sticky in list view)
+            item {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -2416,8 +2416,8 @@ fun SingleCardAlbumsContent(
                 ),
                 verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
-                // Sticky Section Header
-                stickyHeader {
+                // Section Header (not sticky in list view)
+                item {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -2468,14 +2468,20 @@ fun SingleCardAlbumsContent(
                             if (preparedAlbums.isNotEmpty()) {
                                 FilledTonalIconButton(
                                     onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        HapticUtils.performHapticFeedback(
+                                            context,
+                                            haptics,
+                                            HapticFeedbackType.LongPress
+                                        )
                                         val allSongs = preparedAlbums.flatMap { it.songs }
                                         if (allSongs.isNotEmpty()) {
                                             onPlayQueue(allSongs)
                                         }
                                     },
                                     colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                        containerColor = MaterialTheme.colorScheme.primary.copy(
+                                            alpha = 0.15f
+                                        ),
                                         contentColor = MaterialTheme.colorScheme.primary
                                     ),
                                     modifier = Modifier.size(44.dp)
@@ -2492,7 +2498,11 @@ fun SingleCardAlbumsContent(
                                 // Shuffle Button
                                 FilledIconButton(
                                     onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        HapticUtils.performHapticFeedback(
+                                            context,
+                                            haptics,
+                                            HapticFeedbackType.LongPress
+                                        )
                                         val allSongs = preparedAlbums.flatMap { it.songs }
                                         if (allSongs.isNotEmpty()) {
                                             onShuffleQueue(allSongs)
@@ -4887,8 +4897,8 @@ fun SingleCardArtistsContent(
             ),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Sticky header for list view
-            stickyHeader {
+            // Section header (not sticky in list view)
+            item {
                 ArtistSectionHeader(
                     artistCount = sortedArtists.size,
                     artists = sortedArtists,
