@@ -2087,9 +2087,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         // Find the position of the song in the context
         val songIndex = contextSongs.indexOfFirst { it.id == song.id }
         if (songIndex != -1) {
-            // Reorder the context so the selected song plays first, followed by the rest
-            val reorderedQueue = listOf(song) + contextSongs.filter { it.id != song.id }
-            playQueue(reorderedQueue)
+            // Play the queue starting from the selected song's index
+            // This maintains the original order and allows proper progression
+            playQueue(contextSongs, startIndex = songIndex)
         } else {
             // Song not found in context, add it to the front and play
             val newQueue = listOf(song) + contextSongs
@@ -2291,8 +2291,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun playQueue(songs: List<Song>, enableShuffle: Boolean? = null) {
-        Log.d(TAG, "Playing queue with ${songs.size} songs, shuffle: $enableShuffle")
+    fun playQueue(songs: List<Song>, enableShuffle: Boolean? = null, startIndex: Int = 0) {
+        Log.d(TAG, "Playing queue with ${songs.size} songs, shuffle: $enableShuffle, startIndex: $startIndex")
         
         // Clear current lyrics to prevent showing stale lyrics from previous song
         _currentLyrics.value = null
@@ -2300,6 +2300,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         if (songs.isEmpty()) {
             Log.e(TAG, "Cannot play empty queue")
             return
+        }
+        
+        // Validate startIndex
+        val validStartIndex = startIndex.coerceIn(0, songs.size - 1)
+        if (startIndex != validStartIndex) {
+            Log.w(TAG, "startIndex $startIndex out of bounds, using $validStartIndex")
         }
         
         // Build media items on a background thread to avoid blocking the main thread
@@ -2343,29 +2349,29 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                         // Prepare BEFORE setting queue state for better sync
                         controller.prepare()
                         
-                        // Set the queue in the view model immediately for UI responsiveness
-                        _currentQueue.value = Queue(songs, 0)
+                        // Set the queue in the view model with the correct starting index
+                        _currentQueue.value = Queue(songs, validStartIndex)
                         
-                        // Start playback from the first song
-                        controller.seekToDefaultPosition(0)
+                        // Start playback from the specified index
+                        controller.seekToDefaultPosition(validStartIndex)
                         controller.play()
                         
-                        // Update current song and state
-                        val firstSong = songs.firstOrNull()
-                        _currentSong.value = firstSong
+                        // Update current song and state to the song at startIndex
+                        val startingSong = songs.getOrNull(validStartIndex)
+                        _currentSong.value = startingSong
                         _isPlaying.value = true
                         
-                        // Add first song to recently played
-                        firstSong?.let { updateRecentlyPlayed(it) }
+                        // Add starting song to recently played
+                        startingSong?.let { updateRecentlyPlayed(it) }
                         
                         // Update favorite status
-                        _isFavorite.value = firstSong?.let { song -> 
+                        _isFavorite.value = startingSong?.let { song -> 
                             _favoriteSongs.value.contains(song.id) 
                         } ?: false
                         
                         startProgressUpdates()
                         
-                        Log.d(TAG, "Successfully started playback of queue with ${songs.size} songs")
+                        Log.d(TAG, "Successfully started playback of queue with ${songs.size} songs from index $validStartIndex")
                         
                         // Debug queue state
                         debugQueueState()
