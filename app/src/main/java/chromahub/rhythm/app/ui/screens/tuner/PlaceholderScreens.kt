@@ -7360,8 +7360,16 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
     // State variables
     val showLyrics by appSettings.showLyrics.collectAsState()
     val canvasApiEnabled by appSettings.canvasApiEnabled.collectAsState()
+    val playerShowGradientOverlay by appSettings.playerShowGradientOverlay.collectAsState()
+    val playerShowSeekButtons by appSettings.playerShowSeekButtons.collectAsState()
+    val playerTextAlignment by appSettings.playerTextAlignment.collectAsState()
+    val playerShowSongInfoOnArtwork by appSettings.playerShowSongInfoOnArtwork.collectAsState()
+    val playerArtworkCornerRadius by appSettings.playerArtworkCornerRadius.collectAsState()
+    val playerShowAudioQualityBadges by appSettings.playerShowAudioQualityBadges.collectAsState()
     
     var showChipOrderBottomSheet by remember { mutableStateOf(false) }
+    var showTextAlignmentDialog by remember { mutableStateOf(false) }
+    var showCornerRadiusSheet by remember { mutableStateOf(false) }
     
     CollapsibleHeaderScreen(
         title = "Player",
@@ -7434,7 +7442,105 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             toggleState = canvasApiEnabled,
                             onToggleChange = { appSettings.setCanvasApiEnabled(it) }
                         )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        SettingRow(
+                            icon = Icons.Default.Gradient,
+                            title = "Gradient Overlay",
+                            description = "Show gradient overlay on album artwork",
+                            toggleState = playerShowGradientOverlay,
+                            onToggleChange = { appSettings.setPlayerShowGradientOverlay(it) }
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        SettingRow(
+                            icon = Icons.Default.Info,
+                            title = "Song Info on Artwork",
+                            description = "Show title and artist overlay on album art",
+                            toggleState = playerShowSongInfoOnArtwork,
+                            onToggleChange = { appSettings.setPlayerShowSongInfoOnArtwork(it) }
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        SettingRow(
+                            icon = Icons.Default.HighQuality,
+                            title = "Audio Quality Badges",
+                            description = "Display codec and bitrate information",
+                            toggleState = playerShowAudioQualityBadges,
+                            onToggleChange = { appSettings.setPlayerShowAudioQualityBadges(it) }
+                        )
                     }
+                }
+            }
+            
+            // Layout Options Section
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Layout Options",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column {
+                        SettingRow(
+                            icon = Icons.Default.Forward10,
+                            title = "Seek Buttons",
+                            description = "Show 10-second skip forward/backward buttons",
+                            toggleState = playerShowSeekButtons,
+                            onToggleChange = { appSettings.setPlayerShowSeekButtons(it) }
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        SettingRow(
+                            icon = Icons.Default.FormatAlignCenter,
+                            title = "Text Alignment",
+                            description = when(playerTextAlignment) {
+                                "START" -> "Left aligned"
+                                "END" -> "Right aligned"
+                                else -> "Center aligned"
+                            },
+                            onClick = { showTextAlignmentDialog = true }
+                        )
+                    }
+                }
+            }
+            
+            // Artwork Customization Section
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Artwork Customization",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    SettingRow(
+                        icon = Icons.Default.RoundedCorner,
+                        title = "Corner Radius",
+                        description = "${playerArtworkCornerRadius}dp",
+                        onClick = { showCornerRadiusSheet = true }
+                    )
                 }
             }
 
@@ -7538,6 +7644,157 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
             appSettings = appSettings,
             haptics = haptics
         )
+    }
+    
+    // Text Alignment Dialog
+    if (showTextAlignmentDialog) {
+        AlertDialog(
+            onDismissRequest = { showTextAlignmentDialog = false },
+            title = { Text("Text Alignment") },
+            text = {
+                Column {
+                    listOf(
+                        "START" to "Left",
+                        "CENTER" to "Center",
+                        "END" to "Right"
+                    ).forEach { (value, label) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    appSettings.setPlayerTextAlignment(value)
+                                    showTextAlignmentDialog = false
+                                }
+                                .padding(vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = playerTextAlignment == value,
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    appSettings.setPlayerTextAlignment(value)
+                                    showTextAlignmentDialog = false
+                                }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(label)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showTextAlignmentDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+    
+    // Corner Radius Bottom Sheet
+    if (showCornerRadiusSheet) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        var tempRadius by remember { mutableIntStateOf(playerArtworkCornerRadius) }
+        
+        ModalBottomSheet(
+            onDismissRequest = { showCornerRadiusSheet = false },
+            sheetState = sheetState,
+            dragHandle = { 
+                BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.primary)
+            },
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 0.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Corner Radius",
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 6.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    shape = CircleShape
+                                )
+                        ) {
+                            Text(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.labelLarge,
+                                text = "${tempRadius}dp",
+                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 1,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Slider(
+                    value = tempRadius.toFloat(),
+                    onValueChange = { tempRadius = it.toInt() },
+                    onValueChangeFinished = {
+                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        appSettings.setPlayerArtworkCornerRadius(tempRadius)
+                    },
+                    valueRange = 0f..40f,
+                    steps = 39,
+                    colors = SliderDefaults.colors(
+                        thumbColor = MaterialTheme.colorScheme.primary,
+                        activeTrackColor = MaterialTheme.colorScheme.primary
+                    )
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Info card
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.tertiary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "Adjusts the roundness of album artwork corners",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
     }
 }
 

@@ -287,6 +287,14 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_ARTIST_SEPARATOR_ENABLED = "artist_separator_enabled"
         private const val KEY_ARTIST_SEPARATOR_DELIMITERS = "artist_separator_delimiters" // Comma-separated string of delimiters
         
+        // Player Screen Customization Settings
+        private const val KEY_PLAYER_SHOW_GRADIENT_OVERLAY = "player_show_gradient_overlay"
+        private const val KEY_PLAYER_SHOW_SEEK_BUTTONS = "player_show_seek_buttons"
+        private const val KEY_PLAYER_TEXT_ALIGNMENT = "player_text_alignment" // "START", "CENTER", "END"
+        private const val KEY_PLAYER_SHOW_SONG_INFO_ON_ARTWORK = "player_show_song_info_on_artwork"
+        private const val KEY_PLAYER_ARTWORK_CORNER_RADIUS = "player_artwork_corner_radius" // 0-40 dp
+        private const val KEY_PLAYER_SHOW_AUDIO_QUALITY_BADGES = "player_show_audio_quality_badges"
+        
         @Volatile
         private var INSTANCE: AppSettings? = null
         
@@ -2446,6 +2454,14 @@ class AppSettings private constructor(context: Context) {
         _widgetShowAlbum.value = prefs.getBoolean(KEY_WIDGET_SHOW_ALBUM, true)
         _widgetCornerRadius.value = prefs.getInt(KEY_WIDGET_CORNER_RADIUS, 24)
         _widgetAutoUpdate.value = prefs.getBoolean(KEY_WIDGET_AUTO_UPDATE, true)
+        
+        // Player Screen Customization Settings
+        _playerShowGradientOverlay.value = prefs.getBoolean(KEY_PLAYER_SHOW_GRADIENT_OVERLAY, true)
+        _playerShowSeekButtons.value = prefs.getBoolean(KEY_PLAYER_SHOW_SEEK_BUTTONS, true)
+        _playerTextAlignment.value = prefs.getString(KEY_PLAYER_TEXT_ALIGNMENT, "CENTER") ?: "CENTER"
+        _playerShowSongInfoOnArtwork.value = prefs.getBoolean(KEY_PLAYER_SHOW_SONG_INFO_ON_ARTWORK, true)
+        _playerArtworkCornerRadius.value = prefs.getInt(KEY_PLAYER_ARTWORK_CORNER_RADIUS, 28)
+        _playerShowAudioQualityBadges.value = prefs.getBoolean(KEY_PLAYER_SHOW_AUDIO_QUALITY_BADGES, true)
     }
     
     // ==================== Widget Settings ====================
@@ -2550,6 +2566,50 @@ class AppSettings private constructor(context: Context) {
     fun setHomeShowMoodSections(value: Boolean) {
         _homeShowMoodSections.value = value
         prefs.edit().putBoolean(KEY_HOME_SHOW_MOOD_SECTIONS, value).apply()
+    }
+    
+    // ==================== Player Screen Customization Settings ====================
+    
+    private val _playerShowGradientOverlay = MutableStateFlow(prefs.getBoolean(KEY_PLAYER_SHOW_GRADIENT_OVERLAY, true))
+    val playerShowGradientOverlay: StateFlow<Boolean> = _playerShowGradientOverlay.asStateFlow()
+    fun setPlayerShowGradientOverlay(value: Boolean) {
+        _playerShowGradientOverlay.value = value
+        prefs.edit().putBoolean(KEY_PLAYER_SHOW_GRADIENT_OVERLAY, value).apply()
+    }
+    
+    private val _playerShowSeekButtons = MutableStateFlow(prefs.getBoolean(KEY_PLAYER_SHOW_SEEK_BUTTONS, true))
+    val playerShowSeekButtons: StateFlow<Boolean> = _playerShowSeekButtons.asStateFlow()
+    fun setPlayerShowSeekButtons(value: Boolean) {
+        _playerShowSeekButtons.value = value
+        prefs.edit().putBoolean(KEY_PLAYER_SHOW_SEEK_BUTTONS, value).apply()
+    }
+    
+    private val _playerTextAlignment = MutableStateFlow(prefs.getString(KEY_PLAYER_TEXT_ALIGNMENT, "CENTER") ?: "CENTER")
+    val playerTextAlignment: StateFlow<String> = _playerTextAlignment.asStateFlow()
+    fun setPlayerTextAlignment(value: String) {
+        _playerTextAlignment.value = value
+        prefs.edit().putString(KEY_PLAYER_TEXT_ALIGNMENT, value).apply()
+    }
+    
+    private val _playerShowSongInfoOnArtwork = MutableStateFlow(prefs.getBoolean(KEY_PLAYER_SHOW_SONG_INFO_ON_ARTWORK, true))
+    val playerShowSongInfoOnArtwork: StateFlow<Boolean> = _playerShowSongInfoOnArtwork.asStateFlow()
+    fun setPlayerShowSongInfoOnArtwork(value: Boolean) {
+        _playerShowSongInfoOnArtwork.value = value
+        prefs.edit().putBoolean(KEY_PLAYER_SHOW_SONG_INFO_ON_ARTWORK, value).apply()
+    }
+    
+    private val _playerArtworkCornerRadius = MutableStateFlow(prefs.getInt(KEY_PLAYER_ARTWORK_CORNER_RADIUS, 28))
+    val playerArtworkCornerRadius: StateFlow<Int> = _playerArtworkCornerRadius.asStateFlow()
+    fun setPlayerArtworkCornerRadius(value: Int) {
+        _playerArtworkCornerRadius.value = value.coerceIn(0, 40)
+        prefs.edit().putInt(KEY_PLAYER_ARTWORK_CORNER_RADIUS, _playerArtworkCornerRadius.value).apply()
+    }
+    
+    private val _playerShowAudioQualityBadges = MutableStateFlow(prefs.getBoolean(KEY_PLAYER_SHOW_AUDIO_QUALITY_BADGES, true))
+    val playerShowAudioQualityBadges: StateFlow<Boolean> = _playerShowAudioQualityBadges.asStateFlow()
+    fun setPlayerShowAudioQualityBadges(value: Boolean) {
+        _playerShowAudioQualityBadges.value = value
+        prefs.edit().putBoolean(KEY_PLAYER_SHOW_AUDIO_QUALITY_BADGES, value).apply()
     }
     
     private val _homeDiscoverAutoScroll = MutableStateFlow(prefs.getBoolean(KEY_HOME_DISCOVER_AUTO_SCROLL, true))

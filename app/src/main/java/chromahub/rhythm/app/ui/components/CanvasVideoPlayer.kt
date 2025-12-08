@@ -62,6 +62,7 @@ fun CanvasVideoPlayer(
     modifier: Modifier = Modifier,
     isPlaying: Boolean = true,
     cornerRadius: androidx.compose.ui.unit.Dp = 28.dp,
+    showGradientOverlay: Boolean = true,
     onVideoReady: (() -> Unit)? = null,
     onVideoError: (() -> Unit)? = null
 ) {
@@ -339,42 +340,44 @@ fun CanvasVideoPlayer(
                     .scale(videoScale)
             )
 
-            // Add gradient overlays on top of the video player
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(cornerRadius))
-                    .alpha(videoAlpha)
-                    .scale(videoScale)
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                BottomSheetDefaults.ContainerColor.copy(alpha = 0.6f),
-                                BottomSheetDefaults.ContainerColor.copy(alpha = 0.9f),
-                                BottomSheetDefaults.ContainerColor.copy(alpha = 1.0f)
+            // Add gradient overlays on top of the video player (controlled by setting)
+            if (showGradientOverlay) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(cornerRadius))
+                        .alpha(videoAlpha)
+                        .scale(videoScale)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    BottomSheetDefaults.ContainerColor.copy(alpha = 0.6f),
+                                    BottomSheetDefaults.ContainerColor.copy(alpha = 0.9f),
+                                    BottomSheetDefaults.ContainerColor.copy(alpha = 1.0f)
+                                )
                             )
                         )
-                    )
-            )
+                )
 
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(cornerRadius))
-                    .alpha(videoAlpha)
-                    .scale(videoScale)
-                    .background(
-                        Brush.horizontalGradient(
-                            colors = listOf(
-                                BottomSheetDefaults.ContainerColor.copy(alpha = 0.2f),
-                                Color.Transparent,
-                                Color.Transparent,
-                                BottomSheetDefaults.ContainerColor.copy(alpha = 0.2f)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(cornerRadius))
+                        .alpha(videoAlpha)
+                        .scale(videoScale)
+                        .background(
+                            Brush.horizontalGradient(
+                                colors = listOf(
+                                    BottomSheetDefaults.ContainerColor.copy(alpha = 0.2f),
+                                    Color.Transparent,
+                                    Color.Transparent,
+                                    BottomSheetDefaults.ContainerColor.copy(alpha = 0.2f)
+                                )
                             )
                         )
-                    )
-            )
+                )
+            }
         }
     }
 }
@@ -392,6 +395,7 @@ fun CanvasPlayer(
     cornerRadius: androidx.compose.ui.unit.Dp = 28.dp,
     albumArtUrl: Any? = null,
     albumName: String? = null,
+    showGradientOverlay: Boolean = true,
     onCanvasLoaded: (() -> Unit)? = null,
     onCanvasFailed: (() -> Unit)? = null,
     onRetryRequested: (() -> Unit)? = null,
@@ -445,37 +449,39 @@ fun CanvasPlayer(
             )
         ) {
             fallbackContent()
-            // Add gradient overlays to fallback content for consistency
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                BottomSheetDefaults.ContainerColor.copy(alpha = 0.6f),
-                                BottomSheetDefaults.ContainerColor.copy(alpha = 0.9f),
-                                BottomSheetDefaults.ContainerColor.copy(alpha = 1.0f)
+            // Add gradient overlays to fallback content for consistency (controlled by setting)
+            if (showGradientOverlay) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    BottomSheetDefaults.ContainerColor.copy(alpha = 0.6f),
+                                    BottomSheetDefaults.ContainerColor.copy(alpha = 0.9f),
+                                    BottomSheetDefaults.ContainerColor.copy(alpha = 1.0f)
+                                )
                             )
                         )
-                    )
-            )
-            
-            // Horizontal gradient for more depth
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.horizontalGradient(
-                            colors = listOf(
-                                BottomSheetDefaults.ContainerColor.copy(alpha = 0.2f),
-                                Color.Transparent,
-                                Color.Transparent,
-                                BottomSheetDefaults.ContainerColor.copy(alpha = 0.2f)
+                )
+                
+                // Horizontal gradient for more depth
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.horizontalGradient(
+                                colors = listOf(
+                                    BottomSheetDefaults.ContainerColor.copy(alpha = 0.2f),
+                                    Color.Transparent,
+                                    Color.Transparent,
+                                    BottomSheetDefaults.ContainerColor.copy(alpha = 0.2f)
+                                )
                             )
                         )
-                    )
-            )
+                )
+            }
         }
         return
     }
@@ -521,37 +527,40 @@ fun CanvasPlayer(
                             shape = RoundedCornerShape(cornerRadius)
                         )
                         
-                        // Add gradient overlays to album art for consistency with canvas
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(
-                                    Brush.verticalGradient(
-                                        colors = listOf(
-                                            Color.Transparent,
-                                            BottomSheetDefaults.ContainerColor.copy(alpha = 0.6f),
-                                            BottomSheetDefaults.ContainerColor.copy(alpha = 0.9f),
-                                            BottomSheetDefaults.ContainerColor.copy(alpha = 1.0f)
+                        // Add gradient overlays to album art for consistency with canvas (controlled by setting)
+                        if (showGradientOverlay) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        Brush.verticalGradient(
+                                            colors = listOf(
+                                                Color.Transparent,
+                                                BottomSheetDefaults.ContainerColor.copy(alpha = 0.6f),
+                                                BottomSheetDefaults.ContainerColor.copy(alpha = 0.9f),
+                                                BottomSheetDefaults.ContainerColor.copy(alpha = 1.0f)
+                                            )
                                         )
                                     )
-                                )
-                        )
-                        
-                        // Horizontal gradient for more depth
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(
-                                    Brush.horizontalGradient(
-                                        colors = listOf(
-                                            BottomSheetDefaults.ContainerColor.copy(alpha = 0.2f),
-                                            Color.Transparent,
-                                            Color.Transparent,
-                                            BottomSheetDefaults.ContainerColor.copy(alpha = 0.2f)
+                            )
+                            
+                            // Horizontal gradient for more depth
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        Brush.horizontalGradient(
+                                            colors = listOf(
+                                                BottomSheetDefaults.ContainerColor.copy(alpha = 0.2f),
+                                                Color.Transparent,
+                                                Color.Transparent,
+                                                BottomSheetDefaults.ContainerColor.copy(alpha = 0.2f)
+                                            )
                                         )
                                     )
-                                )
-                        )
+                                
+                            )
+                        }
                     }
                 } else if (fallbackContent != null) {
                     fallbackContent()
@@ -671,6 +680,7 @@ fun CanvasPlayer(
                     videoUrl = videoUrl,
                     isPlaying = isPlaying,
                     cornerRadius = cornerRadius,
+                    showGradientOverlay = showGradientOverlay,
                     modifier = Modifier.fillMaxSize(),
                     onVideoReady = {
                         Log.d("CanvasPlayer", "Canvas video is ready and animated in")

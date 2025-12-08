@@ -278,6 +278,15 @@ fun PlayerScreen(
     val useSystemVolume by appSettingsInstance.useSystemVolume.collectAsState()
     val groupByAlbumArtist by appSettingsInstance.groupByAlbumArtist.collectAsState()
     val useHoursFormat by appSettingsInstance.useHoursInTimeFormat.collectAsState()
+    
+    // Player customization settings
+    val playerShowGradientOverlay by appSettingsInstance.playerShowGradientOverlay.collectAsState()
+    val playerShowSeekButtons by appSettingsInstance.playerShowSeekButtons.collectAsState()
+    val playerTextAlignment by appSettingsInstance.playerTextAlignment.collectAsState()
+    val playerShowSongInfoOnArtwork by appSettingsInstance.playerShowSongInfoOnArtwork.collectAsState()
+    val playerArtworkCornerRadius by appSettingsInstance.playerArtworkCornerRadius.collectAsState()
+    val playerShowAudioQualityBadges by appSettingsInstance.playerShowAudioQualityBadges.collectAsState()
+    val canvasApiEnabled by appSettingsInstance.canvasApiEnabled.collectAsState()
 
     // Helper function to split artist names
     val splitArtistNames: (String) -> List<String> = remember {
@@ -473,7 +482,7 @@ fun PlayerScreen(
     }
 
     // Load canvas when song changes, but preserve lyrics view state
-    LaunchedEffect(song?.id) {
+    LaunchedEffect(song?.id, canvasApiEnabled) {
         if (song != null) {
             // Don't reset lyrics view state - let user maintain their preference
             // Only reset song info visibility if lyrics are currently showing
@@ -484,6 +493,12 @@ fun PlayerScreen(
             // Reset canvas state
             canvasData = null
             canvasRetryCount = 0 // Reset retry count for new song
+            
+            // Only load canvas if Canvas API is enabled
+            if (!canvasApiEnabled) {
+                Log.d("PlayerScreen", "Canvas API disabled, skipping canvas load")
+                return@LaunchedEffect
+            }
             
             // Try to load canvas for the new song
             try {
@@ -1186,7 +1201,7 @@ fun PlayerScreen(
                             modifier = Modifier
                                 .fillMaxWidth(1.0f) // Enlarged album art to touch screen edges
                                 .aspectRatio(1f)
-                                .clip(RoundedCornerShape(if (isCompactHeight) 20.dp else 28.dp))
+                                .clip(RoundedCornerShape(if (isCompactHeight) 20.dp else playerArtworkCornerRadius.dp))
                                 .graphicsLayer {
                                     // Album art scales and shrinks during swipe (mini-player effect)
                                     val combinedScale = albumScale * (1f - swipeProgress * 0.2f)
@@ -1221,10 +1236,11 @@ fun PlayerScreen(
                                 CanvasPlayer(
                                     videoUrl = canvasData?.videoUrl,
                                     isPlaying = true, // Always keep canvas playing
-                                    cornerRadius = if (isCompactHeight) 20.dp else 28.dp,
+                                    cornerRadius = if (isCompactHeight) 20.dp else playerArtworkCornerRadius.dp,
                                     modifier = Modifier.fillMaxSize(),
                                     albumArtUrl = song.artworkUri,
                                     albumName = song.title,
+                                    showGradientOverlay = playerShowGradientOverlay,
                                     onCanvasLoaded = {
                                         Log.d(
                                             "PlayerScreen",
@@ -1253,14 +1269,14 @@ fun PlayerScreen(
                                                     contentScale = ContentScale.Crop,
                                                     modifier = Modifier
                                                         .fillMaxSize()
-                                                        .clip(RoundedCornerShape(if (isCompactHeight) 20.dp else 28.dp))
+                                                        .clip(RoundedCornerShape(if (isCompactHeight) 20.dp else playerArtworkCornerRadius.dp))
                                                 )
                                             } else {
                                                 // Fallback to Rhythm logo if artwork is null
                                                 Box(
                                                     modifier = Modifier
                                                         .fillMaxSize()
-                                                        .clip(RoundedCornerShape(if (isCompactHeight) 20.dp else 28.dp))
+                                                        .clip(RoundedCornerShape(if (isCompactHeight) 20.dp else playerArtworkCornerRadius.dp))
                                                         .background(
                                                             Brush.radialGradient(
                                                                 colors = listOf(
@@ -1283,46 +1299,48 @@ fun PlayerScreen(
                                                         modifier = Modifier.size(120.dp)
                                                     )
 
-                                                    // Add gradient overlays for consistency
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .fillMaxSize()
-                                                            .background(
-                                                                Brush.verticalGradient(
-                                                                    colors = listOf(
-                                                                        Color.Transparent,
-                                                                        BottomSheetDefaults.ContainerColor.copy(
-                                                                            alpha = 0.6f
-                                                                        ),
-                                                                        BottomSheetDefaults.ContainerColor.copy(
-                                                                            alpha = 0.9f
-                                                                        ),
-                                                                        BottomSheetDefaults.ContainerColor.copy(
-                                                                            alpha = 1.0f
+                                                    // Add gradient overlays for consistency (controlled by setting)
+                                                    if (playerShowGradientOverlay) {
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .fillMaxSize()
+                                                                .background(
+                                                                    Brush.verticalGradient(
+                                                                        colors = listOf(
+                                                                            Color.Transparent,
+                                                                            BottomSheetDefaults.ContainerColor.copy(
+                                                                                alpha = 0.6f
+                                                                            ),
+                                                                            BottomSheetDefaults.ContainerColor.copy(
+                                                                                alpha = 0.9f
+                                                                            ),
+                                                                            BottomSheetDefaults.ContainerColor.copy(
+                                                                                alpha = 1.0f
+                                                                            )
                                                                         )
                                                                     )
                                                                 )
-                                                            )
-                                                    )
+                                                        )
 
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .fillMaxSize()
-                                                            .background(
-                                                                Brush.horizontalGradient(
-                                                                    colors = listOf(
-                                                                        BottomSheetDefaults.ContainerColor.copy(
-                                                                            alpha = 0.2f
-                                                                        ),
-                                                                        Color.Transparent,
-                                                                        Color.Transparent,
-                                                                        BottomSheetDefaults.ContainerColor.copy(
-                                                                            alpha = 0.2f
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .fillMaxSize()
+                                                                .background(
+                                                                    Brush.horizontalGradient(
+                                                                        colors = listOf(
+                                                                            BottomSheetDefaults.ContainerColor.copy(
+                                                                                alpha = 0.2f
+                                                                            ),
+                                                                            Color.Transparent,
+                                                                            Color.Transparent,
+                                                                            BottomSheetDefaults.ContainerColor.copy(
+                                                                                alpha = 0.2f
+                                                                            )
                                                                         )
                                                                     )
                                                                 )
-                                                            )
-                                                    )
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }
@@ -1361,7 +1379,7 @@ fun PlayerScreen(
                             ) {
                                 // Song info overlay on album art with improved animations
                                 AnimatedVisibility(
-                                    visible = song != null && isSongInfoVisible && !showLyricsView,
+                                    visible = song != null && isSongInfoVisible && !showLyricsView && playerShowSongInfoOnArtwork,
                                     enter = fadeIn(
                                         animationSpec = tween(
                                             durationMillis = 300,
@@ -1389,7 +1407,11 @@ fun PlayerScreen(
                                 ) {
                                     if (song != null) {
                                         Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            horizontalAlignment = when(playerTextAlignment) {
+                                                "START" -> Alignment.Start
+                                                "END" -> Alignment.End
+                                                else -> Alignment.CenterHorizontally
+                                            },
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .padding(
@@ -1405,7 +1427,11 @@ fun PlayerScreen(
                                                     fontSize = if (isCompactHeight) 22.sp else 28.sp
                                                 ),
                                                 color = MaterialTheme.colorScheme.onSurface,
-                                                textAlign = TextAlign.Center,
+                                                textAlign = when(playerTextAlignment) {
+                                                    "START" -> TextAlign.Start
+                                                    "END" -> TextAlign.End
+                                                    else -> TextAlign.Center
+                                                },
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis,
                                                 modifier = Modifier
@@ -1433,7 +1459,11 @@ fun PlayerScreen(
                                                 color = MaterialTheme.colorScheme.onSurface.copy(
                                                     alpha = 0.85f
                                                 ),
-                                                textAlign = TextAlign.Center,
+                                                textAlign = when(playerTextAlignment) {
+                                                    "START" -> TextAlign.Start
+                                                    "END" -> TextAlign.End
+                                                    else -> TextAlign.Center
+                                                },
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis,
                                                 modifier = Modifier
@@ -1444,11 +1474,13 @@ fun PlayerScreen(
                                             )
                                             
                                             // Audio quality badges
-                                            Spacer(modifier = Modifier.height(8.dp))
-                                            AudioQualityBadges(
-                                                song = song,
-                                                modifier = Modifier.fillMaxWidth()
-                                            )
+                                            if (playerShowAudioQualityBadges) {
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                                AudioQualityBadges(
+                                                    song = song,
+                                                    modifier = Modifier.fillMaxWidth()
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -1939,7 +1971,7 @@ fun PlayerScreen(
 
                             // Seek 10 seconds back button
                             AnimatedVisibility(
-                                visible = isPlaying, // Show when paused
+                                visible = isPlaying && playerShowSeekButtons, // Show when paused and setting enabled
                                 enter = fadeIn(
                                     animationSpec = spring(
                                         dampingRatio = Spring.DampingRatioMediumBouncy,
@@ -2097,7 +2129,7 @@ fun PlayerScreen(
 
                             // Seek 10 seconds forward button
                             AnimatedVisibility(
-                                visible = isPlaying, // Show when paused
+                                visible = isPlaying && playerShowSeekButtons, // Show when paused and setting enabled
                                 enter = fadeIn(
                                     animationSpec = spring(
                                         dampingRatio = Spring.DampingRatioMediumBouncy,
