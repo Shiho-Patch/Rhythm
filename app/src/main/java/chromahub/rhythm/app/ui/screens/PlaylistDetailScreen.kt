@@ -1069,7 +1069,8 @@ fun PlaylistSongItem(
                 Surface(
                     modifier = Modifier.size(56.dp),
                     shape = RoundedCornerShape(12.dp),
-                    tonalElevation = 4.dp
+                    tonalElevation = 4.dp,
+                    border = if (isCurrentSong) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
                 ) {
                     AsyncImage(
                         model = ImageRequest.Builder(context)

@@ -125,12 +125,19 @@ object MediaUtils {
                         cursor.getLong(albumIdIndex)
                     )
                     
+                    // Parse multiple artists from the artist string
+                    val rawArtist = cursor.getString(artistIndex)
+                    val appSettings = chromahub.rhythm.app.data.AppSettings.getInstance(context)
+                    val artistSeparatorEnabled = appSettings.artistSeparatorEnabled.value
+                    val delimiters = appSettings.artistSeparatorDelimiters.value
+                    val artist = ArtistSeparator.getPrimaryArtist(rawArtist, delimiters, artistSeparatorEnabled)
+                    
                     Log.d(TAG, "Found matching song in MediaStore with ID: $id")
                     
                     return Song(
                         id = id.toString(),
                         title = cursor.getString(titleIndex),
-                        artist = cursor.getString(artistIndex),
+                        artist = artist,
                         album = cursor.getString(albumIndex),
                         albumId = cursor.getLong(albumIdIndex).toString(),
                         duration = cursor.getLong(durationIndex),
@@ -232,7 +239,16 @@ object MediaUtils {
 
                 // Use extracted metadata if available, otherwise use fallbacks
                 title = extractedTitle ?: title ?: uri.lastPathSegment?.substringBeforeLast(".") ?: "Unknown"
-                artist = extractedArtist ?: "Unknown Artist"
+                
+                // Parse multiple artists from the artist string using configured delimiters
+                val rawArtist = extractedArtist ?: "Unknown Artist"
+                val appSettings = chromahub.rhythm.app.data.AppSettings.getInstance(context)
+                val artistSeparatorEnabled = appSettings.artistSeparatorEnabled.value
+                val delimiters = appSettings.artistSeparatorDelimiters.value
+                
+                // Get primary artist for display (first artist in the list)
+                artist = ArtistSeparator.getPrimaryArtist(rawArtist, delimiters, artistSeparatorEnabled)
+                
                 album = extractedAlbum ?: "Unknown Album"
                 duration = extractedDuration?.toLongOrNull() ?: 0L
                 year = extractedYear?.toIntOrNull() ?: 0

@@ -114,6 +114,7 @@ object SettingsRoutes {
     const val ABOUT = "about_screen"
     const val UPDATES = "updates_screen"
     const val MEDIA_SCAN = "media_scan_settings"
+    const val ARTIST_SEPARATORS = "artist_separators_settings"
     const val PLAYLISTS = "playlist_settings"
     const val API_MANAGEMENT = "api_management_settings"
     const val CACHE_MANAGEMENT = "cache_management_settings"
@@ -247,6 +248,7 @@ fun SettingsScreen(
                     //     toggleState = groupByAlbumArtist,
                     //     onToggleChange = { appSettings.setGroupByAlbumArtist(it) }
                     // ),
+                    SettingItem(Icons.Default.Person, "Artists", "Configure multi-artist parsing and organization", onClick = { onNavigateTo(SettingsRoutes.ARTIST_SEPARATORS) }),
                     SettingItem(Icons.Default.Folder, "Media Scan", "Manage blacklist and media scanning", onClick = { onNavigateTo(SettingsRoutes.MEDIA_SCAN) }),
                     SettingItem(Icons.AutoMirrored.Filled.QueueMusic, "Playlists", "Manage your playlists", onClick = { onNavigateTo(SettingsRoutes.PLAYLISTS) })
                 )
@@ -816,6 +818,7 @@ fun SettingsScreenWrapper(onBack: () -> Unit, appSettings: chromahub.rhythm.app.
             SettingsRoutes.NOTIFICATIONS -> NotificationsSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.PLAYLISTS -> PlaylistsSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.MEDIA_SCAN -> MediaScanSettingsScreen(onBackClick = { currentRoute = null })
+            SettingsRoutes.ARTIST_SEPARATORS -> ArtistSeparatorsSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.ABOUT -> chromahub.rhythm.app.ui.screens.tuner.AboutScreen(
                 onBackClick = { currentRoute = null },
                 onNavigateToUpdates = { currentRoute = SettingsRoutes.UPDATES }

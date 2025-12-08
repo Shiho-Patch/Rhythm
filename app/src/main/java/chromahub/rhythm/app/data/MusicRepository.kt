@@ -602,7 +602,20 @@ class MusicRepository(context: Context) {
         return try {
             val id = cursor.getLong(indices.id)
             val title = cursor.getString(indices.title)?.trim() ?: return null
-            val artist = cursor.getString(indices.artist)?.trim() ?: "Unknown Artist"
+            val rawArtist = cursor.getString(indices.artist)?.trim() ?: "Unknown Artist"
+            
+            // Parse multiple artists from the artist string using configured delimiters
+            val appSettings = AppSettings.getInstance(context)
+            val artistSeparatorEnabled = appSettings.artistSeparatorEnabled.value
+            val delimiters = appSettings.artistSeparatorDelimiters.value
+            
+            // Get primary artist for the Song object (first artist in the list)
+            val artist = chromahub.rhythm.app.util.ArtistSeparator.getPrimaryArtist(
+                rawArtist,
+                delimiters,
+                artistSeparatorEnabled
+            )
+            
             val album = cursor.getString(indices.album)?.trim() ?: "Unknown Album"
             val albumId = cursor.getLong(indices.albumId)
             val duration = cursor.getLong(indices.duration)

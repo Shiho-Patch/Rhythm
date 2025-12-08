@@ -2444,6 +2444,470 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    val appSettings = AppSettings.getInstance(context)
+    val scope = rememberCoroutineScope()
+    
+    val artistSeparatorEnabled by appSettings.artistSeparatorEnabled.collectAsState()
+    val artistSeparatorDelimiters by appSettings.artistSeparatorDelimiters.collectAsState()
+    val groupByAlbumArtist by appSettings.groupByAlbumArtist.collectAsState()
+    
+    var showDelimiterBottomSheet by remember { mutableStateOf(false) }
+    var tempDelimiters by remember { mutableStateOf(artistSeparatorDelimiters) }
+    
+    CollapsibleHeaderScreen(
+        title = "Artists",
+        showBackButton = true,
+        onBackClick = {
+            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+            onBackClick()
+        }
+    ) { modifier ->
+        val settingGroups = listOf(
+            SettingGroup(
+                title = "Multi-Artist Parsing",
+                items = listOf(
+                    SettingItem(
+                        Icons.Default.Person,
+                        "Enable Artist Separation",
+                        "Split multi-artist tags (e.g., \"Artist1/Artist2\")",
+                        toggleState = artistSeparatorEnabled,
+                        onToggleChange = { 
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            appSettings.setArtistSeparatorEnabled(it)
+                        }
+                    ),
+                    SettingItem(
+                        Icons.Default.Settings,
+                        "Configure Delimiters",
+                        "Current: ${artistSeparatorDelimiters.toCharArray().joinToString(", ")}",
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            tempDelimiters = artistSeparatorDelimiters
+                            showDelimiterBottomSheet = true
+                        }
+                    )
+                ),
+            ),
+            SettingGroup(
+                title = "Library Organization",
+                items = listOf(
+                    SettingItem(
+                        Icons.Default.Album,
+                        "Group by Album Artist",
+                        "Show collaboration albums under main artist",
+                        toggleState = groupByAlbumArtist,
+                        onToggleChange = { 
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            appSettings.setGroupByAlbumArtist(it)
+                        }
+                    )
+                )
+            )
+        )
+
+        val lazyListState = rememberSaveable(
+            key = "artist_separators_scroll_state",
+            saver = LazyListStateSaver
+        ) {
+            androidx.compose.foundation.lazy.LazyListState()
+        }
+        
+        LazyColumn(
+            state = lazyListState,
+            modifier = modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(horizontal = 24.dp)
+        ) {
+            items(
+                items = settingGroups,
+                key = { "setting_${it.title}" },
+                contentType = { "settingGroup" }
+            ) { group ->
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = group.title,
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column {
+                        when (group.title) {
+                            "Multi-Artist Parsing" -> {
+                                // First item: Enable Artist Separation
+                                TunerSettingRow(item = group.items[0])
+                                
+                                // Second item: Configure Delimiters with AnimatedVisibility
+                                AnimatedVisibility(
+                                    visible = artistSeparatorEnabled,
+                                    enter = fadeIn(animationSpec = tween(300)) + expandVertically(animationSpec = tween(300)),
+                                    exit = fadeOut(animationSpec = tween(200)) + shrinkVertically(animationSpec = tween(200))
+                                ) {
+                                    Column {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 20.dp),
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                        )
+                                        TunerSettingRow(item = group.items[1])
+                                    }
+                                }
+                            }
+                            else -> {
+                                // Default rendering for other groups
+                                group.items.forEachIndexed { index, item ->
+                                    TunerSettingRow(item = item)
+                                    if (index < group.items.lastIndex) {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 20.dp),
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Info Card
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "About Multi-Artist Parsing",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "When enabled, Rhythm will automatically split artist tags containing multiple artists. This is useful for songs downloaded with yt-dlp or other tools that use delimiters like '/' to separate artists.\n\nBackslash (\\\\) can be used to escape delimiters.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                        )
+                    }
+                }
+            }
+            
+            // Examples
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Lightbulb,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "Examples",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        ArtistSeparatorExampleItem(
+                            original = "Artist1/Artist2",
+                            result = "Artist1, Artist2"
+                        )
+                        ArtistSeparatorExampleItem(
+                            original = "Artist1; Artist2",
+                            result = "Artist1, Artist2"
+                        )
+                        ArtistSeparatorExampleItem(
+                            original = "Artist1 & Artist2",
+                            result = "Artist1, Artist2"
+                        )
+                        ArtistSeparatorExampleItem(
+                            original = "Artist1\\\\/Artist2",
+                            result = "Artist1/Artist2 (escaped)"
+                        )
+                    }
+                }
+            }
+            
+            item {
+                Spacer(modifier = Modifier.height(32.dp))
+            }
+        }
+    }
+    
+    // Delimiter Configuration Bottom Sheet
+    if (showDelimiterBottomSheet) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        
+        // Animation states
+        var showContent by remember { mutableStateOf(false) }
+        val contentAlpha by animateFloatAsState(
+            targetValue = if (showContent) 1f else 0f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            ),
+            label = "contentAlpha"
+        )
+
+        LaunchedEffect(Unit) {
+            delay(100)
+            showContent = true
+        }
+        
+        ModalBottomSheet(
+            onDismissRequest = { showDelimiterBottomSheet = false },
+            sheetState = sheetState,
+            dragHandle = {
+                BottomSheetDefaults.DragHandle(
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+                    .graphicsLayer(alpha = contentAlpha)
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 0.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                            text = "Configure Delimiters",
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 6.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    shape = CircleShape
+                                )
+                        ) {
+                            Text(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.labelLarge,
+                                text = "Select artist separators",
+                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 1,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                val commonDelimiters = listOf(
+                    '/' to "Slash",
+                    ';' to "Semicolon",
+                    ',' to "Comma",
+                    '+' to "Plus",
+                    '&' to "Ampersand"
+                )
+                
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    commonDelimiters.forEach { (char, name) ->
+                        Card(
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                tempDelimiters = if (tempDelimiters.contains(char)) {
+                                    tempDelimiters.replace(char.toString(), "")
+                                } else {
+                                    tempDelimiters + char
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (tempDelimiters.contains(char))
+                                    MaterialTheme.colorScheme.primaryContainer
+                                else
+                                    MaterialTheme.colorScheme.surfaceContainerHighest
+                            ),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp, vertical = 18.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(44.dp)
+                                            .background(
+                                                color = if (tempDelimiters.contains(char))
+                                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                                                else
+                                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = char.toString(),
+                                            style = MaterialTheme.typography.titleLarge,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (tempDelimiters.contains(char))
+                                                MaterialTheme.colorScheme.primary
+                                            else
+                                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                        )
+                                    }
+                                    Text(
+                                        text = name,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Medium,
+                                        color = if (tempDelimiters.contains(char))
+                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                        else
+                                            MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                                Checkbox(
+                                    checked = tempDelimiters.contains(char),
+                                    onCheckedChange = null,
+                                    colors = CheckboxDefaults.colors(
+                                        checkedColor = MaterialTheme.colorScheme.primary,
+                                        checkmarkColor = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Button(
+                    onClick = {
+                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                        scope.launch {
+                            appSettings.setArtistSeparatorDelimiters(tempDelimiters)
+                            showDelimiterBottomSheet = false
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    enabled = tempDelimiters.isNotEmpty()
+                ) {
+                    Text(
+                        text = "Save Changes",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ArtistSeparatorExampleItem(original: String, result: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.MusicNote,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f),
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "\"$original\"",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(start = 24.dp, top = 2.dp)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.4f),
+                modifier = Modifier.size(14.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = result,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+            )
+        }
+    }
+}
+
 @Composable
 fun ApiServiceRow(
     title: String,
@@ -4559,7 +5023,6 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
     val context = LocalContext.current
     val appSettings = AppSettings.getInstance(context)
     val hapticFeedbackEnabled by appSettings.hapticFeedbackEnabled.collectAsState()
-    val groupByAlbumArtist by appSettings.groupByAlbumArtist.collectAsState()
     val showLyrics by appSettings.showLyrics.collectAsState()
     val festiveThemeEnabled by appSettings.festiveThemeEnabled.collectAsState()
     val festiveThemeAutoDetect by appSettings.festiveThemeAutoDetect.collectAsState()
@@ -4630,21 +5093,6 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                     )
                 )
             }
-            
-            add(
-                SettingGroup(
-                    title = "Library Organization",
-                    items = listOf(
-                        SettingItem(
-                            Icons.Default.Person,
-                            "Group by Album Artist",
-                            "Show collaboration albums under main artist",
-                            toggleState = groupByAlbumArtist,
-                            onToggleChange = { appSettings.setGroupByAlbumArtist(it) }
-                        )
-                    )
-                )
-            )
         }
 
         LazyColumn(

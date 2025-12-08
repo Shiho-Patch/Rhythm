@@ -283,6 +283,10 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_HOME_SHOW_PLAY_BUTTONS = "home_show_play_buttons"
         private const val KEY_HOME_SECTION_ORDER = "home_section_order"
         
+        // Artist Separator Settings
+        private const val KEY_ARTIST_SEPARATOR_ENABLED = "artist_separator_enabled"
+        private const val KEY_ARTIST_SEPARATOR_DELIMITERS = "artist_separator_delimiters" // Comma-separated string of delimiters
+        
         @Volatile
         private var INSTANCE: AppSettings? = null
         
@@ -347,6 +351,16 @@ class AppSettings private constructor(context: Context) {
     
     private val _useDynamicColors = MutableStateFlow(prefs.getBoolean(KEY_USE_DYNAMIC_COLORS, false))
     val useDynamicColors: StateFlow<Boolean> = _useDynamicColors.asStateFlow()
+    
+    // Artist Separator Settings
+    private val _artistSeparatorEnabled = MutableStateFlow(prefs.getBoolean(KEY_ARTIST_SEPARATOR_ENABLED, true))
+    val artistSeparatorEnabled: StateFlow<Boolean> = _artistSeparatorEnabled.asStateFlow()
+    
+    // Default delimiters: / ; , + &
+    private val _artistSeparatorDelimiters = MutableStateFlow(
+        prefs.getString(KEY_ARTIST_SEPARATOR_DELIMITERS, "/;,+&") ?: "/;,+&"
+    )
+    val artistSeparatorDelimiters: StateFlow<String> = _artistSeparatorDelimiters.asStateFlow()
     
     private val _customColorScheme = MutableStateFlow(prefs.getString(KEY_CUSTOM_COLOR_SCHEME, "Default") ?: "Default")
     val customColorScheme: StateFlow<String> = _customColorScheme.asStateFlow()
@@ -985,6 +999,17 @@ class AppSettings private constructor(context: Context) {
     fun setUseDynamicColors(use: Boolean) {
         prefs.edit().putBoolean(KEY_USE_DYNAMIC_COLORS, use).apply()
         _useDynamicColors.value = use
+    }
+    
+    // Artist Separator Settings Methods
+    fun setArtistSeparatorEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_ARTIST_SEPARATOR_ENABLED, enabled).apply()
+        _artistSeparatorEnabled.value = enabled
+    }
+    
+    fun setArtistSeparatorDelimiters(delimiters: String) {
+        prefs.edit().putString(KEY_ARTIST_SEPARATOR_DELIMITERS, delimiters).apply()
+        _artistSeparatorDelimiters.value = delimiters
     }
     
     fun setCustomColorScheme(scheme: String) {
@@ -2668,7 +2693,7 @@ class AppSettings private constructor(context: Context) {
     
     // Default section order for home screen
     private val defaultHomeSectionOrder = listOf(
-        "GREETING", "RECENTLY_PLAYED", "DISCOVER", "ARTISTS", 
+        "GREETING", "DISCOVER", "RECENTLY_PLAYED", "ARTISTS", 
         "NEW_RELEASES", "RECENTLY_ADDED", "RECOMMENDED", "STATS", "MOOD"
     )
     private val _homeSectionOrder = MutableStateFlow(
