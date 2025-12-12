@@ -87,6 +87,8 @@ import kotlin.system.exitProcess
 import chromahub.rhythm.app.ui.components.CollapsibleHeaderScreen
 import chromahub.rhythm.app.ui.components.RhythmIcons
 import chromahub.rhythm.app.ui.components.StandardBottomSheetHeader
+import chromahub.rhythm.app.ui.components.StyledProgressBar
+import chromahub.rhythm.app.ui.components.ProgressStyle
 import chromahub.rhythm.app.ui.screens.LicensesBottomSheet
 import chromahub.rhythm.app.ui.utils.LazyListStateSaver
 import chromahub.rhythm.app.viewmodel.MusicViewModel
@@ -7349,6 +7351,413 @@ fun LibraryTabOrderSettingsScreen(onBackClick: () -> Unit) {
     }
 }
 
+// MiniPlayer Customization Screen
+@Composable
+fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
+    val context = LocalContext.current
+    val appSettings = AppSettings.getInstance(context)
+    val haptics = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
+    
+    // MiniPlayer settings
+    val miniPlayerProgressStyle by appSettings.miniPlayerProgressStyle.collectAsState()
+    val miniPlayerShowProgress by appSettings.miniPlayerShowProgress.collectAsState()
+    val miniPlayerShowArtwork by appSettings.miniPlayerShowArtwork.collectAsState()
+    val miniPlayerArtworkSize by appSettings.miniPlayerArtworkSize.collectAsState()
+    val miniPlayerCornerRadius by appSettings.miniPlayerCornerRadius.collectAsState()
+    val miniPlayerShowTime by appSettings.miniPlayerShowTime.collectAsState()
+    val miniPlayerUseCircularProgress by appSettings.miniPlayerUseCircularProgress.collectAsState()
+    
+    var showMiniPlayerProgressStyleSheet by remember { mutableStateOf(false) }
+    var showMiniPlayerArtworkSizeSheet by remember { mutableStateOf(false) }
+    var showMiniPlayerCornerRadiusSheet by remember { mutableStateOf(false) }
+    
+    CollapsibleHeaderScreen(
+        title = "MiniPlayer",
+        showBackButton = true,
+        onBackClick = onBackClick
+    ) { modifier ->
+        LazyColumn(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp)
+        ) {
+            
+            // Progress Display Section
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Progress Display",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column {
+                        // Progress preview
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 12.dp)
+                        ) {
+                            val previewStyle = try {
+                                ProgressStyle.valueOf(miniPlayerProgressStyle)
+                            } catch (e: IllegalArgumentException) {
+                                ProgressStyle.NORMAL
+                            }
+                            if (miniPlayerShowProgress && !miniPlayerUseCircularProgress) {
+                                StyledProgressBar(
+                                    progress = 0.45f,
+                                    style = previewStyle,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    progressColor = MaterialTheme.colorScheme.primary,
+                                    trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                                    height = 4.dp,
+                                    isPlaying = true
+                                )
+                            } else if (miniPlayerShowProgress && miniPlayerUseCircularProgress) {
+                                Box(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator(
+                                        progress = { 0.45f },
+                                        modifier = Modifier.size(32.dp),
+                                        color = MaterialTheme.colorScheme.primary,
+                                        trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                                        strokeWidth = 3.dp
+                                    )
+                                }
+                            } else {
+                                Text(
+                                    text = "Progress hidden",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        SettingRow(
+                            icon = Icons.Default.Visibility,
+                            title = "Show Progress",
+                            description = "Display progress indicator",
+                            toggleState = miniPlayerShowProgress,
+                            onToggleChange = { appSettings.setMiniPlayerShowProgress(it) }
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        SettingRow(
+                            icon = Icons.Default.ChangeCircle,
+                            title = "Circular Progress",
+                            description = "Use circular progress on play/pause button",
+                            toggleState = miniPlayerUseCircularProgress,
+                            onToggleChange = { appSettings.setMiniPlayerUseCircularProgress(it) }
+                        )
+                        if (!miniPlayerUseCircularProgress) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 20.dp),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                            )
+                            SettingRow(
+                                icon = Icons.Default.LinearScale,
+                                title = "Progress Style",
+                                description = miniPlayerProgressStyle.lowercase().replaceFirstChar { it.uppercase() },
+                                onClick = { showMiniPlayerProgressStyleSheet = true }
+                            )
+                        }
+                    }
+                }
+            }
+            
+            // Artwork Section
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Artwork",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column {
+                        SettingRow(
+                            icon = Icons.Default.Album,
+                            title = "Show Artwork",
+                            description = "Display album artwork",
+                            toggleState = miniPlayerShowArtwork,
+                            onToggleChange = { appSettings.setMiniPlayerShowArtwork(it) }
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        SettingRow(
+                            icon = Icons.Default.PhotoSizeSelectLarge,
+                            title = "Artwork Size",
+                            description = "${miniPlayerArtworkSize}dp",
+                            onClick = { showMiniPlayerArtworkSizeSheet = true }
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        SettingRow(
+                            icon = Icons.Default.RoundedCorner,
+                            title = "Corner Radius",
+                            description = "${miniPlayerCornerRadius}dp",
+                            onClick = { showMiniPlayerCornerRadiusSheet = true }
+                        )
+                    }
+                }
+            }
+            
+            // Display Options Section
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Display Options",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    SettingRow(
+                        icon = Icons.Default.Timer,
+                        title = "Show Time",
+                        description = "Display playback time",
+                        toggleState = miniPlayerShowTime,
+                        onToggleChange = { appSettings.setMiniPlayerShowTime(it) }
+                    )
+                }
+            }
+
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+
+            // Description Card
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "MiniPlayer",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Customize the compact player that appears at the bottom of your screen.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+            }
+            
+            item { Spacer(modifier = Modifier.height(24.dp)) }
+        }
+    }
+    
+    // MiniPlayer Progress Style Bottom Sheet
+    if (showMiniPlayerProgressStyleSheet) {
+        ProgressStyleBottomSheet(
+            title = "Progress Style",
+            currentStyle = miniPlayerProgressStyle,
+            onStyleSelected = { style ->
+                appSettings.setMiniPlayerProgressStyle(style)
+                showMiniPlayerProgressStyleSheet = false
+            },
+            onDismiss = { showMiniPlayerProgressStyleSheet = false },
+            context = context,
+            haptics = haptics
+        )
+    }
+    
+    // MiniPlayer Artwork Size Bottom Sheet
+    if (showMiniPlayerArtworkSizeSheet) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        var tempSize by remember { mutableIntStateOf(miniPlayerArtworkSize) }
+        
+        ModalBottomSheet(
+            onDismissRequest = { showMiniPlayerArtworkSizeSheet = false },
+            sheetState = sheetState,
+            dragHandle = { 
+                BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.primary)
+            },
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Artwork Size",
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 6.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    shape = CircleShape
+                                )
+                        ) {
+                            Text(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.labelLarge,
+                                text = "${tempSize}dp",
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Slider(
+                    value = tempSize.toFloat(),
+                    onValueChange = { tempSize = it.toInt() },
+                    onValueChangeFinished = {
+                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        appSettings.setMiniPlayerArtworkSize(tempSize)
+                    },
+                    valueRange = 40f..72f,
+                    steps = 31,
+                    colors = SliderDefaults.colors(
+                        thumbColor = MaterialTheme.colorScheme.primary,
+                        activeTrackColor = MaterialTheme.colorScheme.primary
+                    )
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+    }
+    
+    // MiniPlayer Corner Radius Bottom Sheet
+    if (showMiniPlayerCornerRadiusSheet) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        var tempRadius by remember { mutableIntStateOf(miniPlayerCornerRadius) }
+        
+        ModalBottomSheet(
+            onDismissRequest = { showMiniPlayerCornerRadiusSheet = false },
+            sheetState = sheetState,
+            dragHandle = { 
+                BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.primary)
+            },
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Corner Radius",
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 6.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    shape = CircleShape
+                                )
+                        ) {
+                            Text(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.labelLarge,
+                                text = "${tempRadius}dp",
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Slider(
+                    value = tempRadius.toFloat(),
+                    onValueChange = { tempRadius = it.toInt() },
+                    onValueChangeFinished = {
+                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        appSettings.setMiniPlayerCornerRadius(tempRadius)
+                    },
+                    valueRange = 0f..28f,
+                    steps = 27,
+                    colors = SliderDefaults.colors(
+                        thumbColor = MaterialTheme.colorScheme.primary,
+                        activeTrackColor = MaterialTheme.colorScheme.primary
+                    )
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+    }
+}
+
 // Player Customization Screen
 @Composable
 fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
@@ -7367,9 +7776,13 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
     val playerArtworkCornerRadius by appSettings.playerArtworkCornerRadius.collectAsState()
     val playerShowAudioQualityBadges by appSettings.playerShowAudioQualityBadges.collectAsState()
     
+    // Progress bar settings
+    val playerProgressStyle by appSettings.playerProgressStyle.collectAsState()
+    
     var showChipOrderBottomSheet by remember { mutableStateOf(false) }
-    var showTextAlignmentDialog by remember { mutableStateOf(false) }
+    var showTextAlignmentSheet by remember { mutableStateOf(false) }
     var showCornerRadiusSheet by remember { mutableStateOf(false) }
+    var showPlayerProgressStyleSheet by remember { mutableStateOf(false) }
     
     CollapsibleHeaderScreen(
         title = "Player",
@@ -7514,7 +7927,58 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                 "END" -> "Right aligned"
                                 else -> "Center aligned"
                             },
-                            onClick = { showTextAlignmentDialog = true }
+                            onClick = { showTextAlignmentSheet = true }
+                        )
+                    }
+                }
+            }
+            
+            // Progress Bar Style Section
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Progress Display",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column {
+                        // Progress style preview
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 16.dp)
+                        ) {
+                            val previewStyle = try {
+                                ProgressStyle.valueOf(playerProgressStyle)
+                            } catch (e: IllegalArgumentException) {
+                                ProgressStyle.WAVY
+                            }
+                            StyledProgressBar(
+                                progress = 0.65f,
+                                style = previewStyle,
+                                modifier = Modifier.fillMaxWidth(),
+                                progressColor = MaterialTheme.colorScheme.primary,
+                                trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                                height = 8.dp,
+                                isPlaying = true
+                            )
+                        }
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        SettingRow(
+                            icon = Icons.Default.LinearScale,
+                            title = "Progress Style",
+                            description = playerProgressStyle.lowercase().replaceFirstChar { it.uppercase() },
+                            onClick = { showPlayerProgressStyleSheet = true }
                         )
                     }
                 }
@@ -7524,7 +7988,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
             item {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    text = "Artwork Customization",
+                    text = "Artwork",
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
@@ -7646,48 +8110,116 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
         )
     }
     
-    // Text Alignment Dialog
-    if (showTextAlignmentDialog) {
-        AlertDialog(
-            onDismissRequest = { showTextAlignmentDialog = false },
-            title = { Text("Text Alignment") },
-            text = {
-                Column {
-                    listOf(
-                        "START" to "Left",
-                        "CENTER" to "Center",
-                        "END" to "Right"
-                    ).forEach { (value, label) ->
+    // Text Alignment Bottom Sheet
+    if (showTextAlignmentSheet) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        
+        ModalBottomSheet(
+            onDismissRequest = { showTextAlignmentSheet = false },
+            sheetState = sheetState,
+            dragHandle = { 
+                BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.primary)
+            },
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+            ) {
+                // Header
+                Text(
+                    text = "Text Alignment",
+                    style = MaterialTheme.typography.displayMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(vertical = 16.dp)
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Alignment options
+                listOf(
+                    Triple("START", "Left", Icons.AutoMirrored.Filled.AlignHorizontalLeft),
+                    Triple("CENTER", "Center", Icons.Default.FormatAlignCenter),
+                    Triple("END", "Right", Icons.AutoMirrored.Filled.AlignHorizontalRight)
+                ).forEach { (value, label, icon) ->
+                    val isSelected = playerTextAlignment == value
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isSelected) 
+                                MaterialTheme.colorScheme.primaryContainer 
+                            else 
+                                MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            appSettings.setPlayerTextAlignment(value)
+                            showTextAlignmentSheet = false
+                        }
+                    ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                    appSettings.setPlayerTextAlignment(value)
-                                    showTextAlignmentDialog = false
-                                }
-                                .padding(vertical = 12.dp),
+                                .padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            RadioButton(
-                                selected = playerTextAlignment == value,
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                    appSettings.setPlayerTextAlignment(value)
-                                    showTextAlignmentDialog = false
-                                }
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = label,
+                                tint = if (isSelected) 
+                                    MaterialTheme.colorScheme.onPrimaryContainer 
+                                else 
+                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(24.dp)
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(label)
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                color = if (isSelected) 
+                                    MaterialTheme.colorScheme.onPrimaryContainer 
+                                else 
+                                    MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.weight(1f))
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Selected",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         }
                     }
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = { showTextAlignmentDialog = false }) {
-                    Text("Cancel")
-                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
             }
+        }
+    }
+    
+    // Player Progress Style Bottom Sheet
+    if (showPlayerProgressStyleSheet) {
+        ProgressStyleBottomSheet(
+            title = "Progress Style",
+            currentStyle = playerProgressStyle,
+            onStyleSelected = { style ->
+                appSettings.setPlayerProgressStyle(style)
+                showPlayerProgressStyleSheet = false
+            },
+            onDismiss = { showPlayerProgressStyleSheet = false },
+            context = context,
+            haptics = haptics
         )
     }
     
@@ -7894,6 +8426,191 @@ private fun PlayerTipItem(
         )
     }
 }
+
+/**
+ * Bottom sheet for selecting progress bar style with visual previews
+ */
+@Composable
+private fun ProgressStyleBottomSheet(
+    title: String,
+    currentStyle: String,
+    onStyleSelected: (String) -> Unit,
+    onDismiss: () -> Unit,
+    context: Context,
+    haptics: HapticFeedback
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    
+    val progressStyles = listOf(
+        ProgressStyleOption("NORMAL", "Normal", Icons.Default.LinearScale, "Standard progress bar"),
+        ProgressStyleOption("WAVY", "Wavy", Icons.Default.GraphicEq, "Animated wavy line"),
+        ProgressStyleOption("ROUNDED", "Rounded", Icons.Default.RoundedCorner, "Pill-shaped progress"),
+        ProgressStyleOption("THIN", "Thin", Icons.Default.Remove, "Thin elegant line"),
+        ProgressStyleOption("THICK", "Thick", Icons.Default.DragHandle, "Bold thick bar"),
+        ProgressStyleOption("GRADIENT", "Gradient", Icons.Default.Gradient, "Multi-color gradient"),
+        ProgressStyleOption("SEGMENTED", "Segmented", Icons.Default.MoreHoriz, "Segmented blocks"),
+        ProgressStyleOption("DOTS", "Dots", Icons.Default.FiberManualRecord, "Dot indicators")
+    )
+    
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        dragHandle = { 
+            BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.primary)
+        },
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
+        ) {
+            // Header
+            Text(
+                text = title,
+                style = MaterialTheme.typography.displayMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Style options in a grid
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 8.dp)
+            ) {
+                items(progressStyles) { styleOption ->
+                    val isSelected = currentStyle == styleOption.id
+                    val progressStyleEnum = try {
+                        ProgressStyle.valueOf(styleOption.id)
+                    } catch (e: IllegalArgumentException) {
+                        ProgressStyle.NORMAL
+                    }
+                    
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(130.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isSelected) 
+                                MaterialTheme.colorScheme.primaryContainer 
+                            else 
+                                MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        border = if (isSelected) 
+                            BorderStroke(2.dp, MaterialTheme.colorScheme.primary) 
+                        else null,
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            onStyleSelected(styleOption.id)
+                        }
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            // Preview of the style
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(32.dp)
+                                    .padding(horizontal = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                StyledProgressBar(
+                                    progress = 0.6f,
+                                    style = progressStyleEnum,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    progressColor = if (isSelected)
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else
+                                        MaterialTheme.colorScheme.primary,
+                                    trackColor = if (isSelected)
+                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f)
+                                    else
+                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                                    height = 6.dp,
+                                    isPlaying = true
+                                )
+                            }
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(
+                                    imageVector = styleOption.icon,
+                                    contentDescription = null,
+                                    tint = if (isSelected) 
+                                        MaterialTheme.colorScheme.onPrimaryContainer 
+                                    else 
+                                        MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = styleOption.label,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                    color = if (isSelected) 
+                                        MaterialTheme.colorScheme.onPrimaryContainer 
+                                    else 
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                            
+                            Text(
+                                text = styleOption.description,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (isSelected)
+                                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                            
+                            if (isSelected) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Selected",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+/**
+ * Data class for progress style options
+ */
+private data class ProgressStyleOption(
+    val id: String,
+    val label: String,
+    val icon: ImageVector,
+    val description: String
+)
 
 // Data classes and enums for theme customization
 data class ColorSchemeOption(
@@ -11943,6 +12660,177 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                 .background(MaterialTheme.colorScheme.background)
                 .padding(horizontal = 24.dp)
         ) {
+            // ==================== HEADER CUSTOMIZATION ====================
+            item(key = "header_customization_header", contentType = "section_header") {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Header Customization",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+            }
+            
+            item(key = "show_app_icon_setting", contentType = "toggle_card") {
+                val showAppIcon by appSettings.homeShowAppIcon.collectAsState()
+                
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Stars,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Column {
+                                Text(
+                                    text = "Show App Icon",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "Display app icon in header",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        androidx.compose.material3.Switch(
+                            checked = showAppIcon,
+                            onCheckedChange = { 
+                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                appSettings.setHomeShowAppIcon(it) 
+                            },
+                            colors = androidx.compose.material3.SwitchDefaults.colors(
+                                checkedThumbColor = MaterialTheme.colorScheme.primary,
+                                checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
+                            )
+                        )
+                    }
+                }
+            }
+            
+            item(key = "icon_visibility_setting", contentType = "selection_card") {
+                val iconVisibilityMode by appSettings.homeAppIconVisibility.collectAsState()
+                val showAppIcon by appSettings.homeShowAppIcon.collectAsState()
+                
+                AnimatedVisibility(visible = showAppIcon) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp)
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Visibility,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Column {
+                                    Text(
+                                        text = "Icon Visibility",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = "When to show the icon",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            
+                            Spacer(modifier = Modifier.height(16.dp))
+                            
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                listOf(
+                                    Triple(0, "Always", "Show on both states"),
+                                    Triple(1, "Expanded", "Show when expanded"),
+                                    Triple(2, "Collapsed", "Show when collapsed")
+                                ).forEach { (mode, label, description) ->
+                                    Card(
+                                        modifier = Modifier.weight(1f),
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = if (iconVisibilityMode == mode)
+                                                MaterialTheme.colorScheme.primaryContainer
+                                            else
+                                                MaterialTheme.colorScheme.surfaceContainerHighest
+                                        ),
+                                        border = if (iconVisibilityMode == mode)
+                                            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                                        else null,
+                                        onClick = {
+                                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                            appSettings.setHomeAppIconVisibility(mode)
+                                        }
+                                    ) {
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(12.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(
+                                                text = label,
+                                                style = MaterialTheme.typography.labelLarge,
+                                                fontWeight = if (iconVisibilityMode == mode) FontWeight.SemiBold else FontWeight.Normal,
+                                                color = if (iconVisibilityMode == mode)
+                                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                                else
+                                                    MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = description,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = if (iconVisibilityMode == mode)
+                                                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                                else
+                                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                                textAlign = TextAlign.Center
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
             // ==================== SECTION ORDER & VISIBILITY ====================
             item(key = "section_order_header", contentType = "section_header") {
                 Spacer(modifier = Modifier.height(24.dp))

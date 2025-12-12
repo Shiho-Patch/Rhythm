@@ -100,6 +100,7 @@ import androidx.compose.runtime.collectAsState
 
 /**
  * Mini player that appears at the bottom of the screen
+ * Updated to support customizable progress bar styles (NORMAL, WAVY, ROUNDED, etc.)
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,6 +118,15 @@ fun MiniPlayer(
     val context = LocalContext.current
     val appSettings = remember { AppSettings.getInstance(context) }
     val useHoursFormat by appSettings.useHoursInTimeFormat.collectAsState()
+    
+    // MiniPlayer customization settings
+    val miniPlayerProgressStyle by appSettings.miniPlayerProgressStyle.collectAsState()
+    val miniPlayerShowProgress by appSettings.miniPlayerShowProgress.collectAsState()
+    val miniPlayerShowArtwork by appSettings.miniPlayerShowArtwork.collectAsState()
+    val miniPlayerArtworkSize by appSettings.miniPlayerArtworkSize.collectAsState()
+    val miniPlayerCornerRadius by appSettings.miniPlayerCornerRadius.collectAsState()
+    val miniPlayerShowTime by appSettings.miniPlayerShowTime.collectAsState()
+    val miniPlayerUseCircularProgress by appSettings.miniPlayerUseCircularProgress.collectAsState()
     val density = LocalDensity.current
     val haptic = LocalHapticFeedback.current
     val animatedProgress by animateFloatAsState(
@@ -460,16 +470,20 @@ fun MiniPlayer(
                 }
             }
 
-            // Progress bar for the mini player
-            if (song != null) {
-                LinearProgressIndicator(
-                    progress = { animatedProgress }, // Use lambda for progress
+            // Customizable linear progress bar for the mini player (only when not using circular)
+            if (song != null && miniPlayerShowProgress && !miniPlayerUseCircularProgress) {
+                // Linear styled progress bar with more waves for MiniPlayer
+                StyledProgressBar(
+                    progress = animatedProgress,
+                    style = try { ProgressStyle.valueOf(miniPlayerProgressStyle) } catch (e: Exception) { ProgressStyle.NORMAL },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 28.dp) // Added horizontal padding
-                        .height(4.dp), // Thinner progress bar
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        .padding(horizontal = 28.dp),
+                    progressColor = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                    isPlaying = isPlaying,
+                    height = 4.dp,
+                    waveFrequency = 6f // More waves for MiniPlayer
                 )
             }
 
@@ -480,54 +494,55 @@ fun MiniPlayer(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = spacedBy(16.dp)
             ) {
-                // Enhanced album art with no shadows as requested
-                Surface(
-                    modifier = Modifier
-                        .size(56.dp), // Slightly smaller for better proportion
-                    shape = RoundedCornerShape(14.dp), // Adjusted corner radius
-                    shadowElevation = 0.dp, // Remove shadow as requested
-                    tonalElevation = 2.dp, // Keep subtle tonal elevation for depth
-                    color = MaterialTheme.colorScheme.surfaceVariant
-                ) {
-                    Box {
-                        if (song != null) {
-                            M3ImageUtils.TrackImage(
-                                imageUrl = song.artworkUri,
-                                trackName = song.title,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        } else {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(
-                                        brush = androidx.compose.ui.graphics.Brush.linearGradient(
-                                            colors = listOf(
-                                                MaterialTheme.colorScheme.primaryContainer,
-                                                MaterialTheme.colorScheme.secondaryContainer
-                                            )
-                                        )
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = RhythmIcons.Album,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp),
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                // Customizable album art with settings-driven size and corner radius
+                if (miniPlayerShowArtwork) {
+                    Surface(
+                        modifier = Modifier
+                            .size(miniPlayerArtworkSize.dp),
+                        shape = RoundedCornerShape(miniPlayerCornerRadius.dp),
+                        shadowElevation = 0.dp, // Remove shadow as requested
+                        tonalElevation = 2.dp, // Keep subtle tonal elevation for depth
+                        color = MaterialTheme.colorScheme.surfaceVariant
+                    ) {
+                        Box {
+                            if (song != null) {
+                                M3ImageUtils.TrackImage(
+                                    imageUrl = song.artworkUri,
+                                    trackName = song.title,
+                                    modifier = Modifier.fillMaxSize()
                                 )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                                                colors = listOf(
+                                                    MaterialTheme.colorScheme.primaryContainer,
+                                                    MaterialTheme.colorScheme.secondaryContainer
+                                                )
+                                            )
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = RhythmIcons.Album,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp),
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                }
                             }
-                        }
-                        
-                        // Enhanced "live" badge with better styling
-                        if (song?.title?.contains("LIVE", ignoreCase = true) == true || 
-                            song?.genre?.contains("live", ignoreCase = true) == true) {
-                            Badge(
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .padding(2.dp),
-                                containerColor = MaterialTheme.colorScheme.error
-                            ) {
+                            
+                            // Enhanced "live" badge with better styling
+                            if (song?.title?.contains("LIVE", ignoreCase = true) == true || 
+                                song?.genre?.contains("live", ignoreCase = true) == true) {
+                                Badge(
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(2.dp),
+                                    containerColor = MaterialTheme.colorScheme.error
+                                ) {
                                 Text(
                                     "LIVE",
                                     style = MaterialTheme.typography.labelSmall,
@@ -536,6 +551,7 @@ fun MiniPlayer(
                                 )
                             }
                         }
+                    }
                     }
                 }
                 
@@ -570,8 +586,8 @@ fun MiniPlayer(
                             modifier = Modifier.weight(1f, fill = false)
                         )
                         
-                        // Compact time indicator with better styling
-                        if (song != null && progress > 0) {
+                        // Compact time indicator - controlled by setting
+                        if (miniPlayerShowTime && song != null && progress > 0) {
                             Surface(
                                 color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
                                 shape = RoundedCornerShape(8.dp)
@@ -594,25 +610,57 @@ fun MiniPlayer(
                     horizontalArrangement = spacedBy(10.dp), // Increased spacing
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Dynamic shape play/pause button - rounded square for pause, circle for play
-                    FilledIconButton(
-                        onClick = {
-                            // Enhanced haptic feedback for primary action - respecting settings
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
-                            onPlayPause()
-                        },
-                        modifier = Modifier.size(44.dp), // Slightly smaller for better proportion
-                        shape = if (isPlaying) RoundedCornerShape(18.dp) else CircleShape, // Dynamic shape based on state
-                        colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        )
-                    ) {
-                        Icon(
-                            imageVector = if (isPlaying) RhythmIcons.Pause else RhythmIcons.Play,
-                            contentDescription = if (isPlaying) "Pause" else "Play",
-                            modifier = Modifier.size(20.dp)
-                        )
+                    // Play/pause button with optional circular progress border
+                    if (song != null && miniPlayerUseCircularProgress) {
+                        // Circular progress as border around play/pause button
+                        CircularStyledProgressBar(
+                            progress = animatedProgress,
+                            style = try { ProgressStyle.valueOf(miniPlayerProgressStyle) } catch (e: Exception) { ProgressStyle.NORMAL },
+                            modifier = Modifier.size(52.dp),
+                            progressColor = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                            strokeWidth = 3.dp,
+                            isPlaying = isPlaying
+                        ) {
+                            FilledIconButton(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                    onPlayPause()
+                                },
+                                modifier = Modifier.size(44.dp),
+                                shape = if (isPlaying) RoundedCornerShape(18.dp) else CircleShape,
+                                colors = IconButtonDefaults.filledIconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = if (isPlaying) RhythmIcons.Pause else RhythmIcons.Play,
+                                    contentDescription = if (isPlaying) "Pause" else "Play",
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    } else {
+                        // Standard play/pause button without circular progress
+                        FilledIconButton(
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                onPlayPause()
+                            },
+                            modifier = Modifier.size(44.dp),
+                            shape = if (isPlaying) RoundedCornerShape(18.dp) else CircleShape,
+                            colors = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        ) {
+                            Icon(
+                                imageVector = if (isPlaying) RhythmIcons.Pause else RhythmIcons.Play,
+                                contentDescription = if (isPlaying) "Pause" else "Play",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                     
                     // Enhanced next track button with better styling

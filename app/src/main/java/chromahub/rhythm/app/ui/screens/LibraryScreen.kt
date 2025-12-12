@@ -1,3 +1,7 @@
+// Experimental API opt-ins required for:
+// - Material3 APIs (ModalBottomSheet, ExtendedFloatingActionButton behaviors)
+// - Foundation APIs (HorizontalPager, stickyHeader in LazyColumn)
+// These will become stable in future Compose releases
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 package chromahub.rhythm.app.ui.screens
 
@@ -68,8 +72,10 @@ import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Box

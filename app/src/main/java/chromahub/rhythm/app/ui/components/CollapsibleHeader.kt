@@ -1,16 +1,19 @@
 package chromahub.rhythm.app.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row // Added import for Row
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -18,6 +21,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -55,6 +61,8 @@ fun CollapsibleHeaderScreen(
     actions: @Composable () -> Unit = {},
     filterDropdown: @Composable () -> Unit = {}, // New parameter for the filter dropdown
     scrollBehaviorKey: String? = null, // Key for preserving scroll behavior state
+    showAppIcon: Boolean = false,
+    iconVisibilityMode: Int = 0, // 0=Both, 1=Expanded Only, 2=Collapsed Only
     content: @Composable (Modifier) -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
@@ -95,15 +103,35 @@ fun CollapsibleHeaderScreen(
                 Spacer(modifier = Modifier.height(5.dp)) // Add more padding before the header starts
                 LargeTopAppBar(
                     title = {
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.headlineLarge.copy(
-                                fontFamily = FontFamily.Default,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = fontSize
-                            ),
-                            modifier = Modifier.padding(start = 14.dp) // Adjust start padding for title
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.padding(start = 14.dp)
+                        ) {
+                            // Icon visibility logic: 0=Both, 1=Expanded Only (collapsedFraction < 0.5), 2=Collapsed Only (collapsedFraction >= 0.5)
+                            val shouldShowIcon = showAppIcon && when (iconVisibilityMode) {
+                                0 -> true // Always show
+                                1 -> collapsedFraction < 0.5f // Show only when expanded
+                                2 -> collapsedFraction >= 0.5f // Show only when collapsed
+                                else -> true
+                            }
+                            
+                            if (shouldShowIcon) {
+                                androidx.compose.foundation.Image(
+                                    painter = androidx.compose.ui.res.painterResource(id = chromahub.rhythm.app.R.drawable.rhythm_splash_logo),
+                                    contentDescription = "App Icon",
+                                    modifier = Modifier.size((48 + (36 - 28) * (1 - collapsedFraction)).dp)
+                                )
+                            }
+                            Text(
+                                text = title,
+                                style = MaterialTheme.typography.headlineLarge.copy(
+                                    fontFamily = FontFamily.Default,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = fontSize
+                                )
+                            )
+                        }
                     },
                     navigationIcon = {
                         if (showBackButton) {

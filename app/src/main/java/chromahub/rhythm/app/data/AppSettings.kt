@@ -248,6 +248,10 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_WIDGET_CORNER_RADIUS = "widget_corner_radius"
         private const val KEY_WIDGET_AUTO_UPDATE = "widget_auto_update"
         
+        // Home Screen Customization Settings - Header
+        private const val KEY_HOME_SHOW_APP_ICON = "home_show_app_icon"
+        private const val KEY_HOME_APP_ICON_VISIBILITY = "home_app_icon_visibility" // 0=Both, 1=Expanded, 2=Collapsed
+        
         // Home Screen Customization Settings - Section Visibility
         private const val KEY_HOME_SHOW_GREETING = "home_show_greeting"
         private const val KEY_HOME_SHOW_RECENTLY_PLAYED = "home_show_recently_played"
@@ -294,6 +298,21 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_PLAYER_SHOW_SONG_INFO_ON_ARTWORK = "player_show_song_info_on_artwork"
         private const val KEY_PLAYER_ARTWORK_CORNER_RADIUS = "player_artwork_corner_radius" // 0-40 dp
         private const val KEY_PLAYER_SHOW_AUDIO_QUALITY_BADGES = "player_show_audio_quality_badges"
+        private const val KEY_PLAYER_PROGRESS_STYLE = "player_progress_style" // "NORMAL", "WAVY", "ROUNDED", "THIN", "THICK"
+        
+        // MiniPlayer Customization Settings
+        private const val KEY_MINIPLAYER_PROGRESS_STYLE = "miniplayer_progress_style" // "NORMAL", "WAVY", "ROUNDED", "THIN", "GRADIENT"
+        private const val KEY_MINIPLAYER_SHOW_PROGRESS = "miniplayer_show_progress"
+        private const val KEY_MINIPLAYER_SHOW_ARTWORK = "miniplayer_show_artwork"
+        private const val KEY_MINIPLAYER_ARTWORK_SIZE = "miniplayer_artwork_size" // 40-72 dp
+        private const val KEY_MINIPLAYER_CORNER_RADIUS = "miniplayer_corner_radius" // 0-28 dp
+        private const val KEY_MINIPLAYER_SHOW_TIME = "miniplayer_show_time"
+        private const val KEY_MINIPLAYER_USE_CIRCULAR_PROGRESS = "miniplayer_use_circular_progress"
+        private const val KEY_MINIPLAYER_ARTWORK_STYLE = "miniplayer_artwork_style" // "ROUNDED", "CIRCLE", "SQUARE"
+        private const val KEY_MINIPLAYER_SHOW_SKIP_BUTTONS = "miniplayer_show_skip_buttons"
+        private const val KEY_MINIPLAYER_TEXT_ALIGNMENT = "miniplayer_text_alignment" // "START", "CENTER"
+        private const val KEY_MINIPLAYER_SWIPE_GESTURES = "miniplayer_swipe_gestures"
+        private const val KEY_MINIPLAYER_SHOW_ARTIST = "miniplayer_show_artist"
         
         @Volatile
         private var INSTANCE: AppSettings? = null
@@ -2505,6 +2524,20 @@ class AppSettings private constructor(context: Context) {
     
     // ==================== Home Screen Customization Settings ====================
     
+    private val _homeShowAppIcon = MutableStateFlow(prefs.getBoolean(KEY_HOME_SHOW_APP_ICON, false))
+    val homeShowAppIcon: StateFlow<Boolean> = _homeShowAppIcon.asStateFlow()
+    fun setHomeShowAppIcon(value: Boolean) {
+        _homeShowAppIcon.value = value
+        prefs.edit().putBoolean(KEY_HOME_SHOW_APP_ICON, value).apply()
+    }
+    
+    private val _homeAppIconVisibility = MutableStateFlow(prefs.getInt(KEY_HOME_APP_ICON_VISIBILITY, 0))
+    val homeAppIconVisibility: StateFlow<Int> = _homeAppIconVisibility.asStateFlow()
+    fun setHomeAppIconVisibility(value: Int) {
+        _homeAppIconVisibility.value = value
+        prefs.edit().putInt(KEY_HOME_APP_ICON_VISIBILITY, value).apply()
+    }
+    
     private val _homeShowGreeting = MutableStateFlow(prefs.getBoolean(KEY_HOME_SHOW_GREETING, true))
     val homeShowGreeting: StateFlow<Boolean> = _homeShowGreeting.asStateFlow()
     fun setHomeShowGreeting(value: Boolean) {
@@ -2610,6 +2643,100 @@ class AppSettings private constructor(context: Context) {
     fun setPlayerShowAudioQualityBadges(value: Boolean) {
         _playerShowAudioQualityBadges.value = value
         prefs.edit().putBoolean(KEY_PLAYER_SHOW_AUDIO_QUALITY_BADGES, value).apply()
+    }
+    
+    // Player Progress Bar Style
+    private val _playerProgressStyle = MutableStateFlow(prefs.getString(KEY_PLAYER_PROGRESS_STYLE, "WAVY") ?: "WAVY")
+    val playerProgressStyle: StateFlow<String> = _playerProgressStyle.asStateFlow()
+    fun setPlayerProgressStyle(value: String) {
+        _playerProgressStyle.value = value
+        prefs.edit().putString(KEY_PLAYER_PROGRESS_STYLE, value).apply()
+    }
+    
+    // ==================== MiniPlayer Customization Settings ====================
+    
+    private val _miniPlayerProgressStyle = MutableStateFlow(prefs.getString(KEY_MINIPLAYER_PROGRESS_STYLE, "NORMAL") ?: "NORMAL")
+    val miniPlayerProgressStyle: StateFlow<String> = _miniPlayerProgressStyle.asStateFlow()
+    fun setMiniPlayerProgressStyle(value: String) {
+        _miniPlayerProgressStyle.value = value
+        prefs.edit().putString(KEY_MINIPLAYER_PROGRESS_STYLE, value).apply()
+    }
+    
+    private val _miniPlayerShowProgress = MutableStateFlow(prefs.getBoolean(KEY_MINIPLAYER_SHOW_PROGRESS, true))
+    val miniPlayerShowProgress: StateFlow<Boolean> = _miniPlayerShowProgress.asStateFlow()
+    fun setMiniPlayerShowProgress(value: Boolean) {
+        _miniPlayerShowProgress.value = value
+        prefs.edit().putBoolean(KEY_MINIPLAYER_SHOW_PROGRESS, value).apply()
+    }
+    
+    private val _miniPlayerShowArtwork = MutableStateFlow(prefs.getBoolean(KEY_MINIPLAYER_SHOW_ARTWORK, true))
+    val miniPlayerShowArtwork: StateFlow<Boolean> = _miniPlayerShowArtwork.asStateFlow()
+    fun setMiniPlayerShowArtwork(value: Boolean) {
+        _miniPlayerShowArtwork.value = value
+        prefs.edit().putBoolean(KEY_MINIPLAYER_SHOW_ARTWORK, value).apply()
+    }
+    
+    private val _miniPlayerArtworkSize = MutableStateFlow(prefs.getInt(KEY_MINIPLAYER_ARTWORK_SIZE, 56))
+    val miniPlayerArtworkSize: StateFlow<Int> = _miniPlayerArtworkSize.asStateFlow()
+    fun setMiniPlayerArtworkSize(value: Int) {
+        _miniPlayerArtworkSize.value = value
+        prefs.edit().putInt(KEY_MINIPLAYER_ARTWORK_SIZE, value).apply()
+    }
+    
+    private val _miniPlayerCornerRadius = MutableStateFlow(prefs.getInt(KEY_MINIPLAYER_CORNER_RADIUS, 14))
+    val miniPlayerCornerRadius: StateFlow<Int> = _miniPlayerCornerRadius.asStateFlow()
+    fun setMiniPlayerCornerRadius(value: Int) {
+        _miniPlayerCornerRadius.value = value
+        prefs.edit().putInt(KEY_MINIPLAYER_CORNER_RADIUS, value).apply()
+    }
+    
+    private val _miniPlayerShowTime = MutableStateFlow(prefs.getBoolean(KEY_MINIPLAYER_SHOW_TIME, true))
+    val miniPlayerShowTime: StateFlow<Boolean> = _miniPlayerShowTime.asStateFlow()
+    fun setMiniPlayerShowTime(value: Boolean) {
+        _miniPlayerShowTime.value = value
+        prefs.edit().putBoolean(KEY_MINIPLAYER_SHOW_TIME, value).apply()
+    }
+    
+    private val _miniPlayerUseCircularProgress = MutableStateFlow(prefs.getBoolean(KEY_MINIPLAYER_USE_CIRCULAR_PROGRESS, false))
+    val miniPlayerUseCircularProgress: StateFlow<Boolean> = _miniPlayerUseCircularProgress.asStateFlow()
+    fun setMiniPlayerUseCircularProgress(value: Boolean) {
+        _miniPlayerUseCircularProgress.value = value
+        prefs.edit().putBoolean(KEY_MINIPLAYER_USE_CIRCULAR_PROGRESS, value).apply()
+    }
+    
+    private val _miniPlayerArtworkStyle = MutableStateFlow(prefs.getString(KEY_MINIPLAYER_ARTWORK_STYLE, "ROUNDED") ?: "ROUNDED")
+    val miniPlayerArtworkStyle: StateFlow<String> = _miniPlayerArtworkStyle.asStateFlow()
+    fun setMiniPlayerArtworkStyle(value: String) {
+        _miniPlayerArtworkStyle.value = value
+        prefs.edit().putString(KEY_MINIPLAYER_ARTWORK_STYLE, value).apply()
+    }
+    
+    private val _miniPlayerShowSkipButtons = MutableStateFlow(prefs.getBoolean(KEY_MINIPLAYER_SHOW_SKIP_BUTTONS, true))
+    val miniPlayerShowSkipButtons: StateFlow<Boolean> = _miniPlayerShowSkipButtons.asStateFlow()
+    fun setMiniPlayerShowSkipButtons(value: Boolean) {
+        _miniPlayerShowSkipButtons.value = value
+        prefs.edit().putBoolean(KEY_MINIPLAYER_SHOW_SKIP_BUTTONS, value).apply()
+    }
+    
+    private val _miniPlayerTextAlignment = MutableStateFlow(prefs.getString(KEY_MINIPLAYER_TEXT_ALIGNMENT, "START") ?: "START")
+    val miniPlayerTextAlignment: StateFlow<String> = _miniPlayerTextAlignment.asStateFlow()
+    fun setMiniPlayerTextAlignment(value: String) {
+        _miniPlayerTextAlignment.value = value
+        prefs.edit().putString(KEY_MINIPLAYER_TEXT_ALIGNMENT, value).apply()
+    }
+    
+    private val _miniPlayerSwipeGestures = MutableStateFlow(prefs.getBoolean(KEY_MINIPLAYER_SWIPE_GESTURES, true))
+    val miniPlayerSwipeGestures: StateFlow<Boolean> = _miniPlayerSwipeGestures.asStateFlow()
+    fun setMiniPlayerSwipeGestures(value: Boolean) {
+        _miniPlayerSwipeGestures.value = value
+        prefs.edit().putBoolean(KEY_MINIPLAYER_SWIPE_GESTURES, value).apply()
+    }
+    
+    private val _miniPlayerShowArtist = MutableStateFlow(prefs.getBoolean(KEY_MINIPLAYER_SHOW_ARTIST, true))
+    val miniPlayerShowArtist: StateFlow<Boolean> = _miniPlayerShowArtist.asStateFlow()
+    fun setMiniPlayerShowArtist(value: Boolean) {
+        _miniPlayerShowArtist.value = value
+        prefs.edit().putBoolean(KEY_MINIPLAYER_SHOW_ARTIST, value).apply()
     }
     
     private val _homeDiscoverAutoScroll = MutableStateFlow(prefs.getBoolean(KEY_HOME_DISCOVER_AUTO_SCROLL, true))

@@ -122,6 +122,7 @@ object SettingsRoutes {
     const val LIBRARY_TAB_ORDER = "library_tab_order_settings"
     const val THEME_CUSTOMIZATION = "theme_customization_settings"
     const val PLAYER_CUSTOMIZATION = "player_customization_settings"
+    const val MINIPLAYER_CUSTOMIZATION = "miniplayer_customization_settings"
     const val EQUALIZER = "equalizer_settings"
     const val SLEEP_TIMER = "sleep_timer_settings"
     const val CRASH_LOG_HISTORY = "crash_log_history_settings"
@@ -185,6 +186,7 @@ fun SettingsScreen(
                     SettingItem(Icons.Default.Home, "Home", "Customize home screen sections", onClick = { onNavigateTo(SettingsRoutes.HOME_SCREEN) }),
                     SettingItem(Icons.Default.Widgets, "Widget", "Customize home screen widgets", onClick = { onNavigateTo(SettingsRoutes.WIDGET) }),
                     SettingItem(Icons.Default.MusicNote, "Player", "Customize player screen chips and layout", onClick = { onNavigateTo(SettingsRoutes.PLAYER_CUSTOMIZATION) }),
+                    SettingItem(Icons.Default.QueueMusic, "MiniPlayer", "Customize compact player appearance", onClick = { onNavigateTo(SettingsRoutes.MINIPLAYER_CUSTOMIZATION) }),
                     // SettingItem(Icons.Default.Reorder, "Library Tab Order", "Reorder tabs in the library", onClick = { onNavigateTo(SettingsRoutes.LIBRARY_TAB_ORDER) })
                 )
             ),
@@ -831,6 +833,7 @@ fun SettingsScreenWrapper(onBack: () -> Unit, appSettings: chromahub.rhythm.app.
             SettingsRoutes.LIBRARY_TAB_ORDER -> LibraryTabOrderSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.THEME_CUSTOMIZATION -> ThemeCustomizationSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.PLAYER_CUSTOMIZATION -> PlayerCustomizationSettingsScreen(onBackClick = { currentRoute = null })
+            SettingsRoutes.MINIPLAYER_CUSTOMIZATION -> MiniPlayerCustomizationSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.EQUALIZER -> EqualizerSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.SLEEP_TIMER -> SleepTimerSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.CRASH_LOG_HISTORY -> CrashLogHistorySettingsScreen(onBackClick = { currentRoute = null }, appSettings = appSettings)

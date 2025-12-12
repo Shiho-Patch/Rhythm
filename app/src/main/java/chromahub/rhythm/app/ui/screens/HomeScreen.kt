@@ -1,3 +1,7 @@
+// Experimental API opt-ins required for:
+// - Material3 Carousel APIs (HorizontalCenteredHeroCarousel, HorizontalUncontainedCarousel)
+// - ModalBottomSheet, rememberModalBottomSheetState
+// These will become stable in future Material3 releases
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package chromahub.rhythm.app.ui.screens
@@ -42,12 +46,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -202,6 +210,11 @@ fun HomeScreen(
     val musicViewModel = viewModel<chromahub.rhythm.app.viewmodel.MusicViewModel>()
     val haptics = LocalHapticFeedback.current
     val context = LocalContext.current
+    val appSettings = remember { AppSettings.getInstance(context) }
+    
+    // Home header customization
+    val showAppIcon by appSettings.homeShowAppIcon.collectAsState()
+    val iconVisibilityMode by appSettings.homeAppIconVisibility.collectAsState()
     
     // State for artist bottom sheet
     var showArtistSheet by remember { mutableStateOf(false) }
@@ -486,6 +499,8 @@ fun HomeScreen(
 
     CollapsibleHeaderScreen(
         title = context.getString(R.string.home_title),
+        showAppIcon = showAppIcon,
+        iconVisibilityMode = iconVisibilityMode,
         actions = {
             FilledIconButton(
                 onClick = {
@@ -780,11 +795,28 @@ private fun ModernScrollableContent(
         }
     }
     
+    // Remember lazy list state for performance optimization (Compose 1.10)
+    val lazyListState = rememberLazyListState()
+    
+    // Visibility tracking for performance optimization (Compose 1.8+)
+    // Track first visible item for analytics and prefetching optimization
+    val firstVisibleItemIndex by remember { derivedStateOf { lazyListState.firstVisibleItemIndex } }
+    val isScrollInProgress by remember { derivedStateOf { lazyListState.isScrollInProgress } }
+    
+    // Prefetch optimization: when user stops scrolling near end, prepare next items
+    LaunchedEffect(firstVisibleItemIndex, isScrollInProgress) {
+        if (!isScrollInProgress && firstVisibleItemIndex > 0) {
+            // User has scrolled and stopped - good time for analytics or prefetching
+            // This can be extended to log visible sections for personalization
+        }
+    }
+    
     Surface(
         modifier = modifier,
         color = MaterialTheme.colorScheme.background
     ) {
         LazyColumn(
+            state = lazyListState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 20.dp),
@@ -792,7 +824,7 @@ private fun ModernScrollableContent(
             contentPadding = PaddingValues(bottom = 24.dp) // No top padding to connect with topbar
         ) {
             // Update section (preserved as requested)
-            item {
+            item(key = "section_update", contentType = "update") {
                 AnimatedVisibility(
                     visible = updateAvailable && latestVersion != null && error == null && updatesEnabled,
                     enter = slideInVertically() + fadeIn(),
@@ -929,7 +961,10 @@ private fun ModernScrollableContent(
                                     )
                                     Spacer(modifier = Modifier.height(20.dp))
                                     if (newReleases.isNotEmpty()) {
+                                        // Remember lazy row state for scroll position preservation (Compose 1.10)
+                                        val newReleasesListState = rememberLazyListState()
                                         LazyRow(
+                                            state = newReleasesListState,
                                             contentPadding = PaddingValues(horizontal = 8.dp),
                                             horizontalArrangement = Arrangement.spacedBy(16.dp)
                                         ) {
@@ -990,7 +1025,10 @@ private fun ModernScrollableContent(
                                     )
                                     Spacer(modifier = Modifier.height(20.dp))
                                     if (recentlyAddedAlbums.isNotEmpty()) {
+                                        // Remember lazy row state for scroll position preservation (Compose 1.10)
+                                        val recentlyAddedListState = rememberLazyListState()
                                         LazyRow(
+                                            state = recentlyAddedListState,
                                             contentPadding = PaddingValues(horizontal = 8.dp),
                                             horizontalArrangement = Arrangement.spacedBy(16.dp)
                                         ) {
@@ -1331,7 +1369,10 @@ private fun ModernRecentlyPlayedSection(
         Spacer(modifier = Modifier.height(20.dp))
         
         if (recentlyPlayed.isNotEmpty()) {
+            // Remember lazy row state for scroll position preservation (Compose 1.10)
+            val recentlyPlayedListState = rememberLazyListState()
             LazyRow(
+                state = recentlyPlayedListState,
                 contentPadding = PaddingValues(horizontal = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp) // More spacing between items
             ) {
@@ -1373,7 +1414,13 @@ private fun ModernRecentSongCard(
         },
         modifier = Modifier
             .width(180.dp) // Slightly wider for better proportion
-            .height(80.dp), // Slightly taller
+            .height(80.dp) // Slightly taller
+            .shadow(
+                elevation = 4.dp,
+                shape = RoundedCornerShape(20.dp),
+                ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.06f),
+                spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+            ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
@@ -1491,12 +1538,18 @@ private fun ModernSectionTitle(
                 
                 val playScale by animateFloatAsState(
                     targetValue = if (isPlayPressed) 0.94f else 1f,
-                    animationSpec = spring(dampingRatio = 0.6f, stiffness = 500f),
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    ),
                     label = "playScale"
                 )
                 val shuffleScale by animateFloatAsState(
                     targetValue = if (isShufflePressed) 0.94f else 1f,
-                    animationSpec = spring(dampingRatio = 0.6f, stiffness = 500f),
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    ),
                     label = "shuffleScale"
                 )
                 
@@ -1606,7 +1659,10 @@ private fun ModernSectionTitle(
                 var isPressed by remember { mutableStateOf(false) }
                 val scale by animateFloatAsState(
                     targetValue = if (isPressed) 0.94f else 1f,
-                    animationSpec = spring(dampingRatio = 0.6f, stiffness = 500f),
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    ),
                     label = "viewAllScale"
                 )
                 
@@ -1943,7 +1999,10 @@ private fun ModernArtistsSection(
         
         Spacer(modifier = Modifier.height(16.dp))
         
+        // Remember lazy row state for scroll position preservation (Compose 1.10)
+        val artistsListState = rememberLazyListState()
         LazyRow(
+            state = artistsListState,
             contentPadding = PaddingValues(horizontal = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -2074,7 +2133,13 @@ private fun ModernAlbumCard(
         },
         modifier = Modifier
             .width(160.dp)
-            .height(240.dp), // Fixed height to prevent layout issues
+            .height(240.dp) // Fixed height to prevent layout issues
+            .shadow(
+                elevation = 8.dp,
+                shape = RoundedCornerShape(28.dp),
+                ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+            ),
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
@@ -2170,7 +2235,13 @@ private fun ModernSongCard(
         },
         modifier = Modifier
             .width(180.dp)
-            .height(260.dp), // Fixed height to prevent layout issues
+            .height(260.dp) // Fixed height to prevent layout issues
+            .shadow(
+                elevation = 6.dp,
+                shape = RoundedCornerShape(24.dp),
+                ambientColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.08f),
+                spotColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f)
+            ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
@@ -2468,11 +2539,14 @@ private fun ModernMoodSection(
         
         Spacer(modifier = Modifier.height(16.dp))
         
+        // Remember lazy row state for scroll position preservation (Compose 1.10)
+        val moodListState = rememberLazyListState()
         LazyRow(
+            state = moodListState,
             contentPadding = PaddingValues(horizontal = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item {
+            item(key = "mood_energize", contentType = "mood_card") {
                 ModernMoodCard(
                     title = context.getString(R.string.home_mood_energize),
                     description = context.getString(R.string.home_mood_energize_desc),
@@ -2492,7 +2566,7 @@ private fun ModernMoodSection(
                 )
             }
             
-            item {
+            item(key = "mood_relax", contentType = "mood_card") {
                 ModernMoodCard(
                     title = context.getString(R.string.home_mood_relax),
                     description = context.getString(R.string.home_mood_relax_desc),
@@ -2512,7 +2586,7 @@ private fun ModernMoodSection(
                 )
             }
             
-            item {
+            item(key = "mood_focus", contentType = "mood_card") {
                 ModernMoodCard(
                     title = context.getString(R.string.home_mood_focus),
                     description = context.getString(R.string.home_mood_focus_desc),

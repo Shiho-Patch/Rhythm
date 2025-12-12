@@ -46,8 +46,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CircleShape
@@ -157,6 +160,8 @@ import chromahub.rhythm.app.data.PlaybackLocation
 import chromahub.rhythm.app.data.Playlist
 import chromahub.rhythm.app.data.Song
 import chromahub.rhythm.app.ui.components.WaveSlider
+import chromahub.rhythm.app.ui.components.StyledProgressBar
+import chromahub.rhythm.app.ui.components.ProgressStyle
 import chromahub.rhythm.app.ui.components.RhythmIcons
 import chromahub.rhythm.app.ui.theme.PlayerButtonColor
 // import chromahub.rhythm.app.ui.components.M3PlaceholderType
@@ -194,6 +199,8 @@ import chromahub.rhythm.app.data.CanvasData
 import chromahub.rhythm.app.data.Album
 import chromahub.rhythm.app.data.Artist
 
+// Experimental API opt-ins required for:
+// - Material3 ModalBottomSheet and related APIs
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlayerScreen(
@@ -287,6 +294,9 @@ fun PlayerScreen(
     val playerArtworkCornerRadius by appSettingsInstance.playerArtworkCornerRadius.collectAsState()
     val playerShowAudioQualityBadges by appSettingsInstance.playerShowAudioQualityBadges.collectAsState()
     val canvasApiEnabled by appSettingsInstance.canvasApiEnabled.collectAsState()
+    
+    // Progress bar customization settings
+    val playerProgressStyle by appSettingsInstance.playerProgressStyle.collectAsState()
 
     // Helper function to split artist names
     val splitArtistNames: (String) -> List<String> = remember {
@@ -1897,16 +1907,64 @@ fun PlayerScreen(
                                 )
                             }
 
-                            // Wave progress slider
-                            WaveSlider(
-                                value = progress,
-                                onValueChange = onSeek,
-                                modifier = Modifier.weight(1f)
-                                    .padding(horizontal = 8.dp), // Give slider more space
-                                waveColor = MaterialTheme.colorScheme.primary,
-                                trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-                                isPlaying = isPlaying
-                            )
+                            // Customizable progress slider based on user setting
+                            if (playerProgressStyle == "WAVY") {
+                                // Wave progress slider (original style)
+                                WaveSlider(
+                                    value = progress,
+                                    onValueChange = onSeek,
+                                    modifier = Modifier.weight(1f)
+                                        .padding(horizontal = 8.dp),
+                                    waveColor = MaterialTheme.colorScheme.primary,
+                                    trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                                    isPlaying = isPlaying
+                                )
+                            } else {
+                                // Other styled progress bars
+                                val progressStyle = try {
+                                    ProgressStyle.valueOf(playerProgressStyle)
+                                } catch (e: IllegalArgumentException) {
+                                    ProgressStyle.NORMAL
+                                }
+                                
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(horizontal = 8.dp)
+                                        .height(56.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    // Use a clickable slider overlay for seeking
+                                    StyledProgressBar(
+                                        progress = progress,
+                                        style = progressStyle,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        progressColor = MaterialTheme.colorScheme.primary,
+                                        trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                                        height = when (progressStyle) {
+                                            ProgressStyle.THIN -> 2.dp
+                                            ProgressStyle.THICK -> 12.dp
+                                            else -> 8.dp
+                                        },
+                                        isPlaying = isPlaying,
+                                        showThumb = progressStyle == ProgressStyle.NORMAL || progressStyle == ProgressStyle.ROUNDED,
+                                        thumbSize = 14.dp,
+                                        waveFrequency = 2.5f // Fewer waves for Player screen
+                                    )
+                                    
+                                    // Invisible slider for seeking - overlays the progress bar
+                                    androidx.compose.material3.Slider(
+                                        value = progress,
+                                        onValueChange = onSeek,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = SliderDefaults.colors(
+                                            thumbColor = Color.Transparent,
+                                            activeTrackColor = Color.Transparent,
+                                            inactiveTrackColor = Color.Transparent
+                                        )
+                                    )
+                                }
+                            }
 
                             // Total time pill
                             Surface(
