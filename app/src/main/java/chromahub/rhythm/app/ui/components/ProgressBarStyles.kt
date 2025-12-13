@@ -1,8 +1,11 @@
 package chromahub.rhythm.app.ui.components
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -22,7 +25,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,6 +39,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -385,6 +391,7 @@ private fun NormalProgressBar(
 
 /**
  * Wavy animated progress bar - playful and musical
+ * Enhanced with smooth amplitude transitions and bezier curve smoothing
  */
 @Composable
 private fun WavyProgressBar(
@@ -394,18 +401,35 @@ private fun WavyProgressBar(
     trackColor: Color,
     height: Dp,
     isPlaying: Boolean,
-    waveFrequency: Float = 4f
+    waveFrequency: Float = 6f
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "wavyProgress")
-    val waveOffset by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = if (isPlaying) 2 * PI.toFloat() else 0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "waveOffset"
+    // Smooth wave amplitude animation - only show wave when playing
+    val targetAmplitude = if (isPlaying) height.value / 3f else 0f
+    val animatedAmplitude by animateDpAsState(
+        targetValue = targetAmplitude.dp,
+        animationSpec = tween(300, easing = FastOutSlowInEasing),
+        label = "WaveAmplitudeAnim"
     )
+    
+    // Conditional phase animation - only when wave should show
+    val phaseShiftAnim = remember { Animatable(0f) }
+    val phaseShift = phaseShiftAnim.value
+    
+    LaunchedEffect(isPlaying) {
+        if (isPlaying) {
+            val fullRotation = (2 * PI).toFloat()
+            while (isPlaying) {
+                val start = (phaseShiftAnim.value % fullRotation).let { 
+                    if (it < 0f) it + fullRotation else it 
+                }
+                phaseShiftAnim.snapTo(start)
+                phaseShiftAnim.animateTo(
+                    targetValue = start + fullRotation,
+                    animationSpec = tween(durationMillis = 2000, easing = LinearEasing)
+                )
+            }
+        }
+    }
     
     Canvas(
         modifier = modifier
@@ -415,7 +439,7 @@ private fun WavyProgressBar(
         val width = size.width
         val centerY = size.height / 2
         val progressWidth = width * progress.coerceIn(0f, 1f)
-        val waveAmplitude = (size.height / 3).coerceAtLeast(2f)
+        val waveAmplitude = animatedAmplitude.toPx().coerceAtLeast(0f)
         val strokeWidth = (size.height / 2).coerceIn(2f, 6f)
         
         // Draw track
@@ -429,26 +453,57 @@ private fun WavyProgressBar(
         
         // Draw wavy progress
         if (progressWidth > 0) {
-            val path = Path()
-            path.moveTo(0f, centerY)
-            
-            var x = 0f
-            val step = 2f
-            while (x <= progressWidth) {
-                val y = centerY + sin((x / width * waveFrequency * PI) + waveOffset).toFloat() * waveAmplitude
-                if (x == 0f) {
-                    path.moveTo(x, y)
-                } else {
-                    path.lineTo(x, y)
+            if (waveAmplitude > 0.01f) {
+                // Draw smooth wavy line using quadratic bezier curves
+                val path = Path()
+                val waveLength = width / waveFrequency
+                val step = (waveLength / 10f).coerceAtLeast(1.5f).coerceAtMost(strokeWidth)
+                
+                fun yAt(x: Float): Float {
+                    val s = sin((x / width * waveFrequency * PI) + phaseShift).toFloat()
+                    return (centerY + waveAmplitude * s).coerceIn(
+                        centerY - waveAmplitude - strokeWidth / 2f,
+                        centerY + waveAmplitude + strokeWidth / 2f
+                    )
                 }
-                x += step
+                
+                var prevX = 0f
+                var prevY = yAt(prevX)
+                path.moveTo(prevX, prevY)
+                
+                var x = prevX + step
+                while (x < progressWidth) {
+                    val y = yAt(x)
+                    val midX = (prevX + x) * 0.5f
+                    val midY = (prevY + y) * 0.5f
+                    path.quadraticBezierTo(prevX, prevY, midX, midY)
+                    prevX = x
+                    prevY = y
+                    x += step
+                }
+                val endY = yAt(progressWidth)
+                path.quadraticBezierTo(prevX, prevY, progressWidth, endY)
+                
+                drawPath(
+                    path = path,
+                    color = progressColor,
+                    style = Stroke(
+                        width = strokeWidth,
+                        cap = StrokeCap.Round,
+                        join = StrokeJoin.Round,
+                        miter = 1f
+                    )
+                )
+            } else {
+                // Draw straight line when paused
+                drawLine(
+                    color = progressColor,
+                    start = Offset(0f, centerY),
+                    end = Offset(progressWidth, centerY),
+                    strokeWidth = strokeWidth,
+                    cap = StrokeCap.Round
+                )
             }
-            
-            drawPath(
-                path = path,
-                color = progressColor,
-                style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-            )
         }
     }
 }
@@ -924,16 +979,25 @@ private fun WavyCircularProgress(
     isPlaying: Boolean,
     cornerRadius: Dp = 50.dp
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "wavyCircular")
-    val waveOffset by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = if (isPlaying) 2 * PI.toFloat() else 0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "waveOffset"
-    )
+    // Conditional phase animation - only when playing
+    val phaseShiftAnim = remember { Animatable(0f) }
+    val phaseShift = phaseShiftAnim.value
+    
+    LaunchedEffect(isPlaying) {
+        if (isPlaying) {
+            val fullRotation = (2 * PI).toFloat()
+            while (isPlaying) {
+                val start = (phaseShiftAnim.value % fullRotation).let { 
+                    if (it < 0f) it + fullRotation else it 
+                }
+                phaseShiftAnim.snapTo(start)
+                phaseShiftAnim.animateTo(
+                    targetValue = start + fullRotation,
+                    animationSpec = tween(durationMillis = 2000, easing = LinearEasing)
+                )
+            }
+        }
+    }
     
     Canvas(modifier = Modifier.fillMaxSize()) {
         val stroke = strokeWidth.toPx()
@@ -949,7 +1013,7 @@ private fun WavyCircularProgress(
                 strokeWidth = stroke,
                 cornerRadius = rectCornerRadius,
                 isWavy = true,
-                waveOffset = waveOffset
+                waveOffset = phaseShift
             )
         } else {
             // Original circular implementation
@@ -970,12 +1034,15 @@ private fun WavyCircularProgress(
                 val sweepAngle = 360f * progress
                 val steps = 200
                 
+                var prevX = 0f
+                var prevY = 0f
+                
                 for (i in 0..steps) {
                     val angle = (i.toFloat() / steps) * sweepAngle
                     if (angle > sweepAngle) break
                     
                     val angleRad = Math.toRadians((angle - 90).toDouble())
-                    val wave = sin((angle / 360f * 8 * PI) + waveOffset) * stroke * 0.3f
+                    val wave = sin((angle / 360f * 12 * PI) + phaseShift).toFloat() * stroke * 0.3f
                     val currentRadius = radius + wave
                     
                     val x = center.x + (currentRadius * kotlin.math.cos(angleRad)).toFloat()
@@ -983,15 +1050,27 @@ private fun WavyCircularProgress(
                     
                     if (i == 0) {
                         path.moveTo(x, y)
+                        prevX = x
+                        prevY = y
                     } else {
-                        path.lineTo(x, y)
+                        // Use quadratic bezier for smoother curves
+                        val midX = (prevX + x) * 0.5f
+                        val midY = (prevY + y) * 0.5f
+                        path.quadraticBezierTo(prevX, prevY, midX, midY)
+                        prevX = x
+                        prevY = y
                     }
                 }
                 
                 drawPath(
                     path = path,
                     color = progressColor,
-                    style = Stroke(width = stroke, cap = StrokeCap.Round)
+                    style = Stroke(
+                        width = stroke,
+                        cap = StrokeCap.Round,
+                        join = StrokeJoin.Round,
+                        miter = 1f
+                    )
                 )
             }
         }
@@ -1380,7 +1459,12 @@ private fun DrawScope.drawRoundedRectSegmentedProgress(
             drawPath(
                 path = path,
                 color = progressColor,
-                style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                style = Stroke(
+                    width = strokeWidth,
+                    cap = StrokeCap.Round,
+                    join = StrokeJoin.Round,
+                    miter = 1f
+                )
             )
         }
     }
@@ -1458,7 +1542,12 @@ private fun DrawScope.drawRoundedRectGradientProgress(
                     progressColor
                 )
             ),
-            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+            style = Stroke(
+                width = strokeWidth,
+                cap = StrokeCap.Round,
+                join = StrokeJoin.Round,
+                miter = 1f
+            )
         )
     }
 }
@@ -1491,7 +1580,7 @@ private fun DrawScope.createRoundedRectProgressPath(
         
         if (isWavy) {
             // Add wave effect
-            val wave = sin((offset / perimeter * 8 * PI) + waveOffset) * strokeWidth * 0.2f
+            val wave = sin((offset / perimeter * 12 * PI) + waveOffset).toFloat() * strokeWidth * 0.2f
             // Apply wave perpendicular to path
             val nextPoint = getPointOnRoundedRect(left, top, right, bottom, cornerRadius, (offset + 1).coerceAtMost(perimeter))
             val dx = nextPoint.x - point.x
