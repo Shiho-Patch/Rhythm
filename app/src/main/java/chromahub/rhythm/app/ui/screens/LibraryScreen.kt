@@ -201,6 +201,7 @@ import androidx.compose.material.icons.rounded.ArrowCircleDown
 import androidx.compose.material.icons.rounded.ArrowCircleUp
 import androidx.compose.ui.text.font.FontFamily
 import chromahub.rhythm.app.ui.components.RhythmIcons
+import chromahub.rhythm.app.ui.components.PlayingEqIcon
 import chromahub.rhythm.app.ui.components.M3FourColorCircularLoader
 import chromahub.rhythm.app.util.AudioFormatDetector
 import chromahub.rhythm.app.util.AudioQualityDetector
@@ -3352,11 +3353,11 @@ fun LibrarySongItem(
                     color = titleColor
                 )
                 if (isCurrentSong && isPlaying) {
-                    Icon(
-                        imageVector = RhythmIcons.Player.Equalizer,
-                        contentDescription = "Now playing",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(16.dp)
+                    PlayingEqIcon(
+                        modifier = Modifier.size(width = 16.dp, height = 14.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        isPlaying = isPlaying,
+                        bars = 3
                     )
                 }
             }

@@ -47,6 +47,7 @@ import chromahub.rhythm.app.data.Album
 import chromahub.rhythm.app.data.Song
 import chromahub.rhythm.app.data.AppSettings
 import chromahub.rhythm.app.ui.components.RhythmIcons
+import chromahub.rhythm.app.ui.components.PlayingEqIcon
 import chromahub.rhythm.app.ui.components.M3PlaceholderType
 import chromahub.rhythm.app.ui.components.formatDuration
 import chromahub.rhythm.app.util.ImageUtils
@@ -309,29 +310,29 @@ fun AlbumBottomSheet(
                     }
 
                     // Close button
-                    Surface(
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                            onDismiss()
-                        },
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(WindowInsets.statusBars.asPaddingValues())
-                            .padding(16.dp)
-                            .size(44.dp),
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.85f),
-                        shadowElevation = 0.dp
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Filled.Close,
-                                contentDescription = "Close",
-                                tint = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                    }
+//                    Surface(
+//                        onClick = {
+//                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+//                            onDismiss()
+//                        },
+//                        modifier = Modifier
+//                            .align(Alignment.TopEnd)
+//                            .padding(WindowInsets.statusBars.asPaddingValues())
+//                            .padding(16.dp)
+//                            .size(44.dp),
+//                        shape = CircleShape,
+//                        color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.85f),
+//                        shadowElevation = 0.dp
+//                    ) {
+//                        Box(contentAlignment = Alignment.Center) {
+//                            Icon(
+//                                imageVector = Icons.Filled.Close,
+//                                contentDescription = "Close",
+//                                tint = MaterialTheme.colorScheme.onSurface,
+//                                modifier = Modifier.size(22.dp)
+//                            )
+//                        }
+//                    }
 
                     // Main content layout
                     Column(
@@ -690,11 +691,6 @@ fun AlbumBottomSheet(
                 ) {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
-                        color = if (isScrolled)
-                            MaterialTheme.colorScheme.surfaceContainerHigh
-                        else
-                            Color.Transparent,
-                        shadowElevation = if (isScrolled) 0.dp else 0.dp
                     ) {
                         Row(
                             modifier = Modifier
@@ -1092,12 +1088,12 @@ fun ExpressiveSongItem(
                 contentAlignment = Alignment.Center
             ) {
                 if (isCurrentSong && isPlaying) {
-                    // Playing indicator - no pulse
-                    Icon(
-                        imageVector = RhythmIcons.Player.Equalizer,
-                        contentDescription = "Now playing",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(22.dp)
+                    // Playing indicator with animated equalizer
+                    PlayingEqIcon(
+                        modifier = Modifier.size(width = 22.dp, height = 18.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        isPlaying = isPlaying,
+                        bars = 3
                     )
                 } else {
                     Text(

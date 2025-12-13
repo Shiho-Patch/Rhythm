@@ -164,6 +164,9 @@ import chromahub.rhythm.app.ui.components.StyledProgressBar
 import chromahub.rhythm.app.ui.components.ProgressStyle
 import chromahub.rhythm.app.ui.components.ThumbStyle
 import chromahub.rhythm.app.ui.components.RhythmIcons
+import chromahub.rhythm.app.ui.components.AutoScrollingTextOnDemand
+import chromahub.rhythm.app.ui.components.PlayingEqIcon
+import chromahub.rhythm.app.ui.components.ShimmerBox
 import chromahub.rhythm.app.ui.theme.PlayerButtonColor
 // import chromahub.rhythm.app.ui.components.M3PlaceholderType
 import chromahub.rhythm.app.util.ImageUtils
@@ -1327,18 +1330,27 @@ fun PlayerScreen(
                                         Box(modifier = Modifier.fillMaxSize()) {
                                             // Album art content with enhanced loading state
                                             if (song.artworkUri != null) {
-                                                AsyncImage(
-                                                    model = ImageRequest.Builder(context)
-                                                        .data(song.artworkUri)
-                                                        .placeholder(chromahub.rhythm.app.R.drawable.rhythm_logo)
-                                                        .error(chromahub.rhythm.app.R.drawable.rhythm_logo)
-                                                        .build(),
-                                                    contentDescription = "Album artwork for ${song.title}",
-                                                    contentScale = ContentScale.Crop,
-                                                    modifier = Modifier
-                                                        .fillMaxSize()
-                                                        .clip(RoundedCornerShape(if (isCompactHeight) 20.dp else playerArtworkCornerRadius.dp))
-                                                )
+                                                Box(modifier = Modifier.fillMaxSize()) {
+                                                    // Show shimmer while loading
+                                                    ShimmerBox(
+                                                        modifier = Modifier
+                                                            .fillMaxSize()
+                                                            .clip(RoundedCornerShape(if (isCompactHeight) 20.dp else playerArtworkCornerRadius.dp))
+                                                    )
+                                                    
+                                                    AsyncImage(
+                                                        model = ImageRequest.Builder(context)
+                                                            .data(song.artworkUri)
+                                                            .placeholder(chromahub.rhythm.app.R.drawable.rhythm_logo)
+                                                            .error(chromahub.rhythm.app.R.drawable.rhythm_logo)
+                                                            .build(),
+                                                        contentDescription = "Album artwork for ${song.title}",
+                                                        contentScale = ContentScale.Crop,
+                                                        modifier = Modifier
+                                                            .fillMaxSize()
+                                                            .clip(RoundedCornerShape(if (isCompactHeight) 20.dp else playerArtworkCornerRadius.dp))
+                                                    )
+                                                }
                                             } else {
                                                 // Fallback to Rhythm logo if artwork is null
                                                 Box(
@@ -1487,59 +1499,56 @@ fun PlayerScreen(
                                                     vertical = 16.dp // Add padding from the bottom
                                                 )
                                         ) {
-                                            Text(
-                                                text = song.title,
-                                                style = MaterialTheme.typography.headlineMedium.copy(
-                                                    fontWeight = FontWeight.Bold,
-                                                    letterSpacing = 0.15.sp,
-                                                    fontSize = if (isCompactHeight) 22.sp else 28.sp
-                                                ),
-                                                color = MaterialTheme.colorScheme.onSurface,
-                                                textAlign = when(playerTextAlignment) {
-                                                    "START" -> TextAlign.Start
-                                                    "END" -> TextAlign.End
-                                                    else -> TextAlign.Center
-                                                },
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis,
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(horizontal = 4.dp)
-                                                    .graphicsLayer { alpha = 0.99f }
-                                                    .background(Color.Transparent) // Transparent background
-                                            )
+                                            // Track title with alignment support
+                                            Box(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                contentAlignment = when(playerTextAlignment) {
+                                                    "START" -> Alignment.CenterStart
+                                                    "END" -> Alignment.CenterEnd
+                                                    else -> Alignment.Center
+                                                }
+                                            ) {
+                                                AutoScrollingTextOnDemand(
+                                                    text = song.title,
+                                                    style = MaterialTheme.typography.headlineMedium.copy(
+                                                        fontWeight = FontWeight.Bold,
+                                                        letterSpacing = 0.15.sp,
+                                                        fontSize = if (isCompactHeight) 22.sp else 28.sp
+                                                    ),
+                                                    gradientEdgeColor = MaterialTheme.colorScheme.background,
+                                                    modifier = Modifier.padding(horizontal = 4.dp),
+                                                    enabled = true
+                                                )
+                                            }
 
                                             Spacer(modifier = Modifier.height(if (isCompactHeight) 2.dp else 4.dp))
 
-                                            Text(
-                                                text = buildString {
-                                                    append(song.artist)
-                                                    if (!song.album.isNullOrBlank() && song.album != song.artist) {
-                                                        append(" • ")
-                                                        append(song.album)
-                                                    }
-                                                },
-                                                style = MaterialTheme.typography.titleMedium.copy(
-                                                    fontWeight = FontWeight.Medium,
-                                                    letterSpacing = 0.4.sp,
-                                                    fontSize = if (isCompactHeight) 14.sp else 16.sp
-                                                ),
-                                                color = MaterialTheme.colorScheme.onSurface.copy(
-                                                    alpha = 0.85f
-                                                ),
-                                                textAlign = when(playerTextAlignment) {
-                                                    "START" -> TextAlign.Start
-                                                    "END" -> TextAlign.End
-                                                    else -> TextAlign.Center
-                                                },
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis,
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(horizontal = 4.dp)
-                                                    .graphicsLayer { alpha = 0.99f }
-                                                    .background(Color.Transparent) // Transparent background
-                                            )
+                                            Box(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                contentAlignment = when(playerTextAlignment) {
+                                                    "START" -> Alignment.CenterStart
+                                                    "END" -> Alignment.CenterEnd
+                                                    else -> Alignment.Center
+                                                }
+                                            ) {
+                                                AutoScrollingTextOnDemand(
+                                                    text = buildString {
+                                                        append(song.artist)
+                                                        if (!song.album.isNullOrBlank() && song.album != song.artist) {
+                                                            append(" • ")
+                                                            append(song.album)
+                                                        }
+                                                    },
+                                                    style = MaterialTheme.typography.titleMedium.copy(
+                                                        fontWeight = FontWeight.Medium,
+                                                        letterSpacing = 0.4.sp,
+                                                        fontSize = if (isCompactHeight) 14.sp else 16.sp
+                                                    ),
+                                                    gradientEdgeColor = MaterialTheme.colorScheme.background,
+                                                    modifier = Modifier.padding(horizontal = 4.dp),
+                                                    enabled = true
+                                                )
+                                            }
                                             
                                             // Audio quality badges
                                             if (playerShowAudioQualityBadges) {
@@ -2051,8 +2060,16 @@ fun PlayerScreen(
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-
                         // Main player controls matching the reference image exactly
+                        // TODO: Option to use AnimatedPlaybackControls for enhanced weight-based animations
+                        // AnimatedPlaybackControls(
+                        //     isPlayingProvider = { isPlaying },
+                        //     onPrevious = onSkipPrevious,
+                        //     onPlayPause = onPlayPause,
+                        //     onNext = onSkipNext,
+                        //     modifier = Modifier.padding(horizontal = 32.dp),
+                        //     height = 70.dp
+                        // )
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()

@@ -42,6 +42,7 @@ import chromahub.rhythm.app.data.Album
 import chromahub.rhythm.app.data.Artist
 import chromahub.rhythm.app.data.Song
 import chromahub.rhythm.app.ui.components.RhythmIcons
+import chromahub.rhythm.app.ui.components.PlayingEqIcon
 import chromahub.rhythm.app.ui.components.M3PlaceholderType
 import chromahub.rhythm.app.ui.components.formatDuration
 import chromahub.rhythm.app.util.ImageUtils
@@ -708,11 +709,11 @@ private fun EnhancedArtistSongItem(
                     )
                     
                     if (isCurrentSong && isPlaying) {
-                        Icon(
-                            imageVector = RhythmIcons.Player.Equalizer,
-                            contentDescription = "Now playing",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
+                        PlayingEqIcon(
+                            modifier = Modifier.size(width = 20.dp, height = 16.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            isPlaying = isPlaying,
+                            bars = 3
                         )
                     }
                 }

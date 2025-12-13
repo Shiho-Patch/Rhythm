@@ -87,6 +87,8 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import chromahub.rhythm.app.ui.components.M3LinearLoader
+import chromahub.rhythm.app.ui.components.PlayingEqIcon
+import chromahub.rhythm.app.ui.components.AutoScrollingTextOnDemand
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
@@ -512,6 +514,11 @@ fun MiniPlayer(
                     ) {
                         Box {
                             if (song != null) {
+                                // Show shimmer while loading artwork
+                                ShimmerBox(
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                                
                                 M3ImageUtils.TrackImage(
                                     imageUrl = song.artworkUri,
                                     trackName = song.title,
@@ -566,31 +573,54 @@ fun MiniPlayer(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = spacedBy(2.dp) // Tighter spacing
                 ) {
-                    Text(
-                        text = song?.title ?: "No song playing",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.SemiBold
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                    if (song != null) {
+                        AutoScrollingTextOnDemand(
+                            text = song.title,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.SemiBold
+                            ),
+                            gradientEdgeColor = MaterialTheme.colorScheme.surfaceContainer,
+                            enabled = true
+                        )
+                    } else {
+                        Text(
+                            text = "No song playing",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.SemiBold
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                     
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = spacedBy(6.dp)
                     ) {
-                        // Artist info with enhanced styling
-                        Text(
-                            text = song?.artist ?: "",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = FontWeight.Medium
-                            ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false)
-                        )
+                        // Artist info with auto-scrolling
+                        if (song != null) {
+                            AutoScrollingTextOnDemand(
+                                text = song.artist,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Medium
+                                ),
+                                gradientEdgeColor = MaterialTheme.colorScheme.surfaceContainer,
+                                modifier = Modifier.weight(1f, fill = false),
+                                enabled = true
+                            )
+                        } else {
+                            Text(
+                                text = "",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Medium
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
+                        }
                         
                         // Compact time indicator - controlled by setting
                         if (miniPlayerShowTime && song != null && progress > 0) {

@@ -107,6 +107,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.runtime.collectAsState
+import chromahub.rhythm.app.ui.components.PlayingEqIcon
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -1096,14 +1097,17 @@ fun PlaylistSongItem(
                         color = MaterialTheme.colorScheme.primary,
                         shadowElevation = 2.dp
                     ) {
-                        Icon(
-                            imageVector = RhythmIcons.Play,
-                            contentDescription = "Playing",
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(4.dp)
-                        )
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            PlayingEqIcon(
+                                modifier = Modifier.size(width = 12.dp, height = 10.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                isPlaying = isPlaying,
+                                bars = 3
+                            )
+                        }
                     }
                 }
             }
@@ -1127,11 +1131,11 @@ fun PlaylistSongItem(
                         color = titleColor
                     )
                     if (isCurrentSong && isPlaying) {
-                        Icon(
-                            imageVector = RhythmIcons.Player.Equalizer,
-                            contentDescription = "Now playing",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp)
+                        PlayingEqIcon(
+                            modifier = Modifier.size(width = 18.dp, height = 14.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            isPlaying = isPlaying,
+                            bars = 3
                         )
                     }
                 }
