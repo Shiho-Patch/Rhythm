@@ -34,7 +34,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.math.PI
@@ -56,6 +58,177 @@ enum class ProgressStyle {
 }
 
 /**
+ * Thumb style options for progress bar slider
+ */
+enum class ThumbStyle {
+    NONE,       // No thumb
+    CIRCLE,     // Standard circular thumb
+    PILL,       // Pill-shaped vertical thumb
+    DIAMOND,    // Diamond/rhombus shaped thumb
+    LINE,       // Vertical line thumb
+    SQUARE,     // Rounded square thumb
+    GLOW,       // Circle with glow effect
+    ARROW,      // Arrow/chevron pointing right
+    DOT         // Small dot thumb
+}
+
+/**
+ * Helper function to draw different thumb styles
+ */
+private fun DrawScope.drawThumb(
+    thumbStyle: ThumbStyle,
+    progressColor: Color,
+    thumbSize: Float,
+    position: Offset
+) {
+    when (thumbStyle) {
+        ThumbStyle.NONE -> { /* No thumb */ }
+        ThumbStyle.CIRCLE -> {
+            // Outer glow/shadow effect
+            drawCircle(
+                color = progressColor.copy(alpha = 0.3f),
+                radius = thumbSize / 2 + 2f,
+                center = position
+            )
+            drawCircle(
+                color = progressColor,
+                radius = thumbSize / 2,
+                center = position
+            )
+            // Inner highlight
+            drawCircle(
+                color = Color.White.copy(alpha = 0.3f),
+                radius = thumbSize / 4,
+                center = Offset(position.x - thumbSize / 8, position.y - thumbSize / 8)
+            )
+        }
+        ThumbStyle.PILL -> {
+            val pillWidth = thumbSize * 0.5f
+            val pillHeight = thumbSize * 1.4f
+            // Shadow
+            drawRoundRect(
+                color = progressColor.copy(alpha = 0.3f),
+                topLeft = Offset(position.x - pillWidth / 2 - 1f, position.y - pillHeight / 2 - 1f),
+                size = Size(pillWidth + 2f, pillHeight + 2f),
+                cornerRadius = CornerRadius(pillWidth / 2)
+            )
+            drawRoundRect(
+                color = progressColor,
+                topLeft = Offset(position.x - pillWidth / 2, position.y - pillHeight / 2),
+                size = Size(pillWidth, pillHeight),
+                cornerRadius = CornerRadius(pillWidth / 2)
+            )
+        }
+        ThumbStyle.DIAMOND -> {
+            val path = Path().apply {
+                moveTo(position.x, position.y - thumbSize / 2) // Top
+                lineTo(position.x + thumbSize / 2, position.y) // Right
+                lineTo(position.x, position.y + thumbSize / 2) // Bottom
+                lineTo(position.x - thumbSize / 2, position.y) // Left
+                close()
+            }
+            // Shadow
+            drawPath(path, progressColor.copy(alpha = 0.3f))
+            // Scale down slightly for main shape
+            val innerPath = Path().apply {
+                val inset = 2f
+                moveTo(position.x, position.y - thumbSize / 2 + inset)
+                lineTo(position.x + thumbSize / 2 - inset, position.y)
+                lineTo(position.x, position.y + thumbSize / 2 - inset)
+                lineTo(position.x - thumbSize / 2 + inset, position.y)
+                close()
+            }
+            drawPath(innerPath, progressColor)
+        }
+        ThumbStyle.LINE -> {
+            val lineHeight = thumbSize * 1.6f
+            val lineWidth = thumbSize * 0.25f
+            // Glow
+            drawRoundRect(
+                color = progressColor.copy(alpha = 0.4f),
+                topLeft = Offset(position.x - lineWidth, position.y - lineHeight / 2),
+                size = Size(lineWidth * 2, lineHeight),
+                cornerRadius = CornerRadius(lineWidth)
+            )
+            drawRoundRect(
+                color = progressColor,
+                topLeft = Offset(position.x - lineWidth / 2, position.y - lineHeight / 2),
+                size = Size(lineWidth, lineHeight),
+                cornerRadius = CornerRadius(lineWidth / 2)
+            )
+        }
+        ThumbStyle.SQUARE -> {
+            val squareSize = thumbSize * 0.8f
+            val cornerRadius = squareSize * 0.25f
+            // Shadow
+            drawRoundRect(
+                color = progressColor.copy(alpha = 0.3f),
+                topLeft = Offset(position.x - squareSize / 2 - 1f, position.y - squareSize / 2 - 1f),
+                size = Size(squareSize + 2f, squareSize + 2f),
+                cornerRadius = CornerRadius(cornerRadius)
+            )
+            drawRoundRect(
+                color = progressColor,
+                topLeft = Offset(position.x - squareSize / 2, position.y - squareSize / 2),
+                size = Size(squareSize, squareSize),
+                cornerRadius = CornerRadius(cornerRadius)
+            )
+        }
+        ThumbStyle.GLOW -> {
+            // Multiple glow layers
+            for (i in 3 downTo 0) {
+                val alpha = 0.15f * (4 - i)
+                val radius = thumbSize / 2 + (i * 3f)
+                drawCircle(
+                    color = progressColor.copy(alpha = alpha),
+                    radius = radius,
+                    center = position
+                )
+            }
+            drawCircle(
+                color = progressColor,
+                radius = thumbSize / 2.5f,
+                center = position
+            )
+            // Bright center
+            drawCircle(
+                color = Color.White.copy(alpha = 0.5f),
+                radius = thumbSize / 5f,
+                center = position
+            )
+        }
+        ThumbStyle.ARROW -> {
+            val arrowWidth = thumbSize * 0.8f
+            val arrowHeight = thumbSize * 0.6f
+            val path = Path().apply {
+                moveTo(position.x - arrowWidth / 3, position.y - arrowHeight / 2) // Top left
+                lineTo(position.x + arrowWidth / 2, position.y) // Right point
+                lineTo(position.x - arrowWidth / 3, position.y + arrowHeight / 2) // Bottom left
+                lineTo(position.x - arrowWidth / 6, position.y) // Inner left
+                close()
+            }
+            drawPath(path, progressColor)
+        }
+        ThumbStyle.DOT -> {
+            val dotSize = thumbSize * 0.4f
+            // Outer ring
+            drawCircle(
+                color = progressColor.copy(alpha = 0.4f),
+                radius = dotSize + 3f,
+                center = position,
+                style = Stroke(width = 2f)
+            )
+            // Inner dot
+            drawCircle(
+                color = progressColor,
+                radius = dotSize,
+                center = position
+            )
+        }
+    }
+}
+
+/**
  * Unified progress bar composable that renders different styles
  */
 @Composable
@@ -69,6 +242,7 @@ fun StyledProgressBar(
     isPlaying: Boolean = true,
     animated: Boolean = true,
     showThumb: Boolean = false,
+    thumbStyle: ThumbStyle = ThumbStyle.CIRCLE,
     thumbSize: Dp = 12.dp,
     waveFrequency: Float = 4f
 ) {
@@ -80,6 +254,7 @@ fun StyledProgressBar(
             trackColor = trackColor,
             height = height,
             showThumb = showThumb,
+            thumbStyle = thumbStyle,
             thumbSize = thumbSize
         )
         ProgressStyle.WAVY -> WavyProgressBar(
@@ -96,25 +271,37 @@ fun StyledProgressBar(
             modifier = modifier,
             progressColor = progressColor,
             trackColor = trackColor,
-            height = height
+            height = height,
+            showThumb = showThumb,
+            thumbStyle = thumbStyle,
+            thumbSize = thumbSize
         )
         ProgressStyle.THIN -> ThinProgressBar(
             progress = progress,
             modifier = modifier,
             progressColor = progressColor,
-            trackColor = trackColor
+            trackColor = trackColor,
+            showThumb = showThumb,
+            thumbStyle = thumbStyle,
+            thumbSize = thumbSize
         )
         ProgressStyle.THICK -> ThickProgressBar(
             progress = progress,
             modifier = modifier,
             progressColor = progressColor,
-            trackColor = trackColor
+            trackColor = trackColor,
+            showThumb = showThumb,
+            thumbStyle = thumbStyle,
+            thumbSize = thumbSize
         )
         ProgressStyle.GRADIENT -> GradientProgressBar(
             progress = progress,
             modifier = modifier,
             trackColor = trackColor,
-            height = height
+            height = height,
+            showThumb = showThumb,
+            thumbStyle = thumbStyle,
+            thumbSize = thumbSize
         )
         ProgressStyle.SEGMENTED -> SegmentedProgressBar(
             progress = progress,
@@ -143,9 +330,10 @@ private fun NormalProgressBar(
     trackColor: Color,
     height: Dp,
     showThumb: Boolean = false,
+    thumbStyle: ThumbStyle = ThumbStyle.CIRCLE,
     thumbSize: Dp = 12.dp
 ) {
-    if (showThumb) {
+    if (showThumb && thumbStyle != ThumbStyle.NONE) {
         Canvas(
             modifier = modifier
                 .fillMaxWidth()
@@ -173,12 +361,13 @@ private fun NormalProgressBar(
                 )
             }
             
-            // Draw thumb
+            // Draw thumb based on style
             if (progressWidth > 0) {
-                drawCircle(
-                    color = progressColor,
-                    radius = thumbSize.toPx() / 2,
-                    center = Offset(progressWidth, centerY)
+                drawThumb(
+                    thumbStyle = thumbStyle,
+                    progressColor = progressColor,
+                    thumbSize = thumbSize.toPx(),
+                    position = Offset(progressWidth, centerY)
                 )
             }
         }
@@ -273,24 +462,65 @@ private fun RoundedProgressBar(
     modifier: Modifier = Modifier,
     progressColor: Color,
     trackColor: Color,
-    height: Dp
+    height: Dp,
+    showThumb: Boolean = false,
+    thumbStyle: ThumbStyle = ThumbStyle.CIRCLE,
+    thumbSize: Dp = 12.dp
 ) {
     val actualHeight = height.coerceAtLeast(6.dp)
     
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(actualHeight)
-            .clip(RoundedCornerShape(50))
-            .background(trackColor)
-    ) {
+    if (showThumb && thumbStyle != ThumbStyle.NONE) {
+        Canvas(
+            modifier = modifier
+                .fillMaxWidth()
+                .height(actualHeight.coerceAtLeast(thumbSize))
+        ) {
+            val progressWidth = size.width * progress.coerceIn(0f, 1f)
+            val centerY = size.height / 2
+            val trackHeight = actualHeight.toPx()
+            
+            // Draw track
+            drawRoundRect(
+                color = trackColor,
+                topLeft = Offset(0f, centerY - trackHeight / 2),
+                size = Size(size.width, trackHeight),
+                cornerRadius = CornerRadius(trackHeight / 2)
+            )
+            
+            // Draw progress
+            if (progressWidth > 0) {
+                drawRoundRect(
+                    color = progressColor,
+                    topLeft = Offset(0f, centerY - trackHeight / 2),
+                    size = Size(progressWidth, trackHeight),
+                    cornerRadius = CornerRadius(trackHeight / 2)
+                )
+                
+                // Draw thumb
+                drawThumb(
+                    thumbStyle = thumbStyle,
+                    progressColor = progressColor,
+                    thumbSize = thumbSize.toPx(),
+                    position = Offset(progressWidth, centerY)
+                )
+            }
+        }
+    } else {
         Box(
-            modifier = Modifier
-                .fillMaxWidth(progress.coerceIn(0f, 1f))
+            modifier = modifier
+                .fillMaxWidth()
                 .height(actualHeight)
                 .clip(RoundedCornerShape(50))
-                .background(progressColor)
-        )
+                .background(trackColor)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(progress.coerceIn(0f, 1f))
+                    .height(actualHeight)
+                    .clip(RoundedCornerShape(50))
+                    .background(progressColor)
+            )
+        }
     }
 }
 
@@ -302,12 +532,15 @@ private fun ThinProgressBar(
     progress: Float,
     modifier: Modifier = Modifier,
     progressColor: Color,
-    trackColor: Color
+    trackColor: Color,
+    showThumb: Boolean = false,
+    thumbStyle: ThumbStyle = ThumbStyle.CIRCLE,
+    thumbSize: Dp = 10.dp
 ) {
     Canvas(
         modifier = modifier
             .fillMaxWidth()
-            .height(2.dp)
+            .height(if (showThumb && thumbStyle != ThumbStyle.NONE) thumbSize else 2.dp)
     ) {
         val width = size.width
         val centerY = size.height / 2
@@ -317,7 +550,7 @@ private fun ThinProgressBar(
             color = trackColor,
             start = Offset(0f, centerY),
             end = Offset(width, centerY),
-            strokeWidth = size.height,
+            strokeWidth = 2.dp.toPx(),
             cap = StrokeCap.Round
         )
         
@@ -328,9 +561,19 @@ private fun ThinProgressBar(
                 color = progressColor,
                 start = Offset(0f, centerY),
                 end = Offset(progressWidth, centerY),
-                strokeWidth = size.height,
+                strokeWidth = 2.dp.toPx(),
                 cap = StrokeCap.Round
             )
+            
+            // Draw thumb
+            if (showThumb && thumbStyle != ThumbStyle.NONE) {
+                drawThumb(
+                    thumbStyle = thumbStyle,
+                    progressColor = progressColor,
+                    thumbSize = thumbSize.toPx(),
+                    position = Offset(progressWidth, centerY)
+                )
+            }
         }
     }
 }
@@ -343,22 +586,63 @@ private fun ThickProgressBar(
     progress: Float,
     modifier: Modifier = Modifier,
     progressColor: Color,
-    trackColor: Color
+    trackColor: Color,
+    showThumb: Boolean = false,
+    thumbStyle: ThumbStyle = ThumbStyle.CIRCLE,
+    thumbSize: Dp = 14.dp
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(8.dp)
-            .clip(RoundedCornerShape(4.dp))
-            .background(trackColor)
-    ) {
+    if (showThumb && thumbStyle != ThumbStyle.NONE) {
+        Canvas(
+            modifier = modifier
+                .fillMaxWidth()
+                .height(8.dp.coerceAtLeast(thumbSize))
+        ) {
+            val progressWidth = size.width * progress.coerceIn(0f, 1f)
+            val centerY = size.height / 2
+            val trackHeight = 8.dp.toPx()
+            
+            // Draw track
+            drawRoundRect(
+                color = trackColor,
+                topLeft = Offset(0f, centerY - trackHeight / 2),
+                size = Size(size.width, trackHeight),
+                cornerRadius = CornerRadius(4.dp.toPx())
+            )
+            
+            // Draw progress
+            if (progressWidth > 0) {
+                drawRoundRect(
+                    color = progressColor,
+                    topLeft = Offset(0f, centerY - trackHeight / 2),
+                    size = Size(progressWidth, trackHeight),
+                    cornerRadius = CornerRadius(4.dp.toPx())
+                )
+                
+                // Draw thumb
+                drawThumb(
+                    thumbStyle = thumbStyle,
+                    progressColor = progressColor,
+                    thumbSize = thumbSize.toPx(),
+                    position = Offset(progressWidth, centerY)
+                )
+            }
+        }
+    } else {
         Box(
-            modifier = Modifier
-                .fillMaxWidth(progress.coerceIn(0f, 1f))
+            modifier = modifier
+                .fillMaxWidth()
                 .height(8.dp)
                 .clip(RoundedCornerShape(4.dp))
-                .background(progressColor)
-        )
+                .background(trackColor)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(progress.coerceIn(0f, 1f))
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(progressColor)
+            )
+        }
     }
 }
 
@@ -370,7 +654,10 @@ private fun GradientProgressBar(
     progress: Float,
     modifier: Modifier = Modifier,
     trackColor: Color,
-    height: Dp
+    height: Dp,
+    showThumb: Boolean = false,
+    thumbStyle: ThumbStyle = ThumbStyle.CIRCLE,
+    thumbSize: Dp = 12.dp
 ) {
     val gradientColors = listOf(
         MaterialTheme.colorScheme.primary,
@@ -380,22 +667,60 @@ private fun GradientProgressBar(
     
     val actualHeight = height.coerceAtLeast(4.dp)
     
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(actualHeight)
-            .clip(RoundedCornerShape(50))
-            .background(trackColor)
-    ) {
+    if (showThumb && thumbStyle != ThumbStyle.NONE) {
+        Canvas(
+            modifier = modifier
+                .fillMaxWidth()
+                .height(actualHeight.coerceAtLeast(thumbSize))
+        ) {
+            val progressWidth = size.width * progress.coerceIn(0f, 1f)
+            val centerY = size.height / 2
+            val trackHeight = actualHeight.toPx()
+            
+            // Draw track
+            drawRoundRect(
+                color = trackColor,
+                topLeft = Offset(0f, centerY - trackHeight / 2),
+                size = Size(size.width, trackHeight),
+                cornerRadius = CornerRadius(trackHeight / 2)
+            )
+            
+            // Draw gradient progress
+            if (progressWidth > 0) {
+                drawRoundRect(
+                    brush = Brush.horizontalGradient(gradientColors),
+                    topLeft = Offset(0f, centerY - trackHeight / 2),
+                    size = Size(progressWidth, trackHeight),
+                    cornerRadius = CornerRadius(trackHeight / 2)
+                )
+                
+                // Draw thumb with tertiary color (end of gradient)
+                drawThumb(
+                    thumbStyle = thumbStyle,
+                    progressColor = gradientColors.last(),
+                    thumbSize = thumbSize.toPx(),
+                    position = Offset(progressWidth, centerY)
+                )
+            }
+        }
+    } else {
         Box(
-            modifier = Modifier
-                .fillMaxWidth(progress.coerceIn(0f, 1f))
+            modifier = modifier
+                .fillMaxWidth()
                 .height(actualHeight)
                 .clip(RoundedCornerShape(50))
-                .background(
-                    brush = Brush.horizontalGradient(gradientColors)
-                )
-        )
+                .background(trackColor)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(progress.coerceIn(0f, 1f))
+                    .height(actualHeight)
+                    .clip(RoundedCornerShape(50))
+                    .background(
+                        brush = Brush.horizontalGradient(gradientColors)
+                    )
+            )
+        }
     }
 }
 
@@ -507,16 +832,19 @@ fun MiniProgressBar(
 /**
  * Circular styled progress bar that wraps around content (like play/pause button)
  * Supports all progress styles including wavy, segmented, dots, etc.
+ * The cornerRadius parameter allows the progress to adapt to button shape changes
+ * (e.g., from circle when paused to rounded rect when playing)
  */
 @Composable
 fun CircularStyledProgressBar(
     progress: Float,
     style: ProgressStyle,
     modifier: Modifier = Modifier,
-    progressColor: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-    trackColor: Color = MaterialTheme.colorScheme.primary,
+    progressColor: Color = MaterialTheme.colorScheme.primary,
+    trackColor: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
     strokeWidth: Dp = 3.dp,
     isPlaying: Boolean = true,
+    cornerRadius: Dp = 50.dp, // 50.dp = circle, lower values = more rounded rect
     content: @Composable () -> Unit
 ) {
     Box(
@@ -529,41 +857,58 @@ fun CircularStyledProgressBar(
                 progressColor = progressColor,
                 trackColor = trackColor,
                 strokeWidth = strokeWidth,
-                isPlaying = isPlaying
+                isPlaying = isPlaying,
+                cornerRadius = cornerRadius
             )
             ProgressStyle.SEGMENTED -> SegmentedCircularProgress(
                 progress = progress,
                 progressColor = progressColor,
                 trackColor = trackColor,
-                strokeWidth = strokeWidth
+                strokeWidth = strokeWidth,
+                cornerRadius = cornerRadius
             )
             ProgressStyle.DOTS -> DottedCircularProgress(
                 progress = progress,
                 progressColor = progressColor,
                 trackColor = trackColor,
-                strokeWidth = strokeWidth
+                strokeWidth = strokeWidth,
+                cornerRadius = cornerRadius
             )
             ProgressStyle.GRADIENT -> GradientCircularProgress(
                 progress = progress,
                 progressColor = progressColor,
                 trackColor = trackColor,
-                strokeWidth = strokeWidth
+                strokeWidth = strokeWidth,
+                cornerRadius = cornerRadius
             )
-            else -> {
-                // Standard circular progress for NORMAL, THIN, THICK, ROUNDED
-                androidx.compose.material3.CircularProgressIndicator(
-                    progress = progress,
-                    modifier = Modifier.fillMaxSize(),
-                    color = progressColor,
-                    strokeWidth = when (style) {
-                        ProgressStyle.THIN -> strokeWidth * 0.6f
-                        ProgressStyle.THICK -> strokeWidth * 1.5f
-                        else -> strokeWidth
-                    },
-                    trackColor = trackColor,
-                    strokeCap = if (style == ProgressStyle.ROUNDED) StrokeCap.Round else StrokeCap.Butt
-                )
-            }
+            ProgressStyle.THIN -> ThinCircularProgress(
+                progress = progress,
+                progressColor = progressColor,
+                trackColor = trackColor,
+                strokeWidth = strokeWidth * 0.6f,
+                cornerRadius = cornerRadius
+            )
+            ProgressStyle.THICK -> ThickCircularProgress(
+                progress = progress,
+                progressColor = progressColor,
+                trackColor = trackColor,
+                strokeWidth = strokeWidth * 1.5f,
+                cornerRadius = cornerRadius
+            )
+            ProgressStyle.ROUNDED -> RoundedCircularProgress(
+                progress = progress,
+                progressColor = progressColor,
+                trackColor = trackColor,
+                strokeWidth = strokeWidth,
+                cornerRadius = cornerRadius
+            )
+            ProgressStyle.NORMAL -> NormalCircularProgress(
+                progress = progress,
+                progressColor = progressColor,
+                trackColor = trackColor,
+                strokeWidth = strokeWidth,
+                cornerRadius = cornerRadius
+            )
         }
         
         content()
@@ -576,7 +921,8 @@ private fun WavyCircularProgress(
     progressColor: Color,
     trackColor: Color,
     strokeWidth: Dp,
-    isPlaying: Boolean
+    isPlaying: Boolean,
+    cornerRadius: Dp = 50.dp
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "wavyCircular")
     val waveOffset by infiniteTransition.animateFloat(
@@ -590,46 +936,64 @@ private fun WavyCircularProgress(
     )
     
     Canvas(modifier = Modifier.fillMaxSize()) {
-        val radius = (size.minDimension / 2) - strokeWidth.toPx()
-        val center = Offset(size.width / 2, size.height / 2)
+        val stroke = strokeWidth.toPx()
+        val rectCornerRadius = cornerRadius.toPx().coerceAtMost(size.minDimension / 2)
+        val isRoundedRect = rectCornerRadius < size.minDimension / 2 - 1
         
-        // Draw track
-        drawCircle(
-            color = trackColor,
-            radius = radius,
-            center = center,
-            style = Stroke(width = strokeWidth.toPx())
-        )
-        
-        // Draw wavy progress
-        if (progress > 0f) {
-            val path = Path()
-            val sweepAngle = 360f * progress
-            val steps = 200
-            
-            for (i in 0..steps) {
-                val angle = (i.toFloat() / steps) * sweepAngle
-                if (angle > sweepAngle) break
-                
-                val angleRad = Math.toRadians((angle - 90).toDouble())
-                val wave = sin((angle / 360f * 8 * PI) + waveOffset) * strokeWidth.toPx() * 0.3f
-                val currentRadius = radius + wave
-                
-                val x = center.x + (currentRadius * kotlin.math.cos(angleRad)).toFloat()
-                val y = center.y + (currentRadius * kotlin.math.sin(angleRad)).toFloat()
-                
-                if (i == 0) {
-                    path.moveTo(x, y)
-                } else {
-                    path.lineTo(x, y)
-                }
-            }
-            
-            drawPath(
-                path = path,
-                color = progressColor,
-                style = Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Round)
+        if (isRoundedRect) {
+            // Draw rounded rectangle track and progress
+            drawRoundedRectProgress(
+                progress = progress,
+                progressColor = progressColor,
+                trackColor = trackColor,
+                strokeWidth = stroke,
+                cornerRadius = rectCornerRadius,
+                isWavy = true,
+                waveOffset = waveOffset
             )
+        } else {
+            // Original circular implementation
+            val radius = (size.minDimension / 2) - stroke
+            val center = Offset(size.width / 2, size.height / 2)
+            
+            // Draw track
+            drawCircle(
+                color = trackColor,
+                radius = radius,
+                center = center,
+                style = Stroke(width = stroke)
+            )
+            
+            // Draw wavy progress
+            if (progress > 0f) {
+                val path = Path()
+                val sweepAngle = 360f * progress
+                val steps = 200
+                
+                for (i in 0..steps) {
+                    val angle = (i.toFloat() / steps) * sweepAngle
+                    if (angle > sweepAngle) break
+                    
+                    val angleRad = Math.toRadians((angle - 90).toDouble())
+                    val wave = sin((angle / 360f * 8 * PI) + waveOffset) * stroke * 0.3f
+                    val currentRadius = radius + wave
+                    
+                    val x = center.x + (currentRadius * kotlin.math.cos(angleRad)).toFloat()
+                    val y = center.y + (currentRadius * kotlin.math.sin(angleRad)).toFloat()
+                    
+                    if (i == 0) {
+                        path.moveTo(x, y)
+                    } else {
+                        path.lineTo(x, y)
+                    }
+                }
+                
+                drawPath(
+                    path = path,
+                    color = progressColor,
+                    style = Stroke(width = stroke, cap = StrokeCap.Round)
+                )
+            }
         }
     }
 }
@@ -639,28 +1003,43 @@ private fun SegmentedCircularProgress(
     progress: Float,
     progressColor: Color,
     trackColor: Color,
-    strokeWidth: Dp
+    strokeWidth: Dp,
+    cornerRadius: Dp = 50.dp
 ) {
     Canvas(modifier = Modifier.fillMaxSize()) {
-        val radius = (size.minDimension / 2) - strokeWidth.toPx()
-        val center = Offset(size.width / 2, size.height / 2)
-        val segments = 20
-        val segmentAngle = 360f / segments
-        val gapAngle = 4f
+        val stroke = strokeWidth.toPx()
+        val rectCornerRadius = cornerRadius.toPx().coerceAtMost(size.minDimension / 2)
+        val isRoundedRect = rectCornerRadius < size.minDimension / 2 - 1
         
-        for (i in 0 until segments) {
-            val startAngle = i * segmentAngle - 90f
-            val segmentProgress = ((progress * segments) - i).coerceIn(0f, 1f)
-            
-            drawArc(
-                color = if (segmentProgress > 0) progressColor else trackColor,
-                startAngle = startAngle + gapAngle / 2,
-                sweepAngle = (segmentAngle - gapAngle) * segmentProgress,
-                useCenter = false,
-                style = Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Round),
-                topLeft = Offset(center.x - radius, center.y - radius),
-                size = Size(radius * 2, radius * 2)
+        if (isRoundedRect) {
+            drawRoundedRectSegmentedProgress(
+                progress = progress,
+                progressColor = progressColor,
+                trackColor = trackColor,
+                strokeWidth = stroke,
+                cornerRadius = rectCornerRadius
             )
+        } else {
+            val radius = (size.minDimension / 2) - stroke
+            val center = Offset(size.width / 2, size.height / 2)
+            val segments = 20
+            val segmentAngle = 360f / segments
+            val gapAngle = 4f
+            
+            for (i in 0 until segments) {
+                val startAngle = i * segmentAngle - 90f
+                val segmentProgress = ((progress * segments) - i).coerceIn(0f, 1f)
+                
+                drawArc(
+                    color = if (segmentProgress > 0) progressColor else trackColor,
+                    startAngle = startAngle + gapAngle / 2,
+                    sweepAngle = (segmentAngle - gapAngle) * segmentProgress.coerceAtLeast(0.01f),
+                    useCenter = false,
+                    style = Stroke(width = stroke, cap = StrokeCap.Round),
+                    topLeft = Offset(center.x - radius, center.y - radius),
+                    size = Size(radius * 2, radius * 2)
+                )
+            }
         }
     }
 }
@@ -670,27 +1049,42 @@ private fun DottedCircularProgress(
     progress: Float,
     progressColor: Color,
     trackColor: Color,
-    strokeWidth: Dp
+    strokeWidth: Dp,
+    cornerRadius: Dp = 50.dp
 ) {
     Canvas(modifier = Modifier.fillMaxSize()) {
-        val radius = (size.minDimension / 2) - strokeWidth.toPx()
-        val center = Offset(size.width / 2, size.height / 2)
-        val dots = 24
-        val dotRadius = strokeWidth.toPx() * 0.8f
+        val stroke = strokeWidth.toPx()
+        val rectCornerRadius = cornerRadius.toPx().coerceAtMost(size.minDimension / 2)
+        val isRoundedRect = rectCornerRadius < size.minDimension / 2 - 1
         
-        for (i in 0 until dots) {
-            val angle = (i.toFloat() / dots) * 360f - 90f
-            val angleRad = Math.toRadians(angle.toDouble())
-            val dotProgress = ((progress * dots) - i).coerceIn(0f, 1f)
-            
-            val x = center.x + (radius * kotlin.math.cos(angleRad)).toFloat()
-            val y = center.y + (radius * kotlin.math.sin(angleRad)).toFloat()
-            
-            drawCircle(
-                color = if (dotProgress > 0) progressColor else trackColor,
-                radius = dotRadius * (0.5f + dotProgress * 0.5f),
-                center = Offset(x, y)
+        if (isRoundedRect) {
+            drawRoundedRectDottedProgress(
+                progress = progress,
+                progressColor = progressColor,
+                trackColor = trackColor,
+                strokeWidth = stroke,
+                cornerRadius = rectCornerRadius
             )
+        } else {
+            val radius = (size.minDimension / 2) - stroke
+            val center = Offset(size.width / 2, size.height / 2)
+            val dots = 24
+            val dotRadius = stroke * 0.8f
+            
+            for (i in 0 until dots) {
+                val angle = (i.toFloat() / dots) * 360f - 90f
+                val angleRad = Math.toRadians(angle.toDouble())
+                val dotProgress = ((progress * dots) - i).coerceIn(0f, 1f)
+                
+                val x = center.x + (radius * kotlin.math.cos(angleRad)).toFloat()
+                val y = center.y + (radius * kotlin.math.sin(angleRad)).toFloat()
+                
+                drawCircle(
+                    color = if (dotProgress > 0) progressColor else trackColor,
+                    radius = dotRadius * (0.5f + dotProgress * 0.5f),
+                    center = Offset(x, y)
+                )
+            }
         }
     }
 }
@@ -700,41 +1094,552 @@ private fun GradientCircularProgress(
     progress: Float,
     progressColor: Color,
     trackColor: Color,
-    strokeWidth: Dp
+    strokeWidth: Dp,
+    cornerRadius: Dp = 50.dp
 ) {
     Canvas(modifier = Modifier.fillMaxSize()) {
-        val radius = (size.minDimension / 2) - strokeWidth.toPx()
-        val center = Offset(size.width / 2, size.height / 2)
+        val stroke = strokeWidth.toPx()
+        val rectCornerRadius = cornerRadius.toPx().coerceAtMost(size.minDimension / 2)
+        val isRoundedRect = rectCornerRadius < size.minDimension / 2 - 1
         
-        // Draw track
-        drawCircle(
-            color = trackColor,
-            radius = radius,
-            center = center,
-            style = Stroke(width = strokeWidth.toPx())
+        if (isRoundedRect) {
+            drawRoundedRectGradientProgress(
+                progress = progress,
+                progressColor = progressColor,
+                trackColor = trackColor,
+                strokeWidth = stroke,
+                cornerRadius = rectCornerRadius
+            )
+        } else {
+            val radius = (size.minDimension / 2) - stroke
+            val center = Offset(size.width / 2, size.height / 2)
+            
+            // Draw track
+            drawCircle(
+                color = trackColor,
+                radius = radius,
+                center = center,
+                style = Stroke(width = stroke)
+            )
+            
+            // Draw gradient progress
+            if (progress > 0f) {
+                val sweepAngle = 360f * progress
+                
+                drawArc(
+                    brush = Brush.sweepGradient(
+                        colors = listOf(
+                            progressColor,
+                            progressColor.copy(alpha = 0.7f),
+                            progressColor.copy(alpha = 0.9f),
+                            progressColor
+                        ),
+                        center = center
+                    ),
+                    startAngle = -90f,
+                    sweepAngle = sweepAngle,
+                    useCenter = false,
+                    style = Stroke(width = stroke, cap = StrokeCap.Round),
+                    topLeft = Offset(center.x - radius, center.y - radius),
+                    size = Size(radius * 2, radius * 2)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun NormalCircularProgress(
+    progress: Float,
+    progressColor: Color,
+    trackColor: Color,
+    strokeWidth: Dp,
+    cornerRadius: Dp = 50.dp
+) {
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        val stroke = strokeWidth.toPx()
+        val rectCornerRadius = cornerRadius.toPx().coerceAtMost(size.minDimension / 2)
+        val isRoundedRect = rectCornerRadius < size.minDimension / 2 - 1
+        
+        if (isRoundedRect) {
+            drawRoundedRectProgress(
+                progress = progress,
+                progressColor = progressColor,
+                trackColor = trackColor,
+                strokeWidth = stroke,
+                cornerRadius = rectCornerRadius,
+                isWavy = false,
+                waveOffset = 0f
+            )
+        } else {
+            val radius = (size.minDimension / 2) - stroke
+            val center = Offset(size.width / 2, size.height / 2)
+            
+            // Draw track
+            drawCircle(
+                color = trackColor,
+                radius = radius,
+                center = center,
+                style = Stroke(width = stroke)
+            )
+            
+            // Draw progress arc
+            if (progress > 0f) {
+                drawArc(
+                    color = progressColor,
+                    startAngle = -90f,
+                    sweepAngle = 360f * progress,
+                    useCenter = false,
+                    style = Stroke(width = stroke, cap = StrokeCap.Butt),
+                    topLeft = Offset(center.x - radius, center.y - radius),
+                    size = Size(radius * 2, radius * 2)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ThinCircularProgress(
+    progress: Float,
+    progressColor: Color,
+    trackColor: Color,
+    strokeWidth: Dp,
+    cornerRadius: Dp = 50.dp
+) {
+    NormalCircularProgress(
+        progress = progress,
+        progressColor = progressColor,
+        trackColor = trackColor,
+        strokeWidth = strokeWidth,
+        cornerRadius = cornerRadius
+    )
+}
+
+@Composable
+private fun ThickCircularProgress(
+    progress: Float,
+    progressColor: Color,
+    trackColor: Color,
+    strokeWidth: Dp,
+    cornerRadius: Dp = 50.dp
+) {
+    NormalCircularProgress(
+        progress = progress,
+        progressColor = progressColor,
+        trackColor = trackColor,
+        strokeWidth = strokeWidth,
+        cornerRadius = cornerRadius
+    )
+}
+
+@Composable
+private fun RoundedCircularProgress(
+    progress: Float,
+    progressColor: Color,
+    trackColor: Color,
+    strokeWidth: Dp,
+    cornerRadius: Dp = 50.dp
+) {
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        val stroke = strokeWidth.toPx()
+        val rectCornerRadius = cornerRadius.toPx().coerceAtMost(size.minDimension / 2)
+        val isRoundedRect = rectCornerRadius < size.minDimension / 2 - 1
+        
+        if (isRoundedRect) {
+            drawRoundedRectProgress(
+                progress = progress,
+                progressColor = progressColor,
+                trackColor = trackColor,
+                strokeWidth = stroke,
+                cornerRadius = rectCornerRadius,
+                isWavy = false,
+                waveOffset = 0f,
+                useRoundCap = true
+            )
+        } else {
+            val radius = (size.minDimension / 2) - stroke
+            val center = Offset(size.width / 2, size.height / 2)
+            
+            // Draw track
+            drawCircle(
+                color = trackColor,
+                radius = radius,
+                center = center,
+                style = Stroke(width = stroke)
+            )
+            
+            // Draw progress arc with round cap
+            if (progress > 0f) {
+                drawArc(
+                    color = progressColor,
+                    startAngle = -90f,
+                    sweepAngle = 360f * progress,
+                    useCenter = false,
+                    style = Stroke(width = stroke, cap = StrokeCap.Round),
+                    topLeft = Offset(center.x - radius, center.y - radius),
+                    size = Size(radius * 2, radius * 2)
+                )
+            }
+        }
+    }
+}
+
+// Helper function to draw rounded rectangle progress
+private fun DrawScope.drawRoundedRectProgress(
+    progress: Float,
+    progressColor: Color,
+    trackColor: Color,
+    strokeWidth: Float,
+    cornerRadius: Float,
+    isWavy: Boolean = false,
+    waveOffset: Float = 0f,
+    useRoundCap: Boolean = false
+) {
+    val halfStroke = strokeWidth / 2
+    val left = halfStroke
+    val top = halfStroke
+    val right = size.width - halfStroke
+    val bottom = size.height - halfStroke
+    val cr = cornerRadius.coerceAtMost((size.minDimension - strokeWidth) / 2)
+    
+    // Draw track as rounded rect stroke
+    drawRoundRect(
+        color = trackColor,
+        topLeft = Offset(left, top),
+        size = Size(right - left, bottom - top),
+        cornerRadius = CornerRadius(cr),
+        style = Stroke(width = strokeWidth)
+    )
+    
+    // Draw progress - trace the rounded rect perimeter
+    if (progress > 0f) {
+        val path = createRoundedRectProgressPath(
+            left = left,
+            top = top,
+            right = right,
+            bottom = bottom,
+            cornerRadius = cr,
+            progress = progress,
+            isWavy = isWavy,
+            waveOffset = waveOffset,
+            strokeWidth = strokeWidth
         )
         
-        // Draw gradient progress
-        if (progress > 0f) {
-            val sweepAngle = 360f * progress
+        drawPath(
+            path = path,
+            color = progressColor,
+            style = Stroke(
+                width = strokeWidth,
+                cap = if (useRoundCap) StrokeCap.Round else StrokeCap.Butt
+            )
+        )
+    }
+}
+
+private fun DrawScope.drawRoundedRectSegmentedProgress(
+    progress: Float,
+    progressColor: Color,
+    trackColor: Color,
+    strokeWidth: Float,
+    cornerRadius: Float
+) {
+    val halfStroke = strokeWidth / 2
+    val left = halfStroke
+    val top = halfStroke
+    val right = size.width - halfStroke
+    val bottom = size.height - halfStroke
+    val cr = cornerRadius.coerceAtMost((size.minDimension - strokeWidth) / 2)
+    
+    // Draw track
+    drawRoundRect(
+        color = trackColor,
+        topLeft = Offset(left, top),
+        size = Size(right - left, bottom - top),
+        cornerRadius = CornerRadius(cr),
+        style = Stroke(width = strokeWidth)
+    )
+    
+    // Calculate perimeter for segmentation
+    val segments = 20
+    val perimeter = calculateRoundedRectPerimeter(right - left, bottom - top, cr)
+    val segmentLength = perimeter / segments
+    val gapLength = segmentLength * 0.15f
+    
+    for (i in 0 until segments) {
+        val segmentProgress = ((progress * segments) - i).coerceIn(0f, 1f)
+        if (segmentProgress > 0) {
+            val startOffset = i * segmentLength + gapLength / 2
+            val endOffset = startOffset + (segmentLength - gapLength) * segmentProgress
             
-            drawArc(
-                brush = Brush.sweepGradient(
-                    colors = listOf(
-                        progressColor,
-                        progressColor.copy(alpha = 0.7f),
-                        progressColor.copy(alpha = 0.9f),
-                        progressColor
-                    ),
-                    center = center
-                ),
-                startAngle = -90f,
-                sweepAngle = sweepAngle,
-                useCenter = false,
-                style = Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Round),
-                topLeft = Offset(center.x - radius, center.y - radius),
-                size = Size(radius * 2, radius * 2)
+            val path = createRoundedRectSegmentPath(
+                left = left, top = top, right = right, bottom = bottom,
+                cornerRadius = cr, startOffset = startOffset, endOffset = endOffset
+            )
+            
+            drawPath(
+                path = path,
+                color = progressColor,
+                style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
             )
         }
     }
+}
+
+private fun DrawScope.drawRoundedRectDottedProgress(
+    progress: Float,
+    progressColor: Color,
+    trackColor: Color,
+    strokeWidth: Float,
+    cornerRadius: Float
+) {
+    val halfStroke = strokeWidth / 2
+    val left = halfStroke
+    val top = halfStroke
+    val right = size.width - halfStroke
+    val bottom = size.height - halfStroke
+    val cr = cornerRadius.coerceAtMost((size.minDimension - strokeWidth) / 2)
+    
+    val dots = 24
+    val dotRadius = strokeWidth * 0.8f
+    val perimeter = calculateRoundedRectPerimeter(right - left, bottom - top, cr)
+    
+    for (i in 0 until dots) {
+        val offset = (i.toFloat() / dots) * perimeter
+        val point = getPointOnRoundedRect(left, top, right, bottom, cr, offset)
+        val dotProgress = ((progress * dots) - i).coerceIn(0f, 1f)
+        
+        drawCircle(
+            color = if (dotProgress > 0) progressColor else trackColor,
+            radius = dotRadius * (0.5f + dotProgress * 0.5f),
+            center = point
+        )
+    }
+}
+
+private fun DrawScope.drawRoundedRectGradientProgress(
+    progress: Float,
+    progressColor: Color,
+    trackColor: Color,
+    strokeWidth: Float,
+    cornerRadius: Float
+) {
+    val halfStroke = strokeWidth / 2
+    val left = halfStroke
+    val top = halfStroke
+    val right = size.width - halfStroke
+    val bottom = size.height - halfStroke
+    val cr = cornerRadius.coerceAtMost((size.minDimension - strokeWidth) / 2)
+    
+    // Draw track
+    drawRoundRect(
+        color = trackColor,
+        topLeft = Offset(left, top),
+        size = Size(right - left, bottom - top),
+        cornerRadius = CornerRadius(cr),
+        style = Stroke(width = strokeWidth)
+    )
+    
+    // Draw gradient progress
+    if (progress > 0f) {
+        val path = createRoundedRectProgressPath(
+            left = left, top = top, right = right, bottom = bottom,
+            cornerRadius = cr, progress = progress,
+            isWavy = false, waveOffset = 0f, strokeWidth = strokeWidth
+        )
+        
+        drawPath(
+            path = path,
+            brush = Brush.linearGradient(
+                colors = listOf(
+                    progressColor,
+                    progressColor.copy(alpha = 0.7f),
+                    progressColor.copy(alpha = 0.9f),
+                    progressColor
+                )
+            ),
+            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+        )
+    }
+}
+
+// Helper function to create path for rounded rect progress
+private fun DrawScope.createRoundedRectProgressPath(
+    left: Float,
+    top: Float,
+    right: Float,
+    bottom: Float,
+    cornerRadius: Float,
+    progress: Float,
+    isWavy: Boolean,
+    waveOffset: Float,
+    strokeWidth: Float
+): Path {
+    val path = Path()
+    val perimeter = calculateRoundedRectPerimeter(right - left, bottom - top, cornerRadius)
+    val targetLength = perimeter * progress
+    
+    var currentLength = 0f
+    val steps = 200
+    val stepLength = perimeter / steps
+    
+    for (i in 0..steps) {
+        if (currentLength > targetLength) break
+        
+        val offset = i * stepLength
+        var point = getPointOnRoundedRect(left, top, right, bottom, cornerRadius, offset)
+        
+        if (isWavy) {
+            // Add wave effect
+            val wave = sin((offset / perimeter * 8 * PI) + waveOffset) * strokeWidth * 0.2f
+            // Apply wave perpendicular to path
+            val nextPoint = getPointOnRoundedRect(left, top, right, bottom, cornerRadius, (offset + 1).coerceAtMost(perimeter))
+            val dx = nextPoint.x - point.x
+            val dy = nextPoint.y - point.y
+            val len = kotlin.math.sqrt(dx * dx + dy * dy).coerceAtLeast(0.001f)
+            point = Offset(
+                point.x + (-dy / len) * wave.toFloat(),
+                point.y + (dx / len) * wave.toFloat()
+            )
+        }
+        
+        if (i == 0) {
+            path.moveTo(point.x, point.y)
+        } else {
+            path.lineTo(point.x, point.y)
+        }
+        
+        currentLength += stepLength
+    }
+    
+    return path
+}
+
+private fun DrawScope.createRoundedRectSegmentPath(
+    left: Float,
+    top: Float,
+    right: Float,
+    bottom: Float,
+    cornerRadius: Float,
+    startOffset: Float,
+    endOffset: Float
+): Path {
+    val path = Path()
+    val perimeter = calculateRoundedRectPerimeter(right - left, bottom - top, cornerRadius)
+    
+    val steps = 20
+    val length = endOffset - startOffset
+    val stepLength = length / steps
+    
+    for (i in 0..steps) {
+        val offset = (startOffset + i * stepLength).coerceAtMost(perimeter)
+        val point = getPointOnRoundedRect(left, top, right, bottom, cornerRadius, offset)
+        
+        if (i == 0) {
+            path.moveTo(point.x, point.y)
+        } else {
+            path.lineTo(point.x, point.y)
+        }
+    }
+    
+    return path
+}
+
+private fun calculateRoundedRectPerimeter(width: Float, height: Float, cornerRadius: Float): Float {
+    val cornerArc = 2 * PI.toFloat() * cornerRadius / 4 // Quarter circle
+    val straightWidth = (width - 2 * cornerRadius).coerceAtLeast(0f)
+    val straightHeight = (height - 2 * cornerRadius).coerceAtLeast(0f)
+    return 4 * cornerArc + 2 * straightWidth + 2 * straightHeight
+}
+
+private fun getPointOnRoundedRect(
+    left: Float,
+    top: Float,
+    right: Float,
+    bottom: Float,
+    cornerRadius: Float,
+    offset: Float
+): Offset {
+    val width = right - left
+    val height = bottom - top
+    val cr = cornerRadius.coerceAtMost(kotlin.math.min(width, height) / 2)
+    
+    val cornerArc = PI.toFloat() * cr / 2
+    val straightWidth = (width - 2 * cr).coerceAtLeast(0f)
+    val straightHeight = (height - 2 * cr).coerceAtLeast(0f)
+    val perimeter = 4 * cornerArc + 2 * straightWidth + 2 * straightHeight
+    
+    var pos = offset % perimeter
+    if (pos < 0) pos += perimeter
+    
+    // Start from top center, go clockwise
+    val topCenterX = left + width / 2
+    
+    // Top edge (right half)
+    val topRightStraight = straightWidth / 2
+    if (pos < topRightStraight) {
+        return Offset(topCenterX + pos, top)
+    }
+    pos -= topRightStraight
+    
+    // Top-right corner
+    if (pos < cornerArc) {
+        val angle = -PI.toFloat() / 2 + (pos / cornerArc) * (PI.toFloat() / 2)
+        return Offset(
+            right - cr + cr * kotlin.math.cos(angle),
+            top + cr + cr * kotlin.math.sin(angle)
+        )
+    }
+    pos -= cornerArc
+    
+    // Right edge
+    if (pos < straightHeight) {
+        return Offset(right, top + cr + pos)
+    }
+    pos -= straightHeight
+    
+    // Bottom-right corner
+    if (pos < cornerArc) {
+        val angle = 0f + (pos / cornerArc) * (PI.toFloat() / 2)
+        return Offset(
+            right - cr + cr * kotlin.math.cos(angle),
+            bottom - cr + cr * kotlin.math.sin(angle)
+        )
+    }
+    pos -= cornerArc
+    
+    // Bottom edge
+    if (pos < straightWidth) {
+        return Offset(right - cr - pos, bottom)
+    }
+    pos -= straightWidth
+    
+    // Bottom-left corner
+    if (pos < cornerArc) {
+        val angle = PI.toFloat() / 2 + (pos / cornerArc) * (PI.toFloat() / 2)
+        return Offset(
+            left + cr + cr * kotlin.math.cos(angle),
+            bottom - cr + cr * kotlin.math.sin(angle)
+        )
+    }
+    pos -= cornerArc
+    
+    // Left edge
+    if (pos < straightHeight) {
+        return Offset(left, bottom - cr - pos)
+    }
+    pos -= straightHeight
+    
+    // Top-left corner
+    if (pos < cornerArc) {
+        val angle = PI.toFloat() + (pos / cornerArc) * (PI.toFloat() / 2)
+        return Offset(
+            left + cr + cr * kotlin.math.cos(angle),
+            top + cr + cr * kotlin.math.sin(angle)
+        )
+    }
+    pos -= cornerArc
+    
+    // Top edge (left half)
+    return Offset(left + cr + pos, top)
 }

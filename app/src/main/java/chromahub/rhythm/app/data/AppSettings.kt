@@ -248,8 +248,12 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_WIDGET_CORNER_RADIUS = "widget_corner_radius"
         private const val KEY_WIDGET_AUTO_UPDATE = "widget_auto_update"
         
+        // Global Header Settings
+        private const val KEY_HEADER_COLLAPSE_BEHAVIOR = "header_collapse_behavior" // 0=Normal, 1=Always Collapsed (applies to all screens)
+        
         // Home Screen Customization Settings - Header
-        private const val KEY_HOME_SHOW_APP_ICON = "home_show_app_icon"
+        private const val KEY_HOME_HEADER_DISPLAY_MODE = "home_header_display_mode" // 0=Icon Only, 1=Name Only, 2=Both
+        private const val KEY_HOME_SHOW_APP_ICON = "home_show_app_icon" // Deprecated - kept for migration
         private const val KEY_HOME_APP_ICON_VISIBILITY = "home_app_icon_visibility" // 0=Both, 1=Expanded, 2=Collapsed
         
         // Home Screen Customization Settings - Section Visibility
@@ -299,6 +303,7 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_PLAYER_ARTWORK_CORNER_RADIUS = "player_artwork_corner_radius" // 0-40 dp
         private const val KEY_PLAYER_SHOW_AUDIO_QUALITY_BADGES = "player_show_audio_quality_badges"
         private const val KEY_PLAYER_PROGRESS_STYLE = "player_progress_style" // "NORMAL", "WAVY", "ROUNDED", "THIN", "THICK"
+        private const val KEY_PLAYER_PROGRESS_THUMB_STYLE = "player_progress_thumb_style" // "NONE", "CIRCLE", "PILL", "DIAMOND", "LINE"
         
         // MiniPlayer Customization Settings
         private const val KEY_MINIPLAYER_PROGRESS_STYLE = "miniplayer_progress_style" // "NORMAL", "WAVY", "ROUNDED", "THIN", "GRADIENT"
@@ -313,6 +318,11 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_MINIPLAYER_TEXT_ALIGNMENT = "miniplayer_text_alignment" // "START", "CENTER"
         private const val KEY_MINIPLAYER_SWIPE_GESTURES = "miniplayer_swipe_gestures"
         private const val KEY_MINIPLAYER_SHOW_ARTIST = "miniplayer_show_artist"
+        
+        // Gesture Settings
+        private const val KEY_GESTURE_PLAYER_SWIPE_DISMISS = "gesture_player_swipe_dismiss" // Swipe down to dismiss full player
+        private const val KEY_GESTURE_PLAYER_SWIPE_TRACKS = "gesture_player_swipe_tracks" // Swipe left/right to change tracks in full player
+        private const val KEY_GESTURE_ARTWORK_DOUBLE_TAP = "gesture_artwork_double_tap" // Double tap on artwork to play/pause
         
         @Volatile
         private var INSTANCE: AppSettings? = null
@@ -2522,7 +2532,23 @@ class AppSettings private constructor(context: Context) {
         prefs.edit().putBoolean(KEY_WIDGET_AUTO_UPDATE, value).apply()
     }
     
+    // ==================== Global Header Settings ====================
+    
+    private val _headerCollapseBehavior = MutableStateFlow(prefs.getInt(KEY_HEADER_COLLAPSE_BEHAVIOR, 0))
+    val headerCollapseBehavior: StateFlow<Int> = _headerCollapseBehavior.asStateFlow()
+    fun setHeaderCollapseBehavior(value: Int) {
+        _headerCollapseBehavior.value = value
+        prefs.edit().putInt(KEY_HEADER_COLLAPSE_BEHAVIOR, value).apply()
+    }
+    
     // ==================== Home Screen Customization Settings ====================
+    
+    private val _homeHeaderDisplayMode = MutableStateFlow(prefs.getInt(KEY_HOME_HEADER_DISPLAY_MODE, 1))
+    val homeHeaderDisplayMode: StateFlow<Int> = _homeHeaderDisplayMode.asStateFlow()
+    fun setHomeHeaderDisplayMode(value: Int) {
+        _homeHeaderDisplayMode.value = value
+        prefs.edit().putInt(KEY_HOME_HEADER_DISPLAY_MODE, value).apply()
+    }
     
     private val _homeShowAppIcon = MutableStateFlow(prefs.getBoolean(KEY_HOME_SHOW_APP_ICON, false))
     val homeShowAppIcon: StateFlow<Boolean> = _homeShowAppIcon.asStateFlow()
@@ -2651,6 +2677,14 @@ class AppSettings private constructor(context: Context) {
     fun setPlayerProgressStyle(value: String) {
         _playerProgressStyle.value = value
         prefs.edit().putString(KEY_PLAYER_PROGRESS_STYLE, value).apply()
+    }
+    
+    // Player Progress Thumb Style
+    private val _playerProgressThumbStyle = MutableStateFlow(prefs.getString(KEY_PLAYER_PROGRESS_THUMB_STYLE, "CIRCLE") ?: "CIRCLE")
+    val playerProgressThumbStyle: StateFlow<String> = _playerProgressThumbStyle.asStateFlow()
+    fun setPlayerProgressThumbStyle(value: String) {
+        _playerProgressThumbStyle.value = value
+        prefs.edit().putString(KEY_PLAYER_PROGRESS_THUMB_STYLE, value).apply()
     }
     
     // ==================== MiniPlayer Customization Settings ====================
@@ -2876,6 +2910,28 @@ class AppSettings private constructor(context: Context) {
     fun setHomeDiscoverShowGradient(value: Boolean) {
         _homeDiscoverShowGradient.value = value
         prefs.edit().putBoolean(KEY_HOME_DISCOVER_SHOW_GRADIENT, value).apply()
+    }
+    
+    // Gesture Settings
+    private val _gesturePlayerSwipeDismiss = MutableStateFlow(prefs.getBoolean(KEY_GESTURE_PLAYER_SWIPE_DISMISS, true))
+    val gesturePlayerSwipeDismiss: StateFlow<Boolean> = _gesturePlayerSwipeDismiss.asStateFlow()
+    fun setGesturePlayerSwipeDismiss(value: Boolean) {
+        _gesturePlayerSwipeDismiss.value = value
+        prefs.edit().putBoolean(KEY_GESTURE_PLAYER_SWIPE_DISMISS, value).apply()
+    }
+    
+    private val _gesturePlayerSwipeTracks = MutableStateFlow(prefs.getBoolean(KEY_GESTURE_PLAYER_SWIPE_TRACKS, true))
+    val gesturePlayerSwipeTracks: StateFlow<Boolean> = _gesturePlayerSwipeTracks.asStateFlow()
+    fun setGesturePlayerSwipeTracks(value: Boolean) {
+        _gesturePlayerSwipeTracks.value = value
+        prefs.edit().putBoolean(KEY_GESTURE_PLAYER_SWIPE_TRACKS, value).apply()
+    }
+    
+    private val _gestureArtworkDoubleTap = MutableStateFlow(prefs.getBoolean(KEY_GESTURE_ARTWORK_DOUBLE_TAP, true))
+    val gestureArtworkDoubleTap: StateFlow<Boolean> = _gestureArtworkDoubleTap.asStateFlow()
+    fun setGestureArtworkDoubleTap(value: Boolean) {
+        _gestureArtworkDoubleTap.value = value
+        prefs.edit().putBoolean(KEY_GESTURE_ARTWORK_DOUBLE_TAP, value).apply()
     }
     
     // Default section order for home screen

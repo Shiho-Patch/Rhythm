@@ -31,6 +31,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,12 +64,29 @@ fun CollapsibleHeaderScreen(
     scrollBehaviorKey: String? = null, // Key for preserving scroll behavior state
     showAppIcon: Boolean = false,
     iconVisibilityMode: Int = 0, // 0=Both, 1=Expanded Only, 2=Collapsed Only
+    headerDisplayMode: Int = 1, // 0=Icon Only, 1=Name Only, 2=Both
+    alwaysCollapsed: Boolean = false, // Whether to start with header collapsed (override for specific screens)
     content: @Composable (Modifier) -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val appSettings = remember { chromahub.rhythm.app.data.AppSettings.getInstance(context) }
+    val globalCollapseBehavior by appSettings.headerCollapseBehavior.collectAsState()
+    
+    val topAppBarState = rememberTopAppBarState()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
-        rememberTopAppBarState(),
+        topAppBarState,
         canScroll = { true }
     )
+    
+    // Apply global collapse behavior or screen-specific override
+    val shouldStartCollapsed = alwaysCollapsed || globalCollapseBehavior == 1
+    
+    // If shouldStartCollapsed is true, set the initial state to fully collapsed
+    LaunchedEffect(shouldStartCollapsed) {
+        if (shouldStartCollapsed) {
+            topAppBarState.heightOffset = topAppBarState.heightOffsetLimit
+        }
+    }
 
     // Entrance animation state
     var showContent by remember { mutableStateOf(false) }
@@ -108,12 +126,52 @@ fun CollapsibleHeaderScreen(
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                             modifier = Modifier.padding(start = 14.dp)
                         ) {
-                            // Icon visibility logic: 0=Both, 1=Expanded Only (collapsedFraction < 0.5), 2=Collapsed Only (collapsedFraction >= 0.5)
-                            val shouldShowIcon = showAppIcon && when (iconVisibilityMode) {
-                                0 -> true // Always show
-                                1 -> collapsedFraction < 0.5f // Show only when expanded
-                                2 -> collapsedFraction >= 0.5f // Show only when collapsed
-                                else -> true
+                            // Determine visibility based on scroll state
+                            // collapsedFraction: 0 = fully expanded, 1 = fully collapsed
+                            val isExpanded = collapsedFraction < 0.5f
+                            val isCollapsed = collapsedFraction >= 0.5f
+                            
+                            // Header display mode: 0=Icon Only, 1=Name Only, 2=Both
+                            // Visibility mode: 0=Always, 1=Expanded Only, 2=Collapsed Only
+                            
+                            val shouldShowIcon = when {
+                                // "Both" mode - always show both icon and title regardless of visibility setting
+                                headerDisplayMode == 2 -> true
+                                // "Icon Only" mode - show icon in selected visibility state, show name in opposite state
+                                headerDisplayMode == 0 -> when (iconVisibilityMode) {
+                                    0 -> true // Always show icon
+                                    1 -> isExpanded // Show icon when expanded, name when collapsed
+                                    2 -> isCollapsed // Show icon when collapsed, name when expanded
+                                    else -> true
+                                }
+                                // "Name Only" mode - show name in selected visibility state, show icon in opposite state
+                                headerDisplayMode == 1 -> when (iconVisibilityMode) {
+                                    0 -> false // Always show name only
+                                    1 -> isCollapsed // Show name when expanded, icon when collapsed
+                                    2 -> isExpanded // Show name when collapsed, icon when expanded
+                                    else -> false
+                                }
+                                else -> false
+                            }
+                            
+                            val shouldShowTitle = when {
+                                // "Both" mode - always show both icon and title regardless of visibility setting
+                                headerDisplayMode == 2 -> true
+                                // "Name Only" mode - show name in selected visibility state, show icon in opposite state
+                                headerDisplayMode == 1 -> when (iconVisibilityMode) {
+                                    0 -> true // Always show name
+                                    1 -> isExpanded // Show name when expanded, icon when collapsed
+                                    2 -> isCollapsed // Show name when collapsed, icon when expanded
+                                    else -> true
+                                }
+                                // "Icon Only" mode - show icon in selected visibility state, show name in opposite state
+                                headerDisplayMode == 0 -> when (iconVisibilityMode) {
+                                    0 -> false // Always show icon only
+                                    1 -> isCollapsed // Show icon when expanded, name when collapsed
+                                    2 -> isExpanded // Show icon when collapsed, name when expanded
+                                    else -> false
+                                }
+                                else -> false
                             }
                             
                             if (shouldShowIcon) {
@@ -123,14 +181,16 @@ fun CollapsibleHeaderScreen(
                                     modifier = Modifier.size((48 + (36 - 28) * (1 - collapsedFraction)).dp)
                                 )
                             }
-                            Text(
-                                text = title,
-                                style = MaterialTheme.typography.headlineLarge.copy(
-                                    fontFamily = FontFamily.Default,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = fontSize
+                            if (shouldShowTitle) {
+                                Text(
+                                    text = title,
+                                    style = MaterialTheme.typography.headlineLarge.copy(
+                                        fontFamily = FontFamily.Default,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = fontSize
+                                    )
                                 )
-                            )
+                            }
                         }
                     },
                     navigationIcon = {

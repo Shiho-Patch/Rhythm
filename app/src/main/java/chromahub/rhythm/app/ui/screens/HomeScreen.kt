@@ -213,6 +213,7 @@ fun HomeScreen(
     val appSettings = remember { AppSettings.getInstance(context) }
     
     // Home header customization
+    val headerDisplayMode by appSettings.homeHeaderDisplayMode.collectAsState()
     val showAppIcon by appSettings.homeShowAppIcon.collectAsState()
     val iconVisibilityMode by appSettings.homeAppIconVisibility.collectAsState()
     
@@ -499,6 +500,7 @@ fun HomeScreen(
 
     CollapsibleHeaderScreen(
         title = context.getString(R.string.home_title),
+        headerDisplayMode = headerDisplayMode,
         showAppIcon = showAppIcon,
         iconVisibilityMode = iconVisibilityMode,
         actions = {

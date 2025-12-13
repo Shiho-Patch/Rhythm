@@ -127,6 +127,10 @@ fun MiniPlayer(
     val miniPlayerCornerRadius by appSettings.miniPlayerCornerRadius.collectAsState()
     val miniPlayerShowTime by appSettings.miniPlayerShowTime.collectAsState()
     val miniPlayerUseCircularProgress by appSettings.miniPlayerUseCircularProgress.collectAsState()
+    
+    // Gesture settings
+    val miniPlayerSwipeGestures by appSettings.miniPlayerSwipeGestures.collectAsState()
+    
     val density = LocalDensity.current
     val haptic = LocalHapticFeedback.current
     val animatedProgress by animateFloatAsState(
@@ -270,67 +274,68 @@ fun MiniPlayer(
                 translationX = translationOffsetX
                 alpha = alphaValue
             }
-            .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragStart = { 
-                        // Reset the last haptic offsets on new drag
-                        lastHapticOffset = 0f
-                        lastHapticOffsetX = 0f
-                        
-                        // Initial feedback when starting to drag - respecting settings
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                    },
-                    onDragEnd = {
-                        // Determine which gesture was dominant
-                        val absX = abs(offsetX)
-                        val absY = abs(offsetY)
-                        
-                        if (absX > absY) {
-                            // Horizontal swipe is dominant
-                            if (offsetX < -swipeHorizontalThreshold) {
-                                // Swipe left - next track
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
-                                onSkipNext()
-                            } else if (offsetX > swipeHorizontalThreshold) {
-                                // Swipe right - previous track
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
-                                onSkipPrevious()
+            .pointerInput(miniPlayerSwipeGestures) {
+                if (miniPlayerSwipeGestures) {
+                    detectDragGestures(
+                        onDragStart = { 
+                            // Reset the last haptic offsets on new drag
+                            lastHapticOffset = 0f
+                            lastHapticOffsetX = 0f
+                            
+                            // Initial feedback when starting to drag - respecting settings
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        },
+                        onDragEnd = {
+                            // Determine which gesture was dominant
+                            val absX = abs(offsetX)
+                            val absY = abs(offsetY)
+                            
+                            if (absX > absY) {
+                                // Horizontal swipe is dominant
+                                if (offsetX < -swipeHorizontalThreshold) {
+                                    // Swipe left - next track
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                    onSkipNext()
+                                } else if (offsetX > swipeHorizontalThreshold) {
+                                    // Swipe right - previous track
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                    onSkipPrevious()
+                                } else {
+                                    // Not enough swipe distance
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                }
                             } else {
-                                // Not enough swipe distance
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                // Vertical swipe is dominant
+                                if (offsetY < -swipeUpThreshold) {
+                                    // Swipe up detected, open player with stronger feedback
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                    onPlayerClick()
+                                } else if (offsetY > swipeDownThreshold) {
+                                    // Swipe down detected, dismiss mini player with stronger feedback
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                    isDismissingPlayer = true
+                                } else {
+                                    // Snap-back haptic when releasing before threshold
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                }
                             }
-                        } else {
-                            // Vertical swipe is dominant
-                            if (offsetY < -swipeUpThreshold) {
-                                // Swipe up detected, open player with stronger feedback
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
-                                onPlayerClick()
-                            } else if (offsetY > swipeDownThreshold) {
-                                // Swipe down detected, dismiss mini player with stronger feedback
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
-                                isDismissingPlayer = true
-                            } else {
-                                // Snap-back haptic when releasing before threshold
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            
+                            // Reset offsets if not dismissing
+                            if (!isDismissingPlayer) {
+                                offsetY = 0f
+                                offsetX = 0f
                             }
-                        }
-                        
-                        // Reset offsets if not dismissing
-                        if (!isDismissingPlayer) {
-                            offsetY = 0f
-                            offsetX = 0f
-                        }
-                    },
-                    onDragCancel = {
-                        // Feedback when drag canceled
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                        // Reset offsets if not dismissing
-                        if (!isDismissingPlayer) {
-                            offsetY = 0f
-                            offsetX = 0f
-                        }
-                    },
-                    onDrag = { change, dragAmount ->
+                        },
+                        onDragCancel = {
+                            // Feedback when drag canceled
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            // Reset offsets if not dismissing
+                            if (!isDismissingPlayer) {
+                                offsetY = 0f
+                                offsetX = 0f
+                            }
+                        },
+                        onDrag = { change, dragAmount ->
                         change.consume()
                         // Update offsets for both horizontal and vertical gestures
                         offsetX += dragAmount.x
@@ -355,7 +360,8 @@ fun MiniPlayer(
                             }
                         }
                     }
-                )
+                    )
+                }
             },
         interactionSource = interactionSource
     ) {
@@ -613,6 +619,7 @@ fun MiniPlayer(
                     // Play/pause button with optional circular progress border
                     if (song != null && miniPlayerUseCircularProgress) {
                         // Circular progress as border around play/pause button
+                        // Corner radius adapts to button shape: circle when paused, rounded rect when playing
                         CircularStyledProgressBar(
                             progress = animatedProgress,
                             style = try { ProgressStyle.valueOf(miniPlayerProgressStyle) } catch (e: Exception) { ProgressStyle.NORMAL },
@@ -620,7 +627,8 @@ fun MiniPlayer(
                             progressColor = MaterialTheme.colorScheme.primary,
                             trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
                             strokeWidth = 3.dp,
-                            isPlaying = isPlaying
+                            isPlaying = isPlaying,
+                            cornerRadius = if (isPlaying) 20.dp else 50.dp // Adapt to button shape
                         ) {
                             FilledIconButton(
                                 onClick = {

@@ -98,6 +98,7 @@ import chromahub.rhythm.app.ui.utils.LazyListStateSaver
 import chromahub.rhythm.app.data.AppSettings
 import chromahub.rhythm.app.ui.components.LanguageSwitcherDialog
 import android.content.Context
+import androidx.compose.material.icons.filled.Gesture
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Widgets
@@ -130,6 +131,7 @@ object SettingsRoutes {
     const val LYRICS_SOURCE = "lyrics_source_settings"
     const val WIDGET = "widget_settings"
     const val HOME_SCREEN = "home_screen_settings"
+    const val GESTURES = "gestures_settings"
 }
 
 data class SettingItem(
@@ -211,6 +213,12 @@ fun SettingsScreen(
                         "Vibrate when tapping buttons", 
                         toggleState = hapticFeedbackEnabled,
                         onToggleChange = { appSettings.setHapticFeedbackEnabled(it) }
+                    ),
+                    SettingItem(
+                        Icons.Default.Gesture,
+                        "Gestures",
+                        "Configure swipe and touch gestures",
+                        onClick = { onNavigateTo(SettingsRoutes.GESTURES) }
                     )
                 )
             ),
@@ -841,6 +849,7 @@ fun SettingsScreenWrapper(onBack: () -> Unit, appSettings: chromahub.rhythm.app.
             SettingsRoutes.LYRICS_SOURCE -> LyricsSourceSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.WIDGET -> WidgetSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.HOME_SCREEN -> HomeScreenCustomizationSettingsScreen(onBackClick = { currentRoute = null })
+            SettingsRoutes.GESTURES -> GesturesSettingsScreen(onBackClick = { currentRoute = null })
             else -> SettingsScreen(
                 onBackClick = handleBack,
                 onNavigateTo = { route -> currentRoute = route },

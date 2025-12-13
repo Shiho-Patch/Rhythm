@@ -88,7 +88,9 @@ import chromahub.rhythm.app.ui.components.CollapsibleHeaderScreen
 import chromahub.rhythm.app.ui.components.RhythmIcons
 import chromahub.rhythm.app.ui.components.StandardBottomSheetHeader
 import chromahub.rhythm.app.ui.components.StyledProgressBar
+import chromahub.rhythm.app.ui.components.CircularStyledProgressBar
 import chromahub.rhythm.app.ui.components.ProgressStyle
+import chromahub.rhythm.app.ui.components.ThumbStyle
 import chromahub.rhythm.app.ui.screens.LicensesBottomSheet
 import chromahub.rhythm.app.ui.utils.LazyListStateSaver
 import chromahub.rhythm.app.viewmodel.MusicViewModel
@@ -328,7 +330,7 @@ fun NotificationsSettingsScreen(onBackClick: () -> Unit) {
         ) {
             androidx.compose.foundation.lazy.LazyListState()
         }
-        
+
         LazyColumn(
             state = lazyListState,
             modifier = modifier
@@ -390,7 +392,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
     val shuffleModePersistence by appSettings.shuffleModePersistence.collectAsState()
     val playlistClickBehavior by appSettings.playlistClickBehavior.collectAsState(initial = "ask")
     val useHoursInTimeFormat by appSettings.useHoursInTimeFormat.collectAsState()
-    
+
     var showPlaylistBehaviorDialog by remember { mutableStateOf(false) }
     var showQueueDialogSettingDialog by remember { mutableStateOf(false) }
 
@@ -514,13 +516,13 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
             }
         }
     }
-    
+
     // Playlist Click Behavior Dialog
     if (showPlaylistBehaviorDialog) {
         val haptic = LocalHapticFeedback.current
         val scope = rememberCoroutineScope()
         val playlistSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        
+
         // Animation states
         var showContent by remember { mutableStateOf(false) }
 
@@ -537,11 +539,11 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
             delay(100)
             showContent = true
         }
-        
+
         ModalBottomSheet(
             onDismissRequest = { showPlaylistBehaviorDialog = false },
             sheetState = playlistSheetState,
-            dragHandle = { 
+            dragHandle = {
                 BottomSheetDefaults.DragHandle(
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -591,7 +593,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     // Option 1: Ask each time
                     Card(
@@ -857,13 +859,13 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
             }
         }
     }
-    
+
     // Show Queue Dialog Setting Dialog
     if (showQueueDialogSettingDialog) {
         val haptic = LocalHapticFeedback.current
         val scope = rememberCoroutineScope()
         val queueSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        
+
         // Animation states
         var showContent by remember { mutableStateOf(false) }
 
@@ -880,11 +882,11 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
             delay(100)
             showContent = true
         }
-        
+
         ModalBottomSheet(
             onDismissRequest = { showQueueDialogSettingDialog = false },
             sheetState = queueSheetState,
-            dragHandle = { 
+            dragHandle = {
                 BottomSheetDefaults.DragHandle(
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -934,7 +936,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     // Option 1: Ask each time (show dialog)
                     Card(
@@ -1247,7 +1249,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
         ) {
             androidx.compose.foundation.lazy.LazyListState()
         }
-        
+
         LazyColumn(
             state = lazyListState,
             modifier = modifier
@@ -1440,7 +1442,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                     tint = MaterialTheme.colorScheme.error
                 )
             },
-            title = { 
+            title = {
                 Text(
                     text = context.getString(R.string.dialog_cleanup_empty_playlists_title),
                     style = MaterialTheme.typography.headlineSmall,
@@ -1497,7 +1499,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                     tint = MaterialTheme.colorScheme.error
                 )
             },
-            title = { 
+            title = {
                 Text(
                     text = context.getString(R.string.dialog_delete_playlist_title),
                     style = MaterialTheme.typography.headlineSmall,
@@ -1551,11 +1553,11 @@ private fun PlaylistSettingRow(
     val context = LocalContext.current
     val musicViewModel: MusicViewModel = viewModel()
     val playlists by musicViewModel.playlists.collectAsState()
-    
+
     // Get playlist from data field (should be playlist ID)
     val playlistId = item.data as? String
     val playlist = playlists.find { it.id == playlistId }
-    
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -1616,7 +1618,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
     val haptic = LocalHapticFeedback.current
     val appSettings = AppSettings.getInstance(context)
     val musicViewModel: MusicViewModel = viewModel()
-    
+
     // Get all songs and filtered items
     val allSongs by musicViewModel.songs.collectAsState()
     val filteredSongs by musicViewModel.filteredSongs.collectAsState()
@@ -1624,22 +1626,22 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
     val blacklistedFolders by appSettings.blacklistedFolders.collectAsState()
     val whitelistedSongs by appSettings.whitelistedSongs.collectAsState()
     val whitelistedFolders by appSettings.whitelistedFolders.collectAsState()
-    
+
     // Get current media scan mode from settings
     val mediaScanMode by appSettings.mediaScanMode.collectAsState()
-    
+
     // Mode state
-    var currentMode by remember { 
+    var currentMode by remember {
         mutableStateOf(
-            if (mediaScanMode == "whitelist") chromahub.rhythm.app.ui.screens.MediaScanMode.WHITELIST 
+            if (mediaScanMode == "whitelist") chromahub.rhythm.app.ui.screens.MediaScanMode.WHITELIST
             else chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST
-        ) 
+        )
     }
-    
+
     // Bottom sheet states
     var showSongsBottomSheet by remember { mutableStateOf(false) }
     var showFoldersBottomSheet by remember { mutableStateOf(false) }
-    
+
     // File picker launcher for folder selection
     val folderPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -1649,11 +1651,11 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                 try {
                     val docId = DocumentsContract.getTreeDocumentId(uri)
                     val split = docId.split(":")
-                    
+
                     if (split.size >= 2) {
                         val storageType = split[0] // e.g., "primary", "home", or specific SD card ID
                         val relativePath = split[1] // e.g., "Music/MyFolder"
-                        
+
                         // Build the full path based on storage type
                         val fullPath = when (storageType) {
                             "primary" -> "/storage/emulated/0/$relativePath"
@@ -1670,7 +1672,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                                 }
                             }
                         }
-                        
+
                         if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) {
                             appSettings.addFolderToBlacklist(fullPath)
                         } else {
@@ -1683,17 +1685,17 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
             }
         }
     }
-    
+
     // Computed values OUTSIDE LazyColumn
     val filteredSongDetails = remember(allSongs, blacklistedSongs, whitelistedSongs, currentMode) {
         when (currentMode) {
-            chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST -> 
+            chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST ->
                 allSongs.filter { song -> blacklistedSongs.contains(song.id) }
-            chromahub.rhythm.app.ui.screens.MediaScanMode.WHITELIST -> 
+            chromahub.rhythm.app.ui.screens.MediaScanMode.WHITELIST ->
                 allSongs.filter { song -> whitelistedSongs.contains(song.id) }
         }
     }
-    
+
     val filteredFoldersList = remember(blacklistedFolders, whitelistedFolders, currentMode) {
         when (currentMode) {
             chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST -> blacklistedFolders
@@ -1814,7 +1816,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
         ) {
             androidx.compose.foundation.lazy.LazyListState()
         }
-        
+
         LazyColumn(
             state = lazyListState,
             modifier = modifier
@@ -1825,7 +1827,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
         ) {
             // Main overview content
             item { Spacer(modifier = Modifier.height(8.dp)) }
-            
+
             settingGroups.forEach { group ->
                 item {
                     Text(
@@ -1835,7 +1837,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                         modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                     )
                 }
-                
+
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -1857,7 +1859,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             // Quick Tips Card
             item {
                 Spacer(modifier = Modifier.height(24.dp))
@@ -1905,15 +1907,15 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             item { Spacer(modifier = Modifier.height(24.dp)) }
         }
     }
-    
+
     // Songs bottom sheet
     if (showSongsBottomSheet) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        
+
         // Animation states
         var showContent by remember { mutableStateOf(false) }
         val contentAlpha by animateFloatAsState(
@@ -1929,7 +1931,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
             delay(100)
             showContent = true
         }
-        
+
         ModalBottomSheet(
             onDismissRequest = { showSongsBottomSheet = false },
             sheetState = sheetState,
@@ -1981,9 +1983,9 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                         }
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(24.dp))
-                
+
                 // Stats cards
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -2005,7 +2007,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                             Icon(
                                 imageVector = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) Icons.Default.Block else Icons.Default.CheckCircle,
                                 contentDescription = null,
-                                tint = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) 
+                                tint = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST)
                                     MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(32.dp)
                             )
@@ -2023,7 +2025,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                             )
                         }
                     }
-                    
+
                     Card(
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
@@ -2058,9 +2060,9 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                         }
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(24.dp))
-                
+
                 // Songs list with lazy column
                 LazyColumn(
                     modifier = Modifier
@@ -2107,9 +2109,9 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                                         modifier = Modifier.size(24.dp)
                                     )
                                 }
-                                
+
                                 Spacer(modifier = Modifier.width(16.dp))
-                                
+
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = song.title,
@@ -2127,7 +2129,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                                         overflow = TextOverflow.Ellipsis
                                     )
                                 }
-                                
+
                                 FilledIconButton(
                                     onClick = {
                                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
@@ -2146,7 +2148,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                                     Icon(
                                         imageVector = Icons.Default.Close,
                                         contentDescription = "Remove",
-                                        tint = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) 
+                                        tint = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST)
                                             MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer
                                     )
                                 }
@@ -2154,7 +2156,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                         }
                     }
                 }
-                
+
                 // Clear button at bottom
                 if (filteredSongDetails.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(24.dp))
@@ -2168,7 +2170,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                             }
                             showSongsBottomSheet = false
                         },
-                        border = BorderStroke(2.dp, if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) 
+                        border = BorderStroke(2.dp, if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST)
                             MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -2184,11 +2186,11 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
             }
         }
     }
-    
+
     // Folders bottom sheet
     if (showFoldersBottomSheet) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        
+
         // Animation states
         var showContent by remember { mutableStateOf(false) }
         val contentAlpha by animateFloatAsState(
@@ -2204,7 +2206,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
             delay(100)
             showContent = true
         }
-        
+
         ModalBottomSheet(
             onDismissRequest = { showFoldersBottomSheet = false },
             sheetState = sheetState,
@@ -2256,9 +2258,9 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                         }
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(24.dp))
-                
+
                 // Stats card
                 Card(
                     colors = CardDefaults.cardColors(
@@ -2276,7 +2278,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                         Icon(
                             imageVector = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) Icons.Default.FolderOff else Icons.Default.Folder,
                             contentDescription = null,
-                            tint = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) 
+                            tint = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST)
                                 MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(32.dp)
                         )
@@ -2294,9 +2296,9 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                         )
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(24.dp))
-                
+
                 // Folders list
                 LazyColumn(
                     modifier = Modifier
@@ -2333,14 +2335,14 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                                     Icon(
                                         imageVector = Icons.Filled.Folder,
                                         contentDescription = null,
-                                        tint = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) 
+                                        tint = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST)
                                             MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(24.dp)
                                     )
                                 }
-                                
+
                                 Spacer(modifier = Modifier.width(16.dp))
-                                
+
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = File(folder).name.ifEmpty { context.getString(R.string.settings_root) },
@@ -2358,7 +2360,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                                         overflow = TextOverflow.Ellipsis
                                     )
                                 }
-                                
+
                                 FilledIconButton(
                                     onClick = {
                                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
@@ -2377,7 +2379,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                                     Icon(
                                         imageVector = Icons.Default.Close,
                                         contentDescription = context.getString(R.string.cd_remove),
-                                        tint = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) 
+                                        tint = if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST)
                                             MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer
                                     )
                                 }
@@ -2385,7 +2387,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                         }
                     }
                 }
-                
+
                 // Action buttons at bottom
                 Spacer(modifier = Modifier.height(24.dp))
                 Row(
@@ -2411,7 +2413,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(context.getString(R.string.settings_add_folder_button))
                     }
-                    
+
                     if (filteredFoldersList.isNotEmpty()) {
                         OutlinedButton(
                             onClick = {
@@ -2427,7 +2429,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                                 }
                                 showFoldersBottomSheet = false
                             },
-                            border = BorderStroke(2.dp, if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST) 
+                            border = BorderStroke(2.dp, if (currentMode == chromahub.rhythm.app.ui.screens.MediaScanMode.BLACKLIST)
                                 MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary),
                             modifier = Modifier.weight(1f)
                         ) {
@@ -2453,14 +2455,14 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
     val haptic = LocalHapticFeedback.current
     val appSettings = AppSettings.getInstance(context)
     val scope = rememberCoroutineScope()
-    
+
     val artistSeparatorEnabled by appSettings.artistSeparatorEnabled.collectAsState()
     val artistSeparatorDelimiters by appSettings.artistSeparatorDelimiters.collectAsState()
     val groupByAlbumArtist by appSettings.groupByAlbumArtist.collectAsState()
-    
+
     var showDelimiterBottomSheet by remember { mutableStateOf(false) }
     var tempDelimiters by remember { mutableStateOf(artistSeparatorDelimiters) }
-    
+
     CollapsibleHeaderScreen(
         title = "Artists",
         showBackButton = true,
@@ -2478,7 +2480,7 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
                         "Enable Artist Separation",
                         "Split multi-artist tags (e.g., \"Artist1/Artist2\")",
                         toggleState = artistSeparatorEnabled,
-                        onToggleChange = { 
+                        onToggleChange = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                             appSettings.setArtistSeparatorEnabled(it)
                         }
@@ -2503,7 +2505,7 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
                         "Group by Album Artist",
                         "Show collaboration albums under main artist",
                         toggleState = groupByAlbumArtist,
-                        onToggleChange = { 
+                        onToggleChange = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                             appSettings.setGroupByAlbumArtist(it)
                         }
@@ -2518,7 +2520,7 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
         ) {
             androidx.compose.foundation.lazy.LazyListState()
         }
-        
+
         LazyColumn(
             state = lazyListState,
             modifier = modifier
@@ -2549,7 +2551,7 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
                             "Multi-Artist Parsing" -> {
                                 // First item: Enable Artist Separation
                                 TunerSettingRow(item = group.items[0])
-                                
+
                                 // Second item: Configure Delimiters with AnimatedVisibility
                                 AnimatedVisibility(
                                     visible = artistSeparatorEnabled,
@@ -2581,7 +2583,7 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             // Info Card
             item {
                 Spacer(modifier = Modifier.height(24.dp))
@@ -2621,7 +2623,7 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             // Examples
             item {
                 Spacer(modifier = Modifier.height(16.dp))
@@ -2653,7 +2655,7 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
                             )
                         }
                         Spacer(modifier = Modifier.height(12.dp))
-                        
+
                         ArtistSeparatorExampleItem(
                             original = "Artist1/Artist2",
                             result = "Artist1, Artist2"
@@ -2673,17 +2675,17 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             item {
                 Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }
-    
+
     // Delimiter Configuration Bottom Sheet
     if (showDelimiterBottomSheet) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        
+
         // Animation states
         var showContent by remember { mutableStateOf(false) }
         val contentAlpha by animateFloatAsState(
@@ -2699,7 +2701,7 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
             delay(100)
             showContent = true
         }
-        
+
         ModalBottomSheet(
             onDismissRequest = { showDelimiterBottomSheet = false },
             sheetState = sheetState,
@@ -2753,7 +2755,7 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 val commonDelimiters = listOf(
                     '/' to "Slash",
                     ';' to "Semicolon",
@@ -2761,7 +2763,7 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
                     '+' to "Plus",
                     '&' to "Ampersand"
                 )
-                
+
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     commonDelimiters.forEach { (char, name) ->
                         Card(
@@ -2838,9 +2840,9 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
                         }
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(24.dp))
-                
+
                 Button(
                     onClick = {
                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
@@ -2924,7 +2926,7 @@ fun ApiServiceRow(
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
-    
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -3256,7 +3258,7 @@ fun AboutScreen(
         ) {
             androidx.compose.foundation.lazy.LazyListState()
         }
-        
+
         LazyColumn(
             state = lazyListState,
             modifier = modifier.fillMaxSize(),
@@ -4090,7 +4092,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
     val downloadedFile by updaterViewModel.downloadedFile.collectAsState()
     val whatsNew = latestVersion?.whatsNew ?: emptyList()
     val knownIssues = latestVersion?.knownIssues ?: emptyList()
-    
+
     // Dialog states
     var showChannelDialog by remember { mutableStateOf(false) }
     var showIntervalDialog by remember { mutableStateOf(false) }
@@ -4136,7 +4138,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
         ) {
             androidx.compose.foundation.lazy.LazyListState()
         }
-        
+
         LazyColumn(
             state = lazyListState,
             modifier = modifier.fillMaxSize(),
@@ -4259,7 +4261,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                                     ) {
                                         Icon(
                                             imageVector = if (error?.contains("unknown sources", ignoreCase = true) == true ||
-                                                             error?.contains("install from unknown", ignoreCase = true) == true) 
+                                                             error?.contains("install from unknown", ignoreCase = true) == true)
                                                 Icons.Rounded.Settings else Icons.Rounded.Refresh,
                                             contentDescription = null,
                                             modifier = Modifier.size(18.dp)
@@ -4727,7 +4729,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                                 onToggleChange = { appSettings.setUpdatesEnabled(it) }
                             )
                         )
-                        
+
                         AnimatedVisibility(
                             visible = updatesEnabled,
                             enter = fadeIn(animationSpec = tween(300)) + expandVertically(animationSpec = tween(300)),
@@ -4802,7 +4804,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             // Informational card about smart polling
             item {
                 AnimatedVisibility(
@@ -4849,7 +4851,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
             }
         }
     }
-    
+
     // Update Channel Dialog
     if (showChannelDialog) {
         AlertDialog(
@@ -4869,12 +4871,12 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    
+
                     val channels = listOf(
                         "stable" to "Stable - Tested and reliable releases",
                         "beta" to "Beta - Early access to new features"
                     )
-                    
+
                     channels.forEach { (channel, description) ->
                         Card(
                             onClick = {
@@ -4935,7 +4937,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
             shape = RoundedCornerShape(24.dp)
         )
     }
-    
+
     // Update Check Interval Dialog
     if (showIntervalDialog) {
         AlertDialog(
@@ -4955,7 +4957,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    
+
                     val intervals = listOf(
                         1 to "Every hour",
                         6 to "Every 6 hours",
@@ -4963,7 +4965,7 @@ fun UpdatesSettingsScreen(onBackClick: () -> Unit) {
                         24 to "Once a day",
                         168 to "Once a week"
                     )
-                    
+
                     intervals.forEach { (hours, label) ->
                         Card(
                             onClick = {
@@ -5032,14 +5034,14 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
     val festiveSnowflakeSize by appSettings.festiveSnowflakeSize.collectAsState()
     val festiveSnowflakeArea by appSettings.festiveSnowflakeArea.collectAsState()
     val festiveThemeType by appSettings.festiveThemeType.collectAsState()
-    
+
     // Decoration position settings
     val festiveShowTopLights by appSettings.festiveShowTopLights.collectAsState()
     val festiveShowSideGarland by appSettings.festiveShowSideGarland.collectAsState()
     val festiveShowBottomSnow by appSettings.festiveShowBottomSnow.collectAsState()
     val festiveShowSnowfall by appSettings.festiveShowSnowfall.collectAsState()
     val haptic = LocalHapticFeedback.current
-    
+
     var showFestivalSelectionSheet by remember { mutableStateOf(false) }
 
     CollapsibleHeaderScreen(
@@ -5059,7 +5061,7 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                     onToggleChange = { appSettings.setFestiveThemeEnabled(it) }
                 )
             )
-            
+
             // Show these only if festive theme is enabled
             if (festiveThemeEnabled) {
                 add(
@@ -5071,7 +5073,7 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                         onToggleChange = { appSettings.setFestiveThemeAutoDetect(it) }
                     )
                 )
-                
+
                 // Show festival selection only if auto-detect is off
                 if (!festiveThemeAutoDetect) {
                     add(
@@ -5085,7 +5087,7 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                 }
             }
         }
-        
+
         val settingGroups = buildList {
             if (festiveItems.isNotEmpty()) {
                 add(
@@ -5130,7 +5132,7 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             // Festive Intensity Slider with animation
             item {
                 AnimatedVisibility(
@@ -5146,7 +5148,7 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                         )
-                        
+
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp),
@@ -5172,29 +5174,29 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                                         color = MaterialTheme.colorScheme.primary
                                     )
                                 }
-                                
+
                                 Spacer(modifier = Modifier.height(12.dp))
-                                
+
                                 Slider(
                                     value = festiveThemeIntensity,
-                                    onValueChange = { 
-                                        appSettings.setFestiveThemeIntensity(it) 
+                                    onValueChange = {
+                                        appSettings.setFestiveThemeIntensity(it)
                                     },
                                     valueRange = 0.1f..1f,
                                     modifier = Modifier.fillMaxWidth()
                                 )
-                                
+
                                 Spacer(modifier = Modifier.height(8.dp))
-                                
+
                                 Text(
                                     text = "Adjust the amount of festive decorations shown",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                
+
                                 // Snowflake Size Control
                                 Spacer(modifier = Modifier.height(24.dp))
-                                
+
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -5205,44 +5207,44 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                                         style = MaterialTheme.typography.bodyLarge,
                                         fontWeight = FontWeight.Medium
                                     )
-                                    
+
                                     Text(
                                         text = "${(festiveSnowflakeSize * 100).toInt()}%",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.primary
                                     )
                                 }
-                                
+
                                 Spacer(modifier = Modifier.height(12.dp))
-                                
+
                                 Slider(
                                     value = festiveSnowflakeSize,
-                                    onValueChange = { 
-                                        appSettings.setFestiveSnowflakeSize(it) 
+                                    onValueChange = {
+                                        appSettings.setFestiveSnowflakeSize(it)
                                     },
                                     valueRange = 0.5f..2.0f,
                                     modifier = Modifier.fillMaxWidth()
                                 )
-                                
+
                                 Spacer(modifier = Modifier.height(8.dp))
-                                
+
                                 Text(
                                     text = "Adjust snowflake size (smaller size = more snowflakes)",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                
+
                                 // Snowflake Area Control
                                 Spacer(modifier = Modifier.height(24.dp))
-                                
+
                                 Text(
                                     text = "Snowflake Display Area",
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.Medium
                                 )
-                                
+
                                 Spacer(modifier = Modifier.height(12.dp))
-                                
+
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -5254,7 +5256,7 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                                         label = { Text("Full Screen") },
                                         modifier = Modifier.weight(1f)
                                     )
-                                    
+
                                     // Left-Right Only Button
                                     FilterChip(
                                         selected = festiveSnowflakeArea == "LEFT_RIGHT_ONLY",
@@ -5262,7 +5264,7 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                                         label = { Text("Sides Only") },
                                         modifier = Modifier.weight(1f)
                                     )
-                                    
+
                                     // Top 1/3 Button
                                     FilterChip(
                                         selected = festiveSnowflakeArea == "TOP_ONE_THIRD",
@@ -5271,9 +5273,9 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                                         modifier = Modifier.weight(1f)
                                     )
                                 }
-                                
+
                                 Spacer(modifier = Modifier.height(8.dp))
-                                
+
                                 Text(
                                     text = when (festiveSnowflakeArea) {
                                         "FULL_SCREEN" -> "Snowflakes appear across the entire screen"
@@ -5284,26 +5286,26 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                
+
                                 // Decoration Elements Section
                                 Spacer(modifier = Modifier.height(24.dp))
-                                
+
                                 Text(
                                     text = "Decoration Elements",
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.Medium
                                 )
-                                
+
                                 Spacer(modifier = Modifier.height(8.dp))
-                                
+
                                 Text(
                                     text = "Toggle individual decoration elements by position",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                
+
                                 Spacer(modifier = Modifier.height(16.dp))
-                                
+
                                 // Decoration Toggle Cards
                                 Column(
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -5316,7 +5318,7 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                                         isEnabled = festiveShowSnowfall,
                                         onToggle = { appSettings.setFestiveShowSnowfall(it) }
                                     )
-                                    
+
                                     // Top Lights Toggle
                                     DecorationToggleCard(
                                         title = "Top Lights",
@@ -5325,7 +5327,7 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                                         isEnabled = festiveShowTopLights,
                                         onToggle = { appSettings.setFestiveShowTopLights(it) }
                                     )
-                                    
+
                                     // Side Garland Toggle
                                     DecorationToggleCard(
                                         title = "Side Garland",
@@ -5334,7 +5336,7 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                                         isEnabled = festiveShowSideGarland,
                                         onToggle = { appSettings.setFestiveShowSideGarland(it) }
                                     )
-                                    
+
                                     // Bottom Snow Toggle
                                     DecorationToggleCard(
                                         title = "Snow Pile",
@@ -5378,11 +5380,11 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             item { Spacer(modifier = Modifier.height(40.dp)) }
         }
     }
-    
+
     // Festival Selection Bottom Sheet
     if (showFestivalSelectionSheet) {
         FestivalSelectionBottomSheet(
@@ -5409,7 +5411,7 @@ private fun DecorationToggleCard(
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
-    
+
     Card(
         colors = CardDefaults.cardColors(
             containerColor = if (isEnabled)
@@ -5451,7 +5453,7 @@ private fun DecorationToggleCard(
                     )
                 }
             }
-            
+
             // Text content
             Column(
                 modifier = Modifier.weight(1f)
@@ -5471,13 +5473,13 @@ private fun DecorationToggleCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                 )
             }
-            
+
             // Toggle switch
             Switch(
                 checked = isEnabled,
-                onCheckedChange = { 
+                onCheckedChange = {
                     HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
-                    onToggle(it) 
+                    onToggle(it)
                 },
                 modifier = Modifier.size(width = 48.dp, height = 24.dp),
                 colors = SwitchDefaults.colors(
@@ -5499,7 +5501,7 @@ private fun FestivalSelectionBottomSheet(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    
+
     // Animation states
     var showContent by remember { mutableStateOf(false) }
     val contentAlpha by animateFloatAsState(
@@ -5515,7 +5517,7 @@ private fun FestivalSelectionBottomSheet(
         delay(100)
         showContent = true
     }
-    
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -5567,9 +5569,9 @@ private fun FestivalSelectionBottomSheet(
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
+
             // Festival Options
             val festivals = listOf(
                 Triple("CHRISTMAS", "Christmas", Icons.Default.AcUnit),
@@ -5577,20 +5579,20 @@ private fun FestivalSelectionBottomSheet(
                 Triple("VALENTINES", "Valentine's Day", Icons.Default.Favorite),
                 Triple("HALLOWEEN", "Halloween", Icons.Default.Nightlight)
             )
-            
+
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 festivals.forEach { (value, name, icon) ->
                     val isSelected = currentFestival == value
                     val isAvailable = value == "CHRISTMAS" || value == "NEW_YEAR"
-                    
+
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
-                            containerColor = if (isSelected) 
+                            containerColor = if (isSelected)
                                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                            else 
+                            else
                                 MaterialTheme.colorScheme.surfaceContainerHigh
                         ),
                         shape = RoundedCornerShape(16.dp),
@@ -5644,7 +5646,7 @@ private fun FestivalSelectionBottomSheet(
                                     }
                                 }
                             }
-                            
+
                             if (isSelected) {
                                 Icon(
                                     imageVector = Icons.Default.CheckCircle,
@@ -5657,9 +5659,9 @@ private fun FestivalSelectionBottomSheet(
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // Info card
             Card(
                 shape = RoundedCornerShape(16.dp),
@@ -5701,7 +5703,7 @@ private fun getFestivalDisplayName(festivalType: String): String {
         else -> "Not selected"
     }
 }
-            
+
 //            item { Spacer(modifier = Modifier.height(40.dp)) }
 //        }
 //    }
@@ -5717,7 +5719,7 @@ fun LyricsSourceDialog(
 ) {
     val lyricsSourcePreference by appSettings.lyricsSourcePreference.collectAsState()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -5769,7 +5771,7 @@ fun LyricsSourceDialog(
                             }
                         }
                     }
-            
+
             // Options
             val sourceOptions = listOf(
                 chromahub.rhythm.app.data.LyricsSourcePreference.EMBEDDED_FIRST to Triple(
@@ -5788,11 +5790,11 @@ fun LyricsSourceDialog(
                     Icons.Default.Folder
                 )
             )
-            
+
             sourceOptions.forEach { (preference, info) ->
                 val (title, description, icon) = info
                 val isSelected = lyricsSourcePreference == preference
-                
+
                 Card(
                     onClick = {
                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
@@ -5818,15 +5820,15 @@ fun LyricsSourceDialog(
                         Icon(
                             imageVector = icon,
                             contentDescription = null,
-                            tint = if (isSelected) 
+                            tint = if (isSelected)
                                 MaterialTheme.colorScheme.onPrimaryContainer
                             else
                                 MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(32.dp)
                         )
-                        
+
                         Spacer(modifier = Modifier.width(16.dp))
-                        
+
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = title,
@@ -5846,7 +5848,7 @@ fun LyricsSourceDialog(
                                     MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        
+
                         if (isSelected) {
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
@@ -5858,9 +5860,9 @@ fun LyricsSourceDialog(
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // Info card
             Card(
                 colors = CardDefaults.cardColors(
@@ -6102,7 +6104,7 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             // Cache Actions
             item {
                 Spacer(modifier = Modifier.height(24.dp))
@@ -6207,7 +6209,7 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
                         }
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
@@ -6583,12 +6585,12 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
     val scope = rememberCoroutineScope()
     val haptics = LocalHapticFeedback.current
     val musicViewModel: MusicViewModel = viewModel()
-    
+
     // Collect states
     val autoBackupEnabled by appSettings.autoBackupEnabled.collectAsState()
     val lastBackupTimestamp by appSettings.lastBackupTimestamp.collectAsState()
     val backupLocation by appSettings.backupLocation.collectAsState()
-    
+
     // Local states
     var isCreatingBackup by remember { mutableStateOf(false) }
     var isRestoringFromFile by remember { mutableStateOf(false) }
@@ -6597,7 +6599,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
     var showRestoreSuccess by remember { mutableStateOf(false) }
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
-    
+
     // File picker launcher for backup export
     val backupLocationLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -6608,20 +6610,20 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                     try {
                         isCreatingBackup = true
                         HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                        
+
                         musicViewModel.ensurePlaylistsSaved()
                         val backupJson = appSettings.createBackup()
-                        
+
                         context.contentResolver.openOutputStream(uri)?.use { outputStream ->
                             outputStream.write(backupJson.toByteArray())
                             outputStream.flush()
                         }
-                        
+
                         appSettings.setLastBackupTimestamp(System.currentTimeMillis())
                         appSettings.setBackupLocation(uri.toString())
-                        
+
                         showBackupSuccess = true
-                        
+
                         // Also copy to clipboard
                         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                         val clip = ClipData.newPlainText("Rhythm Backup", backupJson)
@@ -6638,7 +6640,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
             isCreatingBackup = false
         }
     }
-    
+
     // File picker launcher for restore
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -6649,10 +6651,10 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                     try {
                         isRestoringFromFile = true
                         HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                        
+
                         val inputStream = context.contentResolver.openInputStream(uri)
                         val backupJson = inputStream?.bufferedReader()?.use { it.readText() }
-                        
+
                         if (!backupJson.isNullOrEmpty()) {
                             if (appSettings.restoreFromBackup(backupJson)) {
                                 musicViewModel.reloadPlaylistsFromSettings()
@@ -6677,20 +6679,20 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
             isRestoringFromFile = false
         }
     }
-    
+
     // Restore from clipboard logic
     fun restoreFromClipboard() {
         scope.launch {
             try {
                 isRestoringFromClipboard = true
                 HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                
+
                 // Get backup from clipboard
                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = clipboard.primaryClip
                 if (clip != null && clip.itemCount > 0) {
                     val backupJson = clip.getItemAt(0).text.toString()
-                    
+
                     if (appSettings.restoreFromBackup(backupJson)) {
                         // Reload playlists from restored settings
                         musicViewModel.reloadPlaylistsFromSettings()
@@ -6711,7 +6713,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
             }
         }
     }
-    
+
     CollapsibleHeaderScreen(
         title = "Backup & Restore",
         showBackButton = true,
@@ -6724,9 +6726,9 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            
+
             item { Spacer(modifier = Modifier.height(8.dp)) }
-            
+
             // Status Cards
             item {
                 Row(
@@ -6737,9 +6739,9 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                     Card(
                         modifier = Modifier.weight(1f),
                         colors = CardDefaults.cardColors(
-                            containerColor = if (lastBackupTimestamp > 0) 
-                                MaterialTheme.colorScheme.primaryContainer 
-                            else 
+                            containerColor = if (lastBackupTimestamp > 0)
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
                                 MaterialTheme.colorScheme.errorContainer
                         ),
                         shape = RoundedCornerShape(16.dp)
@@ -6751,9 +6753,9 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                             Icon(
                                 imageVector = if (lastBackupTimestamp > 0) Icons.Filled.CheckCircle else Icons.Filled.Warning,
                                 contentDescription = null,
-                                tint = if (lastBackupTimestamp > 0) 
-                                    MaterialTheme.colorScheme.onPrimaryContainer 
-                                else 
+                                tint = if (lastBackupTimestamp > 0)
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                else
                                     MaterialTheme.colorScheme.onErrorContainer,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -6765,17 +6767,17 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                                 } else "Never",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = if (lastBackupTimestamp > 0) 
-                                    MaterialTheme.colorScheme.onPrimaryContainer 
-                                else 
+                                color = if (lastBackupTimestamp > 0)
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                else
                                     MaterialTheme.colorScheme.onErrorContainer
                             )
                             Text(
                                 text = context.getString(R.string.last_backup),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = if (lastBackupTimestamp > 0) 
-                                    MaterialTheme.colorScheme.onPrimaryContainer 
-                                else 
+                                color = if (lastBackupTimestamp > 0)
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                else
                                     MaterialTheme.colorScheme.onErrorContainer
                             )
                         }
@@ -6785,9 +6787,9 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                     Card(
                         modifier = Modifier.weight(1f),
                         colors = CardDefaults.cardColors(
-                            containerColor = if (autoBackupEnabled) 
-                                MaterialTheme.colorScheme.tertiaryContainer 
-                            else 
+                            containerColor = if (autoBackupEnabled)
+                                MaterialTheme.colorScheme.tertiaryContainer
+                            else
                                 MaterialTheme.colorScheme.surfaceVariant
                         ),
                         shape = RoundedCornerShape(16.dp)
@@ -6799,9 +6801,9 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                             Icon(
                                 imageVector = if (autoBackupEnabled) Icons.Filled.Autorenew else Icons.Filled.Schedule,
                                 contentDescription = null,
-                                tint = if (autoBackupEnabled) 
-                                    MaterialTheme.colorScheme.onTertiaryContainer 
-                                else 
+                                tint = if (autoBackupEnabled)
+                                    MaterialTheme.colorScheme.onTertiaryContainer
+                                else
                                     MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -6810,24 +6812,24 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                                 text = if (autoBackupEnabled) "Enabled" else "Manual",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = if (autoBackupEnabled) 
-                                    MaterialTheme.colorScheme.onTertiaryContainer 
-                                else 
+                                color = if (autoBackupEnabled)
+                                    MaterialTheme.colorScheme.onTertiaryContainer
+                                else
                                     MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
                                 text = context.getString(R.string.auto_backup),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = if (autoBackupEnabled) 
-                                    MaterialTheme.colorScheme.onTertiaryContainer 
-                                else 
+                                color = if (autoBackupEnabled)
+                                    MaterialTheme.colorScheme.onTertiaryContainer
+                                else
                                     MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
                 }
             }
-            
+
             // Backup location info if available
             backupLocation?.let { location ->
                 item {
@@ -6858,7 +6860,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             val settingGroups = listOf(
                 SettingGroup(
                     title = "Settings",
@@ -6868,7 +6870,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                             "Auto-backup",
                             "Automatically backup settings weekly",
                             toggleState = autoBackupEnabled,
-                            onToggleChange = { 
+                            onToggleChange = {
                                 HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
                                 appSettings.setAutoBackupEnabled(it)
                                 if (it) appSettings.triggerImmediateBackup()
@@ -6957,7 +6959,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             // Tips/Information Card
             item {
                 Spacer(modifier = Modifier.height(24.dp))
@@ -6989,7 +6991,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                             )
                         }
                         Spacer(modifier = Modifier.height(12.dp))
-                        
+
                         BackupInfoItem(
                             icon = Icons.Filled.Save,
                             text = context.getString(R.string.backup_all_settings_placeholder)
@@ -7005,11 +7007,11 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             item { Spacer(modifier = Modifier.height(8.dp)) }
         }
     }
-    
+
     // Success/Error Dialogs
     if (showBackupSuccess) {
         AlertDialog(
@@ -7022,7 +7024,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                 )
             },
             title = { Text("Backup Created Successfully") },
-            text = { 
+            text = {
                 Text("Your complete Rhythm backup has been created including:\n\n" +
                      "• All app settings and preferences\n" +
                      "• Your playlists and favorite songs\n" +
@@ -7034,9 +7036,9 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                      "The backup has been saved and copied to your clipboard for easy sharing.")
             },
             confirmButton = {
-                Button(onClick = { 
+                Button(onClick = {
                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                    showBackupSuccess = false 
+                    showBackupSuccess = false
                 }) {
                     Icon(
                         imageVector = Icons.Filled.CheckCircle,
@@ -7062,7 +7064,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                 )
             },
             title = { Text("Restore Completed Successfully") },
-            text = { 
+            text = {
                 Text("Your Rhythm data has been restored successfully including:\n\n" +
                      "• All app settings and preferences\n" +
                      "• Your playlists and favorite songs\n" +
@@ -7071,10 +7073,10 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                      "Please restart the app for all changes to take full effect.")
             },
             confirmButton = {
-                Button(onClick = { 
+                Button(onClick = {
                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
                     showRestoreSuccess = false
-                    
+
                     // Restart the app
                     val packageManager = context.packageManager
                     val intent = packageManager.getLaunchIntentForPackage(context.packageName)
@@ -7110,9 +7112,9 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
             title = { Text("Error") },
             text = { Text(errorMessage) },
             confirmButton = {
-                Button(onClick = { 
+                Button(onClick = {
                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                    showError = false 
+                    showError = false
                 }) {
                     Icon(
                         imageVector = Icons.Filled.Close,
@@ -7136,10 +7138,10 @@ fun LibraryTabOrderSettingsScreen(onBackClick: () -> Unit) {
     val appSettings = AppSettings.getInstance(context)
     val haptics = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
-    
+
     val tabOrder by appSettings.libraryTabOrder.collectAsState()
     var reorderableList by remember { mutableStateOf(tabOrder.toList()) }
-    
+
     // Helper function to get display name and icon for tab
     fun getTabInfo(tabId: String): Pair<String, ImageVector> {
         return when (tabId) {
@@ -7151,7 +7153,7 @@ fun LibraryTabOrderSettingsScreen(onBackClick: () -> Unit) {
             else -> Pair(tabId, RhythmIcons.Music.Song)
         }
     }
-    
+
     CollapsibleHeaderScreen(
         title = "Library Tab Order",
         showBackButton = true,
@@ -7164,7 +7166,7 @@ fun LibraryTabOrderSettingsScreen(onBackClick: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item { Spacer(modifier = Modifier.height(8.dp)) }
-            
+
             item {
                 Text(
                     text = context.getString(R.string.library_reorder_tabs),
@@ -7172,16 +7174,16 @@ fun LibraryTabOrderSettingsScreen(onBackClick: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            
+
             item { Spacer(modifier = Modifier.height(8.dp)) }
-            
+
             // Reorderable list
             itemsIndexed(
                 items = reorderableList,
                 key = { _, item -> item }
             ) { index, tabId ->
                 val (tabName, tabIcon) = getTabInfo(tabId)
-                
+
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -7219,7 +7221,7 @@ fun LibraryTabOrderSettingsScreen(onBackClick: () -> Unit) {
                                     )
                                 }
                             }
-                            
+
                             // Tab icon
                             Icon(
                                 imageVector = tabIcon,
@@ -7227,7 +7229,7 @@ fun LibraryTabOrderSettingsScreen(onBackClick: () -> Unit) {
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(24.dp)
                             )
-                            
+
                             // Tab name
                             Text(
                                 text = tabName,
@@ -7236,7 +7238,7 @@ fun LibraryTabOrderSettingsScreen(onBackClick: () -> Unit) {
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                         }
-                        
+
                         // Reorder buttons
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             // Move up button
@@ -7265,7 +7267,7 @@ fun LibraryTabOrderSettingsScreen(onBackClick: () -> Unit) {
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
-                            
+
                             // Move down button
                             FilledIconButton(
                                 onClick = {
@@ -7296,10 +7298,10 @@ fun LibraryTabOrderSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             item {
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 // Action buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -7324,7 +7326,7 @@ fun LibraryTabOrderSettingsScreen(onBackClick: () -> Unit) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Reset")
                     }
-                    
+
                     // Save button
                     Button(
                         onClick = {
@@ -7345,9 +7347,215 @@ fun LibraryTabOrderSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             item { Spacer(modifier = Modifier.height(8.dp)) }
         }
+    }
+}
+
+// Gestures Settings Screen
+@Composable
+fun GesturesSettingsScreen(onBackClick: () -> Unit) {
+    val context = LocalContext.current
+    val appSettings = AppSettings.getInstance(context)
+    val haptic = LocalHapticFeedback.current
+
+    // Gesture settings
+    val miniPlayerSwipeGestures by appSettings.miniPlayerSwipeGestures.collectAsState()
+    val gesturePlayerSwipeDismiss by appSettings.gesturePlayerSwipeDismiss.collectAsState()
+    val gesturePlayerSwipeTracks by appSettings.gesturePlayerSwipeTracks.collectAsState()
+    val gestureArtworkDoubleTap by appSettings.gestureArtworkDoubleTap.collectAsState()
+
+    CollapsibleHeaderScreen(
+        title = "Gestures",
+        showBackButton = true,
+        onBackClick = onBackClick
+    ) { modifier ->
+        LazyColumn(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp)
+        ) {
+            // Mini Player Gestures
+            item(key = "miniplayer_gestures_header") {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Mini Player",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+            }
+
+            item(key = "miniplayer_gestures_card") {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column {
+                        TunerSettingRow(
+                            item = SettingItem(
+                                Icons.Rounded.Swipe,
+                                "Swipe Gestures",
+                                "Swipe up/down to open/dismiss, left/right to skip tracks",
+                                toggleState = miniPlayerSwipeGestures,
+                                onToggleChange = { 
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    appSettings.setMiniPlayerSwipeGestures(it) 
+                                }
+                            )
+                        )
+                    }
+                }
+            }
+
+            // Full Player Gestures
+            item(key = "player_gestures_header") {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Full Player",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+            }
+
+            item(key = "player_gestures_card") {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column {
+                        TunerSettingRow(
+                            item = SettingItem(
+                                Icons.Rounded.SwipeDown,
+                                "Swipe Down to Dismiss",
+                                "Close player by swiping down on the screen",
+                                toggleState = gesturePlayerSwipeDismiss,
+                                onToggleChange = { 
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    appSettings.setGesturePlayerSwipeDismiss(it) 
+                                }
+                            )
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        TunerSettingRow(
+                            item = SettingItem(
+                                Icons.Rounded.SwipeLeft,
+                                "Swipe Artwork for Tracks",
+                                "Swipe left/right on album artwork to skip tracks",
+                                toggleState = gesturePlayerSwipeTracks,
+                                onToggleChange = { 
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    appSettings.setGesturePlayerSwipeTracks(it) 
+                                }
+                            )
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        TunerSettingRow(
+                            item = SettingItem(
+                                Icons.Rounded.TouchApp,
+                                "Double Tap Artwork",
+                                "Double tap on album art to play/pause",
+                                toggleState = gestureArtworkDoubleTap,
+                                onToggleChange = { 
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    appSettings.setGestureArtworkDoubleTap(it) 
+                                }
+                            )
+                        )
+                    }
+                }
+            }
+
+            // Tips
+            item(key = "gesture_tips") {
+                Spacer(modifier = Modifier.height(24.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Lightbulb,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "Quick Tips",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        GestureTipItem(
+                            icon = Icons.Default.SwipeVertical,
+                            text = "Swipe up on mini player to open full player"
+                        )
+                        GestureTipItem(
+                            icon = Icons.Default.SwipeDown,
+                            text = "Swipe down on mini player or full player to dismiss"
+                        )
+                        GestureTipItem(
+                            icon = Icons.Default.TouchApp,
+                            text = "Double tap artwork for quick play/pause"
+                        )
+                        GestureTipItem(
+                            icon = Icons.Default.Speed,
+                            text = "Disable unused gestures for faster response"
+                        )
+                    }
+                }
+            }
+
+            item { Spacer(modifier = Modifier.height(24.dp)) }
+        }
+    }
+}
+
+@Composable
+private fun GestureTipItem(
+    icon: ImageVector,
+    text: String
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 6.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
     }
 }
 
@@ -7358,7 +7566,7 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
     val appSettings = AppSettings.getInstance(context)
     val haptics = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
-    
+
     // MiniPlayer settings
     val miniPlayerProgressStyle by appSettings.miniPlayerProgressStyle.collectAsState()
     val miniPlayerShowProgress by appSettings.miniPlayerShowProgress.collectAsState()
@@ -7367,11 +7575,11 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
     val miniPlayerCornerRadius by appSettings.miniPlayerCornerRadius.collectAsState()
     val miniPlayerShowTime by appSettings.miniPlayerShowTime.collectAsState()
     val miniPlayerUseCircularProgress by appSettings.miniPlayerUseCircularProgress.collectAsState()
-    
+
     var showMiniPlayerProgressStyleSheet by remember { mutableStateOf(false) }
     var showMiniPlayerArtworkSizeSheet by remember { mutableStateOf(false) }
     var showMiniPlayerCornerRadiusSheet by remember { mutableStateOf(false) }
-    
+
     CollapsibleHeaderScreen(
         title = "MiniPlayer",
         showBackButton = true,
@@ -7382,7 +7590,7 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                 .fillMaxSize()
                 .padding(horizontal = 24.dp)
         ) {
-            
+
             // Progress Display Section
             item {
                 Spacer(modifier = Modifier.height(24.dp))
@@ -7425,13 +7633,18 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                     modifier = Modifier.fillMaxWidth(),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    CircularProgressIndicator(
-                                        progress = { 0.45f },
-                                        modifier = Modifier.size(32.dp),
-                                        color = MaterialTheme.colorScheme.primary,
+                                    CircularStyledProgressBar(
+                                        progress = 0.45f,
+                                        style = previewStyle,
+                                        modifier = Modifier.size(40.dp),
+                                        progressColor = MaterialTheme.colorScheme.primary,
                                         trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                                        strokeWidth = 3.dp
-                                    )
+                                        strokeWidth = 3.dp,
+                                        isPlaying = true,
+                                        cornerRadius = 50.dp
+                                    ) {
+                                        // Empty content - just preview the progress ring
+                                    }
                                 }
                             } else {
                                 Text(
@@ -7465,22 +7678,21 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             toggleState = miniPlayerUseCircularProgress,
                             onToggleChange = { appSettings.setMiniPlayerUseCircularProgress(it) }
                         )
-                        if (!miniPlayerUseCircularProgress) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 20.dp),
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                            )
-                            SettingRow(
-                                icon = Icons.Default.LinearScale,
-                                title = "Progress Style",
-                                description = miniPlayerProgressStyle.lowercase().replaceFirstChar { it.uppercase() },
-                                onClick = { showMiniPlayerProgressStyleSheet = true }
-                            )
-                        }
+                        // Show progress style for both linear and circular modes
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        SettingRow(
+                            icon = Icons.Default.LinearScale,
+                            title = "Progress Style",
+                            description = miniPlayerProgressStyle.lowercase().replaceFirstChar { it.uppercase() },
+                            onClick = { showMiniPlayerProgressStyleSheet = true }
+                        )
                     }
                 }
             }
-            
+
             // Artwork Section
             item {
                 Spacer(modifier = Modifier.height(24.dp))
@@ -7527,7 +7739,7 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             // Display Options Section
             item {
                 Spacer(modifier = Modifier.height(24.dp))
@@ -7593,11 +7805,11 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             item { Spacer(modifier = Modifier.height(24.dp)) }
         }
     }
-    
+
     // MiniPlayer Progress Style Bottom Sheet
     if (showMiniPlayerProgressStyleSheet) {
         ProgressStyleBottomSheet(
@@ -7612,16 +7824,16 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
             haptics = haptics
         )
     }
-    
+
     // MiniPlayer Artwork Size Bottom Sheet
     if (showMiniPlayerArtworkSizeSheet) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         var tempSize by remember { mutableIntStateOf(miniPlayerArtworkSize) }
-        
+
         ModalBottomSheet(
             onDismissRequest = { showMiniPlayerArtworkSizeSheet = false },
             sheetState = sheetState,
-            dragHandle = { 
+            dragHandle = {
                 BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.primary)
             },
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
@@ -7662,9 +7874,9 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                         }
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 Slider(
                     value = tempSize.toFloat(),
                     onValueChange = { tempSize = it.toInt() },
@@ -7679,21 +7891,21 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                         activeTrackColor = MaterialTheme.colorScheme.primary
                     )
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
-    
+
     // MiniPlayer Corner Radius Bottom Sheet
     if (showMiniPlayerCornerRadiusSheet) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         var tempRadius by remember { mutableIntStateOf(miniPlayerCornerRadius) }
-        
+
         ModalBottomSheet(
             onDismissRequest = { showMiniPlayerCornerRadiusSheet = false },
             sheetState = sheetState,
-            dragHandle = { 
+            dragHandle = {
                 BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.primary)
             },
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
@@ -7734,9 +7946,9 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                         }
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 Slider(
                     value = tempRadius.toFloat(),
                     onValueChange = { tempRadius = it.toInt() },
@@ -7751,7 +7963,7 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                         activeTrackColor = MaterialTheme.colorScheme.primary
                     )
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
@@ -7765,7 +7977,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
     val appSettings = AppSettings.getInstance(context)
     val haptics = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
-    
+
     // State variables
     val showLyrics by appSettings.showLyrics.collectAsState()
     val canvasApiEnabled by appSettings.canvasApiEnabled.collectAsState()
@@ -7775,15 +7987,17 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
     val playerShowSongInfoOnArtwork by appSettings.playerShowSongInfoOnArtwork.collectAsState()
     val playerArtworkCornerRadius by appSettings.playerArtworkCornerRadius.collectAsState()
     val playerShowAudioQualityBadges by appSettings.playerShowAudioQualityBadges.collectAsState()
-    
+
     // Progress bar settings
     val playerProgressStyle by appSettings.playerProgressStyle.collectAsState()
-    
+    val playerProgressThumbStyle by appSettings.playerProgressThumbStyle.collectAsState()
+
     var showChipOrderBottomSheet by remember { mutableStateOf(false) }
     var showTextAlignmentSheet by remember { mutableStateOf(false) }
     var showCornerRadiusSheet by remember { mutableStateOf(false) }
     var showPlayerProgressStyleSheet by remember { mutableStateOf(false) }
-    
+    var showPlayerThumbStyleSheet by remember { mutableStateOf(false) }
+
     CollapsibleHeaderScreen(
         title = "Player",
         showBackButton = true,
@@ -7794,7 +8008,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                 .fillMaxSize()
                 .padding(horizontal = 24.dp)
         ) {
-            
+
             // Player Controls Section
             item {
                 Spacer(modifier = Modifier.height(24.dp))
@@ -7820,7 +8034,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             // Display Options Section
             item {
                 Spacer(modifier = Modifier.height(24.dp))
@@ -7891,7 +8105,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             // Layout Options Section
             item {
                 Spacer(modifier = Modifier.height(24.dp))
@@ -7932,7 +8146,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             // Progress Bar Style Section
             item {
                 Spacer(modifier = Modifier.height(24.dp))
@@ -7949,7 +8163,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Column {
-                        // Progress style preview
+                        // Progress style preview with thumb
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -7960,6 +8174,11 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             } catch (e: IllegalArgumentException) {
                                 ProgressStyle.WAVY
                             }
+                            val previewThumbStyle = try {
+                                ThumbStyle.valueOf(playerProgressThumbStyle)
+                            } catch (e: IllegalArgumentException) {
+                                ThumbStyle.CIRCLE
+                            }
                             StyledProgressBar(
                                 progress = 0.65f,
                                 style = previewStyle,
@@ -7967,7 +8186,10 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                 progressColor = MaterialTheme.colorScheme.primary,
                                 trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
                                 height = 8.dp,
-                                isPlaying = true
+                                isPlaying = true,
+                                showThumb = previewThumbStyle != ThumbStyle.NONE,
+                                thumbStyle = previewThumbStyle,
+                                thumbSize = 14.dp
                             )
                         }
                         HorizontalDivider(
@@ -7980,10 +8202,20 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             description = playerProgressStyle.lowercase().replaceFirstChar { it.uppercase() },
                             onClick = { showPlayerProgressStyleSheet = true }
                         )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        SettingRow(
+                            icon = Icons.Default.TouchApp,
+                            title = "Thumb Style",
+                            description = playerProgressThumbStyle.lowercase().replaceFirstChar { it.uppercase() },
+                            onClick = { showPlayerThumbStyleSheet = true }
+                        )
                     }
                 }
             }
-            
+
             // Artwork Customization Section
             item {
                 Spacer(modifier = Modifier.height(24.dp))
@@ -8048,7 +8280,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             // Tips Card
             // item {
             //     Spacer(modifier = Modifier.height(24.dp))
@@ -8080,7 +8312,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
             //                 )
             //             }
             //             Spacer(modifier = Modifier.height(12.dp))
-                        
+
             //             PlayerTipItem(
             //                 icon = Icons.Default.Reorder,
             //                 text = "Tap 'Chip Order & Visibility' to customize action chips"
@@ -8096,11 +8328,11 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
             //         }
             //     }
             // }
-            
+
             item { Spacer(modifier = Modifier.height(24.dp)) }
         }
     }
-    
+
     // Show chip order bottom sheet
     if (showChipOrderBottomSheet) {
         chromahub.rhythm.app.ui.screens.PlayerChipOrderBottomSheet(
@@ -8109,15 +8341,15 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
             haptics = haptics
         )
     }
-    
+
     // Text Alignment Bottom Sheet
     if (showTextAlignmentSheet) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        
+
         ModalBottomSheet(
             onDismissRequest = { showTextAlignmentSheet = false },
             sheetState = sheetState,
-            dragHandle = { 
+            dragHandle = {
                 BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.primary)
             },
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
@@ -8138,9 +8370,9 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
-                
+
                 Spacer(modifier = Modifier.height(8.dp))
-                
+
                 // Alignment options
                 listOf(
                     Triple("START", "Left", Icons.AutoMirrored.Filled.AlignHorizontalLeft),
@@ -8154,9 +8386,9 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             .padding(vertical = 4.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = if (isSelected) 
-                                MaterialTheme.colorScheme.primaryContainer 
-                            else 
+                            containerColor = if (isSelected)
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
                                 MaterialTheme.colorScheme.surfaceContainerHigh
                         ),
                         onClick = {
@@ -8174,9 +8406,9 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             Icon(
                                 imageVector = icon,
                                 contentDescription = label,
-                                tint = if (isSelected) 
-                                    MaterialTheme.colorScheme.onPrimaryContainer 
-                                else 
+                                tint = if (isSelected)
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                else
                                     MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -8185,9 +8417,9 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                 text = label,
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                color = if (isSelected) 
-                                    MaterialTheme.colorScheme.onPrimaryContainer 
-                                else 
+                                color = if (isSelected)
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                else
                                     MaterialTheme.colorScheme.onSurface
                             )
                             Spacer(modifier = Modifier.weight(1f))
@@ -8202,12 +8434,12 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                         }
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
-    
+
     // Player Progress Style Bottom Sheet
     if (showPlayerProgressStyleSheet) {
         ProgressStyleBottomSheet(
@@ -8222,16 +8454,31 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
             haptics = haptics
         )
     }
-    
+
+    // Player Thumb Style Bottom Sheet
+    if (showPlayerThumbStyleSheet) {
+        ThumbStyleBottomSheet(
+            title = "Thumb Style",
+            currentStyle = playerProgressThumbStyle,
+            onStyleSelected = { style ->
+                appSettings.setPlayerProgressThumbStyle(style)
+                showPlayerThumbStyleSheet = false
+            },
+            onDismiss = { showPlayerThumbStyleSheet = false },
+            context = context,
+            haptics = haptics
+        )
+    }
+
     // Corner Radius Bottom Sheet
     if (showCornerRadiusSheet) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         var tempRadius by remember { mutableIntStateOf(playerArtworkCornerRadius) }
-        
+
         ModalBottomSheet(
             onDismissRequest = { showCornerRadiusSheet = false },
             sheetState = sheetState,
-            dragHandle = { 
+            dragHandle = {
                 BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.primary)
             },
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
@@ -8277,9 +8524,9 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                         }
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 Slider(
                     value = tempRadius.toFloat(),
                     onValueChange = { tempRadius = it.toInt() },
@@ -8294,9 +8541,9 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                         activeTrackColor = MaterialTheme.colorScheme.primary
                     )
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 // Info card
                 Card(
                     colors = CardDefaults.cardColors(
@@ -8323,7 +8570,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                         )
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
@@ -8341,12 +8588,12 @@ private fun SettingRow(
 ) {
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
-    
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .then(
-                if (onClick != null) Modifier.clickable { 
+                if (onClick != null) Modifier.clickable {
                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                     onClick()
                 }
@@ -8377,7 +8624,7 @@ private fun SettingRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        
+
         if (toggleState != null && onToggleChange != null) {
             Switch(
                 checked = toggleState,
@@ -8440,7 +8687,7 @@ private fun ProgressStyleBottomSheet(
     haptics: HapticFeedback
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    
+
     val progressStyles = listOf(
         ProgressStyleOption("NORMAL", "Normal", Icons.Default.LinearScale, "Standard progress bar"),
         ProgressStyleOption("WAVY", "Wavy", Icons.Default.GraphicEq, "Animated wavy line"),
@@ -8451,11 +8698,11 @@ private fun ProgressStyleBottomSheet(
         ProgressStyleOption("SEGMENTED", "Segmented", Icons.Default.MoreHoriz, "Segmented blocks"),
         ProgressStyleOption("DOTS", "Dots", Icons.Default.FiberManualRecord, "Dot indicators")
     )
-    
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        dragHandle = { 
+        dragHandle = {
             BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.primary)
         },
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
@@ -8476,9 +8723,9 @@ private fun ProgressStyleBottomSheet(
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(vertical = 16.dp)
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             // Style options in a grid
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
@@ -8493,20 +8740,20 @@ private fun ProgressStyleBottomSheet(
                     } catch (e: IllegalArgumentException) {
                         ProgressStyle.NORMAL
                     }
-                    
+
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(130.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = if (isSelected) 
-                                MaterialTheme.colorScheme.primaryContainer 
-                            else 
+                            containerColor = if (isSelected)
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
                                 MaterialTheme.colorScheme.surfaceContainerHigh
                         ),
-                        border = if (isSelected) 
-                            BorderStroke(2.dp, MaterialTheme.colorScheme.primary) 
+                        border = if (isSelected)
+                            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
                         else null,
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
@@ -8543,9 +8790,9 @@ private fun ProgressStyleBottomSheet(
                                     isPlaying = true
                                 )
                             }
-                            
+
                             Spacer(modifier = Modifier.height(8.dp))
-                            
+
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.Center,
@@ -8554,9 +8801,9 @@ private fun ProgressStyleBottomSheet(
                                 Icon(
                                     imageVector = styleOption.icon,
                                     contentDescription = null,
-                                    tint = if (isSelected) 
-                                        MaterialTheme.colorScheme.onPrimaryContainer 
-                                    else 
+                                    tint = if (isSelected)
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else
                                         MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.size(16.dp)
                                 )
@@ -8565,13 +8812,13 @@ private fun ProgressStyleBottomSheet(
                                     text = styleOption.label,
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                    color = if (isSelected) 
-                                        MaterialTheme.colorScheme.onPrimaryContainer 
-                                    else 
+                                    color = if (isSelected)
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else
                                         MaterialTheme.colorScheme.onSurface
                                 )
                             }
-                            
+
                             Text(
                                 text = styleOption.description,
                                 style = MaterialTheme.typography.labelSmall,
@@ -8582,7 +8829,7 @@ private fun ProgressStyleBottomSheet(
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier.padding(top = 4.dp)
                             )
-                            
+
                             if (isSelected) {
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Icon(
@@ -8596,7 +8843,7 @@ private fun ProgressStyleBottomSheet(
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
@@ -8611,6 +8858,196 @@ private data class ProgressStyleOption(
     val icon: ImageVector,
     val description: String
 )
+
+/**
+ * Data class for thumb style options
+ */
+private data class ThumbStyleOption(
+    val id: String,
+    val label: String,
+    val icon: ImageVector,
+    val description: String
+)
+
+/**
+ * Bottom sheet for selecting thumb style
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ThumbStyleBottomSheet(
+    title: String,
+    currentStyle: String,
+    onStyleSelected: (String) -> Unit,
+    onDismiss: () -> Unit,
+    context: Context,
+    haptics: HapticFeedback
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    val thumbStyles = listOf(
+        ThumbStyleOption("NONE", "None", Icons.Default.VisibilityOff, "No thumb indicator"),
+        ThumbStyleOption("CIRCLE", "Circle", Icons.Default.FiberManualRecord, "Circular with highlight"),
+        ThumbStyleOption("PILL", "Pill", Icons.Default.RoundedCorner, "Vertical pill shape"),
+        ThumbStyleOption("DIAMOND", "Diamond", Icons.Default.ChangeHistory, "Diamond rhombus"),
+        ThumbStyleOption("LINE", "Line", Icons.Default.Remove, "Thin vertical line"),
+        ThumbStyleOption("SQUARE", "Square", Icons.Default.CropSquare, "Rounded square"),
+        ThumbStyleOption("GLOW", "Glow", Icons.Default.Flare, "Glowing circle"),
+        ThumbStyleOption("ARROW", "Arrow", Icons.Default.PlayArrow, "Arrow pointer"),
+        ThumbStyleOption("DOT", "Dot", Icons.Default.Adjust, "Small dot with ring")
+    )
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        dragHandle = {
+            BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.primary)
+        },
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
+        ) {
+            // Header
+            Text(
+                text = title,
+                style = MaterialTheme.typography.displayMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Style options in a grid
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 8.dp)
+            ) {
+                items(thumbStyles) { styleOption ->
+                    val isSelected = currentStyle == styleOption.id
+                    val thumbStyleEnum = try {
+                        ThumbStyle.valueOf(styleOption.id)
+                    } catch (e: IllegalArgumentException) {
+                        ThumbStyle.CIRCLE
+                    }
+
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(130.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isSelected)
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
+                                MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        border = if (isSelected)
+                            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                        else null,
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            onStyleSelected(styleOption.id)
+                        }
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            // Preview of the thumb style
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(32.dp)
+                                    .padding(horizontal = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                StyledProgressBar(
+                                    progress = 0.6f,
+                                    style = ProgressStyle.NORMAL,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    progressColor = if (isSelected)
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else
+                                        MaterialTheme.colorScheme.primary,
+                                    trackColor = if (isSelected)
+                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f)
+                                    else
+                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                                    height = 6.dp,
+                                    isPlaying = true,
+                                    showThumb = thumbStyleEnum != ThumbStyle.NONE,
+                                    thumbStyle = thumbStyleEnum,
+                                    thumbSize = 12.dp
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(
+                                    imageVector = styleOption.icon,
+                                    contentDescription = null,
+                                    tint = if (isSelected)
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else
+                                        MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = styleOption.label,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                    color = if (isSelected)
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+
+                            Text(
+                                text = styleOption.description,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (isSelected)
+                                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+
+                            if (isSelected) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Selected",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
 
 // Data classes and enums for theme customization
 data class ColorSchemeOption(
@@ -8962,9 +9399,9 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     SettingItem(
                         Icons.Default.ColorLens,
                         "Color Schemes",
-                        if (selectedColorSource == ColorSource.CUSTOM) 
-                            "Browse and select predefined color palettes" 
-                        else 
+                        if (selectedColorSource == ColorSource.CUSTOM)
+                            "Browse and select predefined color palettes"
+                        else
                             "Available only with Custom color source",
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
@@ -8974,9 +9411,9 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     SettingItem(
                         Icons.Default.Brush,
                         "Custom Colors",
-                        if (selectedColorSource == ColorSource.CUSTOM) 
-                            "Create your own unique color palette" 
-                        else 
+                        if (selectedColorSource == ColorSource.CUSTOM)
+                            "Create your own unique color palette"
+                        else
                             "Available only with Custom color source",
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
@@ -9003,9 +9440,9 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     SettingItem(
                         Icons.Default.TextFields,
                         "Font Selection",
-                        if (selectedFontSource == FontSource.SYSTEM) 
-                            "Choose from built-in font options" 
-                        else 
+                        if (selectedFontSource == FontSource.SYSTEM)
+                            "Choose from built-in font options"
+                        else
                             "Available only with System font source",
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
@@ -9015,9 +9452,9 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     SettingItem(
                         Icons.Default.FileUpload,
                         "Import Custom Font",
-                        if (customFontPath != null) 
-                            "Imported: ${customFontFamily}" 
-                        else 
+                        if (customFontPath != null)
+                            "Imported: ${customFontFamily}"
+                        else
                             "Import your own font file (.ttf, .otf)",
                         onClick = {
                             HapticUtils.performHapticFeedback(
@@ -9059,7 +9496,7 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             "Display Mode" -> {
                                 // First item: Follow System Theme
                                 TunerSettingRow(item = group.items[0])
-                                
+
                                 // Second item: Dark Mode with AnimatedVisibility
                                 AnimatedVisibility(
                                     visible = !useSystemTheme,
@@ -9226,7 +9663,7 @@ private fun ColorSourceDialog(
 ) {
     if (showDialog) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        
+
         // Animation states
         var showContent by remember { mutableStateOf(false) }
 
@@ -9243,7 +9680,7 @@ private fun ColorSourceDialog(
             delay(100)
             showContent = true
         }
-        
+
         ModalBottomSheet(
             onDismissRequest = onDismiss,
             sheetState = sheetState,
@@ -9297,7 +9734,7 @@ private fun ColorSourceDialog(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     ColorSource.entries.forEach { source ->
                         val isSelected = selectedColorSource == source
@@ -9419,7 +9856,7 @@ private fun FontSourceDialog(
 ) {
     if (showDialog) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        
+
         // Animation states
         var showContent by remember { mutableStateOf(false) }
 
@@ -9436,7 +9873,7 @@ private fun FontSourceDialog(
             delay(100)
             showContent = true
         }
-        
+
         ModalBottomSheet(
             onDismissRequest = onDismiss,
             sheetState = sheetState,
@@ -9490,7 +9927,7 @@ private fun FontSourceDialog(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     FontSource.entries.forEach { source ->
                         val isSelected = selectedFontSource == source
@@ -9668,7 +10105,7 @@ private fun ColorSchemesDialog(
 ) {
     if (showDialog) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        
+
         // Animation states
         var showContent by remember { mutableStateOf(false) }
 
@@ -9685,7 +10122,7 @@ private fun ColorSchemesDialog(
             delay(100)
             showContent = true
         }
-        
+
         ModalBottomSheet(
             onDismissRequest = onDismiss,
             sheetState = sheetState,
@@ -9739,7 +10176,7 @@ private fun ColorSchemesDialog(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 if (selectedColorSource != ColorSource.CUSTOM) {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
@@ -9937,7 +10374,7 @@ private fun CustomColorsDialog(
 ) {
     if (showDialog) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        
+
         // Animation states
         var showContent by remember { mutableStateOf(false) }
 
@@ -9954,7 +10391,7 @@ private fun CustomColorsDialog(
             delay(100)
             showContent = true
         }
-        
+
         // Parse current custom colors from the scheme name, or use defaults
         val customScheme = parseCustomColorScheme(currentScheme, false)
 
@@ -10035,7 +10472,7 @@ private fun CustomColorsDialog(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 if (selectedColorSource != ColorSource.CUSTOM) {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
@@ -10695,7 +11132,7 @@ private fun FontSelectionDialog(
 ) {
     if (showDialog) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        
+
         // Animation states
         var showContent by remember { mutableStateOf(false) }
 
@@ -10712,7 +11149,7 @@ private fun FontSelectionDialog(
             delay(100)
             showContent = true
         }
-        
+
         ModalBottomSheet(
             onDismissRequest = onDismiss,
             sheetState = sheetState,
@@ -10766,7 +11203,7 @@ private fun FontSelectionDialog(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 if (selectedFontSource != FontSource.SYSTEM) {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
@@ -10912,7 +11349,7 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
     val hapticFeedback = LocalHapticFeedback.current
     val appSettings = AppSettings.getInstance(context)
     val scope = rememberCoroutineScope()
-    
+
     // API states
     val deezerApiEnabled by appSettings.deezerApiEnabled.collectAsState()
     val canvasApiEnabled by appSettings.canvasApiEnabled.collectAsState()
@@ -10921,7 +11358,7 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
     val spotifyApiEnabled by appSettings.spotifyApiEnabled.collectAsState()
     val spotifyClientId by appSettings.spotifyClientId.collectAsState()
     val spotifyClientSecret by appSettings.spotifyClientSecret.collectAsState()
-    
+
     // Spotify API dialog state
     var showSpotifyConfigDialog by remember { mutableStateOf(false) }
 
@@ -10941,8 +11378,8 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item { Spacer(modifier = Modifier.height(8.dp)) }
-           
-            
+
+
             // API Services
             item {
                 Text(
@@ -10976,7 +11413,7 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
                             modifier = Modifier.padding(horizontal = 20.dp),
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                         )
-                        
+
                         // Spotify Canvas API
                         ApiServiceRow(
                             title = "Spotify Canvas",
@@ -10994,7 +11431,7 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
                             isEnabled = canvasApiEnabled && (spotifyApiEnabled || true),
                             icon = RhythmIcons.Song,
                             showToggle = true,
-                            onToggle = { enabled -> 
+                            onToggle = { enabled ->
                                 appSettings.setCanvasApiEnabled(enabled)
                                 // Auto-clear canvas cache when disabled
                                 if (!enabled) {
@@ -11009,15 +11446,15 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
                                     }
                                 }
                             },
-                            onClick = { 
-                                showSpotifyConfigDialog = true 
+                            onClick = {
+                                showSpotifyConfigDialog = true
                             }
                         )
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 20.dp),
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                         )
-                        
+
                         // LRCLib API
                         ApiServiceRow(
                             title = "LRCLib",
@@ -11034,7 +11471,7 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
                             modifier = Modifier.padding(horizontal = 20.dp),
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                         )
-                        
+
                         // YouTube Music API
                         ApiServiceRow(
                             title = "YouTube Music",
@@ -11051,7 +11488,7 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
                             modifier = Modifier.padding(horizontal = 20.dp),
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                         )
-                        
+
                         // GitHub API
                         ApiServiceRow(
                             title = "GitHub",
@@ -11066,7 +11503,7 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             item { Spacer(modifier = Modifier.height(24.dp)) }
 
              item {
@@ -11096,7 +11533,7 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
                                 color = MaterialTheme.colorScheme.onTertiaryContainer
                             )
                         }
-                        
+
                         Text(
                             text = context.getString(R.string.external_services_desc),
                             style = MaterialTheme.typography.bodyMedium,
@@ -11107,7 +11544,7 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
             }
         }
     }
-    
+
     // Spotify API Configuration Dialog
     if (showSpotifyConfigDialog) {
         SpotifyApiConfigDialog(
@@ -11135,7 +11572,7 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
     val haptics = LocalHapticFeedback.current
     val musicViewModel: MusicViewModel = viewModel()
     val scope = rememberCoroutineScope()
-    
+
     // Collect states from settings
     val equalizerEnabledState by musicViewModel.equalizerEnabled.collectAsState()
     val equalizerPresetState by musicViewModel.equalizerPreset.collectAsState()
@@ -11144,11 +11581,11 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
     val bassBoostStrengthState by musicViewModel.bassBoostStrength.collectAsState()
     val virtualizerEnabledState by musicViewModel.virtualizerEnabled.collectAsState()
     val virtualizerStrengthState by musicViewModel.virtualizerStrength.collectAsState()
-    
+
     // Local mutable states for UI
     var isEqualizerEnabled by remember(equalizerEnabledState) { mutableStateOf(equalizerEnabledState) }
     var selectedPreset by remember(equalizerPresetState) { mutableStateOf(equalizerPresetState) }
-    var bandLevels by remember(equalizerBandLevelsState) { 
+    var bandLevels by remember(equalizerBandLevelsState) {
         mutableStateOf(
             equalizerBandLevelsState.split(",").mapNotNull { it.toFloatOrNull() }.let { levels ->
                 if (levels.size == 5) levels else List(5) { 0f }
@@ -11159,7 +11596,7 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
     var bassBoostStrength by remember(bassBoostStrengthState) { mutableFloatStateOf(bassBoostStrengthState.toFloat()) }
     var isVirtualizerEnabled by remember(virtualizerEnabledState) { mutableStateOf(virtualizerEnabledState) }
     var virtualizerStrength by remember(virtualizerStrengthState) { mutableFloatStateOf(virtualizerStrengthState.toFloat()) }
-    
+
     // Preset definitions
     val presets = listOf(
         EqualizerPreset("Flat", Icons.Rounded.LinearScale, listOf(0f, 0f, 0f, 0f, 0f)),
@@ -11171,33 +11608,33 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
         EqualizerPreset("Hip Hop", Icons.Rounded.GraphicEq, listOf(7f, 4f, 0f, 2f, 6f)),
         EqualizerPreset("Vocal", Icons.Rounded.RecordVoiceOver, listOf(0f, 3f, 5f, 4f, 2f))
     )
-    
+
     val frequencyLabels = listOf("60Hz", "230Hz", "910Hz", "3.6kHz", "14kHz")
-    
+
     // Functions
     fun applyPreset(preset: EqualizerPreset) {
         HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
         selectedPreset = preset.name
         bandLevels = preset.bands
-        
+
         // Save to settings
         musicViewModel.appSettings.setEqualizerPreset(preset.name)
         musicViewModel.appSettings.setEqualizerBandLevels(preset.bands.joinToString(","))
-        
+
         // Apply to service
         musicViewModel.applyEqualizerPreset(preset.name, preset.bands)
     }
-    
+
     fun updateBandLevel(band: Int, level: Float) {
         val newLevels = bandLevels.toMutableList()
         newLevels[band] = level
         bandLevels = newLevels
         selectedPreset = "Custom"
-        
+
         // Save to settings
         musicViewModel.appSettings.setEqualizerBandLevels(newLevels.joinToString(","))
         musicViewModel.appSettings.setEqualizerPreset("Custom")
-        
+
         // Apply to service
         val levelShort = (level * 100).toInt().toShort()
         musicViewModel.setEqualizerBandLevel(band.toShort(), levelShort)
@@ -11214,7 +11651,7 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
         ) {
             androidx.compose.foundation.lazy.LazyListState()
         }
-        
+
         LazyColumn(
             state = lazyListState,
             modifier = modifier.fillMaxSize(),
@@ -11454,7 +11891,7 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                                     }
 
                                     Spacer(modifier = Modifier.height(16.dp))
-                                    
+
                                     // Define colors at the Column scope for reuse
                                     val primaryColor = MaterialTheme.colorScheme.primary
                                     val secondaryColor = MaterialTheme.colorScheme.secondary
@@ -11557,7 +11994,7 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                                                     2 -> primaryColor // Mid
                                                     else -> tertiaryColor // Treble
                                                 }
-                                                
+
                                                 // Outer glow
                                                 drawCircle(
                                                     color = pointColor.copy(alpha = 0.3f),
@@ -11579,7 +12016,7 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                                             }
                                         }
                                     }
-                                    
+
                                     // Frequency labels row
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Row(
@@ -11613,7 +12050,7 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                                 val secondaryColor = MaterialTheme.colorScheme.secondary
                                 val primaryColor = MaterialTheme.colorScheme.primary
                                 val tertiaryColor = MaterialTheme.colorScheme.tertiary
-                                
+
                                 bandLevels.forEachIndexed { index, level ->
                                     // Color based on frequency range (bass = secondary, mid = primary, treble = tertiary)
                                     val bandColor = when (index) {
@@ -11629,7 +12066,7 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                                         4 -> "Treble"
                                         else -> ""
                                     }
-                                    
+
                                     Card(
                                         colors = CardDefaults.cardColors(
                                             containerColor = bandColor.copy(alpha = if (level != 0f) 0.12f else 0.06f)
@@ -11674,7 +12111,7 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                                                     }
                                                 }
                                             }
-                                            
+
                                             // Band info
                                             Column(
                                                 modifier = Modifier.width(56.dp)
@@ -11999,7 +12436,7 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                             Spacer(modifier = Modifier.height(12.dp))
 
                             FilledTonalButton(
-                                onClick = { 
+                                onClick = {
                                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                                     musicViewModel.openSystemEqualizer()
                                 },
@@ -12598,10 +13035,10 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
     val context = LocalContext.current
     val appSettings = AppSettings.getInstance(context)
     val haptic = LocalHapticFeedback.current
-    
+
     // State for home section order bottom sheet
     var showHomeSectionOrderSheet by remember { mutableStateOf(false) }
-    
+
     // Collect all home screen settings
     val showGreeting by appSettings.homeShowGreeting.collectAsState()
     val showRecentlyPlayed by appSettings.homeShowRecentlyPlayed.collectAsState()
@@ -12622,14 +13059,14 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
     val recommendedCount by appSettings.homeRecommendedCount.collectAsState()
     val carouselHeight by appSettings.homeCarouselHeight.collectAsState()
     val discoverCarouselStyle by appSettings.homeDiscoverCarouselStyle.collectAsState()
-    
+
     // Discover Widget visibility settings
     val discoverShowAlbumName by appSettings.homeDiscoverShowAlbumName.collectAsState()
     val discoverShowArtistName by appSettings.homeDiscoverShowArtistName.collectAsState()
     val discoverShowYear by appSettings.homeDiscoverShowYear.collectAsState()
     val discoverShowPlayButton by appSettings.homeDiscoverShowPlayButton.collectAsState()
     val discoverShowGradient by appSettings.homeDiscoverShowGradient.collectAsState()
-    
+
     // Show bottom sheet if requested
     if (showHomeSectionOrderSheet) {
         chromahub.rhythm.app.ui.components.HomeSectionOrderBottomSheet(
@@ -12637,7 +13074,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
             appSettings = appSettings
         )
     }
-    
+
     CollapsibleHeaderScreen(
         title = "Home",
         showBackButton = true,
@@ -12671,8 +13108,18 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                 )
             }
             
-            item(key = "show_app_icon_setting", contentType = "toggle_card") {
-                val showAppIcon by appSettings.homeShowAppIcon.collectAsState()
+            // Consolidated Header Settings Card
+            item(key = "header_settings_card", contentType = "settings_card") {
+                val collapseBehavior by appSettings.headerCollapseBehavior.collectAsState()
+                val displayMode by appSettings.homeHeaderDisplayMode.collectAsState()
+                val visibilityMode by appSettings.homeAppIconVisibility.collectAsState()
+                
+                val displayLabel = when (displayMode) {
+                    0 -> "icon"
+                    1 -> "name"
+                    2 -> "icon & name"
+                    else -> "content"
+                }
                 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -12680,66 +13127,59 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Column {
+                        // Always Start Collapsed Toggle
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Stars,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Column {
-                                Text(
-                                    text = "Show App Icon",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.onSurface
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.UnfoldLess,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp)
                                 )
-                                Text(
-                                    text = "Display app icon in header",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                Column {
+                                    Text(
+                                        text = "Always Start Collapsed",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = "Start all screens with collapsed header",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
-                        }
-                        androidx.compose.material3.Switch(
-                            checked = showAppIcon,
-                            onCheckedChange = { 
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                appSettings.setHomeShowAppIcon(it) 
-                            },
-                            colors = androidx.compose.material3.SwitchDefaults.colors(
-                                checkedThumbColor = MaterialTheme.colorScheme.primary,
-                                checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
+                            androidx.compose.material3.Switch(
+                                checked = collapseBehavior == 1,
+                                onCheckedChange = { 
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    appSettings.setHeaderCollapseBehavior(if (it) 1 else 0) 
+                                },
+                                colors = androidx.compose.material3.SwitchDefaults.colors(
+                                    checkedThumbColor = MaterialTheme.colorScheme.primary,
+                                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
+                                )
                             )
+                        }
+                        
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                         )
-                    }
-                }
-            }
-            
-            item(key = "icon_visibility_setting", contentType = "selection_card") {
-                val iconVisibilityMode by appSettings.homeAppIconVisibility.collectAsState()
-                val showAppIcon by appSettings.homeShowAppIcon.collectAsState()
-                
-                AnimatedVisibility(visible = showAppIcon) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 12.dp),
-                        shape = RoundedCornerShape(18.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                    ) {
+                        
+                        // Header Display Mode
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -12750,78 +13190,161 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
-                                    imageVector = Icons.Rounded.Visibility,
+                                    imageVector = Icons.Rounded.Stars,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(24.dp)
                                 )
                                 Column {
                                     Text(
-                                        text = "Icon Visibility",
+                                        text = "Header Display",
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Medium,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
-                                        text = "When to show the icon",
+                                        text = "Choose what to show in header",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             }
-                            
+
                             Spacer(modifier = Modifier.height(16.dp))
-                            
+
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 listOf(
-                                    Triple(0, "Always", "Show on both states"),
-                                    Triple(1, "Expanded", "Show when expanded"),
-                                    Triple(2, "Collapsed", "Show when collapsed")
-                                ).forEach { (mode, label, description) ->
+                                    Pair(0, "Icon"),
+                                    Pair(1, "Name"),
+                                    Pair(2, "Both")
+                                ).forEach { (mode, label) ->
                                     Card(
-                                        modifier = Modifier.weight(1f),
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(48.dp),
                                         shape = RoundedCornerShape(12.dp),
                                         colors = CardDefaults.cardColors(
-                                            containerColor = if (iconVisibilityMode == mode)
+                                            containerColor = if (displayMode == mode)
                                                 MaterialTheme.colorScheme.primaryContainer
                                             else
                                                 MaterialTheme.colorScheme.surfaceContainerHighest
                                         ),
-                                        border = if (iconVisibilityMode == mode)
+                                        border = if (displayMode == mode)
                                             BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
                                         else null,
                                         onClick = {
                                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                            appSettings.setHomeAppIconVisibility(mode)
+                                            appSettings.setHomeHeaderDisplayMode(mode)
                                         }
                                     ) {
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(12.dp),
-                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        Box(
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentAlignment = Alignment.Center
                                         ) {
                                             Text(
                                                 text = label,
                                                 style = MaterialTheme.typography.labelLarge,
-                                                fontWeight = if (iconVisibilityMode == mode) FontWeight.SemiBold else FontWeight.Normal,
-                                                color = if (iconVisibilityMode == mode)
+                                                fontWeight = if (displayMode == mode) FontWeight.SemiBold else FontWeight.Normal,
+                                                color = if (displayMode == mode)
                                                     MaterialTheme.colorScheme.onPrimaryContainer
                                                 else
-                                                    MaterialTheme.colorScheme.onSurface
-                                            )
-                                            Text(
-                                                text = description,
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = if (iconVisibilityMode == mode)
-                                                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                                                else
-                                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    MaterialTheme.colorScheme.onSurface,
                                                 textAlign = TextAlign.Center
                                             )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Hide visibility settings when "Both" is selected since it always shows both
+                        AnimatedVisibility(visible = displayMode != 2) {
+                            Column {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                                
+                                // Visibility Mode
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(20.dp)
+                                ) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Visibility,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Column {
+                                            Text(
+                                                text = "Visibility",
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.Medium,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = "When to show $displayLabel in header",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        listOf(
+                                            Pair(0, "Always"),
+                                            Pair(1, "Expanded"),
+                                            Pair(2, "Collapsed")
+                                        ).forEach { (mode, label) ->
+                                            Card(
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .height(48.dp),
+                                                shape = RoundedCornerShape(12.dp),
+                                                colors = CardDefaults.cardColors(
+                                                    containerColor = if (visibilityMode == mode)
+                                                        MaterialTheme.colorScheme.primaryContainer
+                                                    else
+                                                        MaterialTheme.colorScheme.surfaceContainerHighest
+                                                ),
+                                                border = if (visibilityMode == mode)
+                                                    BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                                                else null,
+                                                onClick = {
+                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                    appSettings.setHomeAppIconVisibility(mode)
+                                                }
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier.fillMaxSize(),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Text(
+                                                        text = label,
+                                                        style = MaterialTheme.typography.labelLarge,
+                                                        fontWeight = if (visibilityMode == mode) FontWeight.SemiBold else FontWeight.Normal,
+                                                        color = if (visibilityMode == mode)
+                                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                                        else
+                                                            MaterialTheme.colorScheme.onSurface,
+                                                        textAlign = TextAlign.Center
+                                                    )
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -12830,7 +13353,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             // ==================== SECTION ORDER & VISIBILITY ====================
             item(key = "section_order_header", contentType = "section_header") {
                 Spacer(modifier = Modifier.height(24.dp))
@@ -12841,7 +13364,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                 )
             }
-            
+
             item(key = "section_order_button", contentType = "action_button") {
                 Card(
                     modifier = Modifier
@@ -12895,96 +13418,143 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             // ==================== WIDGET ITEM COUNTS ====================
-            item(key = "widget_counts_header", contentType = "section_header") {
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    text = "Widget Item Counts",
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
-                )
-            }
-            
             item(key = "widget_counts_settings", contentType = "slider_group") {
                 Column {
-                    AnimatedVisibility(visible = showRecentlyPlayed) {
-                        Column {
-                            HomeSettingsSliderCard(
-                                icon = Icons.Rounded.History,
-                                title = "Recently Played",
-                                description = "$recentlyPlayedCount songs",
-                                value = recentlyPlayedCount.toFloat(),
-                                valueRange = 3f..12f,
-                                steps = 8,
-                                onValueChange = { appSettings.setHomeRecentlyPlayedCount(it.toInt()) }
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = "Widget Item Counts",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                    )
                     
-                    AnimatedVisibility(visible = showArtists) {
-                        Column {
-                            HomeSettingsSliderCard(
-                                icon = Icons.Rounded.People,
-                                title = "Top Artists",
-                                description = "$artistsCount artists",
-                                value = artistsCount.toFloat(),
-                                valueRange = 4f..20f,
-                                steps = 15,
-                                onValueChange = { appSettings.setHomeArtistsCount(it.toInt()) }
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                     
-                    AnimatedVisibility(visible = showNewReleases) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
                         Column {
-                            HomeSettingsSliderCard(
-                                icon = Icons.Rounded.NewReleases,
-                                title = "New Releases",
-                                description = "$newReleasesCount albums",
-                                value = newReleasesCount.toFloat(),
-                                valueRange = 4f..20f,
-                                steps = 15,
-                                onValueChange = { appSettings.setHomeNewReleasesCount(it.toInt()) }
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
+                            var firstItem = true
+                            
+                            AnimatedVisibility(visible = showRecentlyPlayed) {
+                                Column {
+                                    if (!firstItem) {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 20.dp),
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                        )
+                                    }
+                                    HomeSettingsSliderRow(
+                                        icon = Icons.Rounded.History,
+                                        title = "Recently Played",
+                                        description = "$recentlyPlayedCount songs",
+                                        value = recentlyPlayedCount.toFloat(),
+                                        valueRange = 3f..12f,
+                                        steps = 8,
+                                        onValueChange = { appSettings.setHomeRecentlyPlayedCount(it.toInt()) }
+                                    )
+                                }
+                            }
+                            
+                            if (showRecentlyPlayed) { firstItem = false }
+
+                            AnimatedVisibility(visible = showArtists) {
+                                Column {
+                                    if (!firstItem) {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 20.dp),
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                        )
+                                    }
+                                    HomeSettingsSliderRow(
+                                        icon = Icons.Rounded.People,
+                                        title = "Top Artists",
+                                        description = "$artistsCount artists",
+                                        value = artistsCount.toFloat(),
+                                        valueRange = 4f..20f,
+                                        steps = 15,
+                                        onValueChange = { appSettings.setHomeArtistsCount(it.toInt()) }
+                                    )
+                                }
+                            }
+                            
+                            if (showArtists) { firstItem = false }
+
+                            AnimatedVisibility(visible = showNewReleases) {
+                                Column {
+                                    if (!firstItem) {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 20.dp),
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                        )
+                                    }
+                                    HomeSettingsSliderRow(
+                                        icon = Icons.Rounded.NewReleases,
+                                        title = "New Releases",
+                                        description = "$newReleasesCount albums",
+                                        value = newReleasesCount.toFloat(),
+                                        valueRange = 4f..20f,
+                                        steps = 15,
+                                        onValueChange = { appSettings.setHomeNewReleasesCount(it.toInt()) }
+                                    )
+                                }
+                            }
+                            
+                            if (showNewReleases) { firstItem = false }
+
+                            AnimatedVisibility(visible = showRecentlyAdded) {
+                                Column {
+                                    if (!firstItem) {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 20.dp),
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                        )
+                                    }
+                                    HomeSettingsSliderRow(
+                                        icon = Icons.Rounded.LibraryAdd,
+                                        title = "Recently Added",
+                                        description = "$recentlyAddedCount albums",
+                                        value = recentlyAddedCount.toFloat(),
+                                        valueRange = 4f..20f,
+                                        steps = 15,
+                                        onValueChange = { appSettings.setHomeRecentlyAddedCount(it.toInt()) }
+                                    )
+                                }
+                            }
+                            
+                            if (showRecentlyAdded) { firstItem = false }
+
+                            AnimatedVisibility(visible = showRecommended) {
+                                Column {
+                                    if (!firstItem) {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 20.dp),
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                        )
+                                    }
+                                    HomeSettingsSliderRow(
+                                        icon = Icons.Rounded.Recommend,
+                                        title = "Recommended",
+                                        description = "$recommendedCount songs",
+                                        value = recommendedCount.toFloat(),
+                                        valueRange = 2f..8f,
+                                        steps = 5,
+                                        onValueChange = { appSettings.setHomeRecommendedCount(it.toInt()) }
+                                    )
+                                }
+                            }
                         }
-                    }
-                    
-                    AnimatedVisibility(visible = showRecentlyAdded) {
-                        Column {
-                            HomeSettingsSliderCard(
-                                icon = Icons.Rounded.LibraryAdd,
-                                title = "Recently Added",
-                                description = "$recentlyAddedCount albums",
-                                value = recentlyAddedCount.toFloat(),
-                                valueRange = 4f..20f,
-                                steps = 15,
-                                onValueChange = { appSettings.setHomeRecentlyAddedCount(it.toInt()) }
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-                    }
-                    
-                    AnimatedVisibility(visible = showRecommended) {
-                        HomeSettingsSliderCard(
-                            icon = Icons.Rounded.Recommend,
-                            title = "Recommended",
-                            description = "$recommendedCount songs",
-                            value = recommendedCount.toFloat(),
-                            valueRange = 2f..8f,
-                            steps = 5,
-                            onValueChange = { appSettings.setHomeRecommendedCount(it.toInt()) }
-                        )
                     }
                 }
             }
-            
+
             // ==================== DISCOVER CAROUSEL SETTINGS ====================
-            item(key = "discover_carousel_header", contentType = "section_header") {
+            item(key = "discover_carousel_settings", contentType = "settings_card") {
                 AnimatedVisibility(visible = showDiscoverCarousel) {
                     Column {
                         Spacer(modifier = Modifier.height(24.dp))
@@ -12994,157 +13564,240 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                         )
-                    }
-                }
-            }
-            
-            // Carousel Style Selector
-            item(key = "discover_carousel_style", contentType = "style_selector") {
-                AnimatedVisibility(visible = showDiscoverCarousel) {
-                    Column {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        CarouselStyleSelector(
-                            selectedStyle = discoverCarouselStyle,
-                            onStyleSelected = { appSettings.setHomeDiscoverCarouselStyle(it) }
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                }
-            }
-            
-            item(key = "discover_carousel_behavior", contentType = "settings_card") {
-                AnimatedVisibility(visible = showDiscoverCarousel) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(18.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                    ) {
-                        Column {
-                            TunerSettingRow(
-                                item = SettingItem(
-                                    Icons.Rounded.PlayCircle,
-                                    "Auto-Scroll",
-                                    "Automatically cycle through albums",
-                                    toggleState = discoverAutoScroll,
-                                    onToggleChange = { appSettings.setHomeDiscoverAutoScroll(it) }
-                                )
-                            )
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 20.dp),
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                            )
-                            TunerSettingRow(
-                                item = SettingItem(
-                                    Icons.Rounded.Album,
-                                    "Album Name",
-                                    "Show album title on card",
-                                    toggleState = discoverShowAlbumName,
-                                    onToggleChange = { appSettings.setHomeDiscoverShowAlbumName(it) }
-                                )
-                            )
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 20.dp),
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                            )
-                            TunerSettingRow(
-                                item = SettingItem(
-                                    Icons.Rounded.Person,
-                                    "Artist Name",
-                                    "Show artist name on card",
-                                    toggleState = discoverShowArtistName,
-                                    onToggleChange = { appSettings.setHomeDiscoverShowArtistName(it) }
-                                )
-                            )
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 20.dp),
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                            )
-                            TunerSettingRow(
-                                item = SettingItem(
-                                    Icons.Rounded.CalendarToday,
-                                    "Release Year",
-                                    "Show album release year",
-                                    toggleState = discoverShowYear,
-                                    onToggleChange = { appSettings.setHomeDiscoverShowYear(it) }
-                                )
-                            )
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 20.dp),
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                            )
-                            TunerSettingRow(
-                                item = SettingItem(
-                                    Icons.Rounded.PlayArrow,
-                                    "Play Button",
-                                    "Show quick play button",
-                                    toggleState = discoverShowPlayButton,
-                                    onToggleChange = { appSettings.setHomeDiscoverShowPlayButton(it) }
-                                )
-                            )
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 20.dp),
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                            )
-                            TunerSettingRow(
-                                item = SettingItem(
-                                    Icons.Rounded.Gradient,
-                                    "Gradient Overlay",
-                                    "Show gradient behind text",
-                                    toggleState = discoverShowGradient,
-                                    onToggleChange = { appSettings.setHomeDiscoverShowGradient(it) }
-                                )
-                            )
-                        }
-                    }
-                }
-            }
-            
-            item(key = "discover_carousel_sliders", contentType = "slider_group") {
-                AnimatedVisibility(visible = showDiscoverCarousel) {
-                    Column {
+                        
                         Spacer(modifier = Modifier.height(8.dp))
                         
-                        AnimatedVisibility(visible = discoverAutoScroll) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(18.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                        ) {
                             Column {
-                                HomeSettingsSliderCard(
-                                    icon = Icons.Rounded.Timer,
-                                    title = "Auto-Scroll Interval",
-                                    description = "$discoverAutoScrollInterval seconds",
-                                    value = discoverAutoScrollInterval.toFloat(),
-                                    valueRange = 2f..15f,
-                                    steps = 12,
-                                    onValueChange = { appSettings.setHomeDiscoverAutoScrollInterval(it.toInt()) }
+                                // Carousel Style Selector
+                                Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(bottom = 12.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.ViewCarousel,
+                                            contentDescription = null,
+                                            modifier = Modifier
+                                                .size(40.dp)
+                                                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(50))
+                                                .padding(8.dp),
+                                            tint = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Spacer(modifier = Modifier.width(16.dp))
+                                        Column {
+                                            Text(
+                                                text = "Carousel Style",
+                                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = "Choose how albums are displayed",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        val context = LocalContext.current
+                                        val haptic = LocalHapticFeedback.current
+                                        val styles = listOf(
+                                            Triple(0, "Default", "2 side peek albums"),
+                                            Triple(1, "Hero", "1 side peek album")
+                                        )
+                                        
+                                        styles.forEach { (style, title, description) ->
+                                            val isSelected = discoverCarouselStyle == style
+
+                                            Card(
+                                                onClick = {
+                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                    appSettings.setHomeDiscoverCarouselStyle(style)
+                                                },
+                                                modifier = Modifier.weight(1f),
+                                                shape = RoundedCornerShape(12.dp),
+                                                colors = CardDefaults.cardColors(
+                                                    containerColor = if (isSelected)
+                                                        MaterialTheme.colorScheme.primaryContainer
+                                                    else
+                                                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                                ),
+                                                border = if (isSelected)
+                                                    BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                                                else
+                                                    null
+                                            ) {
+                                                Column(
+                                                    modifier = Modifier.padding(12.dp),
+                                                    horizontalAlignment = Alignment.CenterHorizontally
+                                                ) {
+                                                    Icon(
+                                                        imageVector = when (style) {
+                                                            0 -> Icons.Rounded.ViewColumn
+                                                            else -> Icons.Rounded.CenterFocusWeak
+                                                        },
+                                                        contentDescription = null,
+                                                        tint = if (isSelected)
+                                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                                        else
+                                                            MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        modifier = Modifier.size(24.dp)
+                                                    )
+                                                    Spacer(modifier = Modifier.height(4.dp))
+                                                    Text(
+                                                        text = title,
+                                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                                                        color = if (isSelected)
+                                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                                        else
+                                                            MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        textAlign = TextAlign.Center
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                                 )
-                                Spacer(modifier = Modifier.height(8.dp))
+                                TunerSettingRow(
+                                    item = SettingItem(
+                                        Icons.Rounded.PlayCircle,
+                                        "Auto-Scroll",
+                                        "Automatically cycle through albums",
+                                        toggleState = discoverAutoScroll,
+                                        onToggleChange = { appSettings.setHomeDiscoverAutoScroll(it) }
+                                    )
+                                )
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                                TunerSettingRow(
+                                    item = SettingItem(
+                                        Icons.Rounded.Album,
+                                        "Album Name",
+                                        "Show album title on card",
+                                        toggleState = discoverShowAlbumName,
+                                        onToggleChange = { appSettings.setHomeDiscoverShowAlbumName(it) }
+                                    )
+                                )
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                                TunerSettingRow(
+                                    item = SettingItem(
+                                        Icons.Rounded.Person,
+                                        "Artist Name",
+                                        "Show artist name on card",
+                                        toggleState = discoverShowArtistName,
+                                        onToggleChange = { appSettings.setHomeDiscoverShowArtistName(it) }
+                                    )
+                                )
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                                TunerSettingRow(
+                                    item = SettingItem(
+                                        Icons.Rounded.CalendarToday,
+                                        "Release Year",
+                                        "Show album release year",
+                                        toggleState = discoverShowYear,
+                                        onToggleChange = { appSettings.setHomeDiscoverShowYear(it) }
+                                    )
+                                )
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                                TunerSettingRow(
+                                    item = SettingItem(
+                                        Icons.Rounded.PlayArrow,
+                                        "Play Button",
+                                        "Show quick play button",
+                                        toggleState = discoverShowPlayButton,
+                                        onToggleChange = { appSettings.setHomeDiscoverShowPlayButton(it) }
+                                    )
+                                )
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                                TunerSettingRow(
+                                    item = SettingItem(
+                                        Icons.Rounded.Gradient,
+                                        "Gradient Overlay",
+                                        "Show gradient behind text",
+                                        toggleState = discoverShowGradient,
+                                        onToggleChange = { appSettings.setHomeDiscoverShowGradient(it) }
+                                    )
+                                )
+                                
+                                AnimatedVisibility(visible = discoverAutoScroll) {
+                                    Column {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 20.dp),
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                        )
+                                        HomeSettingsSliderRow(
+                                            icon = Icons.Rounded.Timer,
+                                            title = "Auto-Scroll Interval",
+                                            description = "$discoverAutoScrollInterval seconds",
+                                            value = discoverAutoScrollInterval.toFloat(),
+                                            valueRange = 2f..15f,
+                                            steps = 12,
+                                            onValueChange = { appSettings.setHomeDiscoverAutoScrollInterval(it.toInt()) }
+                                        )
+                                    }
+                                }
+                                
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                                HomeSettingsSliderRow(
+                                    icon = Icons.Rounded.ViewCarousel,
+                                    title = "Album Count",
+                                    description = "$discoverItemCount albums",
+                                    value = discoverItemCount.toFloat(),
+                                    valueRange = 3f..12f,
+                                    steps = 8,
+                                    onValueChange = { appSettings.setHomeDiscoverItemCount(it.toInt()) }
+                                )
+                                
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                                HomeSettingsSliderRow(
+                                    icon = Icons.Rounded.Height,
+                                    title = "Carousel Height",
+                                    description = "${carouselHeight}dp",
+                                    value = carouselHeight.toFloat(),
+                                    valueRange = 180f..320f,
+                                    steps = 13,
+                                    onValueChange = { appSettings.setHomeCarouselHeight(it.toInt()) }
+                                )
                             }
                         }
-                        
-                        HomeSettingsSliderCard(
-                            icon = Icons.Rounded.ViewCarousel,
-                            title = "Album Count",
-                            description = "$discoverItemCount albums",
-                            value = discoverItemCount.toFloat(),
-                            valueRange = 3f..12f,
-                            steps = 8,
-                            onValueChange = { appSettings.setHomeDiscoverItemCount(it.toInt()) }
-                        )
-                        
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        HomeSettingsSliderCard(
-                            icon = Icons.Rounded.Height,
-                            title = "Carousel Height",
-                            description = "${carouselHeight}dp",
-                            value = carouselHeight.toFloat(),
-                            valueRange = 180f..320f,
-                            steps = 13,
-                            onValueChange = { appSettings.setHomeCarouselHeight(it.toInt()) }
-                        )
                     }
                 }
             }
-            
+
             // Quick Tips Card
             item(key = "tips_card", contentType = "tips") {
                 Spacer(modifier = Modifier.height(24.dp))
@@ -13176,7 +13829,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             )
                         }
                         Spacer(modifier = Modifier.height(12.dp))
-                        
+
                         HomeScreenTipItem(
                             icon = Icons.Default.Visibility,
                             text = "Toggle widgets to customize your home screen"
@@ -13196,7 +13849,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             item(key = "bottom_spacer") { Spacer(modifier = Modifier.height(24.dp)) }
         }
     }
@@ -13233,12 +13886,12 @@ private fun CarouselStyleSelector(
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
-    
+
     val styles = listOf(
         Triple(0, "Default", "2 side peek albums"),
         Triple(1, "Hero", "1 side peek album")
     )
-    
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -13273,14 +13926,14 @@ private fun CarouselStyleSelector(
                     )
                 }
             }
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 styles.forEach { (style, title, description) ->
                     val isSelected = selectedStyle == style
-                    
+
                     Card(
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
@@ -13289,14 +13942,14 @@ private fun CarouselStyleSelector(
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = if (isSelected) 
-                                MaterialTheme.colorScheme.primaryContainer 
-                            else 
+                            containerColor = if (isSelected)
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
                                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                         ),
-                        border = if (isSelected) 
+                        border = if (isSelected)
                             BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-                        else 
+                        else
                             null
                     ) {
                         Column(
@@ -13309,9 +13962,9 @@ private fun CarouselStyleSelector(
                                     else -> Icons.Rounded.CenterFocusWeak
                                 },
                                 contentDescription = null,
-                                tint = if (isSelected) 
-                                    MaterialTheme.colorScheme.onPrimaryContainer 
-                                else 
+                                tint = if (isSelected)
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                else
                                     MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -13319,9 +13972,9 @@ private fun CarouselStyleSelector(
                             Text(
                                 text = title,
                                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                                color = if (isSelected) 
-                                    MaterialTheme.colorScheme.onPrimaryContainer 
-                                else 
+                                color = if (isSelected)
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                else
                                     MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center
                             )
@@ -13345,7 +13998,7 @@ private fun HomeSettingsSliderCard(
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
-    
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -13372,9 +14025,9 @@ private fun HomeSettingsSliderCard(
                         .padding(8.dp),
                     tint = MaterialTheme.colorScheme.onSurface
                 )
-                
+
                 Spacer(modifier = Modifier.width(16.dp))
-                
+
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = title,
@@ -13388,9 +14041,9 @@ private fun HomeSettingsSliderCard(
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             Slider(
                 value = value,
                 onValueChange = {
@@ -13424,11 +14077,11 @@ private fun HomeSettingsSliderRow(
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
-    
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(horizontal = 20.dp, vertical = 16.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -13443,9 +14096,9 @@ private fun HomeSettingsSliderRow(
                     .padding(8.dp),
                 tint = MaterialTheme.colorScheme.onSurface
             )
-            
+
             Spacer(modifier = Modifier.width(16.dp))
-            
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
@@ -13459,7 +14112,9 @@ private fun HomeSettingsSliderRow(
                 )
             }
         }
-        
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         Slider(
             value = value,
             onValueChange = {
@@ -13475,12 +14130,7 @@ private fun HomeSettingsSliderRow(
             ),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 56.dp)
-        )
-        
-        HorizontalDivider(
-            modifier = Modifier.padding(top = 8.dp, start = 56.dp),
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                .padding(start = 56.dp, end = 8.dp)
         )
     }
 }

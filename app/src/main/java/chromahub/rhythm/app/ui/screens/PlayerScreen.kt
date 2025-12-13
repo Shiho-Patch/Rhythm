@@ -162,6 +162,7 @@ import chromahub.rhythm.app.data.Song
 import chromahub.rhythm.app.ui.components.WaveSlider
 import chromahub.rhythm.app.ui.components.StyledProgressBar
 import chromahub.rhythm.app.ui.components.ProgressStyle
+import chromahub.rhythm.app.ui.components.ThumbStyle
 import chromahub.rhythm.app.ui.components.RhythmIcons
 import chromahub.rhythm.app.ui.theme.PlayerButtonColor
 // import chromahub.rhythm.app.ui.components.M3PlaceholderType
@@ -297,6 +298,12 @@ fun PlayerScreen(
     
     // Progress bar customization settings
     val playerProgressStyle by appSettingsInstance.playerProgressStyle.collectAsState()
+    val playerProgressThumbStyle by appSettingsInstance.playerProgressThumbStyle.collectAsState()
+    
+    // Gesture settings
+    val gesturePlayerSwipeDismiss by appSettingsInstance.gesturePlayerSwipeDismiss.collectAsState()
+    val gesturePlayerSwipeTracks by appSettingsInstance.gesturePlayerSwipeTracks.collectAsState()
+    val gestureArtworkDoubleTap by appSettingsInstance.gestureArtworkDoubleTap.collectAsState()
 
     // Helper function to split artist names
     val splitArtistNames: (String) -> List<String> = remember {
@@ -1063,39 +1070,40 @@ fun PlayerScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .pointerInput(Unit) {
-                    var initialDragY = 0f
-                    var velocityTracker = 0f
-                    
-                    detectVerticalDragGestures(
-                        onDragStart = {
-                            isDragging = true
-                            initialDragY = swipeOffsetY
-                            velocityTracker = 0f
-                        },
-                        onVerticalDrag = { change, dragAmount ->
-                            // Only allow downward swipes
-                            if (dragAmount > 0) {
-                                change.consume()
-                                swipeOffsetY = (swipeOffsetY + dragAmount).coerceAtLeast(0f)
-                                velocityTracker = dragAmount
-                            }
-                        },
-                        onDragEnd = {
-                            isDragging = false
+                .pointerInput(gesturePlayerSwipeDismiss) {
+                    if (gesturePlayerSwipeDismiss) {
+                        var initialDragY = 0f
+                        var velocityTracker = 0f
+                        
+                        detectVerticalDragGestures(
+                            onDragStart = {
+                                isDragging = true
+                                initialDragY = swipeOffsetY
+                                velocityTracker = 0f
+                            },
+                            onVerticalDrag = { change, dragAmount ->
+                                // Only allow downward swipes
+                                if (dragAmount > 0) {
+                                    change.consume()
+                                    swipeOffsetY = (swipeOffsetY + dragAmount).coerceAtLeast(0f)
+                                    velocityTracker = dragAmount
+                                }
+                            },
+                            onDragEnd = {
+                                isDragging = false
 
-                            // Reduced dismiss threshold: 15% of screen height for easier dismissal
-                            val dismissThreshold = screenHeight * 0.15f
-                            
-                            // Fast swipe threshold for quick dismissal
-                            val fastSwipeThreshold = 1500f
+                                // Reduced dismiss threshold: 15% of screen height for easier dismissal
+                                val dismissThreshold = screenHeight * 0.15f
+                                
+                                // Fast swipe threshold for quick dismissal
+                                val fastSwipeThreshold = 1500f
 
-                            if (swipeOffsetY > dismissThreshold || abs(velocityTracker) > fastSwipeThreshold) {
-                                // Trigger dismiss
-                                HapticUtils.performHapticFeedback(
-                                    context,
-                                    haptic,
-                                    HapticFeedbackType.LongPress
+                                if (swipeOffsetY > dismissThreshold || abs(velocityTracker) > fastSwipeThreshold) {
+                                    // Trigger dismiss
+                                    HapticUtils.performHapticFeedback(
+                                        context,
+                                        haptic,
+                                        HapticFeedbackType.LongPress
                                 )
                                 scope.launch {
                                     // Animate out smoothly
@@ -1112,7 +1120,8 @@ fun PlayerScreen(
                             isDragging = false
                             swipeOffsetY = 0f
                         }
-                    )
+                        )
+                    }
                 }
         ) {
             // Enhanced swipe indicator with progress feedback
@@ -1207,6 +1216,19 @@ fun PlayerScreen(
                         enter = fadeIn() + slideInVertically { it },
                         exit = fadeOut() + slideOutVertically { it }
                     ) {
+                        // State for artwork swipe gestures
+                        var artworkOffsetX by remember { mutableStateOf(0f) }
+                        val artworkSwipeThreshold = 150f
+                        
+                        val artworkTranslationX by animateFloatAsState(
+                            targetValue = artworkOffsetX.coerceIn(-200f, 200f),
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessLow
+                            ),
+                            label = "artworkTranslationX"
+                        )
+                        
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth(1.0f) // Enlarged album art to touch screen edges
@@ -1221,22 +1243,58 @@ fun PlayerScreen(
                                     
                                     // Move upward slightly as if collapsing to mini player position
                                     translationY = -swipeProgress * 100f
+                                    
+                                    // Apply horizontal translation for track swipe
+                                    translationX = artworkTranslationX
                                 }
-                                .clickable(
-                                    enabled = showLyrics // Only enable click if lyrics are available
-                                ) {
-                                    // Add haptic feedback and prevent rapid toggling
-                                    HapticUtils.performHapticFeedback(
-                                        context,
-                                        haptic,
-                                        HapticFeedbackType.TextHandleMove
-                                    )
-                                    if (showLyrics && !isLyricsContentVisible && isSongInfoVisible) {
-                                        // Only toggle if not currently transitioning
-                                        showLyricsView = !showLyricsView
-                                    } else if (showLyrics && isLyricsContentVisible && !isSongInfoVisible) {
-                                        // Allow toggling back from lyrics view
-                                        showLyricsView = !showLyricsView
+                                // Swipe gestures for changing tracks on artwork
+                                .pointerInput(gesturePlayerSwipeTracks, gestureArtworkDoubleTap) {
+                                    if (gesturePlayerSwipeTracks || gestureArtworkDoubleTap) {
+                                        detectTapGestures(
+                                            onDoubleTap = {
+                                                if (gestureArtworkDoubleTap) {
+                                                    // Double tap to play/pause
+                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                    onPlayPause()
+                                                }
+                                            },
+                                            onTap = {
+                                                // Single tap - toggle lyrics if available
+                                                if (showLyrics && !isLyricsContentVisible && isSongInfoVisible) {
+                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                    showLyricsView = !showLyricsView
+                                                } else if (showLyrics && isLyricsContentVisible && !isSongInfoVisible) {
+                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                                    showLyricsView = !showLyricsView
+                                                }
+                                            }
+                                        )
+                                    }
+                                }
+                                .pointerInput(gesturePlayerSwipeTracks) {
+                                    if (gesturePlayerSwipeTracks) {
+                                        detectDragGestures(
+                                            onDragStart = { },
+                                            onDragEnd = {
+                                                if (artworkOffsetX < -artworkSwipeThreshold) {
+                                                    // Swipe left - next track
+                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                    onSkipNext()
+                                                } else if (artworkOffsetX > artworkSwipeThreshold) {
+                                                    // Swipe right - previous track
+                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                    onSkipPrevious()
+                                                }
+                                                artworkOffsetX = 0f
+                                            },
+                                            onDragCancel = {
+                                                artworkOffsetX = 0f
+                                            },
+                                            onDrag = { change, dragAmount ->
+                                                change.consume()
+                                                artworkOffsetX += dragAmount.x
+                                            }
+                                        )
                                     }
                                 },
                             contentAlignment = Alignment.TopCenter // Align content to the center
@@ -1927,6 +1985,12 @@ fun PlayerScreen(
                                     ProgressStyle.NORMAL
                                 }
                                 
+                                val thumbStyle = try {
+                                    ThumbStyle.valueOf(playerProgressThumbStyle)
+                                } catch (e: IllegalArgumentException) {
+                                    ThumbStyle.CIRCLE
+                                }
+                                
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
@@ -1947,7 +2011,8 @@ fun PlayerScreen(
                                             else -> 8.dp
                                         },
                                         isPlaying = isPlaying,
-                                        showThumb = progressStyle == ProgressStyle.NORMAL || progressStyle == ProgressStyle.ROUNDED,
+                                        showThumb = thumbStyle != ThumbStyle.NONE,
+                                        thumbStyle = thumbStyle,
                                         thumbSize = 14.dp,
                                         waveFrequency = 2.5f // Fewer waves for Player screen
                                     )
