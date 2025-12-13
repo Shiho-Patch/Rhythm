@@ -71,6 +71,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -203,6 +204,7 @@ fun HomeScreen(
     onAddSongToPlaylist: (Song, String) -> Unit = { _, _ -> },
     onNavigateToPlaylist: (String) -> Unit = {},
     onCreatePlaylist: (String) -> Unit = { _ -> },
+    onNavigateToStats: () -> Unit = {},
     updaterViewModel: AppUpdaterViewModel = viewModel()
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -570,6 +572,7 @@ fun HomeScreen(
             onAppUpdateClick = onAppUpdateClick,
             onNavigateToLibrary = onNavigateToLibrary,
             onNavigateToPlaylist = onNavigateToPlaylist,
+            onNavigateToStats = onNavigateToStats,
             updaterViewModel = updaterViewModel,
             musicViewModel = musicViewModel,
             coroutineScope = coroutineScope
@@ -603,6 +606,7 @@ private fun ModernScrollableContent(
     onAppUpdateClick: (Boolean) -> Unit = { onSettingsClick() },
     onNavigateToLibrary: () -> Unit = {},
     onNavigateToPlaylist: (String) -> Unit = {},
+    onNavigateToStats: () -> Unit = {},
     updaterViewModel: AppUpdaterViewModel = viewModel(),
     musicViewModel: chromahub.rhythm.app.viewmodel.MusicViewModel,
     coroutineScope: CoroutineScope
@@ -1087,7 +1091,7 @@ private fun ModernScrollableContent(
                     "STATS" -> {
                         if (showListeningStats) {
                             item(key = "section_stats") {
-                                ModernListeningStatsSection()
+                                ModernListeningStatsSection(onClick = onNavigateToStats)
                             }
                         }
                     }
@@ -2305,7 +2309,9 @@ private fun ModernSongCard(
 }
 
 @Composable
-private fun ModernListeningStatsSection() {
+private fun ModernListeningStatsSection(
+    onClick: () -> Unit = {}
+) {
     val context = LocalContext.current
     val viewModel = viewModel<chromahub.rhythm.app.viewmodel.MusicViewModel>()
     val recentlyPlayed by viewModel.recentlyPlayed.collectAsState()
@@ -2326,6 +2332,7 @@ private fun ModernListeningStatsSection() {
 
     // Enhanced stats card with better design
     Card(
+        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -2373,6 +2380,14 @@ private fun ModernListeningStatsSection() {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                
+                // Arrow indicator for navigation
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                    contentDescription = "View detailed stats",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp)
+                )
             }
             
             Spacer(modifier = Modifier.height(24.dp))

@@ -98,6 +98,7 @@ import chromahub.rhythm.app.ui.utils.LazyListStateSaver
 import chromahub.rhythm.app.data.AppSettings
 import chromahub.rhythm.app.ui.components.LanguageSwitcherDialog
 import android.content.Context
+import androidx.compose.material.icons.filled.AutoGraph
 import androidx.compose.material.icons.filled.Gesture
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Settings
@@ -132,6 +133,7 @@ object SettingsRoutes {
     const val WIDGET = "widget_settings"
     const val HOME_SCREEN = "home_screen_settings"
     const val GESTURES = "gestures_settings"
+    const val LISTENING_STATS = "listening_stats"
 }
 
 data class SettingItem(
@@ -267,7 +269,8 @@ fun SettingsScreen(
                 title = "Storage & Data",
                 items = listOf(
                     SettingItem(Icons.Default.Storage, "Cache Management", "Control cache size and clearing", onClick = { onNavigateTo(SettingsRoutes.CACHE_MANAGEMENT) }),
-                    SettingItem(Icons.Default.Backup, "Backup & Restore", "Safeguard settings and playlists", onClick = { onNavigateTo(SettingsRoutes.BACKUP_RESTORE) })
+                    SettingItem(Icons.Default.Backup, "Backup & Restore", "Safeguard settings and playlists", onClick = { onNavigateTo(SettingsRoutes.BACKUP_RESTORE) }),
+                    SettingItem(Icons.Default.AutoGraph, "Rhythm Stats", "View your listening history and insights", onClick = { onNavigateTo(SettingsRoutes.LISTENING_STATS) })
                 )
             ),
             SettingGroup(
@@ -721,7 +724,11 @@ fun SettingsScreenPreview() {
 // Wrapper function for navigation
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun SettingsScreenWrapper(onBack: () -> Unit, appSettings: chromahub.rhythm.app.data.AppSettings) {
+fun SettingsScreenWrapper(
+    onBack: () -> Unit, 
+    appSettings: chromahub.rhythm.app.data.AppSettings,
+    navController: androidx.navigation.NavController
+) {
     var currentRoute by rememberSaveable { mutableStateOf<String?>(null) }
     
     // Hoist the main settings scroll state to persist across navigation
@@ -852,7 +859,13 @@ fun SettingsScreenWrapper(onBack: () -> Unit, appSettings: chromahub.rhythm.app.
             SettingsRoutes.GESTURES -> GesturesSettingsScreen(onBackClick = { currentRoute = null })
             else -> SettingsScreen(
                 onBackClick = handleBack,
-                onNavigateTo = { route -> currentRoute = route },
+                onNavigateTo = { route -> 
+                    if (route == SettingsRoutes.LISTENING_STATS) {
+                        navController.navigate("listening_stats")
+                    } else {
+                        currentRoute = route
+                    }
+                },
                 scrollState = mainSettingsScrollState
             )
         }

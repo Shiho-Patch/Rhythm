@@ -57,10 +57,14 @@ import java.util.Calendar
 import java.io.File
 import chromahub.rhythm.app.data.LyricsData // Import LyricsData
 import chromahub.rhythm.app.util.PendingWriteRequest // Import for metadata write requests
+import chromahub.rhythm.app.data.stats.PlaybackStatsRepository // Import for enhanced stats tracking
 
 class MusicViewModel(application: Application) : AndroidViewModel(application) {
     private val TAG = "MusicViewModel"
     private val repository = MusicRepository(application)
+    
+    // Playback stats repository for enhanced tracking
+    private val playbackStatsRepository = PlaybackStatsRepository.getInstance(application)
     
     // Audio device manager
     private val audioDeviceManager = AudioDeviceManager(application)
@@ -2361,8 +2365,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                         _currentSong.value = startingSong
                         _isPlaying.value = true
                         
-                        // Add starting song to recently played
-                        startingSong?.let { updateRecentlyPlayed(it) }
+                        // Add starting song to recently played and track play
+                        startingSong?.let { 
+                            updateRecentlyPlayed(it)
+                            trackSongPlay(it)
+                        }
                         
                         // Update favorite status
                         _isFavorite.value = startingSong?.let { song -> 
@@ -4514,6 +4521,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             currentTimePrefs[timeSlot] = songs
             _timeBasedPreferences.value = currentTimePrefs
             appSettings.setTimeBasedPreferences(currentTimePrefs)
+            
+            // Record to enhanced playback stats repository (for detailed history)
+            playbackStatsRepository.recordPlayback(
+                song = song,
+                durationMs = song.duration
+            )
         }
     }
 
@@ -4587,6 +4600,26 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         val hours = listeningTime / (1000 * 60 * 60)
         return if (hours < 1) "< 1h" else "${hours}h"
     }
+    
+    // Enhanced stats access
+    val playbackStatsSummary = playbackStatsRepository.statsSummary
+    
+    /**
+     * Load detailed playback stats for a given time range
+     */
+    suspend fun loadPlaybackStats(
+        range: chromahub.rhythm.app.data.stats.StatsTimeRange = chromahub.rhythm.app.data.stats.StatsTimeRange.ALL_TIME
+    ): PlaybackStatsRepository.PlaybackStatsSummary {
+        return playbackStatsRepository.loadSummary(
+            range = range,
+            songs = _songs.value
+        )
+    }
+    
+    /**
+     * Get the PlaybackStatsRepository for direct access
+     */
+    fun getPlaybackStatsRepository(): PlaybackStatsRepository = playbackStatsRepository
 
     // Initialize from persistence
     private suspend fun initializeFromPersistence() {

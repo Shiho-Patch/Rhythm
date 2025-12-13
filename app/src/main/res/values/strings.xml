@@ -282,7 +282,7 @@
     <string name="home_no_recommendations_desc">Listen to some music to get personalized recommendations</string>
     
     <!-- Listening Stats -->
-    <string name="home_listening_stats">Your Listening Stats</string>
+    <string name="home_listening_stats">Your Rhythm Stats</string>
     <string name="home_listening_stats_subtitle">This week\'s musical journey</string>
     <string name="home_stat_listening_time">Listening Time</string>
     <string name="home_stat_songs_played">Songs Played</string>

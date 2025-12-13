@@ -91,6 +91,7 @@ import chromahub.rhythm.app.ui.components.RhythmIcons
 import chromahub.rhythm.app.ui.screens.LibraryScreen
 import chromahub.rhythm.app.ui.components.RhythmIcons.Delete
 import chromahub.rhythm.app.ui.screens.HomeScreen
+import chromahub.rhythm.app.ui.screens.ListeningStatsScreen
 import chromahub.rhythm.app.ui.screens.PlayerScreen
 
 import chromahub.rhythm.app.ui.screens.PlaylistDetailScreen
@@ -184,6 +185,9 @@ sealed class Screen(val route: String) {
     object TunerCrashLogHistory : Screen("tuner_crash_log_history_settings")
     object TunerQueuePlayback : Screen("tuner_queue_playback_settings")
     object TunerHomeScreen : Screen("tuner_home_screen_settings")
+    
+    // Stats Screen
+    object ListeningStats : Screen("listening_stats")
 }
 
 @Composable
@@ -823,6 +827,9 @@ fun RhythmNavigation(
                                         snackbarHostState.showSnackbar(message)
                                     }
                                 }
+                            },
+                            onNavigateToStats = {
+                                navController.navigate(Screen.ListeningStats.route)
                             }
                         )
                     }
@@ -930,7 +937,8 @@ fun RhythmNavigation(
                         onBack = {
                             navController.popBackStack()
                         },
-                        appSettings = appSettings
+                        appSettings = appSettings,
+                        navController = navController
                     )
                 }
                                     // Tuner Settings Subroutes
@@ -999,6 +1007,29 @@ fun RhythmNavigation(
                     
                     composable(Screen.TunerHomeScreen.route) {
                         HomeScreenCustomizationSettingsScreen(onBackClick = { navController.popBackStack() })
+                    }
+                    
+                    composable(
+                        route = Screen.ListeningStats.route,
+                        enterTransition = {
+                            fadeIn(animationSpec = tween(300)) +
+                                slideInVertically(
+                                    initialOffsetY = { it / 4 },
+                                    animationSpec = tween(350, easing = EaseInOutQuart)
+                                )
+                        },
+                        exitTransition = {
+                            fadeOut(animationSpec = tween(300))
+                        },
+                        popExitTransition = {
+                            fadeOut(animationSpec = tween(300)) +
+                                slideOutVertically(
+                                    targetOffsetY = { it / 4 },
+                                    animationSpec = tween(350, easing = EaseInOutQuart)
+                                )
+                        }
+                    ) {
+                        ListeningStatsScreen(navController = navController)
                     }
 
                     composable(
