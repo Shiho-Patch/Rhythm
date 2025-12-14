@@ -101,6 +101,8 @@ import android.content.Context
 import androidx.compose.material.icons.filled.AutoGraph
 import androidx.compose.material.icons.filled.Gesture
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.PlayCircleFilled
+import androidx.compose.material.icons.filled.PlaylistAddCheckCircle
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.ui.platform.LocalContext
@@ -190,7 +192,7 @@ fun SettingsScreen(
                     SettingItem(Icons.Default.Home, "Home", "Customize home screen sections", onClick = { onNavigateTo(SettingsRoutes.HOME_SCREEN) }),
                     SettingItem(Icons.Default.Widgets, "Widget", "Customize home screen widgets", onClick = { onNavigateTo(SettingsRoutes.WIDGET) }),
                     SettingItem(Icons.Default.MusicNote, "Player", "Customize player screen chips and layout", onClick = { onNavigateTo(SettingsRoutes.PLAYER_CUSTOMIZATION) }),
-                    SettingItem(Icons.Default.QueueMusic, "MiniPlayer", "Customize compact player appearance", onClick = { onNavigateTo(SettingsRoutes.MINIPLAYER_CUSTOMIZATION) }),
+                    SettingItem(Icons.Default.PlayCircleFilled, "MiniPlayer", "Customize compact player appearance", onClick = { onNavigateTo(SettingsRoutes.MINIPLAYER_CUSTOMIZATION) }),
                     // SettingItem(Icons.Default.Reorder, "Library Tab Order", "Reorder tabs in the library", onClick = { onNavigateTo(SettingsRoutes.LIBRARY_TAB_ORDER) })
                 )
             ),
@@ -246,7 +248,7 @@ fun SettingsScreen(
                         showLyricsSourceDialog = true 
                     }),
                     SettingItem(Icons.Default.QueueMusic, "Queue & Playback", "Configure queue and playback behavior", onClick = { onNavigateTo(SettingsRoutes.QUEUE_PLAYBACK) }),
-                    SettingItem(Icons.Default.GraphicEq, "Equalizer", "Adjust audio frequencies and effects", onClick = { onNavigateTo(SettingsRoutes.EQUALIZER) }),
+                    SettingItem(Icons.Default.Equalizer, "Equalizer", "Adjust audio frequencies and effects", onClick = { onNavigateTo(SettingsRoutes.EQUALIZER) }),
                     // SettingItem(Icons.Default.AccessTime, "Sleep Timer", "Auto-stop playback after set time", onClick = { onNavigateTo(SettingsRoutes.SLEEP_TIMER) })
                 )
             ),
@@ -262,7 +264,7 @@ fun SettingsScreen(
                     // ),
                     SettingItem(Icons.Default.Person, "Artists", "Configure multi-artist parsing and organization", onClick = { onNavigateTo(SettingsRoutes.ARTIST_SEPARATORS) }),
                     SettingItem(Icons.Default.Folder, "Media Scan", "Manage blacklist and media scanning", onClick = { onNavigateTo(SettingsRoutes.MEDIA_SCAN) }),
-                    SettingItem(Icons.AutoMirrored.Filled.QueueMusic, "Playlists", "Manage your playlists", onClick = { onNavigateTo(SettingsRoutes.PLAYLISTS) })
+                    SettingItem(Icons.Default.PlaylistAddCheckCircle, "Playlists", "Manage your playlists", onClick = { onNavigateTo(SettingsRoutes.PLAYLISTS) })
                 )
             ),
             SettingGroup(

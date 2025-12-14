@@ -170,7 +170,7 @@ fun DeviceConfigurationBottomSheet(
             ) {
                 Column {
                     Text(
-                        text = "My Audio Devices",
+                        text = "Audio Devices",
                         style = MaterialTheme.typography.displayMedium,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface

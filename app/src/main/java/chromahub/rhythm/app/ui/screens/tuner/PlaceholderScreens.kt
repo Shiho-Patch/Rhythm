@@ -373,11 +373,6 @@ fun NotificationsSettingsScreen(onBackClick: () -> Unit) {
     }
 }
 
-// StreamingSettingsScreen removed - not in original SettingsScreen
-// AudioSettingsScreen removed - was inline settings in original SettingsScreen
-// DownloadsSettingsScreen removed - not in original SettingsScreen
-// OfflineModeSettingsScreen removed - not in original SettingsScreen
-
 // Queue & Playback Settings Screen
 @Composable
 fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
@@ -11662,12 +11657,12 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                     containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                     contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                 ),
-                modifier = Modifier.size(44.dp)
+                modifier = Modifier.size(38.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.HeadsetMic,
+                    imageVector = Icons.Rounded.DeviceHub,
                     contentDescription = "My Devices",
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
             Spacer(modifier = Modifier.width(8.dp))
@@ -11681,33 +11676,33 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                 ),
-                modifier = Modifier.size(44.dp)
+                modifier = Modifier.size(38.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Headphones,
+                    imageVector = Icons.Rounded.AutoMode,
                     contentDescription = "AutoEQ Profiles",
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
-            Spacer(modifier = Modifier.width(8.dp))
-            // System Equalizer Button
-            FilledIconButton(
-                onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                    musicViewModel.openSystemEqualizer()
-                },
-                colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                ),
-                modifier = Modifier.size(44.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Settings,
-                    contentDescription = "System Equalizer",
-                    modifier = Modifier.size(22.dp)
-                )
-            }
+//            Spacer(modifier = Modifier.width(8.dp))
+//            // System Equalizer Button
+//            FilledIconButton(
+//                onClick = {
+//                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+//                    musicViewModel.openSystemEqualizer()
+//                },
+//                colors = IconButtonDefaults.filledIconButtonColors(
+//                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+//                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+//                ),
+//                modifier = Modifier.size(44.dp)
+//            ) {
+//                Icon(
+//                    imageVector = Icons.Rounded.DoubleArrow,
+//                    contentDescription = "System Equalizer",
+//                    modifier = Modifier.size(22.dp)
+//                )
+//            }
         }
     ) { modifier ->
         val lazyListState = rememberSaveable(
@@ -11802,12 +11797,24 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Spacer(modifier = Modifier.weight(1f))
-                                Text(
-                                    text = selectedPreset,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = FontWeight.Medium
-                                )
+                                Surface(
+                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Text(
+                                        text = selectedPreset,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                }
+//                                Text(
+//                                    text = selectedPreset,
+//                                    style = MaterialTheme.typography.bodyMedium,
+//                                    color = MaterialTheme.colorScheme.primary,
+//                                    fontWeight = FontWeight.Medium
+//                                )
                                 if (selectedPreset == "Custom") {
                                     Spacer(modifier = Modifier.width(8.dp))
                                     FilledIconButton(
@@ -11941,18 +11948,18 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                                             color = MaterialTheme.colorScheme.primary
                                         )
                                         // Visual indicator
-                                        Surface(
-                                            color = MaterialTheme.colorScheme.primaryContainer,
-                                            shape = RoundedCornerShape(8.dp)
-                                        ) {
-                                            Text(
-                                                text = selectedPreset,
-                                                style = MaterialTheme.typography.labelSmall,
-                                                fontWeight = FontWeight.Medium,
-                                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                            )
-                                        }
+//                                        Surface(
+//                                            color = MaterialTheme.colorScheme.primaryContainer,
+//                                            shape = RoundedCornerShape(8.dp)
+//                                        ) {
+//                                            Text(
+//                                                text = selectedPreset,
+//                                                style = MaterialTheme.typography.labelSmall,
+//                                                fontWeight = FontWeight.Medium,
+//                                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+//                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+//                                            )
+//                                        }
                                     }
 
                                     Spacer(modifier = Modifier.height(16.dp))
@@ -12056,7 +12063,7 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                                             points.forEachIndexed { index, point ->
                                                 val pointColor = when (index) {
                                                     0, 1 -> secondaryColor // Bass
-                                                    2 -> primaryColor // Mid
+                                                    2, 3, 4, 5, 6, 7 -> primaryColor // Mid
                                                     else -> tertiaryColor // Treble
                                                 }
 
@@ -12090,9 +12097,9 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                                     ) {
                                         frequencyLabels.forEachIndexed { index, label ->
                                             val labelColor = when (index) {
-                                                0, 1 -> secondaryColor
-                                                2 -> primaryColor
-                                                else -> tertiaryColor
+                                                0, 1 -> secondaryColor // Bass
+                                                2, 3, 4, 5, 6, 7 -> primaryColor // Mid
+                                                else -> tertiaryColor // Treble
                                             }
                                             Text(
                                                 text = label,
@@ -12119,9 +12126,9 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                                 bandLevels.forEachIndexed { index, level ->
                                     // Color based on frequency range (bass = secondary, mid = primary, treble = tertiary)
                                     val bandColor = when (index) {
-                                        0, 1, 2 -> secondaryColor // Bass frequencies (31Hz, 62Hz, 125Hz)
-                                        3, 4, 5 -> primaryColor // Mid frequencies (250Hz, 500Hz, 1kHz)
-                                        else -> tertiaryColor // Treble frequencies (2kHz, 4kHz, 8kHz, 16kHz)
+                                        0, 1 -> secondaryColor // Bass frequencies (31Hz, 62Hz)
+                                        2, 3, 4, 5, 6, 7 -> primaryColor // Mid frequencies (125Hz, 250Hz, 500Hz, 1kHz, 2kHz, 4kHz)
+                                        else -> tertiaryColor // Treble frequencies (8kHz, 16kHz)
                                     }
                                     val bandLabel = when (index) {
                                         0 -> "Sub Bass"
@@ -12463,131 +12470,131 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-            
-            // Quick Actions Section - Always visible
-            item {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                    shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Surface(
-                                shape = RoundedCornerShape(10.dp),
-                                color = MaterialTheme.colorScheme.primaryContainer,
-                                modifier = Modifier.size(36.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Headphones,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                text = "Quick Actions",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Action buttons row matching PlaylistDetailScreen style
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // My Devices Button
-                            Button(
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                    showDeviceConfiguration = true
-                                },
-                                shape = RoundedCornerShape(24.dp),
-                                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.HeadsetMic,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    "My Devices",
-                                    style = MaterialTheme.typography.titleSmall
-                                )
-                            }
-                            
-                            // AutoEQ Button
-                            FilledTonalButton(
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                    showAutoEQSelector = true
-                                },
-                                shape = RoundedCornerShape(24.dp),
-                                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Headphones,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    "AutoEQ",
-                                    style = MaterialTheme.typography.titleSmall
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // System EQ Button - Full width
-                        OutlinedButton(
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                musicViewModel.openSystemEqualizer()
-                            },
-                            shape = RoundedCornerShape(24.dp),
-                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-                            modifier = Modifier.fillMaxWidth(),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Settings,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                "Open System Equalizer",
-                                style = MaterialTheme.typography.titleSmall
-                            )
-                        }
-                    }
-                }
-            }
-            
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-            }
+//
+//            item {
+//                Spacer(modifier = Modifier.height(24.dp))
+//            }
+//
+//            // Quick Actions Section - Always visible
+//            item {
+//                Card(
+//                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+//                    shape = RoundedCornerShape(20.dp),
+//                    modifier = Modifier.fillMaxWidth()
+//                ) {
+//                    Column(
+//                        modifier = Modifier.padding(20.dp)
+//                    ) {
+//                        Row(
+//                            verticalAlignment = Alignment.CenterVertically,
+//                            modifier = Modifier.fillMaxWidth()
+//                        ) {
+//                            Surface(
+//                                shape = RoundedCornerShape(10.dp),
+//                                color = MaterialTheme.colorScheme.primaryContainer,
+//                                modifier = Modifier.size(36.dp)
+//                            ) {
+//                                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+//                                    Icon(
+//                                        imageVector = Icons.Rounded.Headphones,
+//                                        contentDescription = null,
+//                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+//                                        modifier = Modifier.size(20.dp)
+//                                    )
+//                                }
+//                            }
+//                            Spacer(modifier = Modifier.width(12.dp))
+//                            Text(
+//                                text = "Quick Actions",
+//                                style = MaterialTheme.typography.titleMedium,
+//                                fontWeight = FontWeight.SemiBold
+//                            )
+//                        }
+//
+//                        Spacer(modifier = Modifier.height(16.dp))
+//
+//                        // Action buttons row
+//                        Row(
+//                            modifier = Modifier.fillMaxWidth(),
+//                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+//                            verticalAlignment = Alignment.CenterVertically
+//                        ) {
+//                            // My Devices Button
+//                            Button(
+//                                onClick = {
+//                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+//                                    showDeviceConfiguration = true
+//                                },
+//                                shape = RoundedCornerShape(24.dp),
+//                                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+//                                modifier = Modifier.weight(1f)
+//                            ) {
+//                                Icon(
+//                                    imageVector = Icons.Rounded.HeadsetMic,
+//                                    contentDescription = null,
+//                                    modifier = Modifier.size(20.dp)
+//                                )
+//                                Spacer(modifier = Modifier.width(8.dp))
+//                                Text(
+//                                    "My Devices",
+//                                    style = MaterialTheme.typography.titleSmall
+//                                )
+//                            }
+//
+//                            // AutoEQ Button
+//                            FilledTonalButton(
+//                                onClick = {
+//                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+//                                    showAutoEQSelector = true
+//                                },
+//                                shape = RoundedCornerShape(24.dp),
+//                                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+//                                modifier = Modifier.weight(1f)
+//                            ) {
+//                                Icon(
+//                                    imageVector = Icons.Rounded.Headphones,
+//                                    contentDescription = null,
+//                                    modifier = Modifier.size(20.dp)
+//                                )
+//                                Spacer(modifier = Modifier.width(8.dp))
+//                                Text(
+//                                    "AutoEQ",
+//                                    style = MaterialTheme.typography.titleSmall
+//                                )
+//                            }
+//                        }
+//
+//                        Spacer(modifier = Modifier.height(12.dp))
+//
+//                        // System EQ Button - Full width
+//                        OutlinedButton(
+//                            onClick = {
+//                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+//                                musicViewModel.openSystemEqualizer()
+//                            },
+//                            shape = RoundedCornerShape(24.dp),
+//                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+//                            modifier = Modifier.fillMaxWidth(),
+//                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+//                        ) {
+//                            Icon(
+//                                imageVector = Icons.Rounded.Settings,
+//                                contentDescription = null,
+//                                modifier = Modifier.size(20.dp)
+//                            )
+//                            Spacer(modifier = Modifier.width(8.dp))
+//                            Text(
+//                                "Open System Equalizer",
+//                                style = MaterialTheme.typography.titleSmall
+//                            )
+//                        }
+//                    }
+//                }
+//            }
+//
+//            item {
+//                Spacer(modifier = Modifier.height(24.dp))
+//            }
         }
         
         // AutoEQ Profile Selector

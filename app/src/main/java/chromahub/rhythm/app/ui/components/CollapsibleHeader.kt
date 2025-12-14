@@ -118,7 +118,7 @@ fun CollapsibleHeaderScreen(
             val containerColor = Color.Transparent // Always transparent
 
             Column {
-                Spacer(modifier = Modifier.height(5.dp)) // Add more padding before the header starts
+                Spacer(modifier = Modifier.height(10.dp)) // Add more padding before the header starts
                 LargeTopAppBar(
                     title = {
                         Row(
@@ -197,7 +197,7 @@ fun CollapsibleHeaderScreen(
                         if (showBackButton) {
                             IconButton(
                                 onClick = onBackClick,
-                                modifier = Modifier.padding(start = 8.dp) // Add padding to the back button
+                                modifier = Modifier.padding(start = 12.dp) // Add padding to the back button
                             ) {
                                 Box(
                                     modifier = Modifier
@@ -218,7 +218,7 @@ fun CollapsibleHeaderScreen(
                     actions = {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(end = 8.dp) // Match left-side padding
+                            modifier = Modifier.padding(end = 10.dp) // Match left-side padding
                         ) {
                             filterDropdown() // Place the filter dropdown here
                             actions()
@@ -230,6 +230,7 @@ fun CollapsibleHeaderScreen(
                         scrolledContainerColor = containerColor
                     )
                 )
+//                Spacer(modifier = Modifier.height(1.dp))
             }
         }
     ) { paddingValues ->

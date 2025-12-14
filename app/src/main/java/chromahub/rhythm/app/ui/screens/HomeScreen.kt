@@ -2762,7 +2762,7 @@ private fun ModernUpdateSection(
                 Image(
                     painter = painterResource(id = R.drawable.rhythm_splash_logo),
                     contentDescription = "Rhythm Logo",
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(45.dp)
                 )
                 
                 Spacer(modifier = Modifier.width(8.dp))

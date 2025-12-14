@@ -29,7 +29,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Headphones
+import androidx.compose.material.icons.rounded.Equalizer
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Card
@@ -239,14 +239,14 @@ fun AutoEQProfileSelector(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                    // Brand filters
-                    Text(
-                        text = "Brand",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
-                    )
+                // Brand filters
+                Text(
+                    text = "Brand",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 8.dp)
+                )
                     LazyRow(
                         contentPadding = PaddingValues(horizontal = 5.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -416,7 +416,7 @@ private fun ProfileCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Headphones,
+                        imageVector = Icons.Rounded.Equalizer,
                         contentDescription = null,
                         tint = if (isActive)
                             MaterialTheme.colorScheme.primary
