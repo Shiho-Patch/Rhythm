@@ -68,8 +68,8 @@ fun ListeningStatsScreen(
     // Get data
     val songs by viewModel.songs.collectAsState()
     
-    // UI State
-    var selectedRange by remember { mutableStateOf(StatsTimeRange.ALL_TIME) }
+    // UI State - Default to WEEK for better UX
+    var selectedRange by remember { mutableStateOf(StatsTimeRange.WEEK) }
     var statsSummary by remember { mutableStateOf<PlaybackStatsRepository.PlaybackStatsSummary?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     val tabRowState = rememberLazyListState()
@@ -446,7 +446,7 @@ private fun CosmicListeningTimeWidget(totalDurationMs: Long) {
                 ) {
                     // Icon container
                     Surface(
-                        shape = RoundedCornerShape(20.dp),
+                        shape = RoundedCornerShape(30.dp),
                         color = Color.White.copy(alpha = 0.2f),
                         modifier = Modifier.size(72.dp)
                     ) {
@@ -472,10 +472,29 @@ private fun CosmicListeningTimeWidget(totalDurationMs: Long) {
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
+                        
+                        // Comic dialogue based on listening time
+                        val hours = totalDurationMs / (1000 * 60 * 60)
+                        val motivationalMessage = when {
+                            hours < 1 -> "Just getting started! 🎵"
+                            hours < 5 -> "Nice rhythm going! 🎸"
+                            hours < 10 -> "You're jamming! 🎧"
+                            hours < 24 -> "Music enthusiast! 🎹"
+                            hours < 50 -> "Legendary listener! 🌟"
+                            hours < 100 -> "Music maestro! 🎼"
+                            else -> "Ultimate music sage! 👑"
+                        }
+                        
                         Text(
                             text = "Total Listening Time",
                             style = MaterialTheme.typography.bodyLarge,
                             color = Color.White.copy(alpha = 0.85f)
+                        )
+                        Text(
+                            text = motivationalMessage,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = Color.White.copy(alpha = 0.95f),
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
@@ -511,13 +530,15 @@ private fun QuickStatsRow(stats: PlaybackStatsRepository.PlaybackStatsSummary) {
         QuickStatChip(
             icon = Icons.Outlined.PlayCircle,
             value = "${stats.totalPlayCount}",
-            label = "Plays",
+            label = "Total Plays",
+//            emoji = "🎵",
             modifier = Modifier.weight(1f)
         )
         QuickStatChip(
             icon = Icons.Outlined.MusicNote,
             value = "${stats.uniqueSongs}",
-            label = "Tracks",
+            label = "Unique Tracks",
+//            emoji = "🎶",
             modifier = Modifier.weight(1f)
         )
     }
@@ -528,6 +549,7 @@ private fun QuickStatChip(
     icon: ImageVector,
     value: String,
     label: String,
+    emoji: String = "",
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -553,12 +575,19 @@ private fun QuickStatChip(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(22.dp)
-                    )
+                    if (emoji.isNotEmpty()) {
+                        Text(
+                            text = emoji,
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    } else {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
                 }
             }
             Text(
@@ -581,54 +610,94 @@ private fun QuickStatChip(
  */
 @Composable
 private fun EmptyRhythmView() {
+    val comicMessages = listOf(
+        "🎵 The stage is empty!" to "Time to drop some beats and fill this space!",
+        "📊 Stats on vacation!" to "Play music to bring them back to life!",
+        "🎸 Your rhythm is sleeping" to "Wake it up with some tunes!",
+        "🎧 Stats: 404 Not Found" to "Error: No beats detected. Please jam out!",
+        "🎹 Chart-topping silence!" to "Let's change that with your favorite tracks!"
+    )
+    val message = remember { comicMessages.random() }
+    
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         )
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(48.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(96.dp)
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.BarChart,
-                        contentDescription = null,
-                        modifier = Modifier.size(48.dp),
-                        tint = MaterialTheme.colorScheme.primary
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                            Color.Transparent
+                        )
                     )
+                )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(40.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                // Comic-style speech bubble
+                Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.padding(8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = message.first,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = message.second,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
+                
+                // Animated icon
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                    modifier = Modifier.size(120.dp)
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.BarChart,
+                            contentDescription = null,
+                            modifier = Modifier.size(56.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                
+                Text(
+                    text = "✨ Your musical journey awaits! ✨",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Medium
+                )
             }
-            Text(
-                text = "No Listening Data",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = "Start your musical journey!",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-            Text(
-                text = "Play some tunes to see your stats ✨",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
         }
     }
 }
@@ -638,10 +707,37 @@ private fun EmptyRhythmView() {
  */
 @Composable
 private fun MusicalJourneyCard(stats: PlaybackStatsRepository.PlaybackStatsSummary) {
+    // Comic achievement badge
+    val achievementBadge = when {
+        stats.activeDays >= 30 -> "🏆 Monthly Maestro!"
+        stats.activeDays >= 14 -> "🎖️ Two-Week Wonder!"
+        stats.activeDays >= 7 -> "⭐ Weekly Warrior!"
+        stats.activeDays >= 3 -> "🎵 Getting Groovy!"
+        else -> "🌱 Fresh Start!"
+    }
+    
     RhythmSectionCard(
-        title = "Your Journey",
+        title = "Your Musical Journey",
         icon = Icons.Outlined.Explore
     ) {
+        // Achievement badge
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.tertiaryContainer,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = achievementBadge,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                modifier = Modifier.padding(12.dp),
+                textAlign = TextAlign.Center
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             JourneyStatRow(Icons.Outlined.CalendarToday, "Active Days", "${stats.activeDays}")
             JourneyStatRow(Icons.Outlined.Restore, "Sessions", "${stats.totalSessions}")
@@ -700,6 +796,15 @@ private fun TopVibesCard(songs: List<PlaybackStatsRepository.SongPlaybackSummary
         title = "Top Vibes",
         icon = Icons.Outlined.Favorite
     ) {
+        // Comic subtitle
+        Text(
+            text = "Your most played anthems!",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             songs.take(5).forEachIndexed { index, song ->
                 RhythmRankItem(
@@ -724,6 +829,15 @@ private fun StarArtistsCard(artists: List<PlaybackStatsRepository.ArtistPlayback
         title = "Star Artists",
         icon = Icons.Outlined.Stars
     ) {
+        // Comic subtitle
+        Text(
+            text = "Your hall of fame performers!",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             artists.take(5).forEachIndexed { index, artist ->
                 RhythmRankItem(
@@ -748,6 +862,15 @@ private fun GenreMixCard(genres: List<PlaybackStatsRepository.GenrePlaybackSumma
         title = "Genre Mix",
         icon = Icons.Outlined.Category
     ) {
+        // Comic subtitle
+        Text(
+            text = "Your musical taste palette!",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             genres.take(5).forEach { genre ->
                 GenreMixRow(
@@ -897,30 +1020,25 @@ private fun RhythmRankItem(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Rank badge
-        val rankBgColor = if (isTopItem) {
-            MaterialTheme.colorScheme.primary
-        } else {
-            MaterialTheme.colorScheme.surfaceContainerHighest
-        }
-        
-        val rankTextColor = if (isTopItem) {
-            MaterialTheme.colorScheme.onPrimary
-        } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
+        // Rank badge with medals/emojis
+        val (rankDisplay, rankBgColor, rankTextColor) = when (rank) {
+            1 -> Triple("🥇", MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary)
+            2 -> Triple("🥈", MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary)
+            3 -> Triple("🥉", MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.onTertiary)
+            else -> Triple("$rank", MaterialTheme.colorScheme.surfaceContainerHighest, MaterialTheme.colorScheme.onSurfaceVariant)
         }
         
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(32.dp)
-                .background(rankBgColor, RoundedCornerShape(8.dp))
+                .size(36.dp)
+                .background(rankBgColor, RoundedCornerShape(10.dp))
         ) {
             Text(
-                text = if (isTopItem) "👑" else "$rank",
-                style = if (isTopItem) MaterialTheme.typography.labelLarge else MaterialTheme.typography.labelMedium,
+                text = rankDisplay,
+                style = if (rank <= 3) MaterialTheme.typography.titleMedium else MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
-                color = rankTextColor
+                color = if (rank <= 3) Color.White else rankTextColor
             )
         }
         

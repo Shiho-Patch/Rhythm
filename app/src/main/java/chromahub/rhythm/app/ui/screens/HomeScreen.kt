@@ -2314,20 +2314,27 @@ private fun ModernListeningStatsSection(
 ) {
     val context = LocalContext.current
     val viewModel = viewModel<chromahub.rhythm.app.viewmodel.MusicViewModel>()
-    val recentlyPlayed by viewModel.recentlyPlayed.collectAsState()
+    val songs by viewModel.songs.collectAsState()
 
-    val listeningTimeHours = remember(recentlyPlayed) {
-        val totalMillis = recentlyPlayed.sumOf { it.duration }
+    // Load stats from PlaybackStatsRepository (matching ListeningStatsScreen)
+    var statsSummary by remember { mutableStateOf<chromahub.rhythm.app.data.stats.PlaybackStatsRepository.PlaybackStatsSummary?>(null) }
+    
+    LaunchedEffect(songs) {
+        statsSummary = viewModel.loadPlaybackStats(chromahub.rhythm.app.data.stats.StatsTimeRange.ALL_TIME)
+    }
+
+    val listeningTimeHours = remember(statsSummary) {
+        val totalMillis = statsSummary?.totalDurationMs ?: 0L
         val hours = totalMillis / (1000 * 60 * 60)
         if (hours < 1) "< 1h" else "${hours}h"
     }
 
-    val songsPlayed = remember(recentlyPlayed) {
-        recentlyPlayed.size.toString()
+    val songsPlayed = remember(statsSummary) {
+        (statsSummary?.totalPlayCount ?: 0).toString()
     }
 
-    val uniqueArtists = remember(recentlyPlayed) {
-        recentlyPlayed.map { it.artist }.distinct().size.toString()
+    val uniqueArtists = remember(statsSummary) {
+        (statsSummary?.uniqueArtists ?: 0).toString()
     }
 
     // Enhanced stats card with better design
