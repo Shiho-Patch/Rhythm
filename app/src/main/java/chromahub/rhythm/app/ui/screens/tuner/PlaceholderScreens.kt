@@ -11588,7 +11588,11 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
     var bandLevels by remember(equalizerBandLevelsState) {
         mutableStateOf(
             equalizerBandLevelsState.split(",").mapNotNull { it.toFloatOrNull() }.let { levels ->
-                if (levels.size == 5) levels else List(5) { 0f }
+                when {
+                    levels.size == 10 -> levels
+                    levels.size == 5 -> List(10) { if (it < 5) levels[it] else 0f }
+                    else -> List(10) { 0f }
+                }
             }
         )
     }
@@ -11597,19 +11601,19 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
     var isVirtualizerEnabled by remember(virtualizerEnabledState) { mutableStateOf(virtualizerEnabledState) }
     var virtualizerStrength by remember(virtualizerStrengthState) { mutableFloatStateOf(virtualizerStrengthState.toFloat()) }
 
-    // Preset definitions
+    // Preset definitions - Updated to 10 bands
     val presets = listOf(
-        EqualizerPreset("Flat", Icons.Rounded.LinearScale, listOf(0f, 0f, 0f, 0f, 0f)),
-        EqualizerPreset("Rock", Icons.Rounded.MusicNote, listOf(5f, 3f, -2f, 2f, 8f)),
-        EqualizerPreset("Pop", Icons.Rounded.Star, listOf(2f, 5f, 3f, -1f, 2f)),
-        EqualizerPreset("Jazz", Icons.Rounded.Piano, listOf(4f, 2f, -2f, 2f, 6f)),
-        EqualizerPreset("Classical", Icons.Rounded.LibraryMusic, listOf(3f, -2f, -3f, -1f, 4f)),
-        EqualizerPreset("Electronic", Icons.Rounded.GraphicEq, listOf(6f, 4f, 1f, 3f, 7f)),
-        EqualizerPreset("Hip Hop", Icons.Rounded.GraphicEq, listOf(7f, 4f, 0f, 2f, 6f)),
-        EqualizerPreset("Vocal", Icons.Rounded.RecordVoiceOver, listOf(0f, 3f, 5f, 4f, 2f))
+        EqualizerPreset("Flat", Icons.Rounded.LinearScale, listOf(0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f)),
+        EqualizerPreset("Rock", Icons.Rounded.MusicNote, listOf(5f, 4f, 3f, 1f, -2f, -1f, 2f, 4f, 6f, 8f)),
+        EqualizerPreset("Pop", Icons.Rounded.Star, listOf(2f, 3f, 5f, 4f, 3f, 1f, -1f, 0f, 1f, 2f)),
+        EqualizerPreset("Jazz", Icons.Rounded.Piano, listOf(4f, 3f, 2f, 1f, -2f, -1f, 2f, 3f, 5f, 6f)),
+        EqualizerPreset("Classical", Icons.Rounded.LibraryMusic, listOf(3f, 2f, -1f, -2f, -3f, -2f, -1f, 2f, 3f, 4f)),
+        EqualizerPreset("Electronic", Icons.Rounded.GraphicEq, listOf(6f, 5f, 4f, 2f, 1f, 0f, 3f, 5f, 6f, 7f)),
+        EqualizerPreset("Hip Hop", Icons.Rounded.GraphicEq, listOf(7f, 6f, 4f, 2f, 0f, -1f, 2f, 4f, 5f, 6f)),
+        EqualizerPreset("Vocal", Icons.Rounded.RecordVoiceOver, listOf(0f, 1f, 2f, 3f, 5f, 5f, 4f, 3f, 2f, 2f))
     )
 
-    val frequencyLabels = listOf("60Hz", "230Hz", "910Hz", "3.6kHz", "14kHz")
+    val frequencyLabels = listOf("31Hz", "62Hz", "125Hz", "250Hz", "500Hz", "1kHz", "2kHz", "4kHz", "8kHz", "16kHz")
 
     // Functions
     fun applyPreset(preset: EqualizerPreset) {
@@ -11640,10 +11644,47 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
         musicViewModel.setEqualizerBandLevel(band.toShort(), levelShort)
     }
 
+    var showAutoEQSelector by remember { mutableStateOf(false) }
+
     CollapsibleHeaderScreen(
         title = "Equalizer",
         showBackButton = true,
-        onBackClick = onBackClick
+        onBackClick = onBackClick,
+        actions = {
+            FilledIconButton(
+                onClick = {
+                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                    showAutoEQSelector = true
+                },
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ),
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Headphones,
+                    contentDescription = "AutoEQ Profiles"
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            FilledIconButton(
+                onClick = {
+                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                    musicViewModel.openSystemEqualizer()
+                },
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ),
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Settings,
+                    contentDescription = "System Equalizer"
+                )
+            }
+        }
     ) { modifier ->
         val lazyListState = rememberSaveable(
             key = "equalizer_settings_scroll_state",
@@ -12054,16 +12095,21 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                                 bandLevels.forEachIndexed { index, level ->
                                     // Color based on frequency range (bass = secondary, mid = primary, treble = tertiary)
                                     val bandColor = when (index) {
-                                        0, 1 -> secondaryColor // Bass frequencies
-                                        2 -> primaryColor // Mid frequencies
-                                        else -> tertiaryColor // Treble frequencies
+                                        0, 1, 2 -> secondaryColor // Bass frequencies (31Hz, 62Hz, 125Hz)
+                                        3, 4, 5 -> primaryColor // Mid frequencies (250Hz, 500Hz, 1kHz)
+                                        else -> tertiaryColor // Treble frequencies (2kHz, 4kHz, 8kHz, 16kHz)
                                     }
                                     val bandLabel = when (index) {
                                         0 -> "Sub Bass"
                                         1 -> "Bass"
-                                        2 -> "Mids"
-                                        3 -> "Upper Mids"
-                                        4 -> "Treble"
+                                        2 -> "Low Mid"
+                                        3 -> "Mid"
+                                        4 -> "Mid"
+                                        5 -> "Upper Mid"
+                                        6 -> "Presence"
+                                        7 -> "Presence"
+                                        8 -> "Brilliance"
+                                        9 -> "Air"
                                         else -> ""
                                     }
 
@@ -12394,73 +12440,21 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                 }
             }
 
-            // System Equalizer Section with animation
-            item {
-                AnimatedVisibility(
-                    visible = isEqualizerEnabled,
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically()
-                ) {
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                        shape = RoundedCornerShape(20.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(20.dp)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Settings,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = context.getString(R.string.system_equalizer),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                    Text(
-                                        text = context.getString(R.string.system_equalizer_desc),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            FilledTonalButton(
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                    musicViewModel.openSystemEqualizer()
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.filledTonalButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                                )
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Settings,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Open System Equalizer")
-                            }
-                        }
-                    }
-                }
-            }
-
             item {
                 Spacer(modifier = Modifier.height(24.dp))
             }
+        }
+        
+        // AutoEQ Profile Selector
+        if (showAutoEQSelector) {
+            chromahub.rhythm.app.ui.components.AutoEQProfileSelector(
+                musicViewModel = musicViewModel,
+                onDismiss = { showAutoEQSelector = false },
+                onProfileSelected = { profile ->
+                    musicViewModel.applyAutoEQProfile(profile)
+                    showAutoEQSelector = false
+                }
+            )
         }
     }
 }

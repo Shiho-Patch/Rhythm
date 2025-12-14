@@ -753,8 +753,9 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             ACTION_APPLY_EQUALIZER_PRESET -> {
                 val preset = intent.getStringExtra("preset") ?: ""
                 val levels = intent.getFloatArrayExtra("levels")
-                if (levels != null && levels.size == 5) {
+                if (levels != null) {
                     applyEqualizerPreset(levels)
+                    Log.d(TAG, "Applied equalizer preset: $preset with ${levels.size} bands")
                 }
             }
             ACTION_PLAY_PAUSE -> {
@@ -1310,15 +1311,17 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             // Load equalizer settings
             equalizer?.enabled = appSettings.equalizerEnabled.value
             
-            // Load band levels
+            // Load band levels (supports both 5-band legacy and 10-band)
             val bandLevelsString = appSettings.equalizerBandLevels.value
             val bandLevels = bandLevelsString.split(",").mapNotNull { it.toFloatOrNull() }
-            if (bandLevels.size == 5) {
+            if (bandLevels.isNotEmpty()) {
                 equalizer?.let { eq ->
-                    for (i in 0 until minOf(eq.numberOfBands.toInt(), bandLevels.size)) {
+                    val availableBands = eq.numberOfBands.toInt()
+                    for (i in 0 until minOf(availableBands, bandLevels.size)) {
                         val level = (bandLevels[i] * 100).toInt().toShort()
                         eq.setBandLevel(i.toShort(), level)
                     }
+                    Log.d(TAG, "Applied ${bandLevels.size} band levels to ${availableBands} available bands")
                 }
             }
             

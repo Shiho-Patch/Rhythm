@@ -72,6 +72,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     // Settings manager
     val appSettings = AppSettings.getInstance(application)
     
+    // AutoEQ manager
+    private val autoEQManager = chromahub.rhythm.app.utils.AutoEQManager(application)
+    
     // Settings
     val showLyrics = appSettings.showLyrics
     val showOnlineOnlyLyrics = appSettings.onlineOnlyLyrics
@@ -3686,6 +3689,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun openSystemEqualizer() {
         val context = getApplication<Application>()
+        // Simply use EqualizerUtils which handles the system equalizer opening properly
         EqualizerUtils.openSystemEqualizer(context)
     }
 
@@ -4984,6 +4988,55 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
         context.startService(intent)
         Log.d(TAG, "Applied equalizer preset: $preset")
+    }
+    
+    // AutoEQ functions
+    private val _autoEQProfiles = MutableStateFlow<List<chromahub.rhythm.app.data.AutoEQProfile>>(emptyList())
+    val autoEQProfiles: StateFlow<List<chromahub.rhythm.app.data.AutoEQProfile>> = _autoEQProfiles.asStateFlow()
+    
+    private val _autoEQLoading = MutableStateFlow(false)
+    val autoEQLoading: StateFlow<Boolean> = _autoEQLoading.asStateFlow()
+    
+    fun loadAutoEQProfiles() {
+        viewModelScope.launch {
+            _autoEQLoading.value = true
+            try {
+                val result = autoEQManager.loadProfiles()
+                result.onSuccess { database ->
+                    _autoEQProfiles.value = database.profiles
+                    Log.d(TAG, "Loaded ${database.profiles.size} AutoEQ profiles")
+                }.onFailure { error ->
+                    Log.e(TAG, "Failed to load AutoEQ profiles", error)
+                }
+            } finally {
+                _autoEQLoading.value = false
+            }
+        }
+    }
+    
+    fun searchAutoEQProfiles(query: String): List<chromahub.rhythm.app.data.AutoEQProfile> {
+        return autoEQManager.searchProfiles(query)
+    }
+    
+    fun applyAutoEQProfile(profile: chromahub.rhythm.app.data.AutoEQProfile) {
+        Log.d(TAG, "Applying AutoEQ profile: ${profile.name}")
+        
+        // Ensure we have 10 bands
+        val levels = profile.bands.take(10)
+        if (levels.size != 10) {
+            Log.w(TAG, "AutoEQ profile has ${levels.size} bands, expected 10")
+            return
+        }
+        
+        // Save profile name to settings
+        appSettings.setAutoEQProfile(profile.name)
+        
+        // Apply the profile as a preset
+        applyEqualizerPreset("AutoEQ: ${profile.name}", levels)
+    }
+    
+    fun getAutoEQRecommendedProfiles(): List<chromahub.rhythm.app.data.AutoEQProfile> {
+        return autoEQManager.getRecommendedProfiles()
     }
     
     // Clean sleep timer implementation

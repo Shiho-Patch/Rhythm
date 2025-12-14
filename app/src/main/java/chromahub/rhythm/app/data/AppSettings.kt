@@ -99,6 +99,7 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_EQUALIZER_ENABLED = "equalizer_enabled"
         private const val KEY_EQUALIZER_PRESET = "equalizer_preset"
         private const val KEY_EQUALIZER_BAND_LEVELS = "equalizer_band_levels"
+        private const val KEY_AUTOEQ_PROFILE = "autoeq_profile"
         private const val KEY_BASS_BOOST_ENABLED = "bass_boost_enabled"
         private const val KEY_BASS_BOOST_STRENGTH = "bass_boost_strength"
         private const val KEY_VIRTUALIZER_ENABLED = "virtualizer_enabled"
@@ -511,8 +512,11 @@ class AppSettings private constructor(context: Context) {
     private val _equalizerPreset = MutableStateFlow(prefs.getString(KEY_EQUALIZER_PRESET, "Custom") ?: "Custom")
     val equalizerPreset: StateFlow<String> = _equalizerPreset.asStateFlow()
     
-    private val _equalizerBandLevels = MutableStateFlow(prefs.getString(KEY_EQUALIZER_BAND_LEVELS, "0.0,0.0,0.0,0.0,0.0") ?: "0.0,0.0,0.0,0.0,0.0")
+    private val _equalizerBandLevels = MutableStateFlow(prefs.getString(KEY_EQUALIZER_BAND_LEVELS, "0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0") ?: "0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0")
     val equalizerBandLevels: StateFlow<String> = _equalizerBandLevels.asStateFlow()
+    
+    private val _autoEQProfile = MutableStateFlow(prefs.getString(KEY_AUTOEQ_PROFILE, "") ?: "")
+    val autoEQProfile: StateFlow<String> = _autoEQProfile.asStateFlow()
     
     private val _bassBoostEnabled = MutableStateFlow(prefs.getBoolean(KEY_BASS_BOOST_ENABLED, false))
     val bassBoostEnabled: StateFlow<Boolean> = _bassBoostEnabled.asStateFlow()
@@ -1193,6 +1197,11 @@ class AppSettings private constructor(context: Context) {
     fun setEqualizerBandLevels(levels: String) {
         prefs.edit().putString(KEY_EQUALIZER_BAND_LEVELS, levels).apply()
         _equalizerBandLevels.value = levels
+    }
+    
+    fun setAutoEQProfile(profileName: String) {
+        prefs.edit().putString(KEY_AUTOEQ_PROFILE, profileName).apply()
+        _autoEQProfile.value = profileName
     }
     
     fun setBassBoostEnabled(enable: Boolean) {
