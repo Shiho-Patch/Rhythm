@@ -2652,6 +2652,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             if (appSettings.shuffleModePersistence.value) {
                 appSettings.setSavedShuffleState(newShuffleMode)
             }
+            
+            // Sync the queue with MediaController to update the displayed queue order
+            // This ensures the UI queue list reflects ExoPlayer's shuffled/unshuffled order
+            viewModelScope.launch {
+                // Small delay to let ExoPlayer reorganize its internal timeline after shuffle toggle
+                delay(100)
+                syncQueueWithMediaController()
+                Log.d(TAG, "Queue synced after shuffle toggle - queue now has ${_currentQueue.value.songs.size} songs")
+            }
         }
     }
     
