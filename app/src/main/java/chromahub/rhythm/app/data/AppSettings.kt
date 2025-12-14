@@ -1311,18 +1311,18 @@ class AppSettings private constructor(context: Context) {
     // Playlists
     fun setPlaylists(playlistsJson: String?) {
         if (playlistsJson == null) {
-            prefs.edit().remove(KEY_PLAYLISTS).commit()
+            prefs.edit().remove(KEY_PLAYLISTS).apply() // Use apply() to prevent ANR
         } else {
-            prefs.edit().putString(KEY_PLAYLISTS, playlistsJson).commit()
+            prefs.edit().putString(KEY_PLAYLISTS, playlistsJson).apply() // Use apply() to prevent ANR
         }
         _playlists.value = playlistsJson
     }
 
     fun setFavoriteSongs(favoriteSongsJson: String?) {
         if (favoriteSongsJson == null) {
-            prefs.edit().remove(KEY_FAVORITE_SONGS).commit()
+            prefs.edit().remove(KEY_FAVORITE_SONGS).apply() // Use apply() to prevent ANR
         } else {
-            prefs.edit().putString(KEY_FAVORITE_SONGS, favoriteSongsJson).commit()
+            prefs.edit().putString(KEY_FAVORITE_SONGS, favoriteSongsJson).apply() // Use apply() to prevent ANR
         }
         _favoriteSongs.value = favoriteSongsJson
     }
@@ -1532,8 +1532,10 @@ class AppSettings private constructor(context: Context) {
         // Keep only the last 8 crash logs to prevent excessive storage
         val limitedHistory = currentHistory.take(6)
         val json = Gson().toJson(limitedHistory)
-        prefs.edit().putString(KEY_CRASH_LOG_HISTORY, json).commit() // Changed to commit() for synchronous write
+        // Update in-memory state first for immediate UI feedback
         _crashLogHistory.value = limitedHistory
+        // Use apply() for async write to prevent ANR - crash logs don't need synchronous persistence
+        prefs.edit().putString(KEY_CRASH_LOG_HISTORY, json).apply()
     }
 
     fun clearCrashLogHistory() {

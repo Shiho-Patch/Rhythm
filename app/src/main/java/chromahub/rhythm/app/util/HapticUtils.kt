@@ -6,16 +6,19 @@ import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import chromahub.rhythm.app.data.AppSettings
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 
 /**
  * Utility object for haptic feedback that respects user settings
+ * 
+ * IMPORTANT: This utility uses the current cached value of haptic settings
+ * to avoid blocking the main thread. The value is read from StateFlow's current
+ * value which is always available synchronously.
  */
 object HapticUtils {
     
     /**
-     * Performs haptic feedback only if enabled in settings
+     * Performs haptic feedback only if enabled in settings.
+     * Uses the cached StateFlow value to avoid blocking the main thread.
      */
     fun performHapticFeedback(
         context: Context,
@@ -23,8 +26,9 @@ object HapticUtils {
         type: HapticFeedbackType
     ) {
         val appSettings = AppSettings.getInstance(context)
-        // Use runBlocking for synchronous check - this is acceptable for a simple boolean check
-        val isEnabled = runBlocking { appSettings.hapticFeedbackEnabled.first() }
+        // Use the StateFlow's current value which is synchronously available
+        // This avoids runBlocking which can cause ANR
+        val isEnabled = appSettings.hapticFeedbackEnabled.value
         
         if (isEnabled) {
             hapticFeedback.performHapticFeedback(type)

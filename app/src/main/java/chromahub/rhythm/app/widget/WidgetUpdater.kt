@@ -30,7 +30,7 @@ object WidgetUpdater {
         }
         
         editor.putBoolean("is_playing", isPlaying)
-        editor.commit() // Use commit for immediate write
+        editor.apply() // Use apply for async write to prevent ANR
         
         // Update legacy RemoteViews widget
         MusicWidgetProvider.updateWidgets(context)

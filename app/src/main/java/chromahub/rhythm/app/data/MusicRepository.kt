@@ -3833,14 +3833,10 @@ class MusicRepository(context: Context) {
                         if (genre != null && genre.isNotBlank() && !genre.equals("unknown", ignoreCase = true)) {
                             val updatedSong = song.copy(genre = genre)
                             updatedSongs.add(updatedSong)
-                            // Cache the detected genre
+                            // Cache the detected genre using async apply() to prevent blocking
                             try {
-                                val success = genrePrefs.edit().putString("genre_$songId", genre).commit()
-                                if (success) {
-                                    Log.d(TAG, "Detected and cached genre '$genre' for song ID $songId: ${song.title}")
-                                } else {
-                                    Log.e(TAG, "Failed to commit genre cache for song ID $songId")
-                                }
+                                genrePrefs.edit().putString("genre_$songId", genre).apply()
+                                Log.d(TAG, "Detected and cached genre '$genre' for song ID $songId: ${song.title}")
                             } catch (e: Exception) {
                                 Log.e(TAG, "Failed to cache genre for song ID $songId", e)
                             }
