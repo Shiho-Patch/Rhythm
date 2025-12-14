@@ -121,7 +121,7 @@ fun AutoEQProfileSelector(
     }
     
     // Filtered profiles based on search and filters
-    val filteredProfiles = remember(profiles, searchQuery, selectedBrand, selectedType) {
+    val filteredProfiles = remember(profiles, searchQuery, selectedBrand, selectedType, currentAutoEQProfile) {
         var filtered = profiles
         
         if (searchQuery.isNotBlank()) {
@@ -140,7 +140,8 @@ fun AutoEQProfileSelector(
             filtered = filtered.filter { it.type == selectedType }
         }
         
-        filtered
+        // Sort active profile to the top
+        filtered.sortedWith(compareByDescending { it.name == currentAutoEQProfile })
     }
     
     val brands = remember(profiles) {
@@ -159,77 +160,85 @@ fun AutoEQProfileSelector(
                 color = MaterialTheme.colorScheme.primary
             )
         },
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        contentColor = MaterialTheme.colorScheme.onBackground,
-        tonalElevation = 0.dp
+        containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(horizontal = 24.dp)
                 .padding(bottom = 24.dp)
+                .graphicsLayer(alpha = contentAlpha)
         ) {
-            // Standard Header
-            StandardBottomSheetHeader(
-                title = "AutoEQ Profiles",
-                icon = Icons.Rounded.Headphones,
-                visible = showContent
-            )
-            
-            // Search bar
-            AnimatedVisibility(
-                visible = showContent,
-                enter = fadeIn(),
-                exit = fadeOut()
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 0.dp, vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Column(
-                    modifier = Modifier.graphicsLayer {
-                        alpha = contentAlpha
-                        translationY = contentTranslation
-                    }
-                ) {
-                    TextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp),
-                        placeholder = { Text("Search headphones...") },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.Search,
-                                contentDescription = null
-                            )
-                        },
-                        trailingIcon = {
-                            if (searchQuery.isNotEmpty()) {
-                                IconButton(onClick = { searchQuery = "" }) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Close,
-                                        contentDescription = "Clear search"
-                                    )
-                                }
-                            }
-                        },
-                        shape = RoundedCornerShape(16.dp),
-                        colors = TextFieldDefaults.colors(
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            disabledIndicatorColor = Color.Transparent
-                        ),
-                        singleLine = true
-                    )
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
+                Column {
                     Text(
-                        text = "${filteredProfiles.size} headphone${if (filteredProfiles.size != 1) "s" else ""} available",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 24.dp)
+                        text = "AutoEQ Profiles",
+                        style = MaterialTheme.typography.displayMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
+                    Box(
+                        modifier = Modifier
+                            .padding(top = 6.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                shape = CircleShape
+                            )
+                    ) {
+                        Text(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            style = MaterialTheme.typography.labelLarge,
+                            text = "${filteredProfiles.size} profile${if (filteredProfiles.size != 1) "s" else ""} available",
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Column {
+                // Search bar
+                TextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 5.dp),
+                    placeholder = { Text("Search headphones...") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Rounded.Search,
+                            contentDescription = null
+                        )
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Close,
+                                    contentDescription = "Clear search"
+                                )
+                            }
+                        }
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        disabledIndicatorColor = Color.Transparent
+                    ),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                     // Brand filters
                     Text(
                         text = "Brand",
@@ -239,7 +248,7 @@ fun AutoEQProfileSelector(
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
                     )
                     LazyRow(
-                        contentPadding = PaddingValues(horizontal = 24.dp),
+                        contentPadding = PaddingValues(horizontal = 5.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         item {
@@ -265,19 +274,19 @@ fun AutoEQProfileSelector(
                             )
                         }
                     }
-                    
+
                     Spacer(modifier = Modifier.height(8.dp))
-                    
+
                     // Type filters
                     Text(
                         text = "Type",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 8.dp)
                     )
                     LazyRow(
-                        contentPadding = PaddingValues(horizontal = 24.dp),
+                        contentPadding = PaddingValues(horizontal = 5.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         item {
@@ -303,58 +312,69 @@ fun AutoEQProfileSelector(
                             )
                         }
                     }
-                    
+
                     Spacer(modifier = Modifier.height(16.dp))
                 }
-            }
-            
-            // Loading indicator
-            AnimatedVisibility(visible = isLoading) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-            
-            // Profile list
-            AnimatedVisibility(
-                visible = !isLoading && showContent,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                LazyColumn(
-                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.graphicsLayer {
-                        alpha = contentAlpha
+                
+                // Loading indicator
+                AnimatedVisibility(visible = isLoading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
                     }
+                }
+                
+                // Profile list
+                AnimatedVisibility(
+                    visible = !isLoading && showContent,
+                    enter = fadeIn(),
+                    exit = fadeOut()
                 ) {
-                    items(filteredProfiles, key = { it.name }) { profile ->
-                        val isCurrentlyActive = profile.name == currentAutoEQProfile
-                        ProfileCard(
-                            profile = profile,
-                            isActive = isCurrentlyActive,
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                onProfileSelected(profile)
-                            }
-                        )
+                    LazyColumn(
+                        contentPadding = PaddingValues(horizontal = 5.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.graphicsLayer {
+                            alpha = contentAlpha
+                        }
+                    ) {
+                        items(filteredProfiles, key = { it.name }) { profile ->
+                            val isCurrentlyActive = profile.name == currentAutoEQProfile
+                            ProfileCard(
+                                profile = profile,
+                                isActive = isCurrentlyActive,
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    onProfileSelected(profile)
+                                },
+                                onDisable = if (isCurrentlyActive) {
+                                    {
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        onProfileSelected(AutoEQProfile(
+                                            name = "",
+                                            brand = "",
+                                            type = "",
+                                            bands = listOf(0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f)
+                                        ))
+                                    }
+                                } else null
+                            )
+                        }
                     }
                 }
             }
         }
     }
-}
 
 @Composable
 private fun ProfileCard(
     profile: AutoEQProfile,
     isActive: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onDisable: (() -> Unit)? = null
 ) {
     Card(
         onClick = onClick,
@@ -366,7 +386,7 @@ private fun ProfileCard(
                 MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isActive) 2.dp else 0.dp
+            defaultElevation = if (isActive) 0.dp else 0.dp
         ),
         shape = RoundedCornerShape(16.dp)
     ) {
@@ -441,16 +461,16 @@ private fun ProfileCard(
             
             // Selection indicator
             if (isActive) {
-                Box(
+                IconButton(
+                    onClick = { onDisable?.invoke() },
                     modifier = Modifier
                         .size(32.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primary),
-                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Check,
-                        contentDescription = "Active",
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = "Disable profile",
                         tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(20.dp)
                     )

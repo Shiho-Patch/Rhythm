@@ -100,6 +100,8 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_EQUALIZER_PRESET = "equalizer_preset"
         private const val KEY_EQUALIZER_BAND_LEVELS = "equalizer_band_levels"
         private const val KEY_AUTOEQ_PROFILE = "autoeq_profile"
+        private const val KEY_USER_AUDIO_DEVICES = "user_audio_devices"
+        private const val KEY_ACTIVE_AUDIO_DEVICE_ID = "active_audio_device_id"
         private const val KEY_BASS_BOOST_ENABLED = "bass_boost_enabled"
         private const val KEY_BASS_BOOST_STRENGTH = "bass_boost_strength"
         private const val KEY_VIRTUALIZER_ENABLED = "virtualizer_enabled"
@@ -517,6 +519,12 @@ class AppSettings private constructor(context: Context) {
     
     private val _autoEQProfile = MutableStateFlow(prefs.getString(KEY_AUTOEQ_PROFILE, "") ?: "")
     val autoEQProfile: StateFlow<String> = _autoEQProfile.asStateFlow()
+    
+    private val _userAudioDevices = MutableStateFlow(prefs.getString(KEY_USER_AUDIO_DEVICES, null))
+    val userAudioDevices: StateFlow<String?> = _userAudioDevices.asStateFlow()
+    
+    private val _activeAudioDeviceId = MutableStateFlow(prefs.getString(KEY_ACTIVE_AUDIO_DEVICE_ID, null))
+    val activeAudioDeviceId: StateFlow<String?> = _activeAudioDeviceId.asStateFlow()
     
     private val _bassBoostEnabled = MutableStateFlow(prefs.getBoolean(KEY_BASS_BOOST_ENABLED, false))
     val bassBoostEnabled: StateFlow<Boolean> = _bassBoostEnabled.asStateFlow()
@@ -1202,6 +1210,16 @@ class AppSettings private constructor(context: Context) {
     fun setAutoEQProfile(profileName: String) {
         prefs.edit().putString(KEY_AUTOEQ_PROFILE, profileName).apply()
         _autoEQProfile.value = profileName
+    }
+    
+    fun setUserAudioDevices(devicesJson: String?) {
+        prefs.edit().putString(KEY_USER_AUDIO_DEVICES, devicesJson).apply()
+        _userAudioDevices.value = devicesJson
+    }
+    
+    fun setActiveAudioDeviceId(deviceId: String?) {
+        prefs.edit().putString(KEY_ACTIVE_AUDIO_DEVICE_ID, deviceId).apply()
+        _activeAudioDeviceId.value = deviceId
     }
     
     fun setBassBoostEnabled(enable: Boolean) {

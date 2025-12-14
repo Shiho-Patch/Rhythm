@@ -5039,6 +5039,59 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         return autoEQManager.getRecommendedProfiles()
     }
     
+    // User Audio Device Management
+    fun saveUserAudioDevice(device: chromahub.rhythm.app.data.UserAudioDevice) {
+        val currentDevicesJson = appSettings.userAudioDevices.value
+        val currentDevices = chromahub.rhythm.app.data.UserAudioDevice.fromJson(currentDevicesJson).toMutableList()
+        
+        // Check if device already exists (update) or is new (add)
+        val existingIndex = currentDevices.indexOfFirst { it.id == device.id }
+        if (existingIndex >= 0) {
+            currentDevices[existingIndex] = device
+            Log.d(TAG, "Updated audio device: ${device.name}")
+        } else {
+            currentDevices.add(device)
+            Log.d(TAG, "Added new audio device: ${device.name}")
+        }
+        
+        appSettings.setUserAudioDevices(chromahub.rhythm.app.data.UserAudioDevice.toJson(currentDevices))
+    }
+    
+    fun deleteUserAudioDevice(deviceId: String) {
+        val currentDevicesJson = appSettings.userAudioDevices.value
+        val currentDevices = chromahub.rhythm.app.data.UserAudioDevice.fromJson(currentDevicesJson).toMutableList()
+        
+        currentDevices.removeAll { it.id == deviceId }
+        appSettings.setUserAudioDevices(chromahub.rhythm.app.data.UserAudioDevice.toJson(currentDevices))
+        
+        // If deleted device was active, clear active device
+        if (appSettings.activeAudioDeviceId.value == deviceId) {
+            appSettings.setActiveAudioDeviceId(null)
+        }
+        
+        Log.d(TAG, "Deleted audio device: $deviceId")
+    }
+    
+    fun setActiveAudioDevice(device: chromahub.rhythm.app.data.UserAudioDevice) {
+        appSettings.setActiveAudioDeviceId(device.id)
+        Log.d(TAG, "Set active audio device: ${device.name}")
+        
+        // Apply AutoEQ profile if the device has one configured
+        if (device.autoEQProfileName != null) {
+            val profile = autoEQManager.findProfileByName(device.autoEQProfileName)
+            if (profile != null) {
+                applyAutoEQProfile(profile)
+                Log.d(TAG, "Applied AutoEQ profile for device: ${device.autoEQProfileName}")
+            }
+        }
+    }
+    
+    fun getActiveAudioDevice(): chromahub.rhythm.app.data.UserAudioDevice? {
+        val activeId = appSettings.activeAudioDeviceId.value ?: return null
+        val devices = chromahub.rhythm.app.data.UserAudioDevice.fromJson(appSettings.userAudioDevices.value)
+        return devices.find { it.id == activeId }
+    }
+    
     // Clean sleep timer implementation
     private val _sleepTimerActive = MutableStateFlow(false)
     val sleepTimerActive: StateFlow<Boolean> = _sleepTimerActive.asStateFlow()

@@ -11645,12 +11645,33 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
     }
 
     var showAutoEQSelector by remember { mutableStateOf(false) }
+    var showDeviceConfiguration by remember { mutableStateOf(false) }
 
     CollapsibleHeaderScreen(
         title = "Equalizer",
         showBackButton = true,
         onBackClick = onBackClick,
         actions = {
+            // Device Configuration Button
+            FilledIconButton(
+                onClick = {
+                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                    showDeviceConfiguration = true
+                },
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                ),
+                modifier = Modifier.size(44.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.HeadsetMic,
+                    contentDescription = "My Devices",
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            // AutoEQ Button
             FilledIconButton(
                 onClick = {
                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
@@ -11660,14 +11681,16 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                 ),
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(44.dp)
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Headphones,
-                    contentDescription = "AutoEQ Profiles"
+                    contentDescription = "AutoEQ Profiles",
+                    modifier = Modifier.size(22.dp)
                 )
             }
             Spacer(modifier = Modifier.width(8.dp))
+            // System Equalizer Button
             FilledIconButton(
                 onClick = {
                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
@@ -11677,11 +11700,12 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                 ),
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(44.dp)
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Settings,
-                    contentDescription = "System Equalizer"
+                    contentDescription = "System Equalizer",
+                    modifier = Modifier.size(22.dp)
                 )
             }
         }
@@ -12443,6 +12467,127 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
             item {
                 Spacer(modifier = Modifier.height(24.dp))
             }
+            
+            // Quick Actions Section - Always visible
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Headphones,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "Quick Actions",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Action buttons row matching PlaylistDetailScreen style
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // My Devices Button
+                            Button(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    showDeviceConfiguration = true
+                                },
+                                shape = RoundedCornerShape(24.dp),
+                                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.HeadsetMic,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    "My Devices",
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                            }
+                            
+                            // AutoEQ Button
+                            FilledTonalButton(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    showAutoEQSelector = true
+                                },
+                                shape = RoundedCornerShape(24.dp),
+                                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Headphones,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    "AutoEQ",
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // System EQ Button - Full width
+                        OutlinedButton(
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                musicViewModel.openSystemEqualizer()
+                            },
+                            shape = RoundedCornerShape(24.dp),
+                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Settings,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "Open System Equalizer",
+                                style = MaterialTheme.typography.titleSmall
+                            )
+                        }
+                    }
+                }
+            }
+            
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+            }
         }
         
         // AutoEQ Profile Selector
@@ -12454,6 +12599,14 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                     musicViewModel.applyAutoEQProfile(profile)
                     showAutoEQSelector = false
                 }
+            )
+        }
+        
+        // Device Configuration Bottom Sheet
+        if (showDeviceConfiguration) {
+            chromahub.rhythm.app.ui.components.DeviceConfigurationBottomSheet(
+                musicViewModel = musicViewModel,
+                onDismiss = { showDeviceConfiguration = false }
             )
         }
     }
