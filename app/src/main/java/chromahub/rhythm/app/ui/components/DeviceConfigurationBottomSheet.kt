@@ -2,6 +2,11 @@
 
 package chromahub.rhythm.app.ui.components
 
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -20,18 +25,22 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Edit
@@ -39,6 +48,8 @@ import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.HeadsetMic
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Speaker
 import androidx.compose.material.icons.filled.SpeakerGroup
 import androidx.compose.material.icons.rounded.Bluetooth
@@ -51,6 +62,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -61,6 +73,9 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -68,23 +83,29 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import android.widget.Toast
 import chromahub.rhythm.app.data.AutoEQProfile
 import chromahub.rhythm.app.data.UserAudioDevice
+import chromahub.rhythm.app.util.AutoEQImportExport
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.viewmodel.MusicViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun DeviceConfigurationBottomSheet(
@@ -135,6 +156,28 @@ fun DeviceConfigurationBottomSheet(
     var showDeleteConfirmDialog by remember { mutableStateOf<UserAudioDevice?>(null) }
     var showAutoEQSelector by remember { mutableStateOf(false) }
     var deviceForAutoEQ by remember { mutableStateOf<UserAudioDevice?>(null) }
+    
+    // Import/Export states
+    var showImportDialog by remember { mutableStateOf(false) }
+    var showExportDialog by remember { mutableStateOf(false) }
+    var importText by remember { mutableStateOf("") }
+    var importError by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+    val clipboardManager = LocalClipboardManager.current
+    
+    // File picker launcher
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { 
+            val content = AutoEQImportExport.readFromUri(context, it)
+            if (content != null) {
+                importText = content
+            } else {
+                Toast.makeText(context, "Failed to read file", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
     
     // Load AutoEQ profiles if not loaded
     LaunchedEffect(Unit) {
@@ -233,9 +276,8 @@ fun DeviceConfigurationBottomSheet(
                     // Import Button
                     OutlinedButton(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                            Toast.makeText(context, "Import feature coming soon", Toast.LENGTH_SHORT).show()
-                            // TODO: Implement import functionality
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            showImportDialog = true
                         },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(16.dp),
@@ -253,18 +295,12 @@ fun DeviceConfigurationBottomSheet(
                     // Export Button
                     OutlinedButton(
                         onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                            if (userDevices.isEmpty()) {
-                                Toast.makeText(context, "No devices to export", Toast.LENGTH_SHORT).show()
-                            } else {
-                                Toast.makeText(context, "Export feature coming soon", Toast.LENGTH_SHORT).show()
-                                // TODO: Implement export functionality
-                            }
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            showExportDialog = true
                         },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(16.dp),
-                        contentPadding = PaddingValues(12.dp),
-                        enabled = userDevices.isNotEmpty()
+                        contentPadding = PaddingValues(12.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.FileUpload,
@@ -424,6 +460,308 @@ fun DeviceConfigurationBottomSheet(
             }
         )
     }
+    
+    // Import Dialog
+    if (showImportDialog) {
+        AlertDialog(
+            onDismissRequest = { 
+                showImportDialog = false
+                importText = ""
+                importError = null
+            },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.FileDownload,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = {
+                Text("Import EQ Profile")
+            },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 500.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Text(
+                        text = "Paste EQ settings from autoeq.app or other sources.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(
+                                text = "Supported formats:\n• FixedBandEQ text (AutoEQ)\n• JSON format\n• CSV (10 band values)",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    
+                    OutlinedTextField(
+                        value = importText,
+                        onValueChange = { 
+                            importText = it
+                            importError = null
+                        },
+                        label = { Text("EQ Settings") },
+                        placeholder = { Text("Paste EQ data here...") },
+                        minLines = 6,
+                        maxLines = 10,
+                        modifier = Modifier.fillMaxWidth(),
+                        isError = importError != null,
+                        supportingText = if (importError != null) {
+                            { Text(importError!!, color = MaterialTheme.colorScheme.error) }
+                        } else null,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        FilledTonalButton(
+                            onClick = { filePickerLauncher.launch("*/*") },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(Icons.Default.FileUpload, null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("File", style = MaterialTheme.typography.labelLarge)
+                        }
+                        FilledTonalButton(
+                            onClick = {
+                                clipboardManager.getText()?.text?.let { 
+                                    importText = it
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(Icons.Default.ContentPaste, null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("Paste", style = MaterialTheme.typography.labelLarge)
+                        }
+                    }
+                    
+                    FilledTonalButton(
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://autoeq.app"))
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.Link, null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Open autoeq.app")
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val parsedProfiles = AutoEQImportExport.autoDetectAndParse(importText, "Imported Profile")
+                        
+                        if (parsedProfiles.isNotEmpty()) {
+                            val profile = parsedProfiles.first()
+                            musicViewModel.applyAutoEQProfile(profile)
+                            showImportDialog = false
+                            importText = ""
+                            importError = null
+                            Toast.makeText(context, "Profile imported: ${profile.name}", Toast.LENGTH_SHORT).show()
+                        } else {
+                            importError = "Could not parse EQ settings. Check the format."
+                        }
+                    },
+                    enabled = importText.isNotBlank()
+                ) {
+                    Icon(Icons.Default.Check, null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Import")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { 
+                        showImportDialog = false
+                        importText = ""
+                        importError = null
+                    }
+                ) {
+                    Icon(Icons.Default.Close, null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Cancel")
+                }
+            },
+            shape = RoundedCornerShape(24.dp)
+        )
+    }
+    
+    // Export Dialog
+    if (showExportDialog) {
+        val currentAutoEQProfile = musicViewModel.appSettings.autoEQProfile.collectAsState().value
+        val currentPreset = musicViewModel.appSettings.equalizerPreset.collectAsState().value
+        val currentBandLevels = musicViewModel.appSettings.equalizerBandLevels.collectAsState().value
+        val equalizerEnabled = musicViewModel.appSettings.equalizerEnabled.collectAsState().value
+        
+        // Try to find profile in database, or create from current settings
+        val profileToExport = if (currentAutoEQProfile.isNotEmpty() && currentAutoEQProfile != "None") {
+            // Try to find in database
+            autoEQProfiles.find { it.name == currentAutoEQProfile }
+                ?: run {
+                    // AutoEQ profile exists but not in current database, create from current band levels
+                    val bands = currentBandLevels.split(",")
+                        .mapNotNull { it.toFloatOrNull() }
+                        .take(10)
+                    if (bands.size == 10) {
+                        AutoEQProfile(
+                            name = currentAutoEQProfile,
+                            brand = "",
+                            type = "",
+                            bands = bands
+                        )
+                    } else null
+                }
+        } else if (currentPreset != "Custom" && currentPreset != "Flat") {
+            // Custom preset active
+            val bands = currentBandLevels.split(",")
+                .mapNotNull { it.toFloatOrNull() }
+                .take(10)
+            if (bands.size == 10) {
+                AutoEQProfile(
+                    name = currentPreset,
+                    brand = "",
+                    type = "Custom Preset",
+                    bands = bands
+                )
+            } else null
+        } else {
+            // Custom/manual EQ settings
+            val bands = currentBandLevels.split(",")
+                .mapNotNull { it.toFloatOrNull() }
+                .take(10)
+            if (bands.size == 10 && equalizerEnabled) {
+                AutoEQProfile(
+                    name = "Custom EQ",
+                    brand = "",
+                    type = "Custom",
+                    bands = bands
+                )
+            } else null
+        }
+        
+        AlertDialog(
+            onDismissRequest = { showExportDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.FileUpload,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            title = {
+                Text("Export EQ Profile")
+            },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (profileToExport != null) {
+                        val exportText = AutoEQImportExport.generateShareableText(profileToExport)
+                        
+                        Text(
+                            text = "Share your EQ settings with others or save for backup.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        
+                        Surface(
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text(
+                                    text = "Active Profile: ${profileToExport.name}",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = exportText,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 8,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                        
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            FilledTonalButton(
+                                onClick = {
+                                    clipboardManager.setText(AnnotatedString(exportText))
+                                    Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
+                                },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Icon(Icons.Default.ContentPaste, null, modifier = Modifier.size(16.dp))
+                                Spacer(Modifier.width(4.dp))
+                                Text("Copy", style = MaterialTheme.typography.labelLarge)
+                            }
+                            FilledTonalButton(
+                                onClick = {
+                                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(Intent.EXTRA_SUBJECT, "Rhythm EQ Profile: ${profileToExport.name}")
+                                        putExtra(Intent.EXTRA_TEXT, exportText)
+                                    }
+                                    context.startActivity(Intent.createChooser(shareIntent, "Share EQ Profile"))
+                                },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Icon(Icons.Default.Share, null, modifier = Modifier.size(16.dp))
+                                Spacer(Modifier.width(4.dp))
+                                Text("Share", style = MaterialTheme.typography.labelLarge)
+                            }
+                        }
+                    } else {
+                        Text(
+                            text = "No active EQ settings to export. Please enable the equalizer and configure it first.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showExportDialog = false }
+                ) {
+                    Icon(Icons.Default.Check, null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Done")
+                }
+            },
+            dismissButton = null,
+            shape = RoundedCornerShape(24.dp)
+        )
+    }
 }
 
 @Composable
@@ -515,7 +853,9 @@ private fun DeviceCard(
                                 text = device.autoEQProfileName,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.Medium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }

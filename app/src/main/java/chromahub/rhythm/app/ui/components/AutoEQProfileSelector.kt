@@ -1,7 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package chromahub.rhythm.app.ui.components
-
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -52,6 +51,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -194,7 +194,7 @@ fun AutoEQProfileSelector(
                         Text(
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                             style = MaterialTheme.typography.labelLarge,
-                            text = "${filteredProfiles.size} profile${if (filteredProfiles.size != 1) "s" else ""} available",
+                            text = "${filteredProfiles.size} Profile${if (filteredProfiles.size != 1) "s" else ""} Available",
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }

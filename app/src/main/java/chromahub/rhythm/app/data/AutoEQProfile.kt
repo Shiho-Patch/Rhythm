@@ -39,9 +39,14 @@ data class AutoEQProfile(
 
 /**
  * Container for all AutoEQ profiles
+ * Supports metadata from AutoEQ project
  */
 data class AutoEQDatabase(
-    val profiles: List<AutoEQProfile>
+    val version: Int = 1,
+    val source: String = "AutoEQ",
+    val license: String = "MIT",
+    val bandFrequencies: List<Int> = listOf(31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000),
+    val profiles: List<AutoEQProfile> = emptyList()
 ) {
     fun searchProfiles(query: String): List<AutoEQProfile> {
         if (query.isBlank()) return profiles
