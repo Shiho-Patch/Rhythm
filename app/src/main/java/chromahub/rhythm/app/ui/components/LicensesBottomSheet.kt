@@ -119,6 +119,15 @@ fun LicensesBottomSheet(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                 LicenseSheetItem(
+                    name = "AutoEQ",
+                    description = "Automatic headphone equalization from frequency responses by Jaakko Pasanen",
+                    license = "MIT License",
+                    url = "https://github.com/jaakkopasanen/AutoEq",
+                    context = context,
+                    haptic = haptic
+                )
+                
+                LicenseSheetItem(
                     name = "Jetpack Compose",
                     description = "Android's modern toolkit for building native UI",
                     license = "Apache License 2.0",

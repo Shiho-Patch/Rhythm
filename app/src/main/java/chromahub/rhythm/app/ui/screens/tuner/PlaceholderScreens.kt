@@ -11596,16 +11596,21 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
     var isVirtualizerEnabled by remember(virtualizerEnabledState) { mutableStateOf(virtualizerEnabledState) }
     var virtualizerStrength by remember(virtualizerStrengthState) { mutableFloatStateOf(virtualizerStrengthState.toFloat()) }
 
-    // Preset definitions - Updated to 10 bands
+    // Preset definitions - Updated to 10 bands with AutoEQ-style precision values
+    // Bands: 31Hz, 62Hz, 125Hz, 250Hz, 500Hz, 1kHz, 2kHz, 4kHz, 8kHz, 16kHz
     val presets = listOf(
         EqualizerPreset("Flat", Icons.Rounded.LinearScale, listOf(0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f)),
-        EqualizerPreset("Rock", Icons.Rounded.MusicNote, listOf(5f, 4f, 3f, 1f, -2f, -1f, 2f, 4f, 6f, 8f)),
-        EqualizerPreset("Pop", Icons.Rounded.Star, listOf(2f, 3f, 5f, 4f, 3f, 1f, -1f, 0f, 1f, 2f)),
-        EqualizerPreset("Jazz", Icons.Rounded.Piano, listOf(4f, 3f, 2f, 1f, -2f, -1f, 2f, 3f, 5f, 6f)),
-        EqualizerPreset("Classical", Icons.Rounded.LibraryMusic, listOf(3f, 2f, -1f, -2f, -3f, -2f, -1f, 2f, 3f, 4f)),
-        EqualizerPreset("Electronic", Icons.Rounded.GraphicEq, listOf(6f, 5f, 4f, 2f, 1f, 0f, 3f, 5f, 6f, 7f)),
-        EqualizerPreset("Hip Hop", Icons.Rounded.GraphicEq, listOf(7f, 6f, 4f, 2f, 0f, -1f, 2f, 4f, 5f, 6f)),
-        EqualizerPreset("Vocal", Icons.Rounded.RecordVoiceOver, listOf(0f, 1f, 2f, 3f, 5f, 5f, 4f, 3f, 2f, 2f))
+        EqualizerPreset("Rock", Icons.Rounded.MusicNote, listOf(4.5f, 3.8f, 2.5f, 0.5f, -1.5f, -0.8f, 2.2f, 3.5f, 5.5f, 4.0f)),
+        EqualizerPreset("Pop", Icons.Rounded.Star, listOf(-1.5f, 0.5f, 2.8f, 4.2f, 3.5f, 2.0f, 0.5f, 1.5f, 2.5f, 1.0f)),
+        EqualizerPreset("Jazz", Icons.Rounded.Piano, listOf(3.5f, 2.8f, 1.5f, 0.5f, -1.5f, -0.5f, 1.8f, 2.5f, 4.0f, 3.0f)),
+        EqualizerPreset("Classical", Icons.Rounded.LibraryMusic, listOf(3.0f, 1.5f, -0.5f, -1.5f, -2.0f, -1.5f, 0.5f, 2.5f, 3.5f, 2.5f)),
+        EqualizerPreset("Electronic", Icons.Rounded.GraphicEq, listOf(5.5f, 4.8f, 3.5f, 1.5f, 0.5f, 0f, 2.5f, 4.5f, 5.0f, 4.5f)),
+        EqualizerPreset("Hip Hop", Icons.Rounded.GraphicEq, listOf(6.5f, 5.5f, 3.5f, 1.5f, -0.5f, -0.8f, 1.8f, 3.5f, 4.5f, 3.5f)),
+        EqualizerPreset("Vocal", Icons.Rounded.RecordVoiceOver, listOf(-1.0f, 0.5f, 1.5f, 2.8f, 4.5f, 5.0f, 4.0f, 2.5f, 1.5f, 0.5f)),
+        EqualizerPreset("Bass Boost", Icons.Rounded.Speaker, listOf(6.0f, 5.0f, 3.5f, 1.5f, 0f, 0f, 0f, 0f, 0f, 0f)),
+        EqualizerPreset("Treble Boost", Icons.Rounded.Waves, listOf(0f, 0f, 0f, 0f, 0f, 0.5f, 1.5f, 3.0f, 5.0f, 6.0f)),
+        EqualizerPreset("V-Shape", Icons.Rounded.ShowChart, listOf(5.5f, 4.0f, 1.5f, -1.0f, -2.5f, -2.5f, -0.5f, 2.0f, 4.5f, 5.5f)),
+        EqualizerPreset("Harman", Icons.Rounded.Headphones, listOf(3.5f, 2.0f, 0.5f, -1.0f, 0f, 0.5f, 1.5f, 2.0f, 2.5f, 1.0f))
     )
 
     val frequencyLabels = listOf("31Hz", "62Hz", "125Hz", "250Hz", "500Hz", "1kHz", "2kHz", "4kHz", "8kHz", "16kHz")
@@ -12180,7 +12185,7 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                                                             fontSize = 9.sp
                                                         )
                                                         Text(
-                                                            text = if (level >= 0) "+${level.toInt()}" else "${level.toInt()}",
+                                                            text = if (level >= 0) "+${String.format("%.1f", level)}" else String.format("%.1f", level),
                                                             style = MaterialTheme.typography.labelMedium,
                                                             fontWeight = FontWeight.Bold,
                                                             color = bandColor
@@ -12206,14 +12211,17 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                                                 )
                                             }
 
-                                            // Slider Control with custom colors
+                                            // Slider Control with custom colors - supports decimal values
                                             Slider(
                                                 value = level,
                                                 onValueChange = { newLevel ->
+                                                    // Round to 1 decimal place for precision
+                                                    val roundedLevel = (kotlin.math.round(newLevel * 10) / 10f)
                                                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                                    updateBandLevel(index, newLevel)
+                                                    updateBandLevel(index, roundedLevel)
                                                 },
                                                 valueRange = -15f..15f,
+                                                steps = 299, // -15 to +15 with 0.1 steps = 300 positions (299 steps)
                                                 modifier = Modifier.weight(1f),
                                                 colors = SliderDefaults.colors(
                                                     thumbColor = bandColor,
