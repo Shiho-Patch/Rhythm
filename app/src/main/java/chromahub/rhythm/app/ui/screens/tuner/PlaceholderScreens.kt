@@ -113,6 +113,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.core.text.HtmlCompat
 import chromahub.rhythm.app.ui.components.M3CircularWaveProgressIndicator
 import chromahub.rhythm.app.ui.components.M3FourColorCircularLoader
+import chromahub.rhythm.app.ui.components.PlayingEqIcon
 
 // Equalizer Preset Data Class
 data class EqualizerPreset(
@@ -122,17 +123,59 @@ data class EqualizerPreset(
 )
 
 @Composable
-private fun TunerSettingRow(item: SettingItem) {
+fun TunerSettingRow(item: SettingItem) {
     val hapticFeedback = LocalHapticFeedback.current
     val context = LocalContext.current
     val appSettings = AppSettings.getInstance(context)
     val hapticFeedbackEnabled by appSettings.hapticFeedbackEnabled.collectAsState()
+    
+    // Animation states
+    var isPressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.96f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "tuner_setting_scale"
+    )
+    
+    val iconBackgroundColor by animateColorAsState(
+        targetValue = when {
+            item.toggleState == true -> MaterialTheme.colorScheme.primaryContainer
+            isPressed -> MaterialTheme.colorScheme.secondaryContainer
+            else -> MaterialTheme.colorScheme.surfaceContainerHighest
+        },
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "tuner_icon_bg_color"
+    )
+    
+    val iconTintColor by animateColorAsState(
+        targetValue = when {
+            item.toggleState == true -> MaterialTheme.colorScheme.onPrimaryContainer
+            else -> MaterialTheme.colorScheme.onSurfaceVariant
+        },
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "tuner_icon_tint_color"
+    )
+    
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .then(
                 if (item.onClick != null && item.toggleState == null) {
                     Modifier.clickable(onClick = {
+                        isPressed = true
                         HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
                         item.onClick()
                     })
@@ -140,32 +183,46 @@ private fun TunerSettingRow(item: SettingItem) {
                     Modifier
                 }
             )
-            .padding(16.dp),
+            .padding(horizontal = 18.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            imageVector = item.icon,
-            contentDescription = item.title,
-            modifier = Modifier
-                .size(40.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(50))
-                .padding(8.dp),
-            tint = MaterialTheme.colorScheme.onSurface
-        )
+        // Icon container with expressive design
+        Surface(
+            modifier = Modifier.size(40.dp),
+            shape = RoundedCornerShape(34.dp),
+            color = iconBackgroundColor,
+            tonalElevation = if (item.toggleState == true) 2.dp else 0.dp
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Icon(
+                    imageVector = item.icon,
+                    contentDescription = item.title,
+                    modifier = Modifier.size(24.dp),
+                    tint = iconTintColor
+                )
+            }
+        }
+        
         Spacer(modifier = Modifier.width(16.dp))
         Column(
             modifier = Modifier.weight(1f)
         ) {
             Text(
                 text = item.title,
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
             )
             item.description?.let {
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = it,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = MaterialTheme.typography.bodyMedium.lineHeight
                 )
             }
         }
@@ -175,46 +232,93 @@ private fun TunerSettingRow(item: SettingItem) {
                 imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                 contentDescription = context.getString(R.string.cd_navigate),
                 modifier = Modifier
-                    .size(16.dp)
+                    .size(18.dp)
                     .padding(end = 8.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
-            Switch(
+            TunerAnimatedSwitch(
                 checked = item.toggleState,
                 onCheckedChange = {
                     HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
                     item.onToggleChange?.invoke(it)
-                },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = MaterialTheme.colorScheme.primary,
-                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
-                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
-                )
+                }
             )
         } else if (item.toggleState != null) {
-            Switch(
+            TunerAnimatedSwitch(
                 checked = item.toggleState,
                 onCheckedChange = {
                     HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
                     item.onToggleChange?.invoke(it)
-                },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = MaterialTheme.colorScheme.primary,
-                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
-                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
-                )
+                }
             )
         } else if (item.onClick != null) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                 contentDescription = context.getString(R.string.cd_navigate),
-                modifier = Modifier.size(16.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
         }
     }
+}
+
+@Composable
+fun TunerAnimatedSwitch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val thumbColor by animateColorAsState(
+        targetValue = if (checked) 
+            MaterialTheme.colorScheme.onPrimary
+        else 
+            MaterialTheme.colorScheme.outline,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "tuner_thumb_color"
+    )
+    
+    val trackColor by animateColorAsState(
+        targetValue = if (checked) 
+            MaterialTheme.colorScheme.primary
+        else 
+            MaterialTheme.colorScheme.surfaceContainerHighest,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "tuner_track_color"
+    )
+    
+    Switch(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        modifier = modifier,
+        colors = SwitchDefaults.colors(
+            checkedThumbColor = thumbColor,
+            checkedTrackColor = trackColor,
+            checkedBorderColor = Color.Transparent,
+            uncheckedThumbColor = thumbColor,
+            uncheckedTrackColor = trackColor,
+            uncheckedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+        ),
+        thumbContent = {
+            AnimatedVisibility(
+                visible = checked,
+                enter = scaleIn(spring(dampingRatio = Spring.DampingRatioMediumBouncy)) + fadeIn(),
+                exit = scaleOut(spring(dampingRatio = Spring.DampingRatioMediumBouncy)) + fadeOut()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    )
 }
 
 @Composable
@@ -274,15 +378,9 @@ private fun TunerSettingCard(
             }
 
             if (checked != null && onCheckedChange != null) {
-                Switch(
+                TunerAnimatedSwitch(
                     checked = checked,
-                    onCheckedChange = onCheckedChange,
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = MaterialTheme.colorScheme.primary,
-                        checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
-                        uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
-                    )
+                    onCheckedChange = onCheckedChange
                 )
             } else if (onClick != null) {
                 val context = LocalContext.current
@@ -1359,7 +1457,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                                     }
                                 )
                             } else {
-                                SettingRow(item = item)
+                                TunerSettingRow(item = item)
                             }
                             if (index < group.items.lastIndex) {
                                 HorizontalDivider(
@@ -1842,7 +1940,7 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
                     ) {
                         Column {
                             group.items.forEachIndexed { index, item ->
-                                SettingRow(item = item)
+                                TunerSettingRow(item = item)
                                 if (index < group.items.lastIndex) {
                                     HorizontalDivider(
                                         modifier = Modifier.padding(horizontal = 20.dp),
@@ -2999,16 +3097,12 @@ fun ApiServiceRow(
 
         // Toggle or Arrow icon
         if (showToggle && onToggle != null) {
-            Switch(
+            TunerAnimatedSwitch(
                 checked = isEnabled,
                 onCheckedChange = { enabled ->
                     HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                     onToggle(enabled)
-                },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = MaterialTheme.colorScheme.primary,
-                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                }
             )
         } else {
             // Arrow icon (only for configurable services)
@@ -5470,17 +5564,12 @@ private fun DecorationToggleCard(
             }
 
             // Toggle switch
-            Switch(
+            TunerAnimatedSwitch(
                 checked = isEnabled,
                 onCheckedChange = {
                     HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
                     onToggle(it)
-                },
-                modifier = Modifier.size(width = 48.dp, height = 24.dp),
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = MaterialTheme.colorScheme.primary,
-                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                }
             )
         }
     }
@@ -6943,7 +7032,7 @@ fun BackupRestoreSettingsScreen(onBackClick: () -> Unit) {
                 ) {
                     Column {
                         group.items.forEachIndexed { index, item ->
-                            SettingRow(item = item)
+                            TunerSettingRow(item = item)
                             if (index < group.items.lastIndex) {
                                 HorizontalDivider(
                                     modifier = Modifier.padding(horizontal = 20.dp),
@@ -8621,18 +8710,12 @@ private fun SettingRow(
         }
 
         if (toggleState != null && onToggleChange != null) {
-            Switch(
+            TunerAnimatedSwitch(
                 checked = toggleState,
                 onCheckedChange = {
                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
                     onToggleChange(it)
-                },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = MaterialTheme.colorScheme.primary,
-                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
-                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                }
             )
         } else if (onClick != null) {
             Icon(
@@ -10985,13 +11068,9 @@ private fun ColorPickerControls(
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Switch(
+            TunerAnimatedSwitch(
                 checked = showAdvanced,
-                onCheckedChange = { showAdvanced = it },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = MaterialTheme.colorScheme.primary,
-                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                onCheckedChange = { showAdvanced = it }
             )
         }
 
@@ -11749,23 +11828,32 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = if (isEqualizerEnabled) "Active" else "Disabled",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = if (isEqualizerEnabled) "Active" else "Disabled",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                if (isEqualizerEnabled) {
+                                    PlayingEqIcon(
+                                        modifier = Modifier.size(width = 20.dp, height = 16.dp),
+                                        color = MaterialTheme.colorScheme.primary,
+                                        isPlaying = true,
+                                        bars = 3
+                                    )
+                                }
+                            }
                         }
-                        Switch(
+                        TunerAnimatedSwitch(
                             checked = isEqualizerEnabled,
                             onCheckedChange = { enabled ->
                                 HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                                 isEqualizerEnabled = enabled
                                 musicViewModel.setEqualizerEnabled(enabled)
-                            },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = MaterialTheme.colorScheme.primary,
-                                checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
-                            )
+                            }
                         )
                     }
                 }
@@ -12335,17 +12423,13 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                                             )
                                         }
 
-                                        Switch(
+                                        TunerAnimatedSwitch(
                                             checked = isBassBoostEnabled,
                                             onCheckedChange = { enabled ->
                                                 HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                                                 isBassBoostEnabled = enabled
                                                 musicViewModel.setBassBoost(enabled, bassBoostStrength.toInt().toShort())
-                                            },
-                                            colors = SwitchDefaults.colors(
-                                                checkedThumbColor = secondaryColor,
-                                                checkedTrackColor = secondaryColor.copy(alpha = 0.5f)
-                                            )
+                                            }
                                         )
                                     }
 
@@ -12433,17 +12517,13 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                                             )
                                         }
 
-                                        Switch(
+                                        TunerAnimatedSwitch(
                                             checked = isVirtualizerEnabled,
                                             onCheckedChange = { enabled ->
                                                 HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                                                 isVirtualizerEnabled = enabled
                                                 musicViewModel.setVirtualizer(enabled, virtualizerStrength.toInt().toShort())
-                                            },
-                                            colors = SwitchDefaults.colors(
-                                                checkedThumbColor = tertiaryColor,
-                                                checkedTrackColor = tertiaryColor.copy(alpha = 0.5f)
-                                            )
+                                            }
                                         )
                                     }
 
@@ -13303,12 +13383,25 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.weight(1f)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.UnfoldLess,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(24.dp)
-                                )
+                                // Icon container with expressive design
+                                Surface(
+                                    modifier = Modifier.size(40.dp),
+                                    shape = RoundedCornerShape(34.dp),
+                                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    tonalElevation = 0.dp
+                                ) {
+                                    Box(
+                                        contentAlignment = Alignment.Center,
+                                        modifier = Modifier.fillMaxSize()
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.UnfoldLess,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(24.dp),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
                                 Column {
                                     Text(
                                         text = "Always Start Collapsed",
@@ -13323,16 +13416,12 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                     )
                                 }
                             }
-                            androidx.compose.material3.Switch(
+                            TunerAnimatedSwitch(
                                 checked = collapseBehavior == 1,
                                 onCheckedChange = { 
                                     HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                                     appSettings.setHeaderCollapseBehavior(if (it) 1 else 0) 
-                                },
-                                colors = androidx.compose.material3.SwitchDefaults.colors(
-                                    checkedThumbColor = MaterialTheme.colorScheme.primary,
-                                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
-                                )
+                                }
                             )
                         }
                         
@@ -13351,12 +13440,25 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Stars,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(24.dp)
-                                )
+                                // Icon container with expressive design
+                                Surface(
+                                    modifier = Modifier.size(40.dp),
+                                    shape = RoundedCornerShape(34.dp),
+                                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    tonalElevation = 0.dp
+                                ) {
+                                    Box(
+                                        contentAlignment = Alignment.Center,
+                                        modifier = Modifier.fillMaxSize()
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Stars,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(24.dp),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
                                 Column {
                                     Text(
                                         text = "Header Display",
@@ -13440,12 +13542,25 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.Visibility,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier.size(24.dp)
-                                        )
+                                        // Icon container with expressive design
+                                        Surface(
+                                            modifier = Modifier.size(40.dp),
+                                            shape = RoundedCornerShape(34.dp),
+                                            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                            tonalElevation = 0.dp
+                                        ) {
+                                            Box(
+                                                contentAlignment = Alignment.Center,
+                                                modifier = Modifier.fillMaxSize()
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Visibility,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(24.dp),
+                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        }
                                         Column {
                                             Text(
                                                 text = "Visibility",
@@ -13460,8 +13575,6 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                             )
                                         }
                                     }
-
-                                    Spacer(modifier = Modifier.height(16.dp))
 
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
@@ -13551,12 +13664,25 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.weight(1f)
                         ) {
-                            Icon(
-                                imageVector = Icons.Filled.Reorder,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp)
-                            )
+                            // Icon container with expressive design
+                            Surface(
+                                modifier = Modifier.size(40.dp),
+                                shape = RoundedCornerShape(34.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                tonalElevation = 0.dp
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Reorder,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
                             Column {
                                 Text(
                                     text = "Reorder & Toggle Sections",
@@ -14065,15 +14191,25 @@ private fun CarouselStyleSelector(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(bottom = 12.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.ViewCarousel,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(50))
-                        .padding(8.dp),
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
+                // Icon container with expressive design matching TunerSettingRow
+                Surface(
+                    modifier = Modifier.size(40.dp),
+                    shape = RoundedCornerShape(34.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    tonalElevation = 0.dp
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.ViewCarousel,
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
                     Text(
@@ -14249,15 +14385,25 @@ private fun HomeSettingsSliderRow(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(50))
-                    .padding(8.dp),
-                tint = MaterialTheme.colorScheme.onSurface
-            )
+            // Icon container with expressive design matching TunerSettingRow
+            Surface(
+                modifier = Modifier.size(40.dp),
+                shape = RoundedCornerShape(34.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                tonalElevation = 0.dp
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.width(16.dp))
 

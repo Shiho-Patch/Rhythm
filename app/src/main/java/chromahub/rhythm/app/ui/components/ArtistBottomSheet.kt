@@ -707,15 +707,6 @@ private fun EnhancedArtistSongItem(
                         color = titleColor,
                         modifier = Modifier.weight(1f, fill = false)
                     )
-                    
-                    if (isCurrentSong && isPlaying) {
-                        PlayingEqIcon(
-                            modifier = Modifier.size(width = 20.dp, height = 16.dp),
-                            color = MaterialTheme.colorScheme.primary,
-                            isPlaying = isPlaying,
-                            bars = 3
-                        )
-                    }
                 }
             },
             supportingContent = {
@@ -782,14 +773,17 @@ private fun EnhancedArtistSongItem(
                             color = MaterialTheme.colorScheme.primary,
                             shadowElevation = 2.dp
                         ) {
-                            Icon(
-                                imageVector = RhythmIcons.Play,
-                                contentDescription = "Playing",
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(4.dp)
-                            )
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                PlayingEqIcon(
+                                    modifier = Modifier.size(width = 12.dp, height = 10.dp),
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    isPlaying = isPlaying,
+                                    bars = 3
+                                )
+                            }
                         }
                     }
                 }

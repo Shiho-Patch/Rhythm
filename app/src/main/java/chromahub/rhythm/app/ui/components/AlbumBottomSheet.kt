@@ -1158,30 +1158,20 @@ fun ExpressiveSongItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Track number or playing indicator
+            // Track number
             Box(
                 modifier = Modifier.size(36.dp),
                 contentAlignment = Alignment.Center
             ) {
-                if (isCurrentSong && isPlaying) {
-                    // Playing indicator with animated equalizer
-                    PlayingEqIcon(
-                        modifier = Modifier.size(width = 22.dp, height = 18.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        isPlaying = isPlaying,
-                        bars = 3
-                    )
-                } else {
-                    Text(
-                        text = if (song.trackNumber > 0) "${song.trackNumber}" else "$index",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (isCurrentSong)
-                            MaterialTheme.colorScheme.primary
-                        else
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                Text(
+                    text = if (song.trackNumber > 0) "${song.trackNumber}" else "$index",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (isCurrentSong)
+                        MaterialTheme.colorScheme.primary
+                    else
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             // Album artwork thumbnail
@@ -1206,7 +1196,7 @@ fun ExpressiveSongItem(
                         modifier = Modifier.fillMaxSize()
                     )
 
-                    // Playing overlay
+                    // Playing overlay with EQ icon
                     if (isCurrentSong && isPlaying) {
                         Box(
                             modifier = Modifier
@@ -1214,11 +1204,11 @@ fun ExpressiveSongItem(
                                 .background(Color.Black.copy(alpha = 0.3f)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = RhythmIcons.Play,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(24.dp)
+                            PlayingEqIcon(
+                                modifier = Modifier.size(width = 24.dp, height = 20.dp),
+                                color = Color.White,
+                                isPlaying = isPlaying,
+                                bars = 3
                             )
                         }
                     }

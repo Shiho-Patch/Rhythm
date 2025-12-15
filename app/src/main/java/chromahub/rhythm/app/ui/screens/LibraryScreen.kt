@@ -203,6 +203,8 @@ import androidx.compose.ui.text.font.FontFamily
 import chromahub.rhythm.app.ui.components.RhythmIcons
 import chromahub.rhythm.app.ui.components.PlayingEqIcon
 import chromahub.rhythm.app.ui.components.M3FourColorCircularLoader
+import chromahub.rhythm.app.ui.components.AlphabetBar
+import chromahub.rhythm.app.ui.components.ScrollToTopButton
 import chromahub.rhythm.app.util.AudioFormatDetector
 import chromahub.rhythm.app.util.AudioQualityDetector
 
@@ -2802,22 +2804,62 @@ fun SongsTab(
         }
     }
     
+    // Alphabet bar settings
+    val showAlphabetBar by appSettings.showAlphabetBar.collectAsState()
+    val showScrollToTop by appSettings.showScrollToTop.collectAsState()
+    
+    // Scroll state and tracking
+    val listState = rememberLazyListState()
+    val showScrollToTopButton by remember {
+        derivedStateOf { listState.firstVisibleItemIndex > 2 }
+    }
+    
+    // Generate alphabet letters based on filtered songs
+    val alphabetLetters = remember(filteredSongs) {
+        filteredSongs
+            .mapNotNull { song ->
+                // Get first letter from title
+                val firstChar = song.title.firstOrNull()?.uppercaseChar()
+                if (firstChar?.isLetter() == true) firstChar.toString() else "#"
+            }
+            .distinct()
+            .sortedWith(compareBy { if (it == "#") "~" else it }) // Put # at end
+    }
+    
+    // Map letters to song indices for quick navigation
+    val letterToIndexMap = remember(filteredSongs) {
+        val map = mutableMapOf<String, Int>()
+        filteredSongs.forEachIndexed { index, song ->
+            val firstChar = song.title.firstOrNull()?.uppercaseChar()
+            val letter = if (firstChar?.isLetter() == true) firstChar.toString() else "#"
+            if (!map.containsKey(letter)) {
+                map[letter] = index + 2 // +2 to account for header and chips items
+            }
+        }
+        map
+    }
+    
+    val coroutineScope = rememberCoroutineScope()
+    var selectedLetter by remember { mutableStateOf<String?>(null) }
+    
     if (songs.isEmpty()) {
         EmptyState(
             message = "No songs yet",
             icon = RhythmIcons.Music.Song
         )
     } else {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 20.dp,
-                top = 8.dp,
-                end = 20.dp,
-                bottom = 16.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(0.dp)
-        ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 20.dp,
+                    top = 8.dp,
+                    end = 20.dp,
+                    bottom = 16.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(0.dp)
+            ) {
             // Enhanced Songs Section Header (Scrollable)
             item {
                 Card(
@@ -3033,6 +3075,43 @@ fun SongsTab(
                         haptics = haptics
                     )
                 }
+            }
+            }
+            
+            // Alphabet bar overlay
+            if (showAlphabetBar && alphabetLetters.isNotEmpty()) {
+                AlphabetBar(
+                    letters = alphabetLetters,
+                    selectedLetter = selectedLetter,
+                    onLetterSelected = { letter ->
+                        selectedLetter = letter
+                        letterToIndexMap[letter]?.let { index ->
+                            coroutineScope.launch {
+                                listState.animateScrollToItem(index)
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 8.dp),
+                    haptics = haptics
+                )
+            }
+            
+            // Scroll to top button
+            if (showScrollToTop && showScrollToTopButton) {
+                ScrollToTopButton(
+                    visible = showScrollToTopButton,
+                    onClick = {
+                        coroutineScope.launch {
+                            listState.animateScrollToItem(0)
+                        }
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(bottom = 16.dp, end = 16.dp),
+                    haptics = haptics
+                )
             }
         }
     }
@@ -3340,27 +3419,14 @@ fun LibrarySongItem(
 
     ListItem(
         headlineContent = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = song.title,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = if (isCurrentSong) FontWeight.Bold else FontWeight.Medium,
-                    color = titleColor
-                )
-                if (isCurrentSong && isPlaying) {
-                    PlayingEqIcon(
-                        modifier = Modifier.size(width = 16.dp, height = 14.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        isPlaying = isPlaying,
-                        bars = 3
-                    )
-                }
-            }
+            Text(
+                text = song.title,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = if (isCurrentSong) FontWeight.Bold else FontWeight.Medium,
+                color = titleColor
+            )
         },
         supportingContent = {
             Text(
@@ -3398,14 +3464,17 @@ fun LibrarySongItem(
                         color = MaterialTheme.colorScheme.primary,
                         shadowElevation = 2.dp
                     ) {
-                        Icon(
-                            imageVector = RhythmIcons.Play,
-                            contentDescription = "Playing",
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(4.dp)
-                        )
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            PlayingEqIcon(
+                                modifier = Modifier.size(width = 12.dp, height = 10.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                isPlaying = isPlaying,
+                                bars = 3
+                            )
+                        }
                     }
                 }
             }

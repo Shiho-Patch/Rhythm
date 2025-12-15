@@ -67,14 +67,20 @@ fun SnowfallEffect(
     
     // Continuous animation loop
     LaunchedEffect(Unit) {
+        // Reset lastFrameTime when effect starts to prevent large deltaTime on resume
+        lastFrameTime = 0L
+        
         while (isActive) {
             withFrameNanos { frameTime ->
                 if (lastFrameTime != 0L) {
                     val deltaTime = (frameTime - lastFrameTime) / 1_000_000_000f // Convert to seconds
                     
+                    // Clamp deltaTime to prevent weird behavior when app is resumed after pause
+                    val clampedDeltaTime = deltaTime.coerceIn(0f, 0.1f) // Max 100ms per frame
+                    
                     // Update all snowflakes
                     snowflakes.forEach { snowflake ->
-                        snowflake.update(deltaTime, screenWidth, screenHeight)
+                        snowflake.update(clampedDeltaTime, screenWidth, screenHeight)
                     }
                     
                     animationFrame++
@@ -255,13 +261,19 @@ fun SnowfallWithSparkle(
     
     // Continuous animation loop
     LaunchedEffect(Unit) {
+        // Reset lastFrameTime when effect starts to prevent large deltaTime on resume
+        lastFrameTime = 0L
+        
         while (isActive) {
             withFrameNanos { frameTime ->
                 if (lastFrameTime != 0L) {
                     val deltaTime = (frameTime - lastFrameTime) / 1_000_000_000f
                     
+                    // Clamp deltaTime to prevent weird behavior when app is resumed after pause
+                    val clampedDeltaTime = deltaTime.coerceIn(0f, 0.1f) // Max 100ms per frame
+                    
                     snowflakes.forEach { snowflake ->
-                        snowflake.update(deltaTime, screenWidth, screenHeight)
+                        snowflake.update(clampedDeltaTime, screenWidth, screenHeight)
                     }
                     
                     animationFrame++

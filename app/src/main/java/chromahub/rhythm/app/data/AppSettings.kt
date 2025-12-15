@@ -232,6 +232,10 @@ class AppSettings private constructor(context: Context) {
         // Library Sort Order
         private const val KEY_SONGS_SORT_ORDER = "songs_sort_order"
         
+        // Alphabet Bar Settings
+        private const val KEY_SHOW_ALPHABET_BAR = "show_alphabet_bar"
+        private const val KEY_SHOW_SCROLL_TO_TOP = "show_scroll_to_top"
+        
         // Queue & Playback Behavior
         private const val KEY_SHUFFLE_USES_EXOPLAYER = "shuffle_uses_exoplayer"
         private const val KEY_AUTO_ADD_TO_QUEUE = "auto_add_to_queue"
@@ -496,6 +500,13 @@ class AppSettings private constructor(context: Context) {
     // Group By Album Artist
     private val _groupByAlbumArtist = MutableStateFlow(prefs.getBoolean(KEY_GROUP_BY_ALBUM_ARTIST, true)) // Default true for better organization
     val groupByAlbumArtist: StateFlow<Boolean> = _groupByAlbumArtist.asStateFlow()
+    
+    // Alphabet Bar Settings
+    private val _showAlphabetBar = MutableStateFlow(prefs.getBoolean(KEY_SHOW_ALPHABET_BAR, false))
+    val showAlphabetBar: StateFlow<Boolean> = _showAlphabetBar.asStateFlow()
+    
+    private val _showScrollToTop = MutableStateFlow(prefs.getBoolean(KEY_SHOW_SCROLL_TO_TOP, false))
+    val showScrollToTop: StateFlow<Boolean> = _showScrollToTop.asStateFlow()
     
     // Audio Device Settings
     private val _lastAudioDevice = MutableStateFlow(prefs.getString(KEY_LAST_AUDIO_DEVICE, null))
@@ -1164,6 +1175,16 @@ class AppSettings private constructor(context: Context) {
     fun setGroupByAlbumArtist(enable: Boolean) {
         prefs.edit().putBoolean(KEY_GROUP_BY_ALBUM_ARTIST, enable).apply()
         _groupByAlbumArtist.value = enable
+    }
+    
+    fun setShowAlphabetBar(show: Boolean) {
+        prefs.edit().putBoolean(KEY_SHOW_ALPHABET_BAR, show).apply()
+        _showAlphabetBar.value = show
+    }
+    
+    fun setShowScrollToTop(show: Boolean) {
+        prefs.edit().putBoolean(KEY_SHOW_SCROLL_TO_TOP, show).apply()
+        _showScrollToTop.value = show
     }
     
     fun setSongsSortOrder(sortOrder: String) {

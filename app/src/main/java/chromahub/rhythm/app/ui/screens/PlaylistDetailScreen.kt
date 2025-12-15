@@ -1118,27 +1118,14 @@ fun PlaylistSongItem(
                     .weight(1f)
                     .padding(horizontal = 16.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = song.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = if (isCurrentSong) FontWeight.Bold else FontWeight.Medium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        color = titleColor
-                    )
-                    if (isCurrentSong && isPlaying) {
-                        PlayingEqIcon(
-                            modifier = Modifier.size(width = 18.dp, height = 14.dp),
-                            color = MaterialTheme.colorScheme.primary,
-                            isPlaying = isPlaying,
-                            bars = 3
-                        )
-                    }
-                }
+                Text(
+                    text = song.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = if (isCurrentSong) FontWeight.Bold else FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = titleColor
+                )
                 
                 Spacer(modifier = Modifier.height(4.dp))
                 

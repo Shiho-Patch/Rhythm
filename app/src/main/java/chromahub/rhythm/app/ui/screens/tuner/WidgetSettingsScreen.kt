@@ -132,7 +132,7 @@ fun WidgetSettingsScreen(
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Column {
-                        WidgetSettingRow(
+                        TunerSettingRow(
                             item = SettingItem(
                                 Icons.Default.Image,
                                 "Show Album Art",
@@ -148,7 +148,7 @@ fun WidgetSettingsScreen(
                             modifier = Modifier.padding(horizontal = 20.dp),
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                         )
-                        WidgetSettingRow(
+                        TunerSettingRow(
                             item = SettingItem(
                                 Icons.Default.Person,
                                 "Show Artist Name",
@@ -164,7 +164,7 @@ fun WidgetSettingsScreen(
                             modifier = Modifier.padding(horizontal = 20.dp),
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                         )
-                        WidgetSettingRow(
+                        TunerSettingRow(
                             item = SettingItem(
                                 Icons.Default.Album,
                                 "Show Album Name",
@@ -195,7 +195,7 @@ fun WidgetSettingsScreen(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
-                    WidgetSettingRow(
+                    TunerSettingRow(
                         item = SettingItem(
                             Icons.Default.RoundedCorner,
                             "Corner Radius",
@@ -221,7 +221,7 @@ fun WidgetSettingsScreen(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
-                    WidgetSettingRow(
+                    TunerSettingRow(
                         item = SettingItem(
                             Icons.Default.AutoMode,
                             "Auto Update",
@@ -394,79 +394,6 @@ fun WidgetSettingsScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun WidgetSettingRow(item: SettingItem) {
-    val hapticFeedback = LocalHapticFeedback.current
-    val context = LocalContext.current
-    
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .then(
-                if (item.onClick != null && item.toggleState == null) {
-                    Modifier.clickable(onClick = {
-                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
-                        item.onClick()
-                    })
-                } else {
-                    Modifier
-                }
-            ),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = item.icon,
-            contentDescription = item.title,
-            modifier = Modifier
-                .size(40.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(50))
-                .padding(8.dp),
-            tint = MaterialTheme.colorScheme.onSurface
-        )
-        Spacer(modifier = Modifier.width(16.dp))
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
-            Text(
-                text = item.title,
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            item.description?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-
-        if (item.toggleState != null) {
-            Switch(
-                checked = item.toggleState,
-                onCheckedChange = {
-                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
-                    item.onToggleChange?.invoke(it)
-                },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = MaterialTheme.colorScheme.primary,
-                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
-                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
-                )
-            )
-        } else if (item.onClick != null) {
-            Icon(
-                imageVector = androidx.compose.material.icons.Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = "Navigate",
-                modifier = Modifier.size(16.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }

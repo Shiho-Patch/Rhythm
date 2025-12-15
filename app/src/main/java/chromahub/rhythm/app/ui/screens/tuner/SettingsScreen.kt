@@ -15,9 +15,14 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.animateFloatAsState
+//import androidx.compose.animation.core.animateColorAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -39,6 +44,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Api
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.CheckCircle
@@ -84,9 +90,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.runtime.collectAsState
@@ -98,6 +106,8 @@ import chromahub.rhythm.app.ui.utils.LazyListStateSaver
 import chromahub.rhythm.app.data.AppSettings
 import chromahub.rhythm.app.ui.components.LanguageSwitcherDialog
 import android.content.Context
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.material.icons.filled.AutoGraph
 import androidx.compose.material.icons.filled.Gesture
 import androidx.compose.material.icons.filled.MusicNote
@@ -171,6 +181,8 @@ fun SettingsScreen(
     val showLyrics by appSettings.showLyrics.collectAsState()
     val groupByAlbumArtist by appSettings.groupByAlbumArtist.collectAsState()
     val defaultScreen by appSettings.defaultScreen.collectAsState()
+    val showAlphabetBar by appSettings.showAlphabetBar.collectAsState()
+    val showScrollToTop by appSettings.showScrollToTop.collectAsState()
     
     var showDefaultScreenDialog by remember { mutableStateOf(false) }
     var showLyricsSourceDialog by remember { mutableStateOf(false) }
@@ -262,6 +274,20 @@ fun SettingsScreen(
                     //     toggleState = groupByAlbumArtist,
                     //     onToggleChange = { appSettings.setGroupByAlbumArtist(it) }
                     // ),
+//                    SettingItem(
+//                        Icons.Default.Person,
+//                        "Alphabet Navigation",
+//                        "Show alphabet bar for quick scrolling",
+//                        toggleState = showAlphabetBar,
+//                        onToggleChange = { appSettings.setShowAlphabetBar(it) }
+//                    ),
+//                    SettingItem(
+//                        Icons.Default.ArrowUpward,
+//                        "Scroll to Top Button",
+//                        "Show floating button to quickly scroll to top",
+//                        toggleState = showScrollToTop,
+//                        onToggleChange = { appSettings.setShowScrollToTop(it) }
+//                    ),
                     SettingItem(Icons.Default.Person, "Artists", "Configure multi-artist parsing and organization", onClick = { onNavigateTo(SettingsRoutes.ARTIST_SEPARATORS) }),
                     SettingItem(Icons.Default.Folder, "Media Scan", "Manage blacklist and media scanning", onClick = { onNavigateTo(SettingsRoutes.MEDIA_SCAN) }),
                     SettingItem(Icons.Default.PlaylistAddCheckCircle, "Playlists", "Manage your playlists", onClick = { onNavigateTo(SettingsRoutes.PLAYLISTS) })
@@ -319,18 +345,24 @@ fun SettingsScreen(
                 .padding(horizontal = 24.dp)
         ) {
             items(settingGroups, key = { "setting_${it.title}" }) { group ->
-                Spacer(modifier = Modifier.height(24.dp)) // Increased space between groups
+                Spacer(modifier = Modifier.height(28.dp))
                 Text(
                     text = group.title,
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold), // Smaller title for group
-                    color = MaterialTheme.colorScheme.primary, // Use primary color for group title
-                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp) // Indent group title
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 12.dp),
+                    letterSpacing = 0.5.sp
                 )
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer), // Use surface for card background
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp) // Add subtle elevation
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                    ),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 0.dp
+                    )
                 ) {
                     Column {
                         group.items.forEachIndexed { index, item ->
@@ -339,7 +371,8 @@ fun SettingsScreen(
                             if (index < group.items.lastIndex) {
                                 HorizontalDivider(
                                     modifier = Modifier.padding(horizontal = 20.dp),
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                    thickness = 1.dp,
+                                    color = MaterialTheme.colorScheme.surfaceContainerHighest
                                 )
                             }
                         }
@@ -619,36 +652,99 @@ fun SettingRow(item: SettingItem) {
     val context = LocalContext.current
     val appSettings = AppSettings.getInstance(context)
     val hapticFeedbackEnabled by appSettings.hapticFeedbackEnabled.collectAsState()
+    
+    // Animation states
+    var isPressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.96f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "setting_scale"
+    )
+    
+    val iconBackgroundColor by animateColorAsState(
+        targetValue = when {
+            item.toggleState == true -> MaterialTheme.colorScheme.primaryContainer
+            isPressed -> MaterialTheme.colorScheme.secondaryContainer
+            else -> MaterialTheme.colorScheme.surfaceContainerHighest
+        },
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "icon_bg_color"
+    )
+    
+    val iconTintColor by animateColorAsState(
+        targetValue = when {
+            item.toggleState == true -> MaterialTheme.colorScheme.onPrimaryContainer
+            else -> MaterialTheme.colorScheme.onSurfaceVariant
+        },
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "icon_tint_color"
+    )
+    
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .padding(horizontal = 18.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            imageVector = item.icon,
-            contentDescription = item.title,
-            modifier = Modifier
-                .size(40.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(50))
-                .padding(8.dp),
-            tint = MaterialTheme.colorScheme.onSurface
-        )
+        // Icon container with expressive design
+        Surface(
+            modifier = Modifier.size(40.dp),
+            shape = RoundedCornerShape(24.dp),
+            color = iconBackgroundColor,
+            tonalElevation = if (item.toggleState == true) 2.dp else 0.dp
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Icon(
+                    imageVector = item.icon,
+                    contentDescription = item.title,
+                    modifier = Modifier.size(24.dp),
+                    tint = iconTintColor
+                )
+            }
+        }
+        
         Spacer(modifier = Modifier.width(16.dp))
+        
         Column(
             modifier = Modifier
                 .weight(1f)
                 .then(
                     if (item.onClick != null && item.toggleState == null) {
-                        Modifier.clickable(onClick = {
-                            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
-                            item.onClick()
-                        })
+                        Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = {
+                                isPressed = true
+                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
+                                item.onClick()
+                            }
+                        )
                     } else if (item.onClick != null && item.toggleState != null) {
-                        Modifier.clickable(onClick = {
-                            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
-                            item.onClick()
-                        })
+                        Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = {
+                                isPressed = true
+                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
+                                item.onClick()
+                            }
+                        )
                     } else {
                         Modifier
                     }
@@ -656,14 +752,17 @@ fun SettingRow(item: SettingItem) {
         ) {
             Text(
                 text = item.title,
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
             )
             item.description?.let {
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = it,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = MaterialTheme.typography.bodyMedium.lineHeight
                 )
             }
         }
@@ -673,36 +772,24 @@ fun SettingRow(item: SettingItem) {
                 imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                 contentDescription = "Navigate",
                 modifier = Modifier
-                    .size(16.dp)
+                    .size(18.dp)
                     .padding(end = 8.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
-            Switch(
+            AnimatedSwitch(
                 checked = item.toggleState,
                 onCheckedChange = {
                     HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
                     item.onToggleChange?.invoke(it)
-                },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = MaterialTheme.colorScheme.primary,
-                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
-                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
-                )
+                }
             )
         } else if (item.toggleState != null) {
-            Switch(
+            AnimatedSwitch(
                 checked = item.toggleState,
                 onCheckedChange = {
                     HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
                     item.onToggleChange?.invoke(it)
-                },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = MaterialTheme.colorScheme.primary,
-                    checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
-                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
-                )
+                }
             )
         } else if (item.onClick != null) {
             Icon(
@@ -872,6 +959,62 @@ fun SettingsScreenWrapper(
             )
         }
     }
+}
+
+@Composable
+private fun AnimatedSwitch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val thumbColor by animateColorAsState(
+        targetValue = if (checked) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "thumbColor"
+    )
+    
+    val trackColor by animateColorAsState(
+        targetValue = if (checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "trackColor"
+    )
+    
+    Switch(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        modifier = modifier,
+        colors = SwitchDefaults.colors(
+            checkedThumbColor = thumbColor,
+            checkedTrackColor = trackColor,
+            uncheckedThumbColor = thumbColor,
+            uncheckedTrackColor = trackColor
+        ),
+        thumbContent = {
+            androidx.compose.animation.AnimatedVisibility(
+                visible = checked,
+                enter = scaleIn(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                ) + fadeIn(),
+                exit = scaleOut() + fadeOut()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+    )
 }
 
 @Composable
