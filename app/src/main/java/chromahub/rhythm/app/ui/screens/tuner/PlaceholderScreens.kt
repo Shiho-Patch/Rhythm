@@ -11837,14 +11837,14 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold
                                 )
-                                if (isEqualizerEnabled) {
-                                    PlayingEqIcon(
-                                        modifier = Modifier.size(width = 20.dp, height = 16.dp),
-                                        color = MaterialTheme.colorScheme.primary,
-                                        isPlaying = true,
-                                        bars = 3
-                                    )
-                                }
+//                                if (isEqualizerEnabled) {
+//                                    PlayingEqIcon(
+//                                        modifier = Modifier.size(width = 20.dp, height = 16.dp),
+//                                        color = MaterialTheme.colorScheme.primary,
+//                                        isPlaying = true,
+//                                        bars = 3
+//                                    )
+//                                }
                             }
                         }
                         TunerAnimatedSwitch(
