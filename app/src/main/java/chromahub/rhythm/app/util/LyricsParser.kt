@@ -45,13 +45,41 @@ object LyricsParser {
         }
     }
 
+    /**
+     * Parse LRC format lyrics into structured lyric lines with timestamps.
+     * 
+     * Supports multi-line lyrics where untimestamped lines following a timestamped line
+     * are combined with the timestamped line using newline separators. This enables:
+     * - Translations: [00:00.74]Original text\n(Translation)
+     * - Romanizations: [00:00.74]Original text\nRomanization
+     * - Multi-line verses: [00:00.74]Line 1\nLine 2\nLine 3
+     * 
+     * Example input:
+     * ```
+     * [00:00.74]I've been trying to be every man you saw in me
+     * (He estado intentando ser cada hombre que viste en mí)
+     * [00:05.20]But in my eyes I just flicker out
+     * (Pero en mis ojos solo parpadeo)
+     * ```
+     * 
+     * Output:
+     * - LyricLine(timestamp=740, text="I've been trying...\n(He estado...)")
+     * - LyricLine(timestamp=5200, text="But in my eyes...\n(Pero en mis ojos...)")
+     * 
+     * @param lrcContent The LRC format lyrics string
+     * @return List of parsed lyric lines sorted by timestamp
+     */
     fun parseLyrics(lrcContent: String): List<LyricLine> {
         if (lrcContent.isBlank()) return emptyList()
         
         val lyricLines = mutableListOf<LyricLine>()
         val lines = lrcContent.trim().split("\n", "\r\n", "\r")
+        
+        var pendingTimestamps = mutableListOf<Long>()
+        val pendingTextLines = mutableListOf<String>()
 
-        for (line in lines) {
+        for (lineIndex in lines.indices) {
+            val line = lines[lineIndex]
             val trimmedLine = line.trim()
             if (trimmedLine.isEmpty()) continue
             
@@ -110,23 +138,47 @@ object LyricsParser {
                 }
             }
 
-            // Extract lyrics text after all timestamps
             if (timestamps.isNotEmpty()) {
+                // This line has timestamps - process any pending text first
+                if (pendingTimestamps.isNotEmpty() && pendingTextLines.isNotEmpty()) {
+                    // Combine all pending text lines with newline separator
+                    val combinedText = pendingTextLines.joinToString("\n")
+                    val (voiceTag, cleanedText) = extractVoiceTag(combinedText)
+                    
+                    for (timestamp in pendingTimestamps) {
+                        lyricLines.add(LyricLine(timestamp, cleanedText, voiceTag))
+                    }
+                    pendingTextLines.clear()
+                }
+                
+                // Extract lyrics text after all timestamps
                 val text = if (lastMatchEnd < trimmedLine.length) {
                     trimmedLine.substring(lastMatchEnd).trim()
                 } else {
                     ""
                 }
                 
-                // Only add non-empty lyrics (skip empty timestamp lines)
+                // Store timestamps and initial text
+                pendingTimestamps = timestamps
                 if (text.isNotEmpty()) {
-                    // Extract voice tag if present and clean the text
-                    val (voiceTag, cleanedText) = extractVoiceTag(text)
-                    
-                    for (timestamp in timestamps) {
-                        lyricLines.add(LyricLine(timestamp, cleanedText, voiceTag))
-                    }
+                    pendingTextLines.add(text)
                 }
+            } else {
+                // Line without timestamp - add to pending text if we have a pending timestamp
+                // This handles translations, romanizations, or multi-line lyrics
+                if (pendingTimestamps.isNotEmpty()) {
+                    pendingTextLines.add(trimmedLine)
+                }
+            }
+        }
+        
+        // Process any remaining pending text
+        if (pendingTimestamps.isNotEmpty() && pendingTextLines.isNotEmpty()) {
+            val combinedText = pendingTextLines.joinToString("\n")
+            val (voiceTag, cleanedText) = extractVoiceTag(combinedText)
+            
+            for (timestamp in pendingTimestamps) {
+                lyricLines.add(LyricLine(timestamp, cleanedText, voiceTag))
             }
         }
 
