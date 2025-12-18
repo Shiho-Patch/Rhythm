@@ -67,6 +67,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import chromahub.rhythm.app.data.Song
+import chromahub.rhythm.app.R
 import chromahub.rhythm.app.ui.theme.PlayerButtonColor
 import chromahub.rhythm.app.ui.theme.PlayerProgressColor
 import chromahub.rhythm.app.util.ImageUtils
@@ -409,7 +410,7 @@ fun MiniPlayer(
                         modifier = Modifier.padding(bottom = 4.dp)
                     ) {
                         Text(
-                            text = "⬆ Swipe up for full player",
+                            text = context.getString(R.string.miniplayer_swipe_up_hint),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -429,7 +430,7 @@ fun MiniPlayer(
                         modifier = Modifier.padding(bottom = 4.dp)
                     ) {
                         Text(
-                            text = "⬇ Swipe down to dismiss",
+                            text = context.getString(R.string.miniplayer_swipe_down_hint),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onErrorContainer,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -449,7 +450,7 @@ fun MiniPlayer(
                         modifier = Modifier.padding(bottom = 4.dp)
                     ) {
                         Text(
-                            text = "⬅ Next track",
+                            text = context.getString(R.string.miniplayer_swipe_left_hint),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onTertiaryContainer,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -469,7 +470,7 @@ fun MiniPlayer(
                         modifier = Modifier.padding(bottom = 4.dp)
                     ) {
                         Text(
-                            text = "Previous track ➡",
+                            text = context.getString(R.string.miniplayer_swipe_right_hint),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onTertiaryContainer,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -557,7 +558,7 @@ fun MiniPlayer(
                                     containerColor = MaterialTheme.colorScheme.error
                                 ) {
                                 Text(
-                                    "LIVE",
+                                    context.getString(R.string.badge_live),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onError,
                                     fontSize = 8.sp
@@ -584,7 +585,7 @@ fun MiniPlayer(
                         )
                     } else {
                         Text(
-                            text = "No song playing",
+                            text = context.getString(R.string.miniplayer_no_song),
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.SemiBold
                             ),

@@ -47,6 +47,7 @@ import chromahub.rhythm.app.ui.components.CollapsibleHeaderScreen
 import chromahub.rhythm.app.ui.components.RhythmIcons
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.viewmodel.MusicViewModel
+import chromahub.rhythm.app.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -108,7 +109,7 @@ fun ListeningStatsScreen(
     }
     
     CollapsibleHeaderScreen(
-        title = "Rhythm Stats",
+        title = context.getString(R.string.stats_title),
         showBackButton = true,
         onBackClick = {
             HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
@@ -209,11 +210,12 @@ private fun RhythmTimeRangeTabs(
     onRangeSelected: (StatsTimeRange) -> Unit,
     tabRowState: androidx.compose.foundation.lazy.LazyListState
 ) {
+    val context = LocalContext.current
     val tabNames = mapOf(
-        StatsTimeRange.TODAY to "Today",
-        StatsTimeRange.WEEK to "This Week",
-        StatsTimeRange.MONTH to "This Month",
-        StatsTimeRange.ALL_TIME to "All Time"
+        StatsTimeRange.TODAY to context.getString(R.string.stats_today),
+        StatsTimeRange.WEEK to context.getString(R.string.stats_this_week),
+        StatsTimeRange.MONTH to context.getString(R.string.stats_this_month),
+        StatsTimeRange.ALL_TIME to context.getString(R.string.stats_all_time)
     )
     
     Surface(
@@ -332,6 +334,7 @@ private enum class TimeOfDay {
  */
 @Composable
 private fun CosmicListeningTimeWidget(totalDurationMs: Long) {
+    val context = LocalContext.current
     val timeOfDay = remember { getTimeOfDay() }
     
     // Time-based gradient colors
@@ -366,10 +369,10 @@ private fun CosmicListeningTimeWidget(totalDurationMs: Long) {
     }
     
     val decorationText = when (timeOfDay) {
-        TimeOfDay.MORNING -> "Rise & Rhythm"
-        TimeOfDay.AFTERNOON -> "Midday Beats"
-        TimeOfDay.EVENING -> "Evening Vibes"
-        TimeOfDay.NIGHT -> "Night Grooves"
+        TimeOfDay.MORNING -> context.getString(R.string.stats_rise_rhythm)
+        TimeOfDay.AFTERNOON -> context.getString(R.string.stats_midday_beats)
+        TimeOfDay.EVENING -> context.getString(R.string.stats_evening_vibes)
+        TimeOfDay.NIGHT -> context.getString(R.string.stats_night_grooves)
     }
     
     Card(
@@ -476,17 +479,17 @@ private fun CosmicListeningTimeWidget(totalDurationMs: Long) {
                         // Comic dialogue based on listening time
                         val hours = totalDurationMs / (1000 * 60 * 60)
                         val motivationalMessage = when {
-                            hours < 1 -> "Just getting started! 🎵"
-                            hours < 5 -> "Nice rhythm going! 🎸"
-                            hours < 10 -> "You're jamming! 🎧"
-                            hours < 24 -> "Music enthusiast! 🎹"
-                            hours < 50 -> "Legendary listener! 🌟"
-                            hours < 100 -> "Music maestro! 🎼"
-                            else -> "Ultimate music sage! 👑"
+                            hours < 1 -> context.getString(R.string.stats_just_started)
+                            hours < 5 -> context.getString(R.string.stats_nice_rhythm)
+                            hours < 10 -> context.getString(R.string.stats_jamming)
+                            hours < 24 -> context.getString(R.string.stats_enthusiast)
+                            hours < 50 -> context.getString(R.string.stats_legendary)
+                            hours < 100 -> context.getString(R.string.stats_maestro)
+                            else -> context.getString(R.string.stats_sage)
                         }
                         
                         Text(
-                            text = "Total Listening Time",
+                            text = context.getString(R.string.stats_total_listening_time),
                             style = MaterialTheme.typography.bodyLarge,
                             color = Color.White.copy(alpha = 0.85f)
                         )
@@ -523,6 +526,7 @@ private fun CosmicListeningTimeWidget(totalDurationMs: Long) {
  */
 @Composable
 private fun QuickStatsRow(stats: PlaybackStatsRepository.PlaybackStatsSummary) {
+    val context = LocalContext.current
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -530,14 +534,14 @@ private fun QuickStatsRow(stats: PlaybackStatsRepository.PlaybackStatsSummary) {
         QuickStatChip(
             icon = Icons.Outlined.PlayCircle,
             value = "${stats.totalPlayCount}",
-            label = "Total Plays",
+            label = context.getString(R.string.stats_total_plays),
 //            emoji = "🎵",
             modifier = Modifier.weight(1f)
         )
         QuickStatChip(
             icon = Icons.Outlined.MusicNote,
             value = "${stats.uniqueSongs}",
-            label = "Unique Tracks",
+            label = context.getString(R.string.stats_unique_tracks),
 //            emoji = "🎶",
             modifier = Modifier.weight(1f)
         )

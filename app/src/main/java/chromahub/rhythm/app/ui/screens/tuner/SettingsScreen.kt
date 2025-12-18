@@ -198,53 +198,53 @@ fun SettingsScreen(
     ) { modifier ->
         val settingGroups = listOf(
             SettingGroup(
-                title = "Appearance",
+                title = context.getString(R.string.settings_section_appearance),
                 items = listOf(
-                    SettingItem(Icons.Default.Palette, "Theme", "Customize colors, fonts, and appearance", onClick = { onNavigateTo(SettingsRoutes.THEME_CUSTOMIZATION) }),
-                    SettingItem(Icons.Default.Home, "Home", "Customize home screen sections", onClick = { onNavigateTo(SettingsRoutes.HOME_SCREEN) }),
-                    SettingItem(Icons.Default.Widgets, "Widget", "Customize home screen widgets", onClick = { onNavigateTo(SettingsRoutes.WIDGET) }),
-                    SettingItem(Icons.Default.MusicNote, "Player", "Customize player screen chips and layout", onClick = { onNavigateTo(SettingsRoutes.PLAYER_CUSTOMIZATION) }),
-                    SettingItem(Icons.Default.PlayCircleFilled, "MiniPlayer", "Customize compact player appearance", onClick = { onNavigateTo(SettingsRoutes.MINIPLAYER_CUSTOMIZATION) }),
+                    SettingItem(Icons.Default.Palette, context.getString(R.string.settings_theme_customization), context.getString(R.string.settings_theme_customization_desc), onClick = { onNavigateTo(SettingsRoutes.THEME_CUSTOMIZATION) }),
+                    SettingItem(Icons.Default.Home, context.getString(R.string.settings_home_customization), context.getString(R.string.settings_home_customization_desc), onClick = { onNavigateTo(SettingsRoutes.HOME_SCREEN) }),
+                    SettingItem(Icons.Default.Widgets, context.getString(R.string.settings_widget), context.getString(R.string.settings_widget_desc), onClick = { onNavigateTo(SettingsRoutes.WIDGET) }),
+                    SettingItem(Icons.Default.MusicNote, context.getString(R.string.settings_player_customization), context.getString(R.string.settings_player_customization_desc), onClick = { onNavigateTo(SettingsRoutes.PLAYER_CUSTOMIZATION) }),
+                    SettingItem(Icons.Default.PlayCircleFilled, context.getString(R.string.settings_miniplayer_customization), context.getString(R.string.settings_miniplayer_customization_desc), onClick = { onNavigateTo(SettingsRoutes.MINIPLAYER_CUSTOMIZATION) }),
                     // SettingItem(Icons.Default.Reorder, "Library Tab Order", "Reorder tabs in the library", onClick = { onNavigateTo(SettingsRoutes.LIBRARY_TAB_ORDER) })
                 )
             ),
             SettingGroup(
-                title = "User Interface",
+                title = context.getString(R.string.settings_section_user_interface),
                 items = listOf(
                     SettingItem(
                         Icons.Default.Home,
-                        "Default Landing Screen",
-                        if (defaultScreen == "library") "Library" else "Home",
+                        context.getString(R.string.settings_default_screen),
+                        if (defaultScreen == "library") context.getString(R.string.library) else context.getString(R.string.home),
                         onClick = { showDefaultScreenDialog = true }
                     ),
                     SettingItem(
                         Icons.Default.Public,
-                        "Language",
-                        "Change app language",
+                        context.getString(R.string.settings_language),
+                        context.getString(R.string.settings_language_desc),
                         onClick = { showLanguageSwitcher = true }
                     ),
                     SettingItem(
                         Icons.Default.TouchApp, 
-                        "Haptic Feedback", 
-                        "Vibrate when tapping buttons", 
+                        context.getString(R.string.settings_haptic_feedback), 
+                        context.getString(R.string.settings_haptic_feedback_desc), 
                         toggleState = hapticFeedbackEnabled,
                         onToggleChange = { appSettings.setHapticFeedbackEnabled(it) }
                     ),
                     SettingItem(
                         Icons.Default.Gesture,
-                        "Gestures",
-                        "Configure swipe and touch gestures",
+                        context.getString(R.string.settings_gestures),
+                        context.getString(R.string.settings_gestures_desc),
                         onClick = { onNavigateTo(SettingsRoutes.GESTURES) }
                     )
                 )
             ),
             SettingGroup(
-                title = "Audio & Playback",
+                title = context.getString(R.string.settings_section_audio_playback),
                 items = listOf(
                     SettingItem(
                         RhythmIcons.Player.VolumeUp, 
-                        "System Volume", 
-                        "Use device volume for playback", 
+                        context.getString(R.string.settings_system_volume), 
+                        context.getString(R.string.settings_system_volume_desc), 
                         toggleState = useSystemVolume,
                         onToggleChange = { appSettings.setUseSystemVolume(it) }
                     ),
@@ -255,17 +255,17 @@ fun SettingsScreen(
                     //     toggleState = showLyrics,
                     //     onToggleChange = { appSettings.setShowLyrics(it) }
                     // ),
-                    SettingItem(Icons.Default.Lyrics, "Lyrics Source Priority", "Configure embedded vs online lyrics", onClick = { 
+                    SettingItem(Icons.Default.Lyrics, context.getString(R.string.lyrics_source_priority), context.getString(R.string.playback_lyrics_priority_desc), onClick = { 
                         HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
                         showLyricsSourceDialog = true 
                     }),
-                    SettingItem(Icons.Default.QueueMusic, "Queue & Playback", "Configure queue and playback behavior", onClick = { onNavigateTo(SettingsRoutes.QUEUE_PLAYBACK) }),
-                    SettingItem(Icons.Default.Equalizer, "Equalizer", "Adjust audio frequencies and effects", onClick = { onNavigateTo(SettingsRoutes.EQUALIZER) }),
+                    SettingItem(Icons.Default.QueueMusic, context.getString(R.string.settings_queue_playback_title), context.getString(R.string.settings_queue_playback_desc), onClick = { onNavigateTo(SettingsRoutes.QUEUE_PLAYBACK) }),
+                    SettingItem(Icons.Default.Equalizer, context.getString(R.string.settings_equalizer_title), context.getString(R.string.settings_equalizer_desc), onClick = { onNavigateTo(SettingsRoutes.EQUALIZER) }),
                     // SettingItem(Icons.Default.AccessTime, "Sleep Timer", "Auto-stop playback after set time", onClick = { onNavigateTo(SettingsRoutes.SLEEP_TIMER) })
                 )
             ),
             SettingGroup(
-                title = "Library & Content",
+                title = context.getString(R.string.settings_section_library_content),
                 items = listOf(
                     // SettingItem(
                     //     Icons.Default.Person, 
@@ -288,44 +288,44 @@ fun SettingsScreen(
 //                        toggleState = showScrollToTop,
 //                        onToggleChange = { appSettings.setShowScrollToTop(it) }
 //                    ),
-                    SettingItem(Icons.Default.Person, "Artists", "Configure multi-artist parsing and organization", onClick = { onNavigateTo(SettingsRoutes.ARTIST_SEPARATORS) }),
-                    SettingItem(Icons.Default.Folder, "Media Scan", "Manage blacklist and media scanning", onClick = { onNavigateTo(SettingsRoutes.MEDIA_SCAN) }),
-                    SettingItem(Icons.Default.PlaylistAddCheckCircle, "Playlists", "Manage your playlists", onClick = { onNavigateTo(SettingsRoutes.PLAYLISTS) })
+                    SettingItem(Icons.Default.Person, context.getString(R.string.settings_artist_parsing), context.getString(R.string.settings_artist_parsing_desc), onClick = { onNavigateTo(SettingsRoutes.ARTIST_SEPARATORS) }),
+                    SettingItem(Icons.Default.Folder, context.getString(R.string.settings_media_scan_title), context.getString(R.string.settings_media_scan_desc), onClick = { onNavigateTo(SettingsRoutes.MEDIA_SCAN) }),
+                    SettingItem(Icons.Default.PlaylistAddCheckCircle, context.getString(R.string.settings_playlists_title), context.getString(R.string.settings_playlists_desc), onClick = { onNavigateTo(SettingsRoutes.PLAYLISTS) })
                 )
             ),
             SettingGroup(
-                title = "Storage & Data",
+                title = context.getString(R.string.settings_section_storage_data),
                 items = listOf(
-                    SettingItem(Icons.Default.Storage, "Cache Management", "Control cache size and clearing", onClick = { onNavigateTo(SettingsRoutes.CACHE_MANAGEMENT) }),
-                    SettingItem(Icons.Default.Backup, "Backup & Restore", "Safeguard settings and playlists", onClick = { onNavigateTo(SettingsRoutes.BACKUP_RESTORE) }),
-                    SettingItem(Icons.Default.AutoGraph, "Rhythm Stats", "View your listening history and insights", onClick = { onNavigateTo(SettingsRoutes.LISTENING_STATS) })
+                    SettingItem(Icons.Default.Storage, context.getString(R.string.settings_cache_management_title), context.getString(R.string.settings_cache_management_desc), onClick = { onNavigateTo(SettingsRoutes.CACHE_MANAGEMENT) }),
+                    SettingItem(Icons.Default.Backup, context.getString(R.string.settings_backup_restore_title), context.getString(R.string.settings_backup_restore_desc), onClick = { onNavigateTo(SettingsRoutes.BACKUP_RESTORE) }),
+                    SettingItem(Icons.Default.AutoGraph, context.getString(R.string.settings_rhythm_stats), context.getString(R.string.settings_rhythm_stats_desc), onClick = { onNavigateTo(SettingsRoutes.LISTENING_STATS) })
                 )
             ),
             SettingGroup(
-                title = "Services",
+                title = context.getString(R.string.settings_section_services),
                 items = listOf(
-                    SettingItem(Icons.Default.Api, "API Management", "Configure external API services", onClick = { onNavigateTo(SettingsRoutes.API_MANAGEMENT) })
+                    SettingItem(Icons.Default.Api, context.getString(R.string.settings_api_management), context.getString(R.string.settings_api_management_desc), onClick = { onNavigateTo(SettingsRoutes.API_MANAGEMENT) })
                 )
             ),
             SettingGroup(
-                title = "Updates & Info",
+                title = context.getString(R.string.settings_section_updates_info),
                 items = listOf(
                     SettingItem(
                         Icons.Default.Update,
-                        "Updates",
-                        "Check for app updates",
+                        context.getString(R.string.settings_updates_title),
+                        context.getString(R.string.settings_updates_desc),
                         toggleState = updatesEnabled,
                         onToggleChange = { appSettings.setUpdatesEnabled(it) },
                         onClick = { onNavigateTo(SettingsRoutes.UPDATES) }
                     ),
-                    SettingItem(Icons.Default.Info, "About", "App version and info", onClick = { onNavigateTo(SettingsRoutes.ABOUT) })
+                    SettingItem(Icons.Default.Info, context.getString(R.string.settings_about_title), context.getString(R.string.settings_about_desc), onClick = { onNavigateTo(SettingsRoutes.ABOUT) })
                 )
             ),
             SettingGroup(
-                title = "Advanced",
+                title = context.getString(R.string.settings_section_advanced),
                 items = listOf(
-                    SettingItem(Icons.Default.BugReport, "Crash Log History", "View and manage crash reports", onClick = { onNavigateTo(SettingsRoutes.CRASH_LOG_HISTORY) }),
-                    SettingItem(Icons.Default.Science, "Experimental Features", "Try out cutting-edge features", onClick = { onNavigateTo(SettingsRoutes.EXPERIMENTAL_FEATURES) })
+                    SettingItem(Icons.Default.BugReport, context.getString(R.string.settings_crash_log_history), context.getString(R.string.settings_crash_log_history_desc), onClick = { onNavigateTo(SettingsRoutes.CRASH_LOG_HISTORY) }),
+                    SettingItem(Icons.Default.Science, context.getString(R.string.settings_experimental_features), context.getString(R.string.settings_experimental_features_desc), onClick = { onNavigateTo(SettingsRoutes.EXPERIMENTAL_FEATURES) })
                 )
             )
         )

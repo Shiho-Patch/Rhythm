@@ -118,6 +118,7 @@ class AppSettings private constructor(context: Context) {
         // Playlists
         private const val KEY_PLAYLISTS = "playlists"
         private const val KEY_FAVORITE_SONGS = "favorite_songs"
+        private const val KEY_DEFAULT_PLAYLISTS_ENABLED = "default_playlists_enabled"
         
         // User Statistics
         private const val KEY_LISTENING_TIME = "listening_time"
@@ -630,6 +631,9 @@ class AppSettings private constructor(context: Context) {
 
     private val _favoriteSongs = MutableStateFlow<String?>(prefs.getString(KEY_FAVORITE_SONGS, null))
     val favoriteSongs: StateFlow<String?> = _favoriteSongs.asStateFlow()
+    
+    private val _defaultPlaylistsEnabled = MutableStateFlow(prefs.getBoolean(KEY_DEFAULT_PLAYLISTS_ENABLED, true))
+    val defaultPlaylistsEnabled: StateFlow<Boolean> = _defaultPlaylistsEnabled.asStateFlow()
     
     // User Statistics
     private val _listeningTime = MutableStateFlow(safeLong(KEY_LISTENING_TIME, 0L))
@@ -1423,6 +1427,11 @@ class AppSettings private constructor(context: Context) {
             prefs.edit().putString(KEY_FAVORITE_SONGS, favoriteSongsJson).apply() // Use apply() to prevent ANR
         }
         _favoriteSongs.value = favoriteSongsJson
+    }
+    
+    fun setDefaultPlaylistsEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_DEFAULT_PLAYLISTS_ENABLED, enabled).apply()
+        _defaultPlaylistsEnabled.value = enabled
     }
 
     // User Statistics Methods

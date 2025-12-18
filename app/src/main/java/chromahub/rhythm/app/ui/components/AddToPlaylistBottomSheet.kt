@@ -263,6 +263,8 @@ private fun SongHeaderCard(
     song: Song,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -306,7 +308,7 @@ private fun SongHeaderCard(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = "Add to playlist",
+                    text = context.getString(R.string.bottomsheet_add_to_playlist),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.SemiBold
@@ -566,7 +568,7 @@ private fun EmptyPlaylistsState(
             Spacer(modifier = Modifier.height(16.dp))
             
             Text(
-                text = "No playlists yet",
+                text = context.getString(R.string.bottomsheet_no_playlists),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center

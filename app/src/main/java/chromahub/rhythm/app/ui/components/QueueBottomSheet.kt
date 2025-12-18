@@ -320,6 +320,8 @@ private fun QueueHeader(
     onClearQueue: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -329,7 +331,7 @@ private fun QueueHeader(
     ) {
         Column {
             Text(
-                text = "Queue",
+                text = context.getString(R.string.bottomsheet_queue),
                 style = MaterialTheme.typography.displayMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface

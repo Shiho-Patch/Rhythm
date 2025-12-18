@@ -707,6 +707,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     private suspend fun populateDefaultPlaylistsSafely() {
+        // Only populate if default playlists are enabled
+        if (!appSettings.defaultPlaylistsEnabled.value) {
+            Log.d(TAG, "Default playlists are disabled, skipping population")
+            return
+        }
+        
         try {
             populateRecentlyAddedPlaylist()
         } catch (e: Exception) {
@@ -946,9 +952,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 _albums.value = repository.loadAlbums()
                 _artists.value = repository.loadArtists()
 
-                // Re-populate dynamic playlists
-                populateRecentlyAddedPlaylist()
-                populateMostPlayedPlaylist()
+                // Re-populate dynamic playlists (if enabled)
+                if (appSettings.defaultPlaylistsEnabled.value) {
+                    populateRecentlyAddedPlaylist()
+                    populateMostPlayedPlaylist()
+                }
                 
                 // Refresh all playlists to remove songs that no longer exist on the device
                 refreshPlaylists()
@@ -1358,12 +1366,20 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 val type = object : TypeToken<List<Playlist>>() {}.type
                 GsonUtils.gson.fromJson<List<Playlist>>(playlistsJson, type)
             } else {
-                // Initialize with default playlists if none exist
-                listOf(
-                    Playlist("1", "Favorites"),
-                    Playlist("2", "Recently Added"),
-                    Playlist("3", "Most Played")
-                )
+                // Initialize with default playlists if none exist and default playlists are enabled
+                val defaultPlaylistsEnabled = appSettings.defaultPlaylistsEnabled.value
+                if (defaultPlaylistsEnabled) {
+                    listOf(
+                        Playlist("1", "Favorites"),
+                        Playlist("2", "Recently Added"),
+                        Playlist("3", "Most Played")
+                    )
+                } else {
+                    // Only Favorites playlist when default playlists are disabled
+                    listOf(
+                        Playlist("1", "Favorites")
+                    )
+                }
             }
             _playlists.value = playlists
             
@@ -1375,12 +1391,19 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error loading saved playlists", e)
-            // Initialize with default playlists on error
-            _playlists.value = listOf(
-                Playlist("1", "Favorites"),
-                Playlist("2", "Recently Added"),
-                Playlist("3", "Most Played")
-            )
+            // Initialize with default playlists on error based on setting
+            val defaultPlaylistsEnabled = appSettings.defaultPlaylistsEnabled.value
+            _playlists.value = if (defaultPlaylistsEnabled) {
+                listOf(
+                    Playlist("1", "Favorites"),
+                    Playlist("2", "Recently Added"),
+                    Playlist("3", "Most Played")
+                )
+            } else {
+                listOf(
+                    Playlist("1", "Favorites")
+                )
+            }
             _favoriteSongs.value = emptySet()
         }
     }

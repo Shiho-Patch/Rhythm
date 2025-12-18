@@ -405,7 +405,7 @@ fun OnboardingScreen(
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Back", style = MaterialTheme.typography.labelLarge)
+                                Text(context.getString(R.string.onboarding_back), style = MaterialTheme.typography.labelLarge)
                             }
                         }
 
@@ -516,7 +516,7 @@ fun OnboardingScreen(
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(
-                                            "Checking...",
+                                            context.getString(R.string.onboarding_checking),
                                             style = MaterialTheme.typography.labelLarge
                                         )
                                     }
@@ -526,14 +526,14 @@ fun OnboardingScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         val buttonText = when {
-                                            currentStep == OnboardingStep.SETUP_FINISHED -> "Let's Go!"
-                                            currentStep == OnboardingStep.UPDATER -> "Finish Setup"
+                                            currentStep == OnboardingStep.SETUP_FINISHED -> context.getString(R.string.onboarding_lets_go)
+                                            currentStep == OnboardingStep.UPDATER -> context.getString(R.string.onboarding_finish_setup)
                                             currentStep == OnboardingStep.PERMISSIONS -> when (permissionScreenState) {
-                                                PermissionScreenState.PermissionsGranted -> "Continue"
-                                                PermissionScreenState.RedirectToSettings -> "Open Settings"
-                                                else -> "Grant Access"
+                                                PermissionScreenState.PermissionsGranted -> context.getString(R.string.onboarding_continue)
+                                                PermissionScreenState.RedirectToSettings -> context.getString(R.string.onboarding_open_settings)
+                                                else -> context.getString(R.string.onboarding_grant_access)
                                             }
-                                            else -> "Next"
+                                            else -> context.getString(R.string.onboarding_next)
                                         }
                                         val buttonIcon = when {
                                             currentStep == OnboardingStep.SETUP_FINISHED -> Icons.Filled.Check
@@ -626,6 +626,18 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     var showLanguageSwitcher by remember { mutableStateOf(false) }
+    
+    // Animated scale for logo
+    val infiniteTransition = rememberInfiniteTransition(label = "welcome_animations")
+    val logoGlow by infiniteTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = androidx.compose.animation.core.EaseInOut),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "logoGlow"
+    )
 
     Box(
         modifier = Modifier
@@ -651,7 +663,7 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Language",
+                text = context.getString(R.string.onboarding_language),
                 style = MaterialTheme.typography.labelLarge
             )
         }
@@ -663,7 +675,7 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
                 .fillMaxWidth()
                 .padding(horizontal = 32.dp)
         ) {
-            // App logo 
+            // App logo with glowing effect
             AnimatedVisibility(
                 visible = true,
                 enter = scaleIn(
@@ -675,18 +687,30 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
                     animationSpec = tween(1000)
                 )
             ) {
-                Box {
+                Box(
+                    modifier = Modifier
+                        .size(170.dp)
+                        .clip(CircleShape),
+//                        .background(
+//                            Brush.radialGradient(
+//                                colors = listOf(
+//                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.3f * logoGlow),
+//                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f * logoGlow),
+//                                    androidx.compose.ui.graphics.Color.Transparent
+//                                )
+//                            )
+//                        ),
+                    contentAlignment = Alignment.Center
+                ) {
                     Image(
                         painter = painterResource(id = R.drawable.rhythm_splash_logo),
                         contentDescription = "Rhythm Logo",
-                        modifier = Modifier
-                            .size(150.dp)
-                            .align(Alignment.Center)
+                        modifier = Modifier.size(130.dp)
                     )
                 }
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             
             // App name with staggered animation
             Column(
@@ -871,14 +895,18 @@ private fun WelcomeFeatureChip(
     text: String
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.7f),
-        shape = RoundedCornerShape(12.dp),
-        tonalElevation = 2.dp
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
+        shape = RoundedCornerShape(16.dp),
+        tonalElevation = 2.dp,
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+        )
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
         ) {
             Icon(
                 imageVector = icon,
@@ -975,10 +1003,10 @@ fun EnhancedPermissionContent(
 
         Text(
             text = when (permissionScreenState) {
-                PermissionScreenState.PermissionsGranted -> "Permissions Granted!"
-                PermissionScreenState.RedirectToSettings -> "Action Required: Open Settings"
-                PermissionScreenState.ShowRationale -> "Permissions Needed"
-                else -> "Grant Permissions"
+                PermissionScreenState.PermissionsGranted -> context.getString(R.string.onboarding_permissions_granted_title)
+                PermissionScreenState.RedirectToSettings -> context.getString(R.string.onboarding_action_required_settings)
+                PermissionScreenState.ShowRationale -> context.getString(R.string.onboarding_permissions_needed)
+                else -> context.getString(R.string.onboarding_grant_permissions)
             },
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
@@ -989,10 +1017,10 @@ fun EnhancedPermissionContent(
 
         Text(
             text = when (permissionScreenState) {
-                PermissionScreenState.PermissionsGranted -> "All necessary permissions have been granted. You are ready to proceed!"
-                PermissionScreenState.RedirectToSettings -> "To grant the required permissions, please navigate to the app settings on your device."
-                PermissionScreenState.ShowRationale -> "Rhythm requires certain permissions to function correctly. Please grant them to continue."
-                else -> "To fully utilize Rhythm's features, we need your permission to access certain device capabilities."
+                PermissionScreenState.PermissionsGranted -> context.getString(R.string.onboarding_permissions_granted_desc)
+                PermissionScreenState.RedirectToSettings -> context.getString(R.string.onboarding_redirect_settings_desc)
+                PermissionScreenState.ShowRationale -> context.getString(R.string.onboarding_rationale_desc)
+                else -> context.getString(R.string.onboarding_permissions_required_desc)
             },
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
@@ -1048,8 +1076,8 @@ fun EnhancedPermissionContent(
         ) {
             EnhancedPermissionCard(
                 icon = Icons.Filled.MusicNote,
-                title = "Music Library Access",
-                description = "Read your local music files and display them in the app",
+                title = context.getString(R.string.onboarding_permission_music_title),
+                description = context.getString(R.string.onboarding_permission_music_desc),
                 isGranted = storagePermissions.all { permission ->
                     permissionsState.permissions.find { it.permission == permission }?.status?.isGranted == true
                 }
@@ -1057,8 +1085,8 @@ fun EnhancedPermissionContent(
             
             EnhancedPermissionCard(
                 icon = RhythmIcons.Devices.Bluetooth,
-                title = "Bluetooth Connectivity",
-                description = "Connect to Bluetooth speakers, headphones, and audio devices",
+                title = context.getString(R.string.onboarding_permission_bluetooth_title),
+                description = context.getString(R.string.onboarding_permission_bluetooth_desc),
                 isGranted = bluetoothPermissions.all { permission ->
                     permissionsState.permissions.find { it.permission == permission }?.status?.isGranted == true
                 }
@@ -1067,8 +1095,8 @@ fun EnhancedPermissionContent(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 EnhancedPermissionCard(
                     icon = RhythmIcons.Notifications,
-                    title = "Notifications",
-                    description = "Show playback controls and music information in notifications",
+                    title = context.getString(R.string.onboarding_permission_notifications_title),
+                    description = context.getString(R.string.onboarding_permission_notifications_desc),
                     isGranted = notificationPermissions.all { permission ->
                         permissionsState.permissions.find { it.permission == permission }?.status?.isGranted == true
                     }
@@ -1615,19 +1643,19 @@ fun EnhancedAudioPlaybackContent(
             // Haptic feedback toggle
             EnhancedThemeOption(
                 icon = Icons.Filled.TouchApp,
-                title = "Haptic Feedback",
-                description = "Enable subtle vibrations on interactions for a more tactile experience.",
+                title = context.getString(R.string.onboarding_haptic_title),
+                description = context.getString(R.string.onboarding_haptic_desc),
                 isEnabled = hapticFeedbackEnabled,
                 onToggle = { appSettings.setHapticFeedbackEnabled(it) }
             )
             
             // Default Landing Screen dropdown
             SettingsDropdownItem(
-                title = "Default Landing Screen",
-                description = "Choose which screen opens when you launch Rhythm",
-                selectedOption = if (appSettings.defaultScreen.collectAsState().value == "library") "Library" else "Home",
+                title = context.getString(R.string.onboarding_default_screen_title),
+                description = context.getString(R.string.onboarding_default_screen_desc),
+                selectedOption = if (appSettings.defaultScreen.collectAsState().value == "library") context.getString(R.string.option_library) else context.getString(R.string.option_home),
                 icon = Icons.Filled.Home,
-                options = listOf("Home", "Library"),
+                options = listOf(context.getString(R.string.option_home), context.getString(R.string.option_library)),
                 onOptionSelected = { selectedOption ->
                     appSettings.setDefaultScreen(selectedOption.lowercase())
                 }
@@ -1636,8 +1664,8 @@ fun EnhancedAudioPlaybackContent(
             // System volume control toggle
             EnhancedThemeOption(
                 icon = RhythmIcons.Player.VolumeUp,
-                title = "System Volume Control",
-                description = "Allow your device's physical volume buttons to control Rhythm's playback volume.",
+                title = context.getString(R.string.onboarding_system_volume_title),
+                description = context.getString(R.string.onboarding_system_volume_desc),
                 isEnabled = useSystemVolume,
                 onToggle = { appSettings.setUseSystemVolume(it) }
             )
@@ -1647,8 +1675,8 @@ fun EnhancedAudioPlaybackContent(
             // Auto Add to Queue toggle
             EnhancedThemeOption(
                 icon = Icons.Filled.Queue,
-                title = "Auto Add to Queue",
-                description = "Automatically create a contextual queue from the album/artist when playing a song.",
+                title = context.getString(R.string.onboarding_auto_queue_title),
+                description = context.getString(R.string.onboarding_auto_queue_desc),
                 isEnabled = appSettings.autoAddToQueue.collectAsState().value,
                 onToggle = { appSettings.setAutoAddToQueue(it) }
             )
@@ -1656,8 +1684,8 @@ fun EnhancedAudioPlaybackContent(
             // Clear Queue on New Song toggle
             EnhancedThemeOption(
                 icon = Icons.Filled.Delete,
-                title = "Clear Queue on New Song",
-                description = "Replace the entire queue when playing a new song instead of adding to it.",
+                title = context.getString(R.string.onboarding_clear_queue_title),
+                description = context.getString(R.string.onboarding_clear_queue_desc),
                 isEnabled = appSettings.clearQueueOnNewSong.collectAsState().value,
                 onToggle = { appSettings.setClearQueueOnNewSong(it) }
             )
@@ -1665,8 +1693,8 @@ fun EnhancedAudioPlaybackContent(
             // Repeat Mode Persistence toggle
             EnhancedThemeOption(
                 icon = Icons.Filled.Repeat,
-                title = "Remember Repeat Mode",
-                description = "Keep your repeat mode setting across app restarts.",
+                title = context.getString(R.string.onboarding_repeat_mode_title),
+                description = context.getString(R.string.onboarding_repeat_mode_desc),
                 isEnabled = appSettings.repeatModePersistence.collectAsState().value,
                 onToggle = { appSettings.setRepeatModePersistence(it) }
             )
@@ -1674,8 +1702,8 @@ fun EnhancedAudioPlaybackContent(
             // Shuffle Mode Persistence toggle
             EnhancedThemeOption(
                 icon = Icons.Filled.Shuffle,
-                title = "Remember Shuffle Mode",
-                description = "Keep your shuffle on/off state across app restarts.",
+                title = context.getString(R.string.onboarding_shuffle_mode_title),
+                description = context.getString(R.string.onboarding_shuffle_mode_desc),
                 isEnabled = appSettings.shuffleModePersistence.collectAsState().value,
                 onToggle = { appSettings.setShuffleModePersistence(it) }
             )
@@ -1683,8 +1711,8 @@ fun EnhancedAudioPlaybackContent(
             // ExoPlayer Shuffle toggle
             EnhancedThemeOption(
                 icon = Icons.Filled.Shuffle,
-                title = "Use ExoPlayer Shuffle",
-                description = "Let the media player handle shuffle (recommended: OFF for manual shuffle).",
+                title = context.getString(R.string.onboarding_exoplayer_shuffle_title),
+                description = context.getString(R.string.onboarding_exoplayer_shuffle_desc),
                 isEnabled = appSettings.shuffleUsesExoplayer.collectAsState().value,
                 onToggle = { appSettings.setShuffleUsesExoplayer(it) }
             )
@@ -1693,8 +1721,8 @@ fun EnhancedAudioPlaybackContent(
             // Show Lyrics toggle
             EnhancedThemeOption(
                 icon = Icons.Filled.Lyrics,
-                title = "Show Lyrics",
-                description = "Display synchronized lyrics when available for your favorite songs.",
+                title = context.getString(R.string.onboarding_show_lyrics_title),
+                description = context.getString(R.string.onboarding_show_lyrics_desc),
                 isEnabled = showLyrics,
                 onToggle = { appSettings.setShowLyrics(it) }
             )
@@ -1707,8 +1735,8 @@ fun EnhancedAudioPlaybackContent(
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     SettingsDropdownItem(
-                        title = "Lyrics Source Priority",
-                        description = "Choose which lyrics source to try first (with automatic fallback to others)",
+                        title = context.getString(R.string.onboarding_lyrics_source_title),
+                        description = context.getString(R.string.onboarding_lyrics_source_desc),
                         selectedOption = lyricsSourcePreference.displayName,
                         icon = Icons.Filled.Cloud,
                         options = chromahub.rhythm.app.data.LyricsSourcePreference.values().map { it.displayName },
@@ -1955,22 +1983,11 @@ fun EnhancedLibrarySetupContent(
         // Library tab order feature
         LibraryFeatureCard(
             icon = Icons.Filled.FormatListNumbered,
-            title = "Library Tab Order",
-            description = "Reorder Songs, Playlists, Albums, Artists, and Explorer tabs",
+            title = context.getString(R.string.onboarding_tab_order_title),
+            description = context.getString(R.string.onboarding_tab_order_desc),
             onClick = onOpenTabOrderBottomSheet,
             useTertiaryStyle = true
         )
-
-        // Playlist Management - Hidden, info only
-        /*
-        LibraryFeatureCard(
-            icon = Icons.Filled.Queue,
-            title = "Playlist Management",
-            description = "Create, import, export, and organize your music playlists",
-            onClick = onOpenPlaylistManagementBottomSheet,
-            usePrimaryStyle = true
-        )
-        */
         
         Spacer(modifier = Modifier.height(16.dp))
         
@@ -2011,6 +2028,10 @@ fun EnhancedLibrarySetupContent(
                 LibraryTipItem(
                     icon = Icons.Filled.Queue,
                     text = context.getString(R.string.onboarding_library_2)
+                )
+                LibraryTipItem(
+                    icon = Icons.Filled.LibraryMusic,
+                    text = context.getString(R.string.onboarding_library_4)
                 )
                 LibraryTipItem(
                     icon = Icons.Filled.Tune,
@@ -2280,8 +2301,8 @@ fun EnhancedThemingContent(
             // System theme toggle
             EnhancedThemeOption(
                 icon = Icons.Filled.DarkMode,
-                title = "Follow System Theme",
-                description = "Automatically switch between light and dark themes based on your device's system settings.",
+                title = context.getString(R.string.onboarding_follow_system_title),
+                description = context.getString(R.string.onboarding_follow_system_desc),
                 isEnabled = useSystemTheme,
                 onToggle = { enabled ->
                     scope.launch {
@@ -2298,8 +2319,8 @@ fun EnhancedThemingContent(
             ) {
                 EnhancedThemeOption(
                     icon = Icons.Filled.DarkMode,
-                    title = "Dark Mode",
-                    description = "Manually enable or disable dark mode for the application.",
+                    title = context.getString(R.string.onboarding_dark_mode_title),
+                    description = context.getString(R.string.onboarding_dark_mode_desc),
                     isEnabled = darkMode,
                     onToggle = { enabled ->
                         scope.launch {
@@ -2313,8 +2334,8 @@ fun EnhancedThemingContent(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 EnhancedThemeOption(
                     icon = Icons.Filled.Palette,
-                    title = "Dynamic Colors (Material You)",
-                    description = "Apply colors extracted from your device's wallpaper for a cohesive look.",
+                    title = context.getString(R.string.onboarding_dynamic_colors_title),
+                    description = context.getString(R.string.onboarding_dynamic_colors_desc),
                     isEnabled = useDynamicColors,
                     onToggle = { enabled ->
                         scope.launch {
@@ -2821,12 +2842,12 @@ fun EnhancedUpdaterContent(
         // Title shows status
         Text(
             text = when {
-                error != null -> "Update Check Failed"
-                downloadedFile != null -> "Ready to Install"
-                isDownloading -> "Downloading Update"
-                isCheckingForUpdates -> "Checking for Updates..."
-                updateAvailable -> "Update Available"
-                else -> "Stay Up to Date"
+                error != null -> context.getString(R.string.onboarding_update_check_failed)
+                downloadedFile != null -> context.getString(R.string.onboarding_ready_to_install)
+                isDownloading -> context.getString(R.string.onboarding_downloading_update)
+                isCheckingForUpdates -> context.getString(R.string.onboarding_checking_updates)
+                updateAvailable -> context.getString(R.string.onboarding_update_available)
+                else -> context.getString(R.string.onboarding_stay_up_to_date)
             },
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
@@ -2846,9 +2867,9 @@ fun EnhancedUpdaterContent(
                 error != null -> error ?: "An error occurred"
                 downloadedFile != null -> "Version ${latestVersion?.versionName ?: "?"} is ready to install"
                 isDownloading -> "${downloadProgress.toInt()}% • ${((latestVersion?.apkSize ?: 0) * downloadProgress / 100).toLong().let { updaterViewModel.getReadableFileSize(it) }} / ${latestVersion?.let { updaterViewModel.getReadableFileSize(it.apkSize) } ?: ""}"
-                isCheckingForUpdates -> "Fetching latest version from GitHub..."
+                isCheckingForUpdates -> context.getString(R.string.fetching_latest_version)
                 updateAvailable -> "Version ${latestVersion?.versionName ?: "?"} • ${latestVersion?.let { updaterViewModel.getReadableFileSize(it.apkSize) } ?: ""}"
-                else -> "Get the latest features, improvements, and bug fixes automatically from GitHub. Choose between Stable releases (recommended) or Beta builds for early access to new features. No Google Play required."
+                else -> context.getString(R.string.onboarding_update_default_desc)
             },
             style = MaterialTheme.typography.bodyMedium,
             color = when {
@@ -2905,8 +2926,8 @@ fun EnhancedUpdaterContent(
             // Enable Updates toggle (NEW)
             EnhancedUpdateOption(
                 icon = Icons.Filled.SystemUpdate,
-                title = "Enable Updates",
-                description = "Allow the app to check for and download updates",
+                title = context.getString(R.string.onboarding_enable_updates_title),
+                description = context.getString(R.string.onboarding_enable_updates_desc),
                 isEnabled = updatesEnabled,
                 onToggle = { enabled ->
                     scope.launch {
@@ -2925,8 +2946,8 @@ fun EnhancedUpdaterContent(
                         // Auto check for updates toggle (now inside AnimatedVisibility)
                     EnhancedUpdateOption(
                         icon = Icons.Filled.Autorenew,
-                        title = "Periodic Check", // Changed title
-                        description = "Check for updates from Rhythm's GitHub repo automatically", // Changed description
+                        title = context.getString(R.string.onboarding_periodic_check_title),
+                        description = context.getString(R.string.onboarding_periodic_check_desc),
                         isEnabled = autoCheckForUpdates,
                         onToggle = { enabled ->
                             scope.launch {
@@ -2938,8 +2959,8 @@ fun EnhancedUpdaterContent(
                     // Update Notifications toggle
                     EnhancedUpdateOption(
                         icon = Icons.Filled.Notifications,
-                        title = "Update Notifications",
-                        description = "Get notified when new versions are available",
+                        title = context.getString(R.string.onboarding_update_notifications_title),
+                        description = context.getString(R.string.onboarding_update_notifications_desc),
                         isEnabled = updateNotificationsEnabled,
                         onToggle = { enabled ->
                             scope.launch {
@@ -2951,8 +2972,8 @@ fun EnhancedUpdaterContent(
                     // Smart Polling toggle
                     EnhancedUpdateOption(
                         icon = Icons.Filled.CloudSync,
-                        title = "Smart Polling",
-                        description = "Use efficient checks to save GitHub API calls",
+                        title = context.getString(R.string.onboarding_smart_polling_title),
+                        description = context.getString(R.string.onboarding_smart_polling_desc),
                         isEnabled = useSmartUpdatePolling,
                         onToggle = { enabled ->
                             scope.launch {
@@ -2963,31 +2984,36 @@ fun EnhancedUpdaterContent(
                     
                     // Check Interval dropdown
                     SettingsDropdownItem(
-                        title = "Check Interval",
-                        description = "How often to check for updates",
+                        title = context.getString(R.string.onboarding_check_interval_title),
+                        description = context.getString(R.string.onboarding_check_interval_desc),
                         selectedOption = when (updateCheckIntervalHours) {
-                            1 -> "Every Hour"
-                            3 -> "Every 3 Hours"
-                            6 -> "Every 6 Hours"
-                            12 -> "Every 12 Hours"
-                            24 -> "Daily"
-                            else -> "Every 6 Hours"
+                            1 -> context.getString(R.string.option_every_hour)
+                            3 -> context.getString(R.string.option_every_3_hours)
+                            6 -> context.getString(R.string.option_every_6_hours)
+                            12 -> context.getString(R.string.option_every_12_hours)
+                            24 -> context.getString(R.string.option_daily)
+                            else -> context.getString(R.string.option_every_6_hours)
                         },
                         icon = Icons.Filled.Schedule,
                         options = listOf(
-                            "Every Hour",
-                            "Every 3 Hours", 
-                            "Every 6 Hours",
-                            "Every 12 Hours",
-                            "Daily"
+                            context.getString(R.string.option_every_hour),
+                            context.getString(R.string.option_every_3_hours), 
+                            context.getString(R.string.option_every_6_hours),
+                            context.getString(R.string.option_every_12_hours),
+                            context.getString(R.string.option_daily)
                         ),
                         onOptionSelected = { selectedOption ->
+                            val everyHour = context.getString(R.string.option_every_hour)
+                            val every3Hours = context.getString(R.string.option_every_3_hours)
+                            val every6Hours = context.getString(R.string.option_every_6_hours)
+                            val every12Hours = context.getString(R.string.option_every_12_hours)
+                            val daily = context.getString(R.string.option_daily)
                             val hours = when (selectedOption) {
-                                "Every Hour" -> 1
-                                "Every 3 Hours" -> 3
-                                "Every 6 Hours" -> 6
-                                "Every 12 Hours" -> 12
-                                "Daily" -> 24
+                                everyHour -> 1
+                                every3Hours -> 3
+                                every6Hours -> 6
+                                every12Hours -> 12
+                                daily -> 24
                                 else -> 6
                             }
                             scope.launch {
@@ -2998,23 +3024,25 @@ fun EnhancedUpdaterContent(
 
                             // Update channel selection dropdown
                     SettingsDropdownItem(
-                        title = "Update Channel",
-                        description = "Stable or beta versions.",
+                        title = context.getString(R.string.onboarding_update_channel_title),
+                        description = context.getString(R.string.onboarding_update_channel_desc),
                         selectedOption = when (updateChannel) {
-                            "stable" -> "Stable"
-                            "beta" -> "Beta"
-                            else -> "Stable"
+                            "stable" -> context.getString(R.string.option_stable)
+                            "beta" -> context.getString(R.string.option_beta)
+                            else -> context.getString(R.string.option_stable)
                         },
                         icon = when (updateChannel) {
                             "stable" -> Icons.Filled.Public
                             "beta" -> Icons.Filled.BugReport
                             else -> Icons.Filled.Public
                         },
-                        options = listOf("Stable", "Beta"),
+                        options = listOf(context.getString(R.string.option_stable), context.getString(R.string.option_beta)),
                         onOptionSelected = { selectedOption ->
+                            val stableOption = context.getString(R.string.option_stable)
+                            val betaOption = context.getString(R.string.option_beta)
                             val channel = when (selectedOption) {
-                                "Stable" -> "stable"
-                                "Beta" -> "beta"
+                                stableOption -> "stable"
+                                betaOption -> "beta"
                                 else -> "stable"
                             }
                             scope.launch {
@@ -3605,7 +3633,7 @@ fun EnhancedMediaScanContent(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "How It Works",
+                        text = context.getString(R.string.onboarding_how_it_works),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -3886,20 +3914,20 @@ fun EnhancedSetupFinishedContent(onFinish: () -> Unit) {
         ) {
             SetupCompleteFeature(
                 icon = Icons.Filled.LibraryMusic,
-                title = "Library Configured",
-                description = "Your music library organization preferences are set"
+                title = context.getString(R.string.onboarding_library_configured),
+                description = context.getString(R.string.onboarding_library_configured_desc)
             )
 
             SetupCompleteFeature(
                 icon = Icons.Filled.Palette,
-                title = "Theme Applied",
-                description = "Your custom theme and appearance settings are ready"
+                title = context.getString(R.string.onboarding_theme_applied),
+                description = context.getString(R.string.onboarding_theme_applied_desc)
             )
 
             SetupCompleteFeature(
                 icon = Icons.Filled.Backup,
-                title = "Backup Options",
-                description = "Auto-backup and restoration settings configured"
+                title = context.getString(R.string.onboarding_backup_options),
+                description = context.getString(R.string.onboarding_backup_options_desc)
             )
 
             // SetupCompleteFeature(
@@ -4062,7 +4090,7 @@ private fun OnboardingExpressiveUpdateStatus(
                             modifier = Modifier.size(20.dp)
                         )
                         Text(
-                            text = "In Progress",
+                            text = context.getString(R.string.onboarding_in_progress),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.secondary
@@ -4132,7 +4160,7 @@ private fun OnboardingExpressiveUpdateStatus(
                             border = BorderStroke(2.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
                         ) {
                             Text(
-                                text = "Dismiss",
+                                text = context.getString(R.string.onboarding_dismiss),
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.titleSmall,
                                 modifier = Modifier.padding(vertical = 6.dp)
@@ -4158,7 +4186,7 @@ private fun OnboardingExpressiveUpdateStatus(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Retry",
+                                text = context.getString(R.string.onboarding_retry),
                                 fontWeight = FontWeight.ExtraBold,
                                 style = MaterialTheme.typography.titleSmall,
                                 modifier = Modifier.padding(vertical = 6.dp)

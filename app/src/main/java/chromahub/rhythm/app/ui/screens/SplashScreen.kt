@@ -200,10 +200,30 @@ fun SplashScreen(
         }
     }
 
+    // Animated glow for background
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.03f,
+        targetValue = 0.08f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(3000, easing = EaseInOutSine),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glowAlpha"
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .background(
+                brush = androidx.compose.ui.graphics.Brush.radialGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primary.copy(alpha = glowAlpha),
+                        MaterialTheme.colorScheme.background
+                    ),
+                    radius = 800f
+                )
+            )
             .graphicsLayer {
                 scaleX = exitScale.value
                 scaleY = exitScale.value
@@ -324,10 +344,10 @@ fun SplashScreen(
                                         Spacer(modifier = Modifier.height(12.dp))
                                         Text(
                                             text = when (activeFestiveTheme) {
-                                                FestiveThemeType.CHRISTMAS -> "🎄 Merry Christmas! 🎅"
-                                                FestiveThemeType.NEW_YEAR -> "🎆 Happy New Year! 🎉"
-                                                FestiveThemeType.HALLOWEEN -> "🎃 Happy Halloween! 👻"
-                                                FestiveThemeType.VALENTINES -> "💝 Happy Valentine's Day! 💕"
+                                                FestiveThemeType.CHRISTMAS -> context.getString(R.string.festive_greeting_christmas)
+                                                FestiveThemeType.NEW_YEAR -> context.getString(R.string.festive_greeting_new_year)
+                                                FestiveThemeType.HALLOWEEN -> context.getString(R.string.festive_greeting_halloween)
+                                                FestiveThemeType.VALENTINES -> context.getString(R.string.festive_greeting_valentines)
                                                 else -> ""
                                             },
                                             style = MaterialTheme.typography.bodyLarge.copy(

@@ -260,6 +260,7 @@ object RhythmIcons {
     val Pushpin = Actions.Pushpin // Added Pushpin icon
     val PinOutline = Actions.PinOutline // Added PinOutline icon
     val ArrowUpward = Actions.ArrowUpward // Added ArrowUpward icon
+    val Tune = Actions.Tune // Added Tune icon for crossfade settings
     
     // Location
     val Location = Devices.LocationOutlined

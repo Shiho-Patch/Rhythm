@@ -319,7 +319,7 @@ fun SongInfoBottomSheet(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = "Actions",
+                            text = context.getString(R.string.bottomsheet_actions),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 4.dp, bottom = 2.dp),
@@ -768,7 +768,7 @@ private fun MetadataGridSection(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Metadata",
+                    text = context.getString(R.string.bottomsheet_metadata),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface

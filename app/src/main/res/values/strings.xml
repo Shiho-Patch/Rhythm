@@ -1,6 +1,12 @@
 <resources>
     <string name="app_name">Rhythm</string>
     
+    <!-- Common Labels -->
+    <string name="home">Home</string>
+    <string name="library">Library</string>
+    <string name="search">Search</string>
+    <string name="settings">Settings</string>
+    
     <!-- Media3 notification configuration -->
     <string name="media3_notification_channel_name">Rhythm Music</string>
     <string name="media3_notification_channel_description">Media playback controls</string>
@@ -76,6 +82,15 @@
     <string name="settings_remember_repeat_mode_desc">Save repeat mode (Off/All/One) between app restarts</string>
     <string name="settings_remember_shuffle_mode">Remember Shuffle Mode</string>
     <string name="settings_remember_shuffle_mode_desc">Save shuffle on/off state between app restarts</string>
+    <string name="settings_audio_effects">Audio Effects</string>
+    <string name="settings_crossfade">Crossfade</string>
+    <string name="settings_crossfade_desc">Smooth transition between songs</string>
+    <string name="settings_crossfade_duration">Crossfade Duration</string>
+    <string name="settings_crossfade_duration_desc">%1$.1f seconds</string>
+    <string name="settings_time_display">Time Display</string>
+    <string name="settings_use_hours">Use Hours in Time Format</string>
+    <string name="settings_use_hours_enabled">Shows 1:32:26 for long tracks</string>
+    <string name="settings_use_hours_disabled">Shows 92:26 for long tracks</string>
     
     <!-- Settings - Playlists -->
     <string name="settings_playlists">Playlists</string>
@@ -98,6 +113,8 @@
     <string name="settings_total">Total</string>
     <string name="settings_custom">Custom</string>
     <string name="settings_default">Default</string>
+    <string name="settings_enable_default_playlists">Enable Default Playlists</string>
+    <string name="settings_enable_default_playlists_desc">Automatically create Recently Added and Most Played playlists</string>
     
     <!-- Operation Progress -->
     <string name="operation_exporting_playlists">Exporting playlists…</string>
@@ -219,10 +236,6 @@
     <!-- HomeScreen -->
     <string name="home_title">Rhythm</string>
     <string name="home_settings_cd">Settings</string>
-    <string name="home_greeting_night">Good night</string>
-    <string name="home_greeting_morning">Good morning</string>
-    <string name="home_greeting_afternoon">Good afternoon</string>
-    <string name="home_greeting_evening">Good evening</string>
     <string name="home_discover_albums">Discover Albums</string>
     <string name="home_explore_music">Explore amazing music</string>
     <string name="home_no_featured_albums">No Featured Albums</string>
@@ -482,6 +495,7 @@
     <string name="onboarding_library_1">Customize tab order in Library for quick access to your favorites</string>
     <string name="onboarding_library_2">Create and manage playlists directly from the Library screen</string>
     <string name="onboarding_library_3">Advanced display and sorting options available in Settings > Theme Customization</string>
+    <string name="onboarding_library_4">Default playlists (Recently Added, Most Played) can be toggled in Settings > Playlists</string>
     <string name="onboarding_theme_title">Make Rhythm Yours</string>
     <string name="onboarding_theme_desc">Personalize Rhythm\'s appearance to match your style. Choose your system theme, font, or Material You dynamic colors (Android 12+).</string>
     <string name="onboarding_live_preview">Live Preview</string>
@@ -517,6 +531,130 @@
     <string name="onboarding_next_finetune">Fine-tune audio with the Equalizer</string>
     <string name="onboarding_next_explore">Explore more settings anytime</string>
     <string name="onboarding_settings_change">All settings can be changed anytime in Settings</string>
+    
+    <!-- Onboarding Navigation -->
+    <string name="onboarding_back">Back</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_checking">Checking…</string>
+    <string name="onboarding_lets_go">Let\'s Go!</string>
+    <string name="onboarding_finish_setup">Finish Setup</string>
+    <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_open_settings">Open Settings</string>
+    <string name="onboarding_grant_access">Grant Access</string>
+    <string name="onboarding_language">Language</string>
+    
+    <!-- Onboarding Permission Screen -->
+    <string name="onboarding_permissions_granted_title">Permissions Granted!</string>
+    <string name="onboarding_action_required_settings">Action Required: Open Settings</string>
+    <string name="onboarding_permissions_needed">Permissions Needed</string>
+    <string name="onboarding_grant_permissions">Grant Permissions</string>
+    <string name="onboarding_permissions_granted_desc">All necessary permissions have been granted. You are ready to proceed!</string>
+    <string name="onboarding_redirect_settings_desc">To grant the required permissions, please navigate to the app settings on your device.</string>
+    <string name="onboarding_rationale_desc">Rhythm requires certain permissions to function correctly. Please grant them to continue.</string>
+    <string name="onboarding_permissions_required_desc">To fully utilize Rhythm\'s features, we need your permission to access certain device capabilities.</string>
+    <string name="onboarding_permission_music_title">Music Library Access</string>
+    <string name="onboarding_permission_music_desc">Read your local music files and display them in the app</string>
+    <string name="onboarding_permission_bluetooth_title">Bluetooth Connectivity</string>
+    <string name="onboarding_permission_bluetooth_desc">Connect to Bluetooth speakers, headphones, and audio devices</string>
+    <string name="onboarding_permission_notifications_title">Notifications</string>
+    <string name="onboarding_permission_notifications_desc">Show playback controls and music information in notifications</string>
+    
+    <!-- Onboarding Audio &amp; Playback -->
+    <string name="onboarding_haptic_title">Haptic Feedback</string>
+    <string name="onboarding_haptic_desc">Enable subtle vibrations on interactions for a more tactile experience.</string>
+    <string name="onboarding_default_screen_title">Default Landing Screen</string>
+    <string name="onboarding_default_screen_desc">Choose which screen opens when you launch Rhythm</string>
+    <string name="onboarding_system_volume_title">System Volume Control</string>
+    <string name="onboarding_system_volume_desc">Allow your device\'s physical volume buttons to control Rhythm\'s playback volume.</string>
+    <string name="onboarding_auto_queue_title">Auto Add to Queue</string>
+    <string name="onboarding_auto_queue_desc">Automatically create a contextual queue from the album/artist when playing a song.</string>
+    <string name="onboarding_clear_queue_title">Clear Queue on New Song</string>
+    <string name="onboarding_clear_queue_desc">Replace the entire queue when playing a new song instead of adding to it.</string>
+    <string name="onboarding_repeat_mode_title">Remember Repeat Mode</string>
+    <string name="onboarding_repeat_mode_desc">Keep your repeat mode setting across app restarts.</string>
+    <string name="onboarding_shuffle_mode_title">Remember Shuffle Mode</string>
+    <string name="onboarding_shuffle_mode_desc">Keep your shuffle on/off state across app restarts.</string>
+    <string name="onboarding_exoplayer_shuffle_title">Use ExoPlayer Shuffle</string>
+    <string name="onboarding_exoplayer_shuffle_desc">Let the media player handle shuffle (recommended: OFF for manual shuffle).</string>
+    <string name="onboarding_show_lyrics_title">Show Lyrics</string>
+    <string name="onboarding_show_lyrics_desc">Display synchronized lyrics when available for your favorite songs.</string>
+    <string name="onboarding_lyrics_source_title">Lyrics Source Priority</string>
+    <string name="onboarding_lyrics_source_desc">Choose which lyrics source to try first (with automatic fallback to others)</string>
+    
+    <!-- Onboarding Library Setup -->
+    <string name="onboarding_tab_order_title">Library Tab Order</string>
+    <string name="onboarding_tab_order_desc">Reorder Songs, Playlists, Albums, Artists, and Explorer tabs</string>
+    
+    <!-- Onboarding Theming -->
+    <string name="onboarding_follow_system_title">Follow System Theme</string>
+    <string name="onboarding_follow_system_desc">Automatically switch between light and dark themes based on your device\'s system settings.</string>
+    <string name="onboarding_dark_mode_title">Dark Mode</string>
+    <string name="onboarding_dark_mode_desc">Manually enable or disable dark mode for the application.</string>
+    <string name="onboarding_dynamic_colors_title">Dynamic Colors (Material You)</string>
+    <string name="onboarding_dynamic_colors_desc">Apply colors extracted from your device\'s wallpaper for a cohesive look.</string>
+    
+    <!-- Onboarding Updater -->
+    <string name="onboarding_update_check_failed">Update Check Failed</string>
+    <string name="onboarding_ready_to_install">Ready to Install</string>
+    <string name="onboarding_downloading_update">Downloading Update</string>
+    <string name="onboarding_checking_updates">Checking for Updates…</string>
+    <string name="onboarding_update_available">Update Available</string>
+    <string name="onboarding_stay_up_to_date">Stay Up to Date</string>
+    <string name="onboarding_update_default_desc">Get the latest features, improvements, and bug fixes automatically from GitHub. Choose between Stable releases (recommended) or Beta builds for early access to new features. No Google Play required.</string>
+    <string name="onboarding_enable_updates_title">Enable Updates</string>
+    <string name="onboarding_enable_updates_desc">Allow the app to check for and download updates</string>
+    <string name="onboarding_periodic_check_title">Periodic Check</string>
+    <string name="onboarding_periodic_check_desc">Check for updates from Rhythm\'s GitHub repo automatically</string>
+    <string name="onboarding_update_notifications_title">Update Notifications</string>
+    <string name="onboarding_update_notifications_desc">Get notified when new versions are available</string>
+    <string name="onboarding_smart_polling_title">Smart Polling</string>
+    <string name="onboarding_smart_polling_desc">Use efficient checks to save GitHub API calls</string>
+    <string name="onboarding_check_interval_title">Check Interval</string>
+    <string name="onboarding_check_interval_desc">How often to check for updates</string>
+    <string name="onboarding_update_channel_title">Update Channel</string>
+    <string name="onboarding_update_channel_desc">Stable or beta versions.</string>
+    <string name="fetching_latest_version">Fetching latest version from GitHub…</string>
+    
+    <!-- Onboarding Update Options -->
+    <string name="option_every_hour">Every Hour</string>
+    <string name="option_every_3_hours">Every 3 Hours</string>
+    <string name="option_every_6_hours">Every 6 Hours</string>
+    <string name="option_every_12_hours">Every 12 Hours</string>
+    <string name="option_daily">Daily</string>
+    <string name="option_stable">Stable</string>
+    <string name="option_beta">Beta</string>
+    <string name="option_home">Home</string>
+    <string name="option_library">Library</string>
+    
+    <!-- Onboarding Media Scan -->
+    <string name="onboarding_how_it_works">How It Works</string>
+    
+    <!-- Onboarding Setup Complete -->
+    <string name="onboarding_library_configured">Library Configured</string>
+    <string name="onboarding_library_configured_desc">Your music library organization preferences are set</string>
+    <string name="onboarding_theme_applied">Theme Applied</string>
+    <string name="onboarding_theme_applied_desc">Your custom theme and appearance settings are ready</string>
+    <string name="onboarding_backup_options">Backup Options</string>
+    <string name="onboarding_backup_options_desc">Auto-backup and restoration settings configured</string>
+    
+    <!-- Onboarding Update Status UI -->
+    <string name="onboarding_in_progress">In Progress</string>
+    <string name="onboarding_dismiss">Dismiss</string>
+    <string name="onboarding_retry">Retry</string>
+    
+    <!-- MiniPlayer Swipe Hints -->
+    <string name="miniplayer_swipe_up_hint">↑ Full Player</string>
+    <string name="miniplayer_swipe_down_hint">↓ Dismiss</string>
+    <string name="miniplayer_swipe_left_hint">Next →</string>
+    <string name="miniplayer_swipe_right_hint">← Previous</string>
+    <string name="miniplayer_no_song">No song playing</string>
+    <string name="badge_live">LIVE</string>
+    
+    <!-- Festive Greetings -->
+    <string name="festive_greeting_christmas">🎄 Merry Christmas! 🎅</string>
+    <string name="festive_greeting_new_year">🎆 Happy New Year! 🎉</string>
+    <string name="festive_greeting_halloween">🎃 Happy Halloween! 👻</string>
+    <string name="festive_greeting_valentines">💝 Happy Valentine\'s Day! 💕</string>
     
     <!-- Settings -->
     <string name="settings_tip_theme">Customize your theme with colors, fonts, and festive effects</string>
@@ -676,8 +814,26 @@
     <string name="lyrics_source_priority_desc_placeholder">Choose where Rhythm should look for lyrics first</string>
     <string name="playlist_action_title">Playlist Action</string>
     <string name="playlist_action_desc">Choose what happens when you tap a song in a playlist</string>
+    <string name="playlist_action_choose">Choose default behavior when tapping songs in playlists</string>
+    <string name="playlist_action_ask_title">Ask each time</string>
+    <string name="playlist_action_ask_desc">Show dialog with options to choose</string>
+    <string name="playlist_action_load_title">Load entire playlist</string>
+    <string name="playlist_action_load_desc">Replace queue and play from selected song</string>
+    <string name="playlist_action_single_title">Play only this song</string>
+    <string name="playlist_action_single_desc">Don\'t change the queue</string>
     <string name="queue_action_title">Queue Action</string>
     <string name="queue_action_desc">Choose what happens when you play a song while the queue is not empty</string>
+    <string name="queue_action_choose">Choose what happens when playing a song while queue is not empty</string>
+    <string name="queue_action_ask_title">Ask each time</string>
+    <string name="queue_action_ask_desc">Show dialog with Clear &amp; Play and Add to Queue options</string>
+    <string name="queue_action_replace_title">Replace queue</string>
+    <string name="queue_action_replace_desc">Clear queue and play selected song</string>
+    <string name="queue_action_next_title">Play next</string>
+    <string name="queue_action_next_desc">Add after currently playing song</string>
+    <string name="queue_action_add_title">Add to queue</string>
+    <string name="queue_action_add_desc">Add song at the end of queue</string>
+    <string name="queue_action_always_add_title">Always add to queue</string>
+    <string name="queue_action_always_add_desc">Automatically add songs to queue without asking</string>
     
     <!-- Additional UI Elements -->
     <string name="now_playing">NOW PLAYING</string>
@@ -804,6 +960,8 @@
     <string name="action_change">Change</string>
     <string name="action_choose">Choose</string>
     <string name="action_default">Default</string>
+    <string name="action_play">Play</string>
+    <string name="action_shuffle">Shuffle</string>
     
     <!-- Settings Screen -->
     <string name="settings_title">Settings</string>
@@ -1038,6 +1196,16 @@
     <string name="cd_toggle_multi_select">Toggle multi-select</string>
     <string name="cd_add_song">Add song</string>
     
+    <!-- Bottom Sheet Titles -->
+    <string name="bottomsheet_add_to_playlist">Add to playlist</string>
+    <string name="bottomsheet_no_playlists">No playlists yet</string>
+    <string name="bottomsheet_actions">Actions</string>
+    <string name="bottomsheet_metadata">Metadata</string>
+    <string name="bottomsheet_queue">Queue</string>
+    <string name="bottomsheet_up_next">UP NEXT</string>
+    <string name="bottomsheet_albums">Albums</string>
+    <string name="bottomsheet_songs">Songs</string>
+    
     <!-- Audio Quality Labels -->
     <string name="audio_quality_dolby_atmos">Dolby Atmos</string>
     <string name="audio_quality_dolby_truehd">Dolby TrueHD</string>
@@ -1097,4 +1265,113 @@
     <!-- Misc UI -->
     <string name="ui_clear_all">Clear All</string>
     <string name="ui_error_generic">Error</string>
+    
+    <!-- Settings Screen - Complete -->
+    <string name="settings_home_customization">Home Screen</string>
+    <string name="settings_home_customization_desc">Customize home screen sections and layout</string>
+    <string name="settings_player_customization">Player Screen</string>
+    <string name="settings_player_customization_desc">Customize player controls and chips</string>
+    <string name="settings_miniplayer_customization">Mini Player</string>
+    <string name="settings_miniplayer_customization_desc">Customize compact player appearance</string>
+    <string name="settings_gestures">Gestures</string>
+    <string name="settings_gestures_desc">Configure swipe and touch gestures</string>
+    <string name="settings_artist_parsing">Artist Parsing</string>
+    <string name="settings_artist_parsing_desc">Configure multi-artist detection and display</string>
+    <string name="settings_rhythm_stats">Listening Stats</string>
+    <string name="settings_rhythm_stats_desc">View your listening history and insights</string>
+    
+    <!-- Rhythm Stats Screen -->
+    <string name="stats_title">Rhythm Stats</string>
+    <string name="stats_today">Today</string>
+    <string name="stats_this_week">This Week</string>
+    <string name="stats_this_month">This Month</string>
+    <string name="stats_all_time">All Time</string>
+    <string name="stats_total_listening_time">Total Listening Time</string>
+    <string name="stats_total_plays">Total Plays</string>
+    <string name="stats_unique_tracks">Unique Tracks</string>
+    <string name="stats_top_vibes">Top Vibes</string>
+    <string name="stats_star_artists">Star Artists</string>
+    <string name="stats_genre_mix">Genre Mix</string>
+    <string name="stats_beat_timeline">Beat Timeline</string>
+    <string name="stats_musical_journey">Your Musical Journey</string>
+    <string name="stats_no_data">No listening data yet</string>
+    <string name="stats_start_listening">Start playing music to see your stats</string>
+    <string name="stats_rise_rhythm">Rise &amp; Rhythm</string>
+    <string name="stats_midday_beats">Midday Beats</string>
+    <string name="stats_evening_vibes">Evening Vibes</string>
+    <string name="stats_night_grooves">Night Grooves</string>
+    <string name="stats_just_started">Just getting started! 🎵</string>
+    <string name="stats_nice_rhythm">Nice rhythm going! 🎸</string>
+    <string name="stats_jamming">You\'re jamming! 🎧</string>
+    <string name="stats_enthusiast">Music enthusiast! 🎹</string>
+    <string name="stats_legendary">Legendary listener! 🌟</string>
+    <string name="stats_maestro">Music maestro! 🎼</string>
+    <string name="stats_sage">Ultimate music sage! 👑</string>
+    
+    <!-- Cache Management Complete -->
+    <string name="cache_artwork_images">Artwork Images</string>
+    <string name="cache_artwork_images_desc">Album covers, artist photos, and thumbnails</string>
+    <string name="cache_lyrics">Lyrics Cache</string>
+    <string name="cache_lyrics_desc">Downloaded and synced lyrics data</string>
+    <string name="cache_canvas_videos">Canvas Videos</string>
+    <string name="cache_canvas_videos_desc">Animated music backgrounds</string>
+    <string name="cache_misc_temp">Misc &amp; Temp</string>
+    <string name="cache_misc_temp_desc">Temporary and miscellaneous files</string>
+    <string name="cache_clear_artwork">Clear Artwork Cache</string>
+    <string name="cache_clear_lyrics">Clear Lyrics Cache</string>
+    <string name="cache_clear_canvas">Clear Canvas Cache</string>
+    <string name="cache_remove_all_data">Remove all cached data</string>
+    <string name="cache_good_to_know">Good to Know</string>
+    <string name="cache_tip_auto">Cache helps load content faster and reduces data usage</string>
+    <string name="cache_tip_limit">Set a cache limit to manage storage automatically</string>
+    <string name="cache_tip_clear">Clearing cache will not delete your music or playlists</string>
+    
+    <!-- Queue Playback Settings -->
+    <string name="queue_use_exoplayer_shuffle">Use ExoPlayer Shuffle</string>
+    <string name="queue_use_exoplayer_shuffle_desc">Let the media player handle shuffle</string>
+    <string name="queue_auto_add">Auto Add to Queue</string>
+    <string name="queue_auto_add_desc">Automatically add related songs when playing</string>
+    <string name="queue_clear_on_new">Clear on New Song</string>
+    <string name="queue_clear_on_new_desc">Clear queue when playing a new song directly</string>
+    <string name="queue_remember_repeat">Remember Repeat Mode</string>
+    <string name="queue_remember_repeat_desc">Save repeat mode between app restarts</string>
+    <string name="queue_remember_shuffle">Remember Shuffle Mode</string>
+    <string name="queue_remember_shuffle_desc">Save shuffle state between app restarts</string>
+    <string name="queue_playback_speed">Playback Speed</string>
+    <string name="queue_playback_speed_desc">Adjust playback speed</string>
+    
+    <!-- Gestures Settings -->
+    <string name="gestures_player_swipe_dismiss">Swipe Down to Dismiss</string>
+    <string name="gestures_player_swipe_dismiss_desc">Swipe down on player to close it</string>
+    <string name="gestures_player_swipe_tracks">Swipe to Change Tracks</string>
+    <string name="gestures_player_swipe_tracks_desc">Swipe left/right on artwork to skip tracks</string>
+    <string name="gestures_artwork_double_tap">Double Tap Artwork</string>
+    <string name="gestures_artwork_double_tap_desc">Double tap on artwork to play/pause</string>
+    
+    <!-- Playlist Settings Toggle -->
+    <string name="playlist_ask_each_time">Ask each time</string>
+    <string name="playlist_ask_each_time_desc">Show dialog with options</string>
+    <string name="playlist_load_entire">Load entire playlist</string>
+    <string name="playlist_load_entire_desc">Replace queue and play from selected song</string>
+    <string name="playlist_play_single">Play only this song</string>
+    <string name="playlist_play_single_desc">Don\'t change the queue</string>
+    <string name="queue_always_add">Always add to queue</string>
+    <string name="queue_always_add_desc">Automatically add songs to queue without asking</string>
+    
+    <!-- About Multi-Artist Parsing -->
+    <string name="artist_parsing_about">About Multi-Artist Parsing</string>
+    <string name="artist_parsing_tip_1">Songs with multiple artists are split using separators</string>
+    <string name="artist_parsing_tip_2">Each artist appears separately in your library</string>
+    <string name="artist_parsing_tip_3">Use custom separators for better organization</string>
+    
+    <!-- Home Screen Greetings -->
+    <string name="home_greeting_night">Good Night</string>
+    <string name="home_greeting_morning">Good Morning</string>
+    <string name="home_greeting_afternoon">Good Afternoon</string>
+    <string name="home_greeting_evening">Good Evening</string>
+    
+    <!-- Content Descriptions (additional) -->
+    <string name="cd_reorder_home_sections">Reorder home sections</string>
+    <string name="cd_artist">Artist %1$s</string>
+    <string name="cd_view_detailed_stats">View detailed stats</string>
 </resources>

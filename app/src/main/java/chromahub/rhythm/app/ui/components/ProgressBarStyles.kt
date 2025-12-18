@@ -4,10 +4,13 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -983,6 +986,16 @@ private fun WavyCircularProgress(
     val phaseShiftAnim = remember { Animatable(0f) }
     val phaseShift = phaseShiftAnim.value
     
+    // Wave amplitude animation - animates to 0 when paused (flat circle)
+    val waveAmplitudeAnim by animateFloatAsState(
+        targetValue = if (isPlaying) 0.3f else 0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "waveAmplitude"
+    )
+    
     LaunchedEffect(isPlaying) {
         if (isPlaying) {
             val fullRotation = (2 * PI).toFloat()
@@ -1013,7 +1026,8 @@ private fun WavyCircularProgress(
                 strokeWidth = stroke,
                 cornerRadius = rectCornerRadius,
                 isWavy = true,
-                waveOffset = phaseShift
+                waveOffset = phaseShift,
+                waveAmplitude = waveAmplitudeAnim
             )
         } else {
             // Original circular implementation
@@ -1028,7 +1042,7 @@ private fun WavyCircularProgress(
                 style = Stroke(width = stroke)
             )
             
-            // Draw wavy progress
+            // Draw wavy progress (wave flattens to circle when paused)
             if (progress > 0f) {
                 val path = Path()
                 val sweepAngle = 360f * progress
@@ -1042,7 +1056,7 @@ private fun WavyCircularProgress(
                     if (angle > sweepAngle) break
                     
                     val angleRad = Math.toRadians((angle - 90).toDouble())
-                    val wave = sin((angle / 360f * 12 * PI) + phaseShift).toFloat() * stroke * 0.3f
+                    val wave = sin((angle / 360f * 12 * PI) + phaseShift).toFloat() * stroke * waveAmplitudeAnim
                     val currentRadius = radius + wave
                     
                     val x = center.x + (currentRadius * kotlin.math.cos(angleRad)).toFloat()
@@ -1373,7 +1387,8 @@ private fun DrawScope.drawRoundedRectProgress(
     cornerRadius: Float,
     isWavy: Boolean = false,
     waveOffset: Float = 0f,
-    useRoundCap: Boolean = false
+    useRoundCap: Boolean = false,
+    waveAmplitude: Float = 0.2f
 ) {
     val halfStroke = strokeWidth / 2
     val left = halfStroke
@@ -1402,7 +1417,8 @@ private fun DrawScope.drawRoundedRectProgress(
             progress = progress,
             isWavy = isWavy,
             waveOffset = waveOffset,
-            strokeWidth = strokeWidth
+            strokeWidth = strokeWidth,
+            waveAmplitude = waveAmplitude
         )
         
         drawPath(
@@ -1562,7 +1578,8 @@ private fun DrawScope.createRoundedRectProgressPath(
     progress: Float,
     isWavy: Boolean,
     waveOffset: Float,
-    strokeWidth: Float
+    strokeWidth: Float,
+    waveAmplitude: Float = 0.2f
 ): Path {
     val path = Path()
     val perimeter = calculateRoundedRectPerimeter(right - left, bottom - top, cornerRadius)
@@ -1578,9 +1595,9 @@ private fun DrawScope.createRoundedRectProgressPath(
         val offset = i * stepLength
         var point = getPointOnRoundedRect(left, top, right, bottom, cornerRadius, offset)
         
-        if (isWavy) {
-            // Add wave effect
-            val wave = sin((offset / perimeter * 12 * PI) + waveOffset).toFloat() * strokeWidth * 0.2f
+        if (isWavy && waveAmplitude > 0f) {
+            // Add wave effect - amplitude controls waviness (0 = flat circle, 0.2+ = wavy)
+            val wave = sin((offset / perimeter * 12 * PI) + waveOffset).toFloat() * strokeWidth * waveAmplitude
             // Apply wave perpendicular to path
             val nextPoint = getPointOnRoundedRect(left, top, right, bottom, cornerRadius, (offset + 1).coerceAtMost(perimeter))
             val dx = nextPoint.x - point.x

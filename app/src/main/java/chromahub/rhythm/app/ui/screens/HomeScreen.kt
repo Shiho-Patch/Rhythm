@@ -519,7 +519,7 @@ fun HomeScreen(
             ) {
                 Icon(
                     imageVector = Icons.Filled.Reorder,
-                    contentDescription = "Reorder home sections"
+                    contentDescription = context.getString(R.string.cd_reorder_home_sections)
                 )
             }
             FilledIconButton(
@@ -1291,7 +1291,7 @@ private fun ModernWelcomeSection(
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Search,
-                            contentDescription = "Search",
+                            contentDescription = context.getString(R.string.cd_search),
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -1488,7 +1488,7 @@ private fun ModernRecentSongCard(
             // Play indicator
             Icon(
                 imageVector = Icons.Rounded.PlayArrow,
-                contentDescription = "Play",
+                contentDescription = context.getString(R.string.cd_play),
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(16.dp)
             )
@@ -1597,13 +1597,13 @@ private fun ModernSectionTitle(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Rounded.PlayArrow,
-                                        contentDescription = "Play",
+                                        contentDescription = context.getString(R.string.cd_play),
                                         modifier = Modifier.size(18.dp),
                                         tint = MaterialTheme.colorScheme.onPrimary
                                     )
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
-                                        text = "Play",
+                                        text = context.getString(R.string.action_play),
                                         style = MaterialTheme.typography.labelMedium,
                                         fontWeight = FontWeight.SemiBold,
                                         color = MaterialTheme.colorScheme.onPrimary
@@ -1649,7 +1649,7 @@ private fun ModernSectionTitle(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Rounded.Shuffle,
-                                        contentDescription = "Shuffle",
+                                        contentDescription = context.getString(R.string.cd_shuffle),
                                         modifier = Modifier.size(18.dp),
                                         tint = MaterialTheme.colorScheme.onPrimary
                                     )
@@ -1974,7 +1974,7 @@ private fun androidx.compose.material3.carousel.CarouselItemScope.HeroCarouselCa
                                 ) {
                                     Icon(
                                         imageVector = Icons.Rounded.PlayArrow,
-                                        contentDescription = "Play album",
+                                        contentDescription = context.getString(R.string.cd_play_album),
                                         modifier = Modifier.size(24.dp)
                                     )
                                 }
@@ -2066,7 +2066,7 @@ private fun ModernArtistCard(
                                 )
                             )
                             .build(),
-                        contentDescription = "Artist ${artist.name}",
+                        contentDescription = context.getString(R.string.cd_artist, artist.name),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
                     )
@@ -2077,7 +2077,7 @@ private fun ModernArtistCard(
                     ) {
                         Icon(
                             imageVector = RhythmIcons.Artist,
-                            contentDescription = "Artist ${artist.name}",
+                            contentDescription = context.getString(R.string.cd_artist, artist.name),
                             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                             modifier = Modifier.size(48.dp)
                         )
@@ -2102,7 +2102,7 @@ private fun ModernArtistCard(
             ) {
                 Icon(
                     imageVector = Icons.Rounded.PlayArrow,
-                    contentDescription = "Play ${artist.name}",
+                    contentDescription = context.getString(R.string.cd_play_artist, artist.name),
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -2190,7 +2190,7 @@ private fun ModernAlbumCard(
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.PlayArrow,
-                            contentDescription = "Play album",
+                            contentDescription = context.getString(R.string.cd_play_album),
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -2391,7 +2391,7 @@ private fun ModernListeningStatsSection(
                 // Arrow indicator for navigation
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                    contentDescription = "View detailed stats",
+                    contentDescription = context.getString(R.string.cd_view_detailed_stats),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(24.dp)
                 )
@@ -2761,14 +2761,14 @@ private fun ModernUpdateSection(
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.rhythm_splash_logo),
-                    contentDescription = "Rhythm Logo",
+                    contentDescription = context.getString(R.string.cd_rhythm_logo),
                     modifier = Modifier.size(45.dp)
                 )
                 
                 Spacer(modifier = Modifier.width(8.dp))
                 
                 Text(
-                    text = "Rhythm",
+                    text = context.getString(R.string.app_name),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer

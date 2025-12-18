@@ -79,6 +79,7 @@ import chromahub.rhythm.app.BuildConfig
 import chromahub.rhythm.app.data.AppSettings
 import chromahub.rhythm.app.data.Playlist
 import chromahub.rhythm.app.data.Song
+import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
@@ -485,6 +486,8 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
     val shuffleModePersistence by appSettings.shuffleModePersistence.collectAsState()
     val playlistClickBehavior by appSettings.playlistClickBehavior.collectAsState(initial = "ask")
     val useHoursInTimeFormat by appSettings.useHoursInTimeFormat.collectAsState()
+    val crossfadeEnabled by appSettings.crossfade.collectAsState()
+    val crossfadeDuration by appSettings.crossfadeDuration.collectAsState()
 
     var showPlaylistBehaviorDialog by remember { mutableStateOf(false) }
     var showQueueDialogSettingDialog by remember { mutableStateOf(false) }
@@ -556,13 +559,28 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                     )
                 )
             ),
+//            SettingGroup(
+//                title = context.getString(R.string.settings_audio_effects),
+//                items = listOf(
+//                    SettingItem(
+//                        RhythmIcons.Tune,
+//                        context.getString(R.string.settings_crossfade),
+//                        if (crossfadeEnabled)
+//                            context.getString(R.string.settings_crossfade_duration_desc, crossfadeDuration)
+//                        else
+//                            context.getString(R.string.settings_crossfade_desc),
+//                        toggleState = crossfadeEnabled,
+//                        onToggleChange = { appSettings.setCrossfade(it) }
+//                    )
+//                )
+//            ),
             SettingGroup(
-                title = "Time Display",
+                title = context.getString(R.string.settings_time_display),
                 items = listOf(
                     SettingItem(
                         androidx.compose.material.icons.Icons.Default.AccessTime,
-                        "Use Hours in Time Format",
-                        if (useHoursInTimeFormat) "Shows 1:32:26 for long tracks" else "Shows 92:26 for long tracks",
+                        context.getString(R.string.settings_use_hours),
+                        if (useHoursInTimeFormat) context.getString(R.string.settings_use_hours_enabled) else context.getString(R.string.settings_use_hours_disabled),
                         toggleState = useHoursInTimeFormat,
                         onToggleChange = { appSettings.setUseHoursInTimeFormat(it) }
                     )
@@ -607,6 +625,67 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
+            
+            // Crossfade Duration Slider (shown when crossfade is enabled)
+//            if (crossfadeEnabled) {
+//                item(key = "crossfade_duration_slider") {
+//                    Spacer(modifier = Modifier.height(16.dp))
+//                    Card(
+//                        modifier = Modifier.fillMaxWidth(),
+//                        shape = RoundedCornerShape(18.dp),
+//                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+//                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+//                    ) {
+//                        Column(
+//                            modifier = Modifier
+//                                .fillMaxWidth()
+//                                .padding(20.dp)
+//                        ) {
+//                            Row(
+//                                modifier = Modifier.fillMaxWidth(),
+//                                horizontalArrangement = Arrangement.SpaceBetween,
+//                                verticalAlignment = Alignment.CenterVertically
+//                            ) {
+//                                Text(
+//                                    text = context.getString(R.string.settings_crossfade_duration),
+//                                    style = MaterialTheme.typography.titleMedium,
+//                                    fontWeight = FontWeight.Medium
+//                                )
+//                                Text(
+//                                    text = context.getString(R.string.settings_crossfade_duration_desc, crossfadeDuration),
+//                                    style = MaterialTheme.typography.bodyMedium,
+//                                    color = MaterialTheme.colorScheme.primary
+//                                )
+//                            }
+//                            Spacer(modifier = Modifier.height(12.dp))
+//                            Slider(
+//                                value = crossfadeDuration,
+//                                onValueChange = { appSettings.setCrossfadeDuration(it) },
+//                                valueRange = 0.5f..12f,
+//                                steps = 22,
+//                                modifier = Modifier.fillMaxWidth()
+//                            )
+//                            Row(
+//                                modifier = Modifier.fillMaxWidth(),
+//                                horizontalArrangement = Arrangement.SpaceBetween
+//                            ) {
+//                                Text(
+//                                    text = "0.5s",
+//                                    style = MaterialTheme.typography.labelSmall,
+//                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+//                                )
+//                                Text(
+//                                    text = "12s",
+//                                    style = MaterialTheme.typography.labelSmall,
+//                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+//                                )
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+            
+            item(key = "queue_playback_bottom_spacer") { Spacer(modifier = Modifier.height(100.dp)) }
         }
     }
 
@@ -660,7 +739,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                 ) {
                     Column {
                         Text(
-                            text = "Playlist Action",
+                            text = context.getString(R.string.playlist_action_title),
                             style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -676,7 +755,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                             Text(
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 style = MaterialTheme.typography.labelLarge,
-                                text = "Choose default behavior",
+                                text = context.getString(R.string.playlist_action_desc),
                                 overflow = TextOverflow.Ellipsis,
                                 maxLines = 1,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -745,7 +824,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Ask each time",
+                                    text = context.getString(R.string.playlist_ask_each_time),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = if (playlistClickBehavior == "ask")
@@ -755,7 +834,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "Show dialog with options",
+                                    text = context.getString(R.string.playlist_ask_each_time_desc),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = if (playlistClickBehavior == "ask")
                                         MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
@@ -832,7 +911,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Load entire playlist",
+                                    text = context.getString(R.string.playlist_action_load_title),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = if (playlistClickBehavior == "play_all")
@@ -842,7 +921,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "Replace queue and play from selected song",
+                                    text = context.getString(R.string.playlist_action_load_desc),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = if (playlistClickBehavior == "play_all")
                                         MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
@@ -919,7 +998,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Play only this song",
+                                    text = context.getString(R.string.playlist_action_single_title),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = if (playlistClickBehavior == "play_one")
@@ -929,7 +1008,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "Don't change the queue",
+                                    text = context.getString(R.string.playlist_action_single_desc),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = if (playlistClickBehavior == "play_one")
                                         MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
@@ -1003,7 +1082,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                 ) {
                     Column {
                         Text(
-                            text = "Queue Action",
+                            text = context.getString(R.string.queue_action_title),
                             style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -1019,7 +1098,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                             Text(
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 style = MaterialTheme.typography.labelLarge,
-                                text = "Choose default behavior",
+                                text = context.getString(R.string.queue_action_choose),
                                 overflow = TextOverflow.Ellipsis,
                                 maxLines = 1,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -1088,7 +1167,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Ask each time",
+                                    text = context.getString(R.string.queue_action_ask_title),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = if (showQueueDialog)
@@ -1098,7 +1177,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "Show dialog with Clear & Play and Add to Queue options",
+                                    text = context.getString(R.string.queue_action_ask_desc),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = if (showQueueDialog)
                                         MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
@@ -1175,7 +1254,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Always add to queue",
+                                    text = context.getString(R.string.queue_action_always_add_title),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = if (!showQueueDialog)
@@ -1185,7 +1264,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "Automatically add songs to queue without asking",
+                                    text = context.getString(R.string.queue_action_always_add_desc),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = if (!showQueueDialog)
                                         MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
@@ -1215,8 +1294,10 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
 fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
+    val appSettings = AppSettings.getInstance(context)
     val musicViewModel: MusicViewModel = viewModel()
     val playlists by musicViewModel.playlists.collectAsState()
+    val defaultPlaylistsEnabled by appSettings.defaultPlaylistsEnabled.collectAsState()
 
     val defaultPlaylists = playlists.filter { it.isDefault }
     val userPlaylists = playlists.filter { !it.isDefault }
@@ -1279,7 +1360,37 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
         ),
         SettingGroup(
             title = context.getString(R.string.settings_default_playlists),
-            items = if (defaultPlaylists.isNotEmpty()) {
+            items = listOf(
+                SettingItem(
+                    Icons.Default.LibraryMusic,
+                    context.getString(R.string.settings_enable_default_playlists),
+                    context.getString(R.string.settings_enable_default_playlists_desc),
+                    onClick = null,
+                    toggleState = defaultPlaylistsEnabled,
+                    onToggleChange = { enabled ->
+                        appSettings.setDefaultPlaylistsEnabled(enabled)
+                        // Reload playlists to apply the change
+                        if (enabled) {
+                            // Add default playlists if they don't exist
+                            val currentPlaylists = playlists.toMutableList()
+                            if (currentPlaylists.none { it.id == "2" }) {
+                                currentPlaylists.add(Playlist("2", "Recently Added"))
+                            }
+                            if (currentPlaylists.none { it.id == "3" }) {
+                                currentPlaylists.add(Playlist("3", "Most Played"))
+                            }
+                            // Save updated playlists
+                            val playlistsJson = GsonUtils.gson.toJson(currentPlaylists)
+                            appSettings.setPlaylists(playlistsJson)
+                        } else {
+                            // Remove default playlists (except Favorites)
+                            val filteredPlaylists = playlists.filter { it.id == "1" || !it.isDefault }
+                            val playlistsJson = GsonUtils.gson.toJson(filteredPlaylists)
+                            appSettings.setPlaylists(playlistsJson)
+                        }
+                    }
+                )
+            ) + if (defaultPlaylists.isNotEmpty()) {
                 defaultPlaylists.map { playlist ->
                     SettingItem(
                         Icons.Default.MusicNote,
@@ -1448,10 +1559,14 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                 ) {
                     Column {
                         group.items.forEachIndexed { index, item ->
-                            if (group.title == "Default Playlists" || group.title == "My Playlists") {
+                            // Check if this is a toggle setting (has both toggleState and onToggleChange)
+                            if (item.toggleState != null && item.onToggleChange != null) {
+                                TunerSettingRow(item = item)
+                            } else if (group.title == context.getString(R.string.settings_default_playlists) || 
+                                       group.title == context.getString(R.string.settings_my_playlists)) {
                                 PlaylistSettingRow(
                                     item = item,
-                                    isDefaultPlaylist = group.title == "Default Playlists",
+                                    isDefaultPlaylist = group.title == context.getString(R.string.settings_default_playlists),
                                     onDelete = { playlist ->
                                         playlistToDelete = playlist
                                     }
@@ -6318,79 +6433,6 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
-            }
-
-            // Clear cache now button
-            item {
-                Button(
-                    onClick = {
-                        if (!isClearingCache) {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                            isClearingCache = true
-                            scope.launch {
-                                try {
-                                    // Clear cache using CacheManager with canvas repository
-                                    chromahub.rhythm.app.util.CacheManager.clearAllCache(context, null, canvasRepository)
-
-                                    // Clear in-memory caches from MusicRepository
-                                    musicViewModel.getMusicRepository().clearInMemoryCaches()
-
-                                    // Recalculate cache size
-                                    currentCacheSize = chromahub.rhythm.app.util.CacheManager.getCacheSize(context, canvasRepository)
-                                    cacheDetails = chromahub.rhythm.app.util.CacheManager.getDetailedCacheSize(context, canvasRepository)
-
-                                    showClearCacheSuccess = true
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                    delay(3000)
-                                    showClearCacheSuccess = false
-                                } catch (e: Exception) {
-                                    Log.e("CacheManagement", "Error clearing cache", e)
-                                } finally {
-                                    isClearingCache = false
-                                }
-                            }
-                        }
-                    },
-                    enabled = !isClearingCache && !isCalculatingSize,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (showClearCacheSuccess)
-                            MaterialTheme.colorScheme.primaryContainer
-                        else
-                            MaterialTheme.colorScheme.errorContainer,
-                        contentColor = if (showClearCacheSuccess)
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        else
-                            MaterialTheme.colorScheme.onErrorContainer
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    if (isClearingCache) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Clearing cache...")
-                    } else if (showClearCacheSuccess) {
-                        Icon(
-                            imageVector = Icons.Filled.CheckCircle,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Cache cleared!")
-                    } else {
-                        Icon(
-                            imageVector = Icons.Filled.Delete,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Clear All Cache")
-                    }
-                }
             }
 
             // Information section
@@ -13561,6 +13603,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                         .fillMaxWidth()
                                         .padding(20.dp)
                                 ) {
+
                                     Row(
                                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                                         verticalAlignment = Alignment.CenterVertically
@@ -13598,6 +13641,8 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                             )
                                         }
                                     }
+
+                                    Spacer(modifier = Modifier.height(16.dp))
 
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
