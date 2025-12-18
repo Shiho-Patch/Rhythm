@@ -117,7 +117,7 @@ enum class CastDeviceType {
 
 /**
  * Cast Bottom Sheet for managing cast/streaming devices
- * Uses PlayerStateTransfer for seamless playback transfer
+ * Uses native Android output switcher for device selection
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -132,11 +132,11 @@ fun CastBottomSheet(
     
     // Animation states
     var showContent by remember { mutableStateOf(false) }
-    var isScanning by remember { mutableStateOf(false) }
-    var connectedDevice by remember { mutableStateOf<CastDevice?>(null) }
     
-    // Mock available devices - in real implementation, this would come from Cast SDK
-    var availableDevices by remember { mutableStateOf<List<CastDevice>>(emptyList()) }
+    // Get current playback device info (if available)
+    val currentDevice by remember { mutableStateOf<CastDevice?>(
+        CastDevice("local", "This Phone", CastDeviceType.PHONE, isConnected = true)
+    ) }
     
     val contentAlpha by animateFloatAsState(
         targetValue = if (showContent) 1f else 0f,
@@ -176,8 +176,8 @@ fun CastBottomSheet(
                 exit = fadeOut() + slideOutVertically { it }
             ) {
                 CastHeader(
-                    isConnected = connectedDevice != null,
-                    connectedDeviceName = connectedDevice?.name,
+                    isConnected = currentDevice != null,
+                    connectedDeviceName = currentDevice?.name,
                     haptics = haptics
                 )
             }
@@ -190,68 +190,27 @@ fun CastBottomSheet(
                 contentPadding = PaddingValues(horizontal = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Connected Device Card
-                if (connectedDevice != null) {
+                // Current Device Card
+                if (currentDevice != null) {
                     item {
-                        ConnectedDeviceCard(
-                            device = connectedDevice!!,
-                            onDisconnect = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                connectedDevice = null
-                                Toast.makeText(context, "Disconnected from ${connectedDevice?.name}", Toast.LENGTH_SHORT).show()
-                            },
+                        CurrentDeviceCard(
+                            device = currentDevice!!,
                             haptics = haptics
                         )
                     }
                 }
                 
-                // Scan for Devices Card
+                // Output Switcher Button
                 item {
-                    ScanDevicesCard(
-                        isScanning = isScanning,
-                        onScan = {
+                    OutputSwitcherCard(
+                        onOpenSwitcher = {
                             HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                            isScanning = true
-                            // Simulate scanning
-                            coroutineScope.launch {
-                                delay(2000)
-                                availableDevices = listOf(
-                                    CastDevice("1", "Living Room TV", CastDeviceType.TV),
-                                    CastDevice("2", "Kitchen Speaker", CastDeviceType.SPEAKER),
-                                    CastDevice("3", "Bedroom Soundbar", CastDeviceType.SOUNDBAR)
-                                )
-                                isScanning = false
-                            }
+                            // Use native Android output switcher
+                            musicViewModel.showOutputSwitcherDialog()
+                            Toast.makeText(context, "Opening output switcher...", Toast.LENGTH_SHORT).show()
                         },
                         haptics = haptics
                     )
-                }
-                
-                // Available Devices
-                if (availableDevices.isNotEmpty()) {
-                    item {
-                        Text(
-                            text = "Available Devices",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
-                    }
-                    
-                    items(availableDevices) { device ->
-                        DeviceCard(
-                            device = device,
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                // Use PlayerStateTransfer logic here
-                                connectedDevice = device.copy(isConnected = true)
-                                availableDevices = emptyList()
-                                Toast.makeText(context, "Connected to ${device.name}", Toast.LENGTH_SHORT).show()
-                            },
-                            haptics = haptics
-                        )
-                    }
                 }
                 
                 // Info Card
@@ -350,9 +309,8 @@ private fun CastHeader(
 }
 
 @Composable
-private fun ConnectedDeviceCard(
+private fun CurrentDeviceCard(
     device: CastDevice,
-    onDisconnect: () -> Unit,
     haptics: androidx.compose.ui.hapticfeedback.HapticFeedback,
     modifier: Modifier = Modifier
 ) {
@@ -391,84 +349,66 @@ private fun ConnectedDeviceCard(
                 .fillMaxWidth()
                 .padding(20.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            // Device icon
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary),
+                contentAlignment = Alignment.Center
             ) {
-                // Device icon
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = getDeviceIcon(device.deviceType),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
+                Icon(
+                    imageVector = getDeviceIcon(device.deviceType),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+            
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = device.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
                 
-                Column {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+//                    Box(
+//                        modifier = Modifier
+//                            .size(8.dp)
+//                            .clip(CircleShape)
+//                            .background(Color.Green)
+//                    )
                     Text(
-                        text = device.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        text = "Playing Now",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(Color.Green)
-                        )
-                        Text(
-                            text = "Connected",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
                 }
             }
             
-            FilledTonalButton(
-                onClick = onDisconnect,
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Disconnect",
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Disconnect")
-            }
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = "Active",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
         }
     }
 }
 
 @Composable
-private fun ScanDevicesCard(
-    isScanning: Boolean,
-    onScan: () -> Unit,
+private fun OutputSwitcherCard(
+    onOpenSwitcher: () -> Unit,
     haptics: androidx.compose.ui.hapticfeedback.HapticFeedback,
     modifier: Modifier = Modifier
 ) {
-    val rotationAngle by animateFloatAsState(
-        targetValue = if (isScanning) 360f else 0f,
-        animationSpec = tween(1000),
-        label = "rotationAngle"
-    )
-    
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -480,128 +420,56 @@ private fun ScanDevicesCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            if (isScanning) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(48.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    strokeWidth = 3.dp
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Text(
-                    text = "Scanning for devices...",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            } else {
-                Button(
-                    onClick = onScan,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    contentPadding = PaddingValues(16.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Refresh,
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Scan for Devices",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun DeviceCard(
-    device: CastDevice,
-    onClick: () -> Unit,
-    haptics: androidx.compose.ui.hapticfeedback.HapticFeedback,
-    modifier: Modifier = Modifier
-) {
-    var isPressed by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.98f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
-        label = "scale"
-    )
-    
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(20.dp)
         ) {
             Row(
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Device icon
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = getDeviceIcon(device.deviceType),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.Cast,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(28.dp)
+                )
                 
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = device.name,
+                        text = "Switch Output Device",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium,
+                        fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     
                     Text(
-                        text = getDeviceTypeName(device.deviceType),
+                        text = "Connect to Bluetooth, Cast, or other devices",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
             
-            Icon(
-                imageVector = Icons.Default.Cast,
-                contentDescription = "Connect",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp)
-            )
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Button(
+                onClick = onOpenSwitcher,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                contentPadding = PaddingValues(16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Cast,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Open Output Switcher",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         }
     }
 }
@@ -641,7 +509,7 @@ private fun CastInfoCard(modifier: Modifier = Modifier) {
                 Spacer(modifier = Modifier.height(4.dp))
                 
                 Text(
-                    text = "Cast your music to compatible devices like TVs, speakers, and soundbars. Playback state is automatically transferred using Media3 PlayerStateTransfer for seamless transitions.",
+                    text = "Use the output switcher to cast your music to Bluetooth devices, Chromecast, or other compatible devices. Android's native media routing handles seamless playback transfer.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 18.sp

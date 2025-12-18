@@ -48,13 +48,16 @@ import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.HeadsetMic
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Speaker
 import androidx.compose.material.icons.filled.SpeakerGroup
 import androidx.compose.material.icons.rounded.Bluetooth
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Headphones
 import androidx.compose.material.icons.rounded.HeadsetMic
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
@@ -213,7 +216,7 @@ fun DeviceConfigurationBottomSheet(
             ) {
                 Column {
                     Text(
-                        text = "Audio Devices",
+                        text = "Manage AutoEQ",
                         style = MaterialTheme.typography.displayMedium,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
@@ -246,6 +249,62 @@ fun DeviceConfigurationBottomSheet(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 4.dp)
                 )
+                
+                // Current device detection hint
+                val currentLocation = musicViewModel.audioDeviceManager.currentDevice.collectAsState().value
+                if (currentLocation != null && currentLocation.id != "speaker") {
+                    val matchedDevice = musicViewModel.findMatchingUserDevice(currentLocation.name)
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (matchedDevice != null) {
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                            } else {
+                                MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
+                            }
+                        ),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (matchedDevice != null) Icons.Rounded.Check else Icons.Rounded.Info,
+                                contentDescription = null,
+                                tint = if (matchedDevice != null) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.tertiary
+                                },
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = if (matchedDevice != null) "Device Recognized" else "New Device Detected",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = if (matchedDevice != null) {
+                                        "${currentLocation.name} is configured${if (matchedDevice.autoEQProfileName != null) " with ${matchedDevice.autoEQProfileName}" else ""}"
+                                    } else {
+                                        "${currentLocation.name} is connected but not configured"
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
                     
                 Spacer(modifier = Modifier.height(12.dp))
                 
@@ -783,7 +842,7 @@ private fun DeviceCard(
                 MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isActive) 2.dp else 0.dp
+            defaultElevation = if (isActive) 0.dp else 0.dp
         ),
         shape = RoundedCornerShape(16.dp)
     ) {

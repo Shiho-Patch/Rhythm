@@ -66,8 +66,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     // Playback stats repository for enhanced tracking
     private val playbackStatsRepository = PlaybackStatsRepository.getInstance(application)
     
-    // Audio device manager
-    private val audioDeviceManager = AudioDeviceManager(application)
+    // Audio device manager (exposed for UI components that need device detection)
+    val audioDeviceManager = AudioDeviceManager(application)
     
     // Settings manager
     val appSettings = AppSettings.getInstance(application)
@@ -5099,6 +5099,59 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         val activeId = appSettings.activeAudioDeviceId.value ?: return null
         val devices = chromahub.rhythm.app.data.UserAudioDevice.fromJson(appSettings.userAudioDevices.value)
         return devices.find { it.id == activeId }
+    }
+    
+    /**
+     * Try to match a connected audio device (from PlaybackLocation) with saved UserAudioDevice
+     * Uses fuzzy matching to account for slight name variations
+     */
+    fun findMatchingUserDevice(deviceName: String): chromahub.rhythm.app.data.UserAudioDevice? {
+        val devices = chromahub.rhythm.app.data.UserAudioDevice.fromJson(appSettings.userAudioDevices.value)
+        if (devices.isEmpty()) return null
+        
+        val normalizedSearchName = deviceName.lowercase().trim()
+        
+        // First try exact match
+        devices.find { it.name.equals(deviceName, ignoreCase = true) }?.let { return it }
+        
+        // Try fuzzy matching - device name contains saved name or vice versa
+        devices.find { savedDevice ->
+            val normalizedSavedName = savedDevice.name.lowercase().trim()
+            normalizedSearchName.contains(normalizedSavedName) || 
+            normalizedSavedName.contains(normalizedSearchName)
+        }?.let { return it }
+        
+        // Try matching by brand if available
+        devices.find { savedDevice ->
+            if (savedDevice.brand.isNotEmpty()) {
+                normalizedSearchName.contains(savedDevice.brand.lowercase())
+            } else false
+        }?.let { return it }
+        
+        return null
+    }
+    
+    /**
+     * Check if device detection should show AutoEQ suggestion
+     * Returns true if device hasn't been dismissed before
+     */
+    fun shouldShowAutoEQSuggestion(deviceId: String): Boolean {
+        val dismissedDevices = appSettings.dismissedAutoEQSuggestions.value?.split(",") ?: emptyList()
+        return !dismissedDevices.contains(deviceId)
+    }
+    
+    /**
+     * Mark a device as "don't ask again" for AutoEQ suggestions
+     */
+    fun dismissAutoEQSuggestion(deviceId: String) {
+        val current = appSettings.dismissedAutoEQSuggestions.value ?: ""
+        val dismissedList = if (current.isEmpty()) {
+            listOf(deviceId)
+        } else {
+            current.split(",").toMutableList().apply { add(deviceId) }
+        }
+        appSettings.setDismissedAutoEQSuggestions(dismissedList.joinToString(","))
+        Log.d(TAG, "Dismissed AutoEQ suggestion for device: $deviceId")
     }
     
     // Clean sleep timer implementation

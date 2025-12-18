@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.ui.screens
+package chromahub.rhythm.app.ui.components
 
 import android.content.Context
 import android.media.AudioManager
@@ -116,6 +116,11 @@ fun PlaybackBottomSheet(
     var systemVolume by remember { mutableFloatStateOf(0.5f) }
     var systemMaxVolume by remember { mutableStateOf(15) }
     
+    // AutoEQ Suggestion Dialog state
+    var showAutoEQSuggestion by remember { mutableStateOf(false) }
+    var detectedDevice by remember { mutableStateOf<chromahub.rhythm.app.data.UserAudioDevice?>(null) }
+    var showDeviceConfig by remember { mutableStateOf(false) }
+    
     // Collect settings
     val playbackSpeed by musicViewModel.playbackSpeed.collectAsState()
     val gaplessPlayback by appSettings.gaplessPlayback.collectAsState()
@@ -156,6 +161,22 @@ fun PlaybackBottomSheet(
         val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
         systemVolume = currentVolume.toFloat() / maxVolume.toFloat()
         systemMaxVolume = maxVolume
+    }
+    
+    // Device detection and AutoEQ suggestion
+    LaunchedEffect(currentLocation) {
+        if (currentLocation != null && currentLocation.id != "speaker") {
+            // Try to match with saved user devices
+            val matchedDevice = musicViewModel.findMatchingUserDevice(currentLocation.name)
+            
+            if (matchedDevice != null && 
+                matchedDevice.autoEQProfileName != null &&
+                musicViewModel.shouldShowAutoEQSuggestion(matchedDevice.id)) {
+                // Found a matching device with AutoEQ profile configured
+                detectedDevice = matchedDevice
+                showAutoEQSuggestion = true
+            }
+        }
     }
     
     // Monitor system volume changes
@@ -291,6 +312,53 @@ fun PlaybackBottomSheet(
                 }
             }
         }
+    }
+    
+    // AutoEQ Suggestion Dialog
+    if (showAutoEQSuggestion && detectedDevice != null) {
+        val equalizerEnabled by remember { appSettings.equalizerEnabled }.collectAsState()
+        val autoEQProfiles by remember { musicViewModel.autoEQProfiles }.collectAsState()
+        
+        AutoEQSuggestionDialog(
+            deviceName = currentLocation?.name ?: detectedDevice!!.name,
+            savedDevice = detectedDevice!!,
+            equalizerEnabled = equalizerEnabled,
+            onApplyProfile = {
+                // Apply the AutoEQ profile
+                val profile = autoEQProfiles
+                    .find { it.name == detectedDevice!!.autoEQProfileName }
+                
+                if (profile != null) {
+                    musicViewModel.applyAutoEQProfile(profile)
+                    musicViewModel.setActiveAudioDevice(detectedDevice!!)
+                    android.widget.Toast.makeText(
+                        context,
+                        "Applied ${profile.name} profile",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }
+                showAutoEQSuggestion = false
+            },
+            onDismiss = {
+                showAutoEQSuggestion = false
+            },
+            onDontAskAgain = {
+                musicViewModel.dismissAutoEQSuggestion(detectedDevice!!.id)
+                showAutoEQSuggestion = false
+            },
+            onConfigureDevice = {
+                showAutoEQSuggestion = false
+                showDeviceConfig = true
+            }
+        )
+    }
+    
+    // Device Configuration Dialog
+    if (showDeviceConfig) {
+        DeviceConfigurationBottomSheet(
+            musicViewModel = musicViewModel,
+            onDismiss = { showDeviceConfig = false }
+        )
     }
 }
 
@@ -555,6 +623,9 @@ private fun VolumeControlCard(
 ) {
     val useSystemVolume by appSettings.useSystemVolume.collectAsState()
     
+    // Remember previous volume before muting for system volume
+    var previousSystemVolume by remember { mutableFloatStateOf(0.5f) }
+    
     // Current volume values based on setting
     val currentVolume = if (useSystemVolume) systemVolume else volume
     val currentIsMuted = if (useSystemVolume) (systemVolume == 0f) else isMuted
@@ -580,12 +651,16 @@ private fun VolumeControlCard(
     val toggleSystemMute = {
         val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         if (systemVolume > 0f) {
+            // Mute - save current volume
+            previousSystemVolume = systemVolume
             audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0)
             onSystemVolumeChange(0f)
         } else {
-            val halfVolume = systemMaxVolume / 2
-            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, halfVolume, 0)
-            onSystemVolumeChange(0.5f)
+            // Unmute - restore previous volume
+            val volumeToRestore = if (previousSystemVolume > 0f) previousSystemVolume else 0.5f
+            val targetVolume = (volumeToRestore * systemMaxVolume).toInt().coerceIn(1, systemMaxVolume)
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVolume, 0)
+            onSystemVolumeChange(volumeToRestore)
         }
     }
     

@@ -192,7 +192,7 @@ import chromahub.rhythm.app.ui.components.M3CircularLoader // Added for play/pau
 import chromahub.rhythm.app.ui.screens.QueueBottomSheet
 import chromahub.rhythm.app.ui.screens.LibraryTab
 import chromahub.rhythm.app.ui.screens.AddToPlaylistBottomSheet
-import chromahub.rhythm.app.ui.screens.PlaybackBottomSheet
+import chromahub.rhythm.app.ui.components.PlaybackBottomSheet
 import chromahub.rhythm.app.ui.screens.SongInfoBottomSheet
 import chromahub.rhythm.app.ui.screens.ArtistBottomSheet
 import chromahub.rhythm.app.ui.screens.LyricsEditorBottomSheet

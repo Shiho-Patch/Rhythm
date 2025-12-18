@@ -94,6 +94,7 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_LAST_AUDIO_DEVICE = "last_audio_device"
         private const val KEY_AUTO_CONNECT_DEVICE = "auto_connect_device"
         private const val KEY_USE_SYSTEM_VOLUME = "use_system_volume"
+        private const val KEY_DISMISSED_AUTOEQ_SUGGESTIONS = "dismissed_autoeq_suggestions"
         
         // Equalizer Settings
         private const val KEY_EQUALIZER_ENABLED = "equalizer_enabled"
@@ -554,6 +555,9 @@ class AppSettings private constructor(context: Context) {
     
     private val _activeAudioDeviceId = MutableStateFlow(prefs.getString(KEY_ACTIVE_AUDIO_DEVICE_ID, null))
     val activeAudioDeviceId: StateFlow<String?> = _activeAudioDeviceId.asStateFlow()
+    
+    private val _dismissedAutoEQSuggestions = MutableStateFlow(prefs.getString(KEY_DISMISSED_AUTOEQ_SUGGESTIONS, null))
+    val dismissedAutoEQSuggestions: StateFlow<String?> = _dismissedAutoEQSuggestions.asStateFlow()
     
     private val _bassBoostEnabled = MutableStateFlow(prefs.getBoolean(KEY_BASS_BOOST_ENABLED, false))
     val bassBoostEnabled: StateFlow<Boolean> = _bassBoostEnabled.asStateFlow()
@@ -1282,6 +1286,11 @@ class AppSettings private constructor(context: Context) {
     fun setActiveAudioDeviceId(deviceId: String?) {
         prefs.edit().putString(KEY_ACTIVE_AUDIO_DEVICE_ID, deviceId).apply()
         _activeAudioDeviceId.value = deviceId
+    }
+    
+    fun setDismissedAutoEQSuggestions(dismissedDevices: String?) {
+        prefs.edit().putString(KEY_DISMISSED_AUTOEQ_SUGGESTIONS, dismissedDevices).apply()
+        _dismissedAutoEQSuggestions.value = dismissedDevices
     }
     
     fun setBassBoostEnabled(enable: Boolean) {
