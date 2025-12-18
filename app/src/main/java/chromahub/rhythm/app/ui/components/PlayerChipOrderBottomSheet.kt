@@ -321,7 +321,7 @@ fun PlayerChipOrderBottomSheet(
                     OutlinedButton(
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                            reorderableList = listOf("FAVORITE", "SPEED", "EQUALIZER", "SLEEP_TIMER", "LYRICS", "ALBUM", "ARTIST")
+                            reorderableList = listOf("FAVORITE", "SPEED", "EQUALIZER", "SLEEP_TIMER", "LYRICS", "ALBUM", "ARTIST", "CAST")
                             hiddenChipsSet = emptySet()
                             // Save changes instantly
                             appSettings.setPlayerChipOrder(reorderableList)

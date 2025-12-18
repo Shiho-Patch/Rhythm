@@ -69,6 +69,7 @@ fun WaveSlider(
     value: Float,
     onValueChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
+    onValueChangeFinished: (() -> Unit)? = null,
     waveColor: Color = PlayerProgressColor,
     trackColor: Color = MaterialTheme.colorScheme.surfaceVariant,
     enabled: Boolean = true,
@@ -154,6 +155,7 @@ fun WaveSlider(
                 }
                 onValueChange(newValue)
             },
+            onValueChangeFinished = onValueChangeFinished,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(sliderVisualHeight),

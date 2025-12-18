@@ -62,6 +62,8 @@ import androidx.compose.material.icons.rounded.Speaker
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.SystemUpdate
 import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material.icons.rounded.Cast
+import androidx.compose.material.icons.rounded.CastConnected
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.Lyrics
 import androidx.compose.material.icons.rounded.Info // Added Info icon
@@ -180,6 +182,10 @@ object RhythmIcons {
         val Speaker = Icons.Rounded.Speaker
         val SpeakerOutlined = Icons.Outlined.Speaker
         
+        // Cast devices
+        val Cast = Icons.Rounded.Cast
+        val CastConnected = Icons.Rounded.CastConnected
+        
         // Location
         val Location = Icons.Rounded.Place
         val LocationOutlined = Icons.Outlined.Place
@@ -266,4 +272,6 @@ object RhythmIcons {
     val HeadphonesFilled = Devices.Headphones
     val Speaker = Devices.SpeakerOutlined
     val SpeakerFilled = Devices.Speaker
+    val Cast = Devices.Cast
+    val CastConnected = Devices.CastConnected
 }

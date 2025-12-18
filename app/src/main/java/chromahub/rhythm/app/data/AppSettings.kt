@@ -177,6 +177,16 @@ class AppSettings private constructor(context: Context) {
     // UI Settings
     private const val KEY_USE_SETTINGS = "use_settings"
     private const val KEY_DEFAULT_SCREEN = "default_screen"
+    
+        // Codec Monitoring & Enhanced Seeking
+        private const val KEY_CODEC_MONITORING_ENABLED = "codec_monitoring_enabled"
+        private const val KEY_SHOW_CODEC_NOTIFICATIONS = "show_codec_notifications"
+        private const val KEY_ENHANCED_SEEKING_ENABLED = "enhanced_seeking_enabled"
+        
+        // Media3 1.9.0 Features
+        private const val KEY_USE_CUSTOM_COMMAND_BUTTONS = "use_custom_command_buttons"
+        private const val KEY_SCRUBBING_MODE_ENABLED = "scrubbing_mode_enabled"
+        private const val KEY_STUCK_PLAYER_DETECTION_ENABLED = "stuck_player_detection_enabled"
         
         // Festive Theme Settings
         private const val KEY_FESTIVE_THEME_ENABLED = "festive_theme_enabled"
@@ -463,12 +473,20 @@ class AppSettings private constructor(context: Context) {
     val libraryTabOrder: StateFlow<List<String>> = _libraryTabOrder.asStateFlow()
     
     // Player Chip Order (Add to Playlist and Edit chips are not reorderable - they stay fixed)
-    private val defaultChipOrder = listOf("FAVORITE", "SPEED", "EQUALIZER", "SLEEP_TIMER", "LYRICS", "ALBUM", "ARTIST")
+    private val defaultChipOrder = listOf("FAVORITE", "SPEED", "EQUALIZER", "SLEEP_TIMER", "LYRICS", "ALBUM", "ARTIST", "CAST")
     private val _playerChipOrder = MutableStateFlow(
         prefs.getString(KEY_PLAYER_CHIP_ORDER, null)
             ?.split(",")
             ?.filter { it.isNotBlank() }
             ?.takeIf { it.isNotEmpty() }
+            ?.let { existingChips ->
+                // Add CAST if not present in existing order
+                if (!existingChips.contains("CAST")) {
+                    existingChips + "CAST"
+                } else {
+                    existingChips
+                }
+            }
             ?: defaultChipOrder
     )
     val playerChipOrder: StateFlow<List<String>> = _playerChipOrder.asStateFlow()
@@ -843,6 +861,29 @@ class AppSettings private constructor(context: Context) {
     
     private val _festiveSnowflakeArea = MutableStateFlow(prefs.getString(KEY_FESTIVE_SNOWFLAKE_AREA, "FULL_SCREEN") ?: "FULL_SCREEN")
     val festiveSnowflakeArea: StateFlow<String> = _festiveSnowflakeArea.asStateFlow()
+    
+    // Developer & Debugging Settings
+    private val _codecMonitoringEnabled = MutableStateFlow(prefs.getBoolean("codec_monitoring_enabled", false))
+    val codecMonitoringEnabled: StateFlow<Boolean> = _codecMonitoringEnabled.asStateFlow()
+    
+    private val _audioDeviceLoggingEnabled = MutableStateFlow(prefs.getBoolean("audio_device_logging_enabled", false))
+    val audioDeviceLoggingEnabled: StateFlow<Boolean> = _audioDeviceLoggingEnabled.asStateFlow()
+    
+    private val _showCodecNotifications = MutableStateFlow(prefs.getBoolean(KEY_SHOW_CODEC_NOTIFICATIONS, false))
+    val showCodecNotifications: StateFlow<Boolean> = _showCodecNotifications.asStateFlow()
+    
+    private val _enhancedSeekingEnabled = MutableStateFlow(prefs.getBoolean(KEY_ENHANCED_SEEKING_ENABLED, true))
+    val enhancedSeekingEnabled: StateFlow<Boolean> = _enhancedSeekingEnabled.asStateFlow()
+    
+    // Media3 1.9.0 Features
+    private val _useCustomCommandButtons = MutableStateFlow(prefs.getBoolean(KEY_USE_CUSTOM_COMMAND_BUTTONS, true))
+    val useCustomCommandButtons: StateFlow<Boolean> = _useCustomCommandButtons.asStateFlow()
+    
+    private val _scrubbingModeEnabled = MutableStateFlow(prefs.getBoolean(KEY_SCRUBBING_MODE_ENABLED, true))
+    val scrubbingModeEnabled: StateFlow<Boolean> = _scrubbingModeEnabled.asStateFlow()
+    
+    private val _stuckPlayerDetectionEnabled = MutableStateFlow(prefs.getBoolean(KEY_STUCK_PLAYER_DETECTION_ENABLED, true))
+    val stuckPlayerDetectionEnabled: StateFlow<Boolean> = _stuckPlayerDetectionEnabled.asStateFlow()
     
     // Festive Decoration Position Settings
     private val _festiveShowTopLights = MutableStateFlow(prefs.getBoolean(KEY_FESTIVE_SHOW_TOP_LIGHTS, true))
@@ -1601,6 +1642,43 @@ class AppSettings private constructor(context: Context) {
     fun setUseCustomNotification(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_USE_CUSTOM_NOTIFICATION, enabled).apply()
         _useCustomNotification.value = enabled
+    }
+    
+    // Codec Monitoring & Enhanced Seeking Methods
+    fun setCodecMonitoringEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_CODEC_MONITORING_ENABLED, enabled).apply()
+        _codecMonitoringEnabled.value = enabled
+    }
+    
+    fun setShowCodecNotifications(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_SHOW_CODEC_NOTIFICATIONS, enabled).apply()
+        _showCodecNotifications.value = enabled
+    }
+    
+    fun setEnhancedSeekingEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_ENHANCED_SEEKING_ENABLED, enabled).apply()
+        _enhancedSeekingEnabled.value = enabled
+    }
+    
+    fun setAudioDeviceLoggingEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean("audio_device_logging_enabled", enabled).apply()
+        _audioDeviceLoggingEnabled.value = enabled
+    }
+    
+    // Media3 1.9.0 Feature Methods
+    fun setUseCustomCommandButtons(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_USE_CUSTOM_COMMAND_BUTTONS, enabled).apply()
+        _useCustomCommandButtons.value = enabled
+    }
+    
+    fun setScrubbingModeEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_SCRUBBING_MODE_ENABLED, enabled).apply()
+        _scrubbingModeEnabled.value = enabled
+    }
+    
+    fun setStuckPlayerDetectionEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_STUCK_PLAYER_DETECTION_ENABLED, enabled).apply()
+        _stuckPlayerDetectionEnabled.value = enabled
     }
     
     // UI Settings Methods

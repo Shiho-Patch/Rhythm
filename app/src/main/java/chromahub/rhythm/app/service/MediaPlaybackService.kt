@@ -170,6 +170,11 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         const val ACTION_GET_AUDIO_SESSION_ID = "chromahub.rhythm.app.action.GET_AUDIO_SESSION_ID"
         const val BROADCAST_AUDIO_SESSION_ID = "chromahub.rhythm.app.broadcast.AUDIO_SESSION_ID"
         const val EXTRA_AUDIO_SESSION_ID = "audio_session_id"
+        
+        // Mute/Unmute actions (Media3 1.9.0 feature)
+        const val ACTION_MUTE = "chromahub.rhythm.app.action.MUTE"
+        const val ACTION_UNMUTE = "chromahub.rhythm.app.action.UNMUTE"
+        const val ACTION_TOGGLE_MUTE = "chromahub.rhythm.app.action.TOGGLE_MUTE"
 
         // Playback custom commands
         const val REPEAT_MODE_ALL = "repeat_all"
@@ -334,6 +339,8 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             )
             .setHandleAudioBecomingNoisy(true) // Pause on headphone disconnect
             .setWakeMode(C.WAKE_MODE_LOCAL) // Keep CPU awake during playback
+            // NOTE: Wake lock handling is enabled by default in Media3 1.9.0
+            // This prevents buffering issues during background playback
             .setSkipSilenceEnabled(false) // Don't skip silence (preserves artist intent)
             .build()
             
@@ -349,6 +356,15 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             
             override fun onPlayerError(error: PlaybackException) {
                 handlePlaybackError(error)
+            }
+            
+            // NEW in Media3 1.9.0: Monitor audio capabilities changes
+            override fun onAudioSessionIdChanged(audioSessionId: Int) {
+                Log.d(TAG, "Audio session ID changed: $audioSessionId")
+                // Reinitialize audio effects with new session
+                if (audioSessionId != 0) {
+                    initializeAudioEffects()
+                }
             }
         })
         
@@ -786,6 +802,18 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                     updateWidgetFromMediaItem(player.currentMediaItem)
                 }
             }
+            ACTION_MUTE -> {
+                Log.d(TAG, "Mute action")
+                mutePlayer()
+            }
+            ACTION_UNMUTE -> {
+                Log.d(TAG, "Unmute action")
+                unmutePlayer()
+            }
+            ACTION_TOGGLE_MUTE -> {
+                Log.d(TAG, "Toggle mute action")
+                toggleMute()
+            }
         }
         
         // We make sure to call the super implementation
@@ -1079,6 +1107,45 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         Log.d(TAG, "Repeat mode changed to: $repeatMode")
         // Use debounced update to prevent rapid UI changes
         scheduleCustomLayoutUpdate(100)
+    }
+    
+    // Mute state tracking
+    private var volumeBeforeMute: Float = 1.0f
+    private var isMuted: Boolean = false
+    
+    /**
+     * Mute the player while preserving the volume level
+     * Manual implementation since mute()/unmute() require newer Media3 version
+     */
+    private fun mutePlayer() {
+        if (!isMuted) {
+            volumeBeforeMute = player.volume
+            player.volume = 0f
+            isMuted = true
+            Log.d(TAG, "Player muted (volume $volumeBeforeMute preserved)")
+        }
+    }
+    
+    /**
+     * Unmute the player and restore the previous volume
+     */
+    private fun unmutePlayer() {
+        if (isMuted) {
+            player.volume = volumeBeforeMute
+            isMuted = false
+            Log.d(TAG, "Player unmuted (volume $volumeBeforeMute restored)")
+        }
+    }
+    
+    /**
+     * Toggle mute state
+     */
+    private fun toggleMute() {
+        if (isMuted) {
+            unmutePlayer()
+        } else {
+            mutePlayer()
+        }
     }
 
     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {

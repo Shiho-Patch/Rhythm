@@ -303,6 +303,13 @@ fun PlayerScreen(
     val playerProgressStyle by appSettingsInstance.playerProgressStyle.collectAsState()
     val playerProgressThumbStyle by appSettingsInstance.playerProgressThumbStyle.collectAsState()
     
+    // Enhanced seeking settings
+    val enhancedSeekingEnabled by appSettingsInstance.enhancedSeekingEnabled.collectAsState()
+    
+    // Enhanced seeking state - shows preview during scrubbing
+    var isScrubbing by remember { mutableStateOf(false) }
+    var scrubProgress by remember { mutableFloatStateOf(0f) }
+    
     // Gesture settings
     val gesturePlayerSwipeDismiss by appSettingsInstance.gesturePlayerSwipeDismiss.collectAsState()
     val gesturePlayerSwipeTracks by appSettingsInstance.gesturePlayerSwipeTracks.collectAsState()
@@ -362,6 +369,7 @@ fun PlayerScreen(
     var showLyricsEditorDialog by remember { mutableStateOf(false) }
     var showPlaybackSpeedDialog by remember { mutableStateOf(false) }
     var showChipOrderBottomSheet by remember { mutableStateOf(false) }
+    var showCastBottomSheet by remember { mutableStateOf(false) }
     val isCompactWidth = configuration.screenWidthDp < 400
     
     // Sleep timer state from ViewModel
@@ -639,10 +647,14 @@ fun PlayerScreen(
     // Calculate current and total time
     val currentTimeMs = ((song?.duration ?: 0) * progress).toLong()
     val totalTimeMs = song?.duration ?: 0
+    
+    // Calculate scrub preview time when enhanced seeking is active
+    val scrubTimeMs = ((song?.duration ?: 0) * scrubProgress).toLong()
 
     // Format current and total time
     val currentTimeFormatted = formatDuration(currentTimeMs, useHoursFormat)
     val totalTimeFormatted = formatDuration(totalTimeMs, useHoursFormat)
+    val scrubTimeFormatted = formatDuration(scrubTimeMs, useHoursFormat)
 
     LaunchedEffect(song?.id) {
         // Reset animation when song changes
@@ -1957,19 +1969,25 @@ fun PlayerScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            // Current time pill
+                            // Current time pill (shows scrub preview when enhanced seeking)
                             Surface(
                                 shape = RoundedCornerShape(12.dp),
-                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                                color = if (isScrubbing && enhancedSeekingEnabled)
+                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f)
+                                else
+                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
                                 modifier = Modifier.padding(horizontal = 2.dp, vertical = 1.dp)
                             ) {
                                 Text(
-                                    text = currentTimeFormatted,
+                                    text = if (isScrubbing && enhancedSeekingEnabled) scrubTimeFormatted else currentTimeFormatted,
                                     style = MaterialTheme.typography.labelSmall.copy(
-                                        fontWeight = FontWeight.Medium,
+                                        fontWeight = if (isScrubbing && enhancedSeekingEnabled) FontWeight.Bold else FontWeight.Medium,
                                         fontSize = 12.sp
                                     ),
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    color = if (isScrubbing && enhancedSeekingEnabled)
+                                        MaterialTheme.colorScheme.onSecondary
+                                    else
+                                        MaterialTheme.colorScheme.onPrimaryContainer,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                 )
                             }
@@ -1978,8 +1996,21 @@ fun PlayerScreen(
                             if (playerProgressStyle == "WAVY") {
                                 // Wave progress slider (original style)
                                 WaveSlider(
-                                    value = progress,
-                                    onValueChange = onSeek,
+                                    value = if (isScrubbing && enhancedSeekingEnabled) scrubProgress else progress,
+                                    onValueChange = { newValue ->
+                                        if (enhancedSeekingEnabled) {
+                                            isScrubbing = true
+                                            scrubProgress = newValue
+                                        } else {
+                                            onSeek(newValue)
+                                        }
+                                    },
+                                    onValueChangeFinished = {
+                                        if (enhancedSeekingEnabled && isScrubbing) {
+                                            onSeek(scrubProgress)
+                                            isScrubbing = false
+                                        }
+                                    },
                                     modifier = Modifier.weight(1f)
                                         .padding(horizontal = 8.dp),
                                     waveColor = MaterialTheme.colorScheme.primary,
@@ -2026,10 +2057,43 @@ fun PlayerScreen(
                                         waveFrequency = 2.5f // Fewer waves for Player screen
                                     )
                                     
+                                    // Enhanced seeking preview indicator
+                                    if (isScrubbing && enhancedSeekingEnabled) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth(fraction = scrubProgress)
+                                                .height(
+                                                    when (progressStyle) {
+                                                        ProgressStyle.THIN -> 4.dp
+                                                        ProgressStyle.THICK -> 14.dp
+                                                        else -> 10.dp
+                                                    }
+                                                )
+                                                .background(
+                                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
+                                                    RoundedCornerShape(8.dp)
+                                                )
+                                                .align(Alignment.CenterStart)
+                                        )
+                                    }
+                                    
                                     // Invisible slider for seeking - overlays the progress bar
                                     androidx.compose.material3.Slider(
-                                        value = progress,
-                                        onValueChange = onSeek,
+                                        value = if (isScrubbing && enhancedSeekingEnabled) scrubProgress else progress,
+                                        onValueChange = { newValue ->
+                                            if (enhancedSeekingEnabled) {
+                                                isScrubbing = true
+                                                scrubProgress = newValue
+                                            } else {
+                                                onSeek(newValue)
+                                            }
+                                        },
+                                        onValueChangeFinished = {
+                                            if (enhancedSeekingEnabled && isScrubbing) {
+                                                onSeek(scrubProgress)
+                                                isScrubbing = false
+                                            }
+                                        },
                                         modifier = Modifier.fillMaxWidth(),
                                         colors = SliderDefaults.colors(
                                             thumbColor = Color.Transparent,
@@ -3239,6 +3303,65 @@ fun PlayerScreen(
                                                     border = null // Removed border
                                                 )
                                             }
+                                            "CAST" -> {
+                                                var isPressed by remember { mutableStateOf(false) }
+                                                val scale by animateFloatAsState(
+                                                    targetValue = if (isPressed) 0.95f else 1f,
+                                                    animationSpec = spring(
+                                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                        stiffness = Spring.StiffnessLow
+                                                    ),
+                                                    label = "castChipScale"
+                                                )
+                                                AssistChip(
+                                                    onClick = {
+                                                        HapticUtils.performHapticFeedback(
+                                                            context,
+                                                            haptic,
+                                                            HapticFeedbackType.LongPress
+                                                        )
+                                                        showCastBottomSheet = true
+                                                    },
+                                                    label = {
+                                                        Text(
+                                                            "Cast",
+                                                            style = MaterialTheme.typography.labelLarge
+                                                        )
+                                                    },
+                                                    leadingIcon = {
+                                                        Icon(
+                                                            imageVector = RhythmIcons.Cast,
+                                                            contentDescription = "Cast to device",
+                                                            modifier = Modifier.size(16.dp)
+                                                        )
+                                                    },
+                                                    modifier = Modifier
+                                                        .height(32.dp)
+                                                        .graphicsLayer {
+                                                            scaleX = scale
+                                                            scaleY = scale
+                                                        }
+                                                        .pointerInput(Unit) {
+                                                            detectTapGestures(
+                                                                onPress = {
+                                                                    isPressed = true
+                                                                    try {
+                                                                        awaitRelease()
+                                                                    } finally {
+                                                                        isPressed = false
+                                                                    }
+                                                                }
+                                                            )
+                                                        },
+                                                    shape = RoundedCornerShape(16.dp),
+                                                    colors = AssistChipDefaults.assistChipColors(
+                                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                                        labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        leadingIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    ),
+                                                    border = null
+                                                )
+                                            }
                                         }
                                     }
 
@@ -3505,6 +3628,14 @@ fun PlayerScreen(
             onDismiss = { showChipOrderBottomSheet = false },
             appSettings = appSettings,
             haptics = haptic
+        )
+    }
+    
+    // Cast Bottom Sheet
+    if (showCastBottomSheet) {
+        chromahub.rhythm.app.ui.components.CastBottomSheet(
+            musicViewModel = musicViewModel,
+            onDismiss = { showCastBottomSheet = false }
         )
     }
     

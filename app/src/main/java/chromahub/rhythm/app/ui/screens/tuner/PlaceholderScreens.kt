@@ -5186,6 +5186,29 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                     )
                 )
             }
+            
+            // Developer/Debugging features group
+            add(
+                SettingGroup(
+                    title = "Developer & Debugging",
+                    items = listOf(
+                        SettingItem(
+                            Icons.Default.Code,
+                            "Codec Monitoring",
+                            "Log audio codec and format info for debugging. View in Logcat with tag 'CodecMonitor'",
+                            toggleState = appSettings.codecMonitoringEnabled.collectAsState().value,
+                            onToggleChange = { appSettings.setCodecMonitoringEnabled(it) }
+                        ),
+                        SettingItem(
+                            Icons.Default.Headphones,
+                            "Audio Device Logging",
+                            "Log audio device changes (Bluetooth, headphones, etc.)",
+                            toggleState = appSettings.audioDeviceLoggingEnabled.collectAsState().value,
+                            onToggleChange = { appSettings.setAudioDeviceLoggingEnabled(it) }
+                        )
+                    )
+                )
+            )
         }
 
         LazyColumn(
