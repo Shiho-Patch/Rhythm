@@ -258,10 +258,27 @@ fun RhythmNavigation(
     val useSystemTheme by themeViewModel.useSystemTheme.collectAsState()
     val darkMode by themeViewModel.darkMode.collectAsState()
     
+    // Library tab order settings - used to determine first visible tab
+    val libraryTabOrder by appSettings.libraryTabOrder.collectAsState()
+    val hiddenLibraryTabs by appSettings.hiddenLibraryTabs.collectAsState()
+    
+    // Compute the first visible tab based on user's tab order (respecting hidden tabs)
+    val firstVisibleLibraryTab = remember(libraryTabOrder, hiddenLibraryTabs) {
+        val firstVisibleId = libraryTabOrder.firstOrNull { !hiddenLibraryTabs.contains(it) }
+        when (firstVisibleId) {
+            "SONGS" -> LibraryTab.SONGS
+            "PLAYLISTS" -> LibraryTab.PLAYLISTS
+            "ALBUMS" -> LibraryTab.ALBUMS
+            "ARTISTS" -> LibraryTab.ARTISTS
+            "EXPLORER" -> LibraryTab.EXPLORER
+            else -> LibraryTab.SONGS // Default fallback
+        }
+    }
+    
     // Default landing screen
     val defaultScreen by appSettings.defaultScreen.collectAsState()
     val startDestination = when (defaultScreen) {
-        "library" -> Screen.Library.route
+        "library" -> Screen.Library.createRoute(firstVisibleLibraryTab)
         else -> Screen.Home.route
     }
 
@@ -491,21 +508,23 @@ fun RhythmNavigation(
                                         horizontalArrangement = Arrangement.SpaceEvenly,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
+                                        // Use first visible library tab based on user's tab order
+                                        val libraryRoute = Screen.Library.createRoute(firstVisibleLibraryTab)
                                         val items = listOf(
                                             Triple(
                                                 Screen.Home.route, "Home",
                                                 Pair(RhythmIcons.HomeFilled, RhythmIcons.Home)
                                             ),
                                             Triple(
-                                                Screen.Library.createRoute(), "Library",
+                                                libraryRoute, "Library",
                                                 Pair(RhythmIcons.Library, RhythmIcons.Library)
                                             )
                                         )
 
                                         items.forEachIndexed { index, (route, title, icons) ->
-                                            val isSelected = when (route) {
-                                                Screen.Home.route -> currentRoute == Screen.Home.route
-                                                Screen.Library.createRoute() -> currentRoute.startsWith("library")
+                                            val isSelected = when (title) {
+                                                "Home" -> currentRoute == Screen.Home.route
+                                                "Library" -> currentRoute.startsWith("library")
                                                 else -> false
                                             }
 
@@ -1114,6 +1133,7 @@ fun RhythmNavigation(
                             "playlists" -> LibraryTab.PLAYLISTS
                             "albums" -> LibraryTab.ALBUMS
                             "artists" -> LibraryTab.ARTISTS
+                            "explorer" -> LibraryTab.EXPLORER
                             else -> LibraryTab.SONGS
                         }
 

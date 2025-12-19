@@ -65,6 +65,11 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     // Debounce custom layout updates to prevent flickering
     private var updateLayoutJob: Job? = null
     
+    // Crossfade functionality
+    private var crossfadeJob: Job? = null
+    private var isCrossfading: Boolean = false
+    private var crossfadeNextPending: Boolean = false
+    
     // Sleep Timer functionality
     private var sleepTimerJob: Job? = null
     private var sleepTimerDurationMs: Long = 0L
@@ -367,6 +372,9 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                 }
             }
         })
+        
+        // Start crossfade position monitoring if crossfade is enabled
+        startCrossfadeMonitoring()
         
         // Apply current settings
         applyPlayerSettings()
@@ -689,16 +697,6 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     
     private fun applyPlayerSettings() {
         player.apply {
-            // Apply crossfade if enabled
-            if (appSettings.crossfade.value) {
-                val durationMs = (appSettings.crossfadeDuration.value * 1000).toLong()
-                Log.d(TAG, "Crossfade enabled with duration: ${durationMs}ms")
-                // Note: ExoPlayer doesn't have built-in crossfade.
-                // Full implementation would require custom audio processing or dual-player setup.
-                // For now, we use seamless transitions with minimal gap.
-                playWhenReady = playWhenReady // Maintain playback state
-            }
-
             // Apply audio normalization
             if (appSettings.audioNormalization.value) {
                 volume = 1.0f
@@ -706,10 +704,18 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
 
             // Apply replay gain if enabled
             if (appSettings.replayGain.value) {
-                // Note: Replay gain would require parsing track metadata
-                // and applying volume adjustments per track
                 Log.d(TAG, "Replay gain enabled")
             }
+        }
+
+        // Update crossfade monitoring based on setting
+        if (appSettings.crossfade.value) {
+            val durationMs = (appSettings.crossfadeDuration.value * 1000).toLong()
+            Log.d(TAG, "Crossfade enabled with duration: ${durationMs}ms - starting monitor")
+            startCrossfadeMonitoring()
+        } else {
+            Log.d(TAG, "Crossfade disabled - stopping monitor")
+            stopCrossfadeMonitoring()
         }
 
         Log.d(TAG, "Applied player settings: " +
@@ -719,6 +725,124 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                 "Normalization=${appSettings.audioNormalization.value}, " +
                 "ReplayGain=${appSettings.replayGain.value}")
     }
+    
+    // ===== CROSSFADE IMPLEMENTATION =====
+    
+    private var crossfadeMonitorJob: Job? = null
+    private var lastCrossfadeTriggeredForIndex: Int = -1
+    
+    /**
+     * Start monitoring playback position to trigger crossfade near track end.
+     * Uses a polling approach to detect when we're approaching the end of the current track.
+     */
+    private fun startCrossfadeMonitoring() {
+        crossfadeMonitorJob?.cancel()
+        
+        crossfadeMonitorJob = serviceScope.launch {
+            while (isActive) {
+                try {
+                    if (appSettings.crossfade.value && player.isPlaying && !isCrossfading) {
+                        val duration = player.duration
+                        val position = player.currentPosition
+                        val crossfadeDurationMs = (appSettings.crossfadeDuration.value * 1000).toLong()
+                        
+                        // Check if we're within crossfade window and there's a next track
+                        if (duration > 0 && 
+                            position > 0 &&
+                            duration - position <= crossfadeDurationMs &&
+                            player.hasNextMediaItem() &&
+                            player.currentMediaItemIndex != lastCrossfadeTriggeredForIndex) {
+                            
+                            // Trigger crossfade
+                            Log.d(TAG, "Crossfade triggered: position=$position, duration=$duration, " +
+                                    "remaining=${duration - position}ms, crossfadeDuration=${crossfadeDurationMs}ms")
+                            lastCrossfadeTriggeredForIndex = player.currentMediaItemIndex
+                            performCrossfade(crossfadeDurationMs, duration - position)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error in crossfade monitoring", e)
+                }
+                
+                // Check every 100ms for responsiveness
+                delay(100)
+            }
+        }
+    }
+    
+    private fun stopCrossfadeMonitoring() {
+        crossfadeMonitorJob?.cancel()
+        crossfadeMonitorJob = null
+    }
+    
+    /**
+     * Perform a crossfade transition to the next track.
+     * This fades out the current track while seeking to next, then fades in.
+     * 
+     * @param totalDurationMs Total crossfade duration in milliseconds
+     * @param remainingMs Time remaining on current track
+     */
+    private fun performCrossfade(totalDurationMs: Long, remainingMs: Long) {
+        crossfadeJob?.cancel()
+        
+        crossfadeJob = serviceScope.launch {
+            isCrossfading = true
+            val fadeOutDuration = remainingMs.coerceAtMost(totalDurationMs)
+            val fadeInDuration = (totalDurationMs - fadeOutDuration).coerceAtLeast(200)
+            val stepMs = 20L
+            val originalVolume = player.volume
+            
+            Log.d(TAG, "Starting crossfade: fadeOut=${fadeOutDuration}ms, fadeIn=${fadeInDuration}ms")
+            
+            try {
+                // Phase 1: Fade out current track
+                var elapsed = 0L
+                while (elapsed < fadeOutDuration && isActive && player.isPlaying) {
+                    val progress = elapsed.toFloat() / fadeOutDuration
+                    val newVolume = originalVolume * (1f - progress)
+                    player.volume = newVolume.coerceAtLeast(0f)
+                    
+                    delay(stepMs)
+                    elapsed += stepMs
+                }
+                
+                // Ensure volume is at 0 before switching
+                player.volume = 0f
+                
+                // Phase 2: Skip to next track (seamless with Media3)
+                if (player.hasNextMediaItem()) {
+                    player.seekToNextMediaItem()
+                    
+                    // Wait a tiny bit for the next track to start buffering
+                    delay(50)
+                    
+                    // Phase 3: Fade in new track
+                    elapsed = 0L
+                    while (elapsed < fadeInDuration && isActive) {
+                        val progress = elapsed.toFloat() / fadeInDuration
+                        val newVolume = originalVolume * progress
+                        player.volume = newVolume.coerceAtMost(originalVolume)
+                        
+                        delay(stepMs)
+                        elapsed += stepMs
+                    }
+                }
+                
+                // Restore full volume
+                player.volume = originalVolume
+                Log.d(TAG, "Crossfade completed successfully")
+                
+            } catch (e: Exception) {
+                Log.e(TAG, "Error during crossfade", e)
+                // Restore volume on error
+                player.volume = originalVolume
+            } finally {
+                isCrossfading = false
+            }
+        }
+    }
+    
+    // ===== END CROSSFADE IMPLEMENTATION =====
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(TAG, "Service started with command: ${intent?.action}")
@@ -1154,7 +1278,18 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
 
     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
         super.onMediaItemTransition(mediaItem, reason)
-        Log.d(TAG, "Media item transitioned: ${mediaItem?.mediaMetadata?.title}")
+        Log.d(TAG, "Media item transitioned: ${mediaItem?.mediaMetadata?.title}, reason=$reason")
+        
+        // Reset crossfade trigger when user manually seeks or selects a different track
+        if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_SEEK || 
+            reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED) {
+            lastCrossfadeTriggeredForIndex = -1
+            crossfadeJob?.cancel()
+            isCrossfading = false
+            // Restore volume in case crossfade was interrupted
+            player.volume = 1.0f
+        }
+        
         // Update custom layout when song changes to reflect correct favorite state
         scheduleCustomLayoutUpdate(50) // Shorter delay for song transitions
         
@@ -1510,5 +1645,40 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         } catch (e: Exception) {
             Log.e(TAG, "Error releasing audio effects", e)
         }
+    }
+    
+    /**
+     * Called when the app is removed from recents (swiped away).
+     * Implements the "stop playback on app close" setting.
+     */
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        val shouldStopPlayback = appSettings.stopPlaybackOnAppClose.value
+        
+        Log.d(TAG, "onTaskRemoved called - stopPlaybackOnAppClose: $shouldStopPlayback")
+        
+        if (shouldStopPlayback) {
+            // User wants playback to stop when app is closed
+            player.apply {
+                playWhenReady = false
+                stop()
+                clearMediaItems()
+            }
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            stopSelf()
+            super.onTaskRemoved(rootIntent)
+            return
+        }
+        
+        // If not stopping on close, check if we should keep the service alive
+        // Only keep alive if actually playing or has media
+        if (!player.playWhenReady || player.mediaItemCount == 0 || player.playbackState == Player.STATE_ENDED) {
+            // Nothing playing, stop the service
+            Log.d(TAG, "No active playback, stopping service")
+            stopSelf()
+        } else {
+            Log.d(TAG, "Continuing playback in background")
+        }
+        
+        super.onTaskRemoved(rootIntent)
     }
 }

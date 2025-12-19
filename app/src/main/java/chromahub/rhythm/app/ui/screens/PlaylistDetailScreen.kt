@@ -30,6 +30,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -64,7 +65,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -105,9 +105,20 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.runtime.collectAsState
 import chromahub.rhythm.app.ui.components.PlayingEqIcon
+import androidx.compose.ui.graphics.Color
+
+// Playlist sort order enum
+enum class PlaylistSortOrder {
+    TITLE_ASC, TITLE_DESC,
+    ARTIST_ASC, ARTIST_DESC,
+    ALBUM_ASC, ALBUM_DESC,
+    DURATION_ASC, DURATION_DESC,
+    DATE_ADDED_ASC, DATE_ADDED_DESC
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -150,6 +161,14 @@ fun PlaylistDetailScreen(
     var selectedSongForQueue by remember { mutableStateOf<Song?>(null) }
     var isReorderMode by remember { mutableStateOf(false) }
     var showSortMenu by remember { mutableStateOf(false) }
+    
+    // Multi-select mode state
+    var isMultiSelectMode by remember { mutableStateOf(false) }
+    var selectedSongs by remember { mutableStateOf(setOf<String>()) }
+    var showBulkDeleteDialog by remember { mutableStateOf(false) }
+    
+    // Track current sort order for playlist
+    var currentPlaylistSort by remember { mutableStateOf(PlaylistSortOrder.TITLE_ASC) }
 
     val haptics = LocalHapticFeedback.current
     val context = LocalContext.current
@@ -420,6 +439,64 @@ fun PlaylistDetailScreen(
         )
     }
 
+    // Bulk delete dialog
+    if (showBulkDeleteDialog && selectedSongs.isNotEmpty()) {
+        AlertDialog(
+            onDismissRequest = { showBulkDeleteDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Filled.DeleteSweep,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            },
+            title = { Text("Remove ${selectedSongs.size} Songs") },
+            text = { Text("Are you sure you want to remove ${selectedSongs.size} song${if (selectedSongs.size > 1) "s" else ""} from this playlist?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                        // Remove selected songs
+                        selectedSongs.forEach { songId ->
+                            playlist.songs.find { it.id == songId }?.let { song ->
+                                onRemoveSong(song, "Song removed from playlist")
+                            }
+                        }
+                        selectedSongs = emptySet()
+                        isMultiSelectMode = false
+                        showBulkDeleteDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.DeleteSweep,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Remove")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = {
+                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                    showBulkDeleteDialog = false
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Cancel")
+                }
+            },
+            shape = RoundedCornerShape(24.dp)
+        )
+    }
+
     // Export dialog
     if (showExportDialog && (onExportPlaylist != null || onExportPlaylistToCustomLocation != null)) {
         PlaylistExportDialog(
@@ -523,206 +600,443 @@ fun PlaylistDetailScreen(
                 DropdownMenu(
                     expanded = showMenu,
                     onDismissRequest = { showMenu = false },
-                    modifier = Modifier,
-                    shape = RoundedCornerShape(16.dp)
+                    modifier = Modifier
+                        .widthIn(min = 220.dp)
+                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                        .padding(5.dp),
+                    shape = RoundedCornerShape(18.dp)
                 ) {
                     // Reorder songs option
                     if (onReorderSongs != null && playlist.songs.isNotEmpty()) {
-                        DropdownMenuItem(
-                            text = { Text(if (isReorderMode) "Done reordering" else "Reorder songs") },
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                showMenu = false
-                                isReorderMode = !isReorderMode
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = if (isReorderMode) Icons.Default.Check else Icons.Default.Reorder,
-                                    contentDescription = null
-                                )
-                            }
-                        )
+                        Surface(
+                            color = MaterialTheme.colorScheme.surface,
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        if (isReorderMode) "Done reordering" else "Reorder songs",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                },
+                                leadingIcon = {
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                                        shape = CircleShape,
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isReorderMode) Icons.Default.Check else Icons.Default.Reorder,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(6.dp)
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    showMenu = false
+                                    isReorderMode = !isReorderMode
+                                    // Exit multi-select mode when entering reorder mode
+                                    if (isReorderMode) {
+                                        isMultiSelectMode = false
+                                        selectedSongs = emptySet()
+                                    }
+                                }
+                            )
+                        }
+                    }
+                    
+                    // Select songs option (multi-select mode)
+                    if (playlist.songs.isNotEmpty()) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.surface,
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        if (isMultiSelectMode) "Cancel selection" else "Select songs",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                },
+                                leadingIcon = {
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                                        shape = CircleShape,
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isMultiSelectMode) Icons.Default.Close else Icons.Default.CheckBox,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(6.dp)
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    showMenu = false
+                                    isMultiSelectMode = !isMultiSelectMode
+                                    // Exit reorder mode when entering multi-select mode
+                                    if (isMultiSelectMode) {
+                                        isReorderMode = false
+                                    } else {
+                                        selectedSongs = emptySet()
+                                    }
+                                }
+                            )
+                        }
                     }
                     
                     // Sort songs option (submenu)
                     if (onUpdatePlaylistSongs != null && playlist.songs.size > 1) {
-                        DropdownMenuItem(
-                            text = { Text("Sort songs") },
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                showMenu = false
-                                showSortMenu = true
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Sort,
-                                    contentDescription = null
-                                )
-                            }
-                        )
+                        Surface(
+                            color = MaterialTheme.colorScheme.surface,
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        "Sort songs",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                },
+                                leadingIcon = {
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                                        shape = CircleShape,
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Sort,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(6.dp)
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    showMenu = false
+                                    showSortMenu = true
+                                }
+                            )
+                        }
                     }
                     
                     // Export playlist option
                     if (onExportPlaylist != null || onExportPlaylistToCustomLocation != null) {
-                        DropdownMenuItem(
-                            text = { Text("Export playlist") },
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                showMenu = false
-                                showExportDialog = true
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.FileUpload,
-                                    contentDescription = null
-                                )
-                            }
-                        )
+                        Surface(
+                            color = MaterialTheme.colorScheme.surface,
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        "Export playlist",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                },
+                                leadingIcon = {
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                                        shape = CircleShape,
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.FileUpload,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(6.dp)
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    showMenu = false
+                                    showExportDialog = true
+                                }
+                            )
+                        }
                     }
                     
                     // Import playlist option
                     if (onImportPlaylist != null) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.surface,
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        "Import playlist",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                },
+                                leadingIcon = {
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                                        shape = CircleShape,
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = RhythmIcons.Actions.Download,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(6.dp)
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    showMenu = false
+                                    showImportDialog = true
+                                }
+                            )
+                        }
+                    }
+                    
+                    // Rename playlist option
+                    Surface(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
                         DropdownMenuItem(
-                            text = { Text("Import playlist") },
+                            text = {
+                                Text(
+                                    "Rename playlist",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            },
+                            leadingIcon = {
+                                Surface(
+                                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f),
+                                    shape = CircleShape,
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = RhythmIcons.Edit,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(6.dp)
+                                    )
+                                }
+                            },
                             onClick = {
                                 HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
                                 showMenu = false
-                                showImportDialog = true
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = RhythmIcons.Actions.Download,
-                                    contentDescription = null
-                                )
+                                newPlaylistName = playlist.name
+                                showRenameDialog = true
                             }
                         )
                     }
                     
-                    DropdownMenuItem(
-                        text = { Text("Rename playlist") },
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                            showMenu = false
-                            newPlaylistName = playlist.name
-                            showRenameDialog = true
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = RhythmIcons.Edit,
-                                contentDescription = null
-                            )
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Delete playlist") },
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                            showMenu = false
-                            showDeleteDialog = true
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = RhythmIcons.Delete,
-                                contentDescription = null
-                            )
-                        }
-                    )
+                    // Delete playlist option
+                    Surface(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    "Delete playlist",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            },
+                            leadingIcon = {
+                                Surface(
+                                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f),
+                                    shape = CircleShape,
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = RhythmIcons.Delete,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onErrorContainer,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(6.dp)
+                                    )
+                                }
+                            },
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                showMenu = false
+                                showDeleteDialog = true
+                            }
+                        )
+                    }
                 }
                 
                 // Sort menu dropdown
                 DropdownMenu(
                     expanded = showSortMenu,
                     onDismissRequest = { showSortMenu = false },
-                    shape = RoundedCornerShape(16.dp)
+                    modifier = Modifier
+                        .widthIn(min = 220.dp)
+                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                        .padding(5.dp),
+                    shape = RoundedCornerShape(18.dp)
                 ) {
-                    DropdownMenuItem(
-                        text = { Text("By title (A-Z)") },
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                            showSortMenu = false
-                            onUpdatePlaylistSongs?.invoke(playlist.songs.sortedBy { it.title.lowercase() })
-                        },
-                        leadingIcon = {
-                            Icon(Icons.Default.SortByAlpha, contentDescription = null)
+                    PlaylistSortOrder.values().forEach { sortOrder ->
+                        val isSelected = currentPlaylistSort == sortOrder
+                        Surface(
+                            color = if (isSelected) 
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
+                            else
+                                MaterialTheme.colorScheme.surface,
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            DropdownMenuItem(
+                                text = { 
+                                    Text(
+                                        text = when (sortOrder) {
+                                            PlaylistSortOrder.TITLE_ASC -> "Title (A-Z)"
+                                            PlaylistSortOrder.TITLE_DESC -> "Title (Z-A)"
+                                            PlaylistSortOrder.ARTIST_ASC -> "Artist (A-Z)"
+                                            PlaylistSortOrder.ARTIST_DESC -> "Artist (Z-A)"
+                                            PlaylistSortOrder.ALBUM_ASC -> "Album (A-Z)"
+                                            PlaylistSortOrder.ALBUM_DESC -> "Album (Z-A)"
+                                            PlaylistSortOrder.DURATION_ASC -> "Duration (shortest)"
+                                            PlaylistSortOrder.DURATION_DESC -> "Duration (longest)"
+                                            PlaylistSortOrder.DATE_ADDED_ASC -> "Date Added (oldest)"
+                                            PlaylistSortOrder.DATE_ADDED_DESC -> "Date Added (newest)"
+                                        },
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (isSelected)
+                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                        else
+                                            MaterialTheme.colorScheme.onSurface
+                                    )
+                                },
+                                leadingIcon = {
+                                    Surface(
+                                        color = if (isSelected)
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                                        else
+                                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                                        shape = CircleShape,
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = when (sortOrder) {
+                                                PlaylistSortOrder.TITLE_ASC, PlaylistSortOrder.TITLE_DESC -> Icons.Default.SortByAlpha
+                                                PlaylistSortOrder.ARTIST_ASC, PlaylistSortOrder.ARTIST_DESC -> Icons.Default.Person
+                                                PlaylistSortOrder.ALBUM_ASC, PlaylistSortOrder.ALBUM_DESC -> RhythmIcons.Music.Album
+                                                PlaylistSortOrder.DURATION_ASC, PlaylistSortOrder.DURATION_DESC -> Icons.Default.Timer
+                                                PlaylistSortOrder.DATE_ADDED_ASC, PlaylistSortOrder.DATE_ADDED_DESC -> Icons.Default.DateRange
+                                            },
+                                            contentDescription = null,
+                                            tint = if (isSelected)
+                                                MaterialTheme.colorScheme.onPrimaryContainer
+                                            else
+                                                MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(6.dp)
+                                        )
+                                    }
+                                },
+                                trailingIcon = {
+                                    when (sortOrder) {
+                                        PlaylistSortOrder.TITLE_ASC, PlaylistSortOrder.ARTIST_ASC, PlaylistSortOrder.ALBUM_ASC, 
+                                        PlaylistSortOrder.DURATION_ASC, PlaylistSortOrder.DATE_ADDED_ASC -> {
+                                            Icon(
+                                                imageVector = Icons.Default.ArrowUpward,
+                                                contentDescription = "Ascending",
+                                                modifier = Modifier.size(18.dp),
+                                                tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        else -> {
+                                            Icon(
+                                                imageVector = Icons.Default.ArrowDownward,
+                                                contentDescription = "Descending",
+                                                modifier = Modifier.size(18.dp),
+                                                tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                },
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    currentPlaylistSort = sortOrder
+                                    showSortMenu = false
+                                    val sortedSongs = when (sortOrder) {
+                                        PlaylistSortOrder.TITLE_ASC -> playlist.songs.sortedBy { it.title.lowercase() }
+                                        PlaylistSortOrder.TITLE_DESC -> playlist.songs.sortedByDescending { it.title.lowercase() }
+                                        PlaylistSortOrder.ARTIST_ASC -> playlist.songs.sortedBy { it.artist.lowercase() }
+                                        PlaylistSortOrder.ARTIST_DESC -> playlist.songs.sortedByDescending { it.artist.lowercase() }
+                                        PlaylistSortOrder.ALBUM_ASC -> playlist.songs.sortedBy { it.album.lowercase() }
+                                        PlaylistSortOrder.ALBUM_DESC -> playlist.songs.sortedByDescending { it.album.lowercase() }
+                                        PlaylistSortOrder.DURATION_ASC -> playlist.songs.sortedBy { it.duration }
+                                        PlaylistSortOrder.DURATION_DESC -> playlist.songs.sortedByDescending { it.duration }
+                                        PlaylistSortOrder.DATE_ADDED_ASC -> playlist.songs.sortedBy { it.dateAdded }
+                                        PlaylistSortOrder.DATE_ADDED_DESC -> playlist.songs.sortedByDescending { it.dateAdded }
+                                    }
+                                    onUpdatePlaylistSongs?.invoke(sortedSongs)
+                                },
+                                colors = androidx.compose.material3.MenuDefaults.itemColors(
+                                    textColor = if (isSelected) 
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else 
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                            )
                         }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("By title (Z-A)") },
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                            showSortMenu = false
-                            onUpdatePlaylistSongs?.invoke(playlist.songs.sortedByDescending { it.title.lowercase() })
-                        },
-                        leadingIcon = {
-                            Icon(Icons.Default.SortByAlpha, contentDescription = null)
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("By artist (A-Z)") },
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                            showSortMenu = false
-                            onUpdatePlaylistSongs?.invoke(playlist.songs.sortedBy { it.artist.lowercase() })
-                        },
-                        leadingIcon = {
-                            Icon(RhythmIcons.Artist, contentDescription = null)
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("By album (A-Z)") },
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                            showSortMenu = false
-                            onUpdatePlaylistSongs?.invoke(playlist.songs.sortedBy { it.album.lowercase() })
-                        },
-                        leadingIcon = {
-                            Icon(RhythmIcons.Music.Album, contentDescription = null)
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("By duration (shortest)") },
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                            showSortMenu = false
-                            onUpdatePlaylistSongs?.invoke(playlist.songs.sortedBy { it.duration })
-                        },
-                        leadingIcon = {
-                            Icon(Icons.Default.Timer, contentDescription = null)
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("By duration (longest)") },
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                            showSortMenu = false
-                            onUpdatePlaylistSongs?.invoke(playlist.songs.sortedByDescending { it.duration })
-                        },
-                        leadingIcon = {
-                            Icon(Icons.Default.Timer, contentDescription = null)
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("By date added (newest)") },
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                            showSortMenu = false
-                            onUpdatePlaylistSongs?.invoke(playlist.songs.sortedByDescending { it.dateAdded })
-                        },
-                        leadingIcon = {
-                            Icon(Icons.Default.DateRange, contentDescription = null)
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("By date added (oldest)") },
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                            showSortMenu = false
-                            onUpdatePlaylistSongs?.invoke(playlist.songs.sortedBy { it.dateAdded })
-                        },
-                        leadingIcon = {
-                            Icon(Icons.Default.DateRange, contentDescription = null)
-                        }
-                    )
+                    }
                 }
             }
         }
@@ -1009,6 +1323,100 @@ fun PlaylistDetailScreen(
                         }
                     }
                 } else {
+                    // Multi-select mode banner
+                    if (isMultiSelectMode) {
+                        item {
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 8.dp),
+                                color = Color.Transparent,
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        // Select All button
+                                        TextButton(
+                                            onClick = {
+                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                                if (selectedSongs.size == filteredSongs.size) {
+                                                    selectedSongs = emptySet()
+                                                } else {
+                                                    selectedSongs = filteredSongs.map { it.id }.toSet()
+                                                }
+                                            }
+                                        ) {
+                                            Icon(
+                                                imageVector = if (selectedSongs.size == filteredSongs.size) Icons.Default.CheckBox else Icons.Default.CheckBoxOutlineBlank,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                if (selectedSongs.size == filteredSongs.size) "${selectedSongs.size} selected" else "${selectedSongs.size} selected"
+                                            )
+                                        }
+                                    }
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+
+                                        // Delete Selected button
+                                        if (selectedSongs.isNotEmpty()) {
+                                            Button(
+                                                onClick = {
+                                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                                    showBulkDeleteDialog = true
+                                                },
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = MaterialTheme.colorScheme.error
+                                                ),
+                                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.DeleteSweep,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text("Remove")
+                                            }
+                                        }
+                                        // Done button
+                                        Button(
+                                            onClick = {
+                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                                isMultiSelectMode = false
+                                                selectedSongs = emptySet()
+                                            },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = MaterialTheme.colorScheme.primary
+                                            ),
+                                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text("Done")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
                     // Reorder mode banner
                     if (isReorderMode) {
                         item {
@@ -1016,13 +1424,13 @@ fun PlaylistDetailScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(bottom = 8.dp),
-                                color = MaterialTheme.colorScheme.primaryContainer,
+                                color = Color.Transparent,
                                 shape = RoundedCornerShape(12.dp)
                             ) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(12.dp),
+                                        .padding(horizontal = 12.dp, vertical = 8.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
@@ -1033,20 +1441,31 @@ fun PlaylistDetailScreen(
                                         Icon(
                                             imageVector = Icons.Default.Reorder,
                                             contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                         Text(
-                                            text = "Reorder mode - Use arrows to move songs",
+                                            text = "Reorder Songs",
                                             style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
-                                    TextButton(
+                                    // Done button
+                                    Button(
                                         onClick = {
                                             HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                                             isReorderMode = false
-                                        }
+                                        },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.primary
+                                        ),
+                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                                     ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
                                         Text("Done")
                                     }
                                 }
@@ -1059,6 +1478,16 @@ fun PlaylistDetailScreen(
                             PlaylistSongItem(
                                 song = song,
                                 onClick = {
+                                    if (isMultiSelectMode) {
+                                        // Toggle selection
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                        selectedSongs = if (selectedSongs.contains(song.id)) {
+                                            selectedSongs - song.id
+                                        } else {
+                                            selectedSongs + song.id
+                                        }
+                                        return@PlaylistSongItem
+                                    }
                                     if (isReorderMode) {
                                         // Don't play in reorder mode
                                         return@PlaylistSongItem
@@ -1080,7 +1509,7 @@ fun PlaylistDetailScreen(
                                         }
                                     }
                                 },
-                                onRemove = if (isReorderMode) null else { message -> onRemoveSong(song, message) },
+                                onRemove = if (isReorderMode || isMultiSelectMode) null else { message -> onRemoveSong(song, message) },
                                 currentSong = currentSong,
                                 isPlaying = isPlaying,
                                 useHoursFormat = useHoursFormat,
@@ -1098,7 +1527,9 @@ fun PlaylistDetailScreen(
                                         HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
                                         onReorderSongs?.invoke(index, index + 1)
                                     }
-                                } else null
+                                } else null,
+                                isMultiSelectMode = isMultiSelectMode,
+                                isSelected = selectedSongs.contains(song.id)
                             )
                         }
                     }
@@ -1179,7 +1610,9 @@ fun PlaylistSongItem(
     index: Int = 0,
     totalCount: Int = 0,
     onMoveUp: (() -> Unit)? = null,
-    onMoveDown: (() -> Unit)? = null
+    onMoveDown: (() -> Unit)? = null,
+    isMultiSelectMode: Boolean = false,
+    isSelected: Boolean = false
 ) {
     val context = LocalContext.current
     var showRemoveDialog by remember { mutableStateOf(false) }
@@ -1254,9 +1687,18 @@ fun PlaylistSongItem(
         )
     }
     
+    // Update container color for selection
+    val selectionContainerColor by animateColorAsState(
+        targetValue = if (isSelected) MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f) 
+                      else if (isCurrentSong) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f) 
+                      else MaterialTheme.colorScheme.surface,
+        animationSpec = tween(200),
+        label = "selectionContainerColor"
+    )
+    
     Surface(
         onClick = onClick,
-        color = containerColor,
+        color = selectionContainerColor,
         shape = RoundedCornerShape(16.dp),
         tonalElevation = 2.dp,
         shadowElevation = 0.dp, // Remove shadow as requested
@@ -1270,13 +1712,22 @@ fun PlaylistSongItem(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Checkbox for multi-select mode
+            if (isMultiSelectMode) {
+                Checkbox(
+                    checked = isSelected,
+                    onCheckedChange = null, // Handled by Surface onClick
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+            }
+            
             // Enhanced album art with better styling
             Box {
                 Surface(
                     modifier = Modifier.size(56.dp),
                     shape = RoundedCornerShape(12.dp),
                     tonalElevation = 4.dp,
-                    border = if (isCurrentSong) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
+                    border = if (isCurrentSong) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.tertiary) else null
                 ) {
                     AsyncImage(
                         model = ImageRequest.Builder(context)

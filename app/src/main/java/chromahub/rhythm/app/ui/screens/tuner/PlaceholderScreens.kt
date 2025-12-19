@@ -567,21 +567,20 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                     )
                 )
             ),
-            SettingGroup(
-                title = context.getString(R.string.settings_audio_effects),
-                items = listOf(
-                    SettingItem(
-                        RhythmIcons.Tune,
-                        context.getString(R.string.settings_crossfade),
-                        if (crossfadeEnabled)
-                            context.getString(R.string.settings_crossfade_duration_desc, crossfadeDuration)
-                        else
-                            context.getString(R.string.settings_crossfade_desc),
-                        toggleState = crossfadeEnabled,
-                        onToggleChange = { appSettings.setCrossfade(it) }
-                    )
-                )
-            ),
+//            SettingGroup(
+//                title = context.getString(R.string.settings_audio_effects),
+//                items = listOf(
+//                    SettingItem(
+//                        RhythmIcons.Tune,
+//                        context.getString(R.string.settings_crossfade),
+//                        context.getString(R.string.settings_crossfade_desc),
+//                        toggleState = crossfadeEnabled,
+//                        onToggleChange = { appSettings.setCrossfade(it) },
+//                        // Pass the crossfade duration as extra data for rendering
+//                        data = if (crossfadeEnabled) crossfadeDuration else null
+//                    )
+//                )
+//            ),
             SettingGroup(
                 title = context.getString(R.string.settings_time_display),
                 items = listOf(
@@ -623,69 +622,64 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                     Column {
                         group.items.forEachIndexed { index, item ->
                             TunerSettingRow(item = item)
-                            if (index < group.items.lastIndex) {
+                            
+                            // If this is a crossfade setting with enabled state and data (duration), show the slider
+                            if (item.data != null && item.data is Float && item.toggleState == true) {
+                                val duration = item.data as Float
                                 HorizontalDivider(
                                     modifier = Modifier.padding(horizontal = 20.dp),
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                                 )
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Crossfade Duration Slider (shown when crossfade is enabled)
-            if (crossfadeEnabled) {
-                item(key = "crossfade_duration_slider") {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(18.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(20.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = context.getString(R.string.settings_crossfade_duration),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                Text(
-                                    text = context.getString(R.string.settings_crossfade_duration_desc, crossfadeDuration),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Slider(
-                                value = crossfadeDuration,
-                                onValueChange = { appSettings.setCrossfadeDuration(it) },
-                                valueRange = 0.5f..12f,
-                                steps = 22,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "0.5s",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    text = "12s",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                // Crossfade duration slider integrated within the same card
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 20.dp, vertical = 16.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = context.getString(R.string.settings_crossfade_duration),
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                        Text(
+                                            text = context.getString(R.string.settings_crossfade_duration_desc, crossfadeDuration),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Slider(
+                                        value = crossfadeDuration,
+                                        onValueChange = { appSettings.setCrossfadeDuration(it) },
+                                        valueRange = 0.5f..12f,
+                                        steps = 22,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = "0.5s",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            text = "12s",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            } else if (index < group.items.lastIndex) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                                 )
                             }
                         }
