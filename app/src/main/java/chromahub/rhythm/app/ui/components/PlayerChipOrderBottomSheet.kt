@@ -90,6 +90,7 @@ fun PlayerChipOrderBottomSheet(
             "LYRICS" -> Pair("Lyrics", Icons.Rounded.Lyrics)
             "ALBUM" -> Pair("Album", RhythmIcons.Music.Album)
             "ARTIST" -> Pair("Artist", RhythmIcons.Music.Artist)
+            "CAST" -> Pair("Cast", RhythmIcons.Devices.Cast)
             else -> Pair(chipId, Icons.Rounded.Edit)
         }
     }

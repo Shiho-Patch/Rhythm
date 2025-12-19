@@ -282,10 +282,23 @@ fun LibraryScreen(
     val scope = rememberCoroutineScope()
     val haptics = LocalHapticFeedback.current
     
-    // Sync pager with selected tab when tabs change (hide/unhide)
+    // Track previous tab order to detect changes
+    var previousVisibleTabIds by remember { mutableStateOf(visibleTabIds) }
+    
+    // Sync pager with selected tab when tabs change (hide/unhide/reorder)
     LaunchedEffect(tabs.size, visibleTabIds) {
-        // If current selected tab is out of bounds, reset to first tab
-        if (selectedTabIndex >= tabs.size) {
+        // Check if tab configuration has changed (not just on initial composition)
+        val hasTabsChanged = previousVisibleTabIds != visibleTabIds
+        
+        if (hasTabsChanged) {
+            // Tab configuration has changed - always reset to first tab
+            selectedTabIndex = 0
+            pagerState.scrollToPage(0)
+            // Scroll tab row to start
+            tabRowState.animateScrollToItem(0)
+            previousVisibleTabIds = visibleTabIds
+        } else if (selectedTabIndex >= tabs.size) {
+            // If current selected tab is out of bounds, reset to first tab
             selectedTabIndex = 0
             pagerState.scrollToPage(0)
         }
