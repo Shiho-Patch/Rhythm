@@ -344,12 +344,12 @@ fun PlaylistDetailScreen(
                     tint = MaterialTheme.colorScheme.primary
                 )
             },
-            title = { Text("Rename Playlist") },
+            title = { Text(context.getString(R.string.playlist_rename_title)) },
             text = {
                 OutlinedTextField(
                     value = newPlaylistName,
                     onValueChange = { newPlaylistName = it },
-                    label = { Text("Playlist Name") },
+                    label = { Text(context.getString(R.string.playlist_name_label)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -399,8 +399,8 @@ fun PlaylistDetailScreen(
                     tint = MaterialTheme.colorScheme.error
                 )
             },
-            title = { Text("Delete Playlist") },
-            text = { Text("Are you sure you want to delete '${playlist.name}'? This action cannot be undone.") },
+            title = { Text(context.getString(R.string.playlist_delete_title)) },
+            text = { Text(context.getString(R.string.dialog_delete_playlist_message, playlist.name)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -541,7 +541,7 @@ fun PlaylistDetailScreen(
     // Operation result dialog
     operationResult?.let { (message, isError) ->
         PlaylistOperationResultDialog(
-            title = if (isError) "Operation Failed" else "Operation Complete",
+            title = if (isError) context.getString(R.string.playlist_operation_failed) else context.getString(R.string.playlist_operation_complete),
             message = message,
             isError = isError,
             onDismiss = { operationResult = null }
@@ -593,7 +593,7 @@ fun PlaylistDetailScreen(
                 ) {
                     Icon(
                         imageVector = RhythmIcons.More,
-                        contentDescription = "More options",
+                        contentDescription = context.getString(R.string.playlist_more_options),
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -618,7 +618,7 @@ fun PlaylistDetailScreen(
                             DropdownMenuItem(
                                 text = {
                                     Text(
-                                        if (isReorderMode) "Done reordering" else "Reorder songs",
+                                        if (isReorderMode) context.getString(R.string.playlist_done_reordering) else context.getString(R.string.playlist_reorder_songs),
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Medium,
                                         color = MaterialTheme.colorScheme.onSurface

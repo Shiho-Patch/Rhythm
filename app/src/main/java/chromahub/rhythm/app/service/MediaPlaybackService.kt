@@ -1471,37 +1471,85 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                 return
             }
             
-            // Initialize equalizer
-            try {
-                equalizer?.release()
-                equalizer = android.media.audiofx.Equalizer(0, audioSessionId).apply {
-                    enabled = false
-                }
-                Log.d(TAG, "Equalizer initialized with ${equalizer?.numberOfBands} bands for session $audioSessionId")
+            // Check if equalizer is available on this device
+            val equalizerAvailable = try {
+                // Try to create a dummy equalizer to check availability
+                val dummy = android.media.audiofx.Equalizer(0, 0)
+                dummy.release()
+                true
             } catch (e: Exception) {
-                Log.w(TAG, "Equalizer not available: ${e.message}")
+                false
             }
             
-            // Initialize bass boost
-            try {
-                bassBoost?.release()
-                bassBoost = android.media.audiofx.BassBoost(0, audioSessionId).apply {
-                    enabled = false
+            if (!equalizerAvailable) {
+                Log.w(TAG, "Equalizer is not available on this device")
+                equalizer = null
+            } else {
+                // Initialize equalizer
+                try {
+                    equalizer?.release()
+                    equalizer = android.media.audiofx.Equalizer(0, audioSessionId).apply {
+                        enabled = false
+                    }
+                    Log.d(TAG, "Equalizer initialized with ${equalizer?.numberOfBands} bands for session $audioSessionId")
+                } catch (e: Exception) {
+                    Log.w(TAG, "Equalizer initialization failed: ${e.message}")
+                    equalizer = null
                 }
-                Log.d(TAG, "Bass boost initialized")
-            } catch (e: Exception) {
-                Log.w(TAG, "Bass boost not available: ${e.message}")
             }
             
-            // Initialize virtualizer
-            try {
-                virtualizer?.release()
-                virtualizer = android.media.audiofx.Virtualizer(0, audioSessionId).apply {
-                    enabled = false
-                }
-                Log.d(TAG, "Virtualizer initialized")
+            // Check if bass boost is available on this device
+            val bassBoostAvailable = try {
+                // Try to create a dummy bass boost to check availability
+                val dummy = android.media.audiofx.BassBoost(0, 0)
+                dummy.release()
+                true
             } catch (e: Exception) {
-                Log.w(TAG, "Virtualizer not available: ${e.message}")
+                false
+            }
+            
+            if (!bassBoostAvailable) {
+                Log.w(TAG, "Bass boost is not available on this device")
+                bassBoost = null
+            } else {
+                // Initialize bass boost
+                try {
+                    bassBoost?.release()
+                    bassBoost = android.media.audiofx.BassBoost(0, audioSessionId).apply {
+                        enabled = false
+                    }
+                    Log.d(TAG, "Bass boost initialized")
+                } catch (e: Exception) {
+                    Log.w(TAG, "Bass boost initialization failed: ${e.message}")
+                    bassBoost = null
+                }
+            }
+            
+            // Check if virtualizer is available on this device
+            val virtualizerAvailable = try {
+                // Try to create a dummy virtualizer to check availability
+                val dummy = android.media.audiofx.Virtualizer(0, 0)
+                dummy.release()
+                true
+            } catch (e: Exception) {
+                false
+            }
+            
+            if (!virtualizerAvailable) {
+                Log.w(TAG, "Virtualizer is not available on this device")
+                virtualizer = null
+            } else {
+                // Initialize virtualizer
+                try {
+                    virtualizer?.release()
+                    virtualizer = android.media.audiofx.Virtualizer(0, audioSessionId).apply {
+                        enabled = false
+                    }
+                    Log.d(TAG, "Virtualizer initialized")
+                } catch (e: Exception) {
+                    Log.w(TAG, "Virtualizer initialization failed: ${e.message}")
+                    virtualizer = null
+                }
             }
             
             // Load saved settings and apply them
@@ -1521,14 +1569,8 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             val bandLevelsString = appSettings.equalizerBandLevels.value
             val bandLevels = bandLevelsString.split(",").mapNotNull { it.toFloatOrNull() }
             if (bandLevels.isNotEmpty()) {
-                equalizer?.let { eq ->
-                    val availableBands = eq.numberOfBands.toInt()
-                    for (i in 0 until minOf(availableBands, bandLevels.size)) {
-                        val level = (bandLevels[i] * 100).toInt().toShort()
-                        eq.setBandLevel(i.toShort(), level)
-                    }
-                    Log.d(TAG, "Applied ${bandLevels.size} band levels to ${availableBands} available bands")
-                }
+                // Use the same interpolation logic as applyEqualizerPreset
+                applyEqualizerPreset(bandLevels.toFloatArray())
             }
             
             // Load bass boost settings
@@ -1556,8 +1598,20 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     
     fun setEqualizerBandLevel(band: Short, level: Short) {
         try {
-            equalizer?.setBandLevel(band, level)
-            Log.d(TAG, "Set equalizer band $band to level $level")
+            // When a single band is changed in a 10-band UI but we only have 5 hardware bands,
+            // we need to reload and re-interpolate all bands from saved settings
+            val bandLevelsString = appSettings.equalizerBandLevels.value
+            val bandLevels = bandLevelsString.split(",").mapNotNull { it.toFloatOrNull() }
+            
+            if (bandLevels.size == 10 && (equalizer?.numberOfBands?.toInt() ?: 0) < 10) {
+                // Re-apply all bands with interpolation
+                applyEqualizerPreset(bandLevels.toFloatArray())
+                Log.d(TAG, "Re-applied 10-band EQ with interpolation after band $band change")
+            } else {
+                // Direct band setting when counts match
+                equalizer?.setBandLevel(band, level)
+                Log.d(TAG, "Set equalizer band $band to level $level")
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error setting equalizer band level", e)
         }
@@ -1575,19 +1629,84 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         return equalizer?.getBandFreqRange(band)
     }
     
+    fun isEqualizerSupported(): Boolean {
+        return equalizer != null
+    }
+    
     fun applyEqualizerPreset(levels: FloatArray) {
         try {
             equalizer?.let { eq ->
-                val numberOfBands = eq.numberOfBands
-                for (i in 0 until minOf(numberOfBands.toInt(), levels.size)) {
-                    val level = (levels[i] * 100).toInt().toShort() // Convert -1.0 to 1.0 range to -100 to 100
-                    eq.setBandLevel(i.toShort(), level)
+                val numberOfBands = eq.numberOfBands.toInt()
+                val inputBands = levels.size
+                
+                if (inputBands == numberOfBands) {
+                    // Direct mapping if bands match
+                    for (i in 0 until numberOfBands) {
+                        val level = (levels[i] * 100).toInt().toShort()
+                        eq.setBandLevel(i.toShort(), level)
+                    }
+                } else if (inputBands > numberOfBands) {
+                    // Map 10 UI bands to available hardware bands using interpolation
+                    // This handles the case where UI has 10 bands but hardware has 5
+                    val mappedLevels = interpolateBands(levels, numberOfBands)
+                    for (i in 0 until numberOfBands) {
+                        val level = (mappedLevels[i] * 100).toInt().toShort()
+                        eq.setBandLevel(i.toShort(), level)
+                    }
+                } else {
+                    // If hardware has more bands than UI, apply what we have
+                    for (i in 0 until inputBands) {
+                        val level = (levels[i] * 100).toInt().toShort()
+                        eq.setBandLevel(i.toShort(), level)
+                    }
                 }
-                Log.d(TAG, "Applied equalizer preset with ${levels.size} bands")
+                Log.d(TAG, "Applied equalizer preset: ${levels.size} UI bands -> $numberOfBands hardware bands")
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error applying equalizer preset", e)
         }
+    }
+    
+    /**
+     * Interpolates 10-band EQ settings to the available hardware bands.
+     * Uses weighted averaging based on frequency proximity.
+     * 
+     * Standard 10-band frequencies: 31Hz, 62Hz, 125Hz, 250Hz, 500Hz, 1kHz, 2kHz, 4kHz, 8kHz, 16kHz
+     * Standard 5-band frequencies: ~60Hz, 230Hz, 910Hz, 3.6kHz, 14kHz (varies by device)
+     */
+    private fun interpolateBands(inputLevels: FloatArray, outputBands: Int): FloatArray {
+        if (outputBands <= 0 || inputLevels.isEmpty()) return FloatArray(outputBands)
+        
+        val result = FloatArray(outputBands)
+        val inputBands = inputLevels.size
+        
+        // Define the mapping of 10-band to 5-band (approximate frequency groupings)
+        // Band 0 (60Hz): avg of 31Hz, 62Hz, 125Hz
+        // Band 1 (230Hz): avg of 250Hz, 500Hz
+        // Band 2 (910Hz): avg of 1kHz, 2kHz
+        // Band 3 (3.6kHz): avg of 4kHz, 8kHz
+        // Band 4 (14kHz): 16kHz
+        
+        if (outputBands == 5 && inputBands == 10) {
+            // Optimized mapping for the common 10->5 case
+            result[0] = (inputLevels[0] * 0.3f + inputLevels[1] * 0.4f + inputLevels[2] * 0.3f)
+            result[1] = (inputLevels[3] * 0.5f + inputLevels[4] * 0.5f)
+            result[2] = (inputLevels[5] * 0.5f + inputLevels[6] * 0.5f)
+            result[3] = (inputLevels[7] * 0.5f + inputLevels[8] * 0.5f)
+            result[4] = inputLevels[9]
+        } else {
+            // General linear interpolation for other cases
+            val ratio = (inputBands - 1).toFloat() / (outputBands - 1).toFloat()
+            for (i in 0 until outputBands) {
+                val srcPos = i * ratio
+                val lowerIndex = srcPos.toInt().coerceIn(0, inputBands - 1)
+                val upperIndex = (lowerIndex + 1).coerceIn(0, inputBands - 1)
+                val fraction = srcPos - lowerIndex
+                result[i] = inputLevels[lowerIndex] * (1 - fraction) + inputLevels[upperIndex] * fraction
+            }
+        }
+        
+        return result
     }
     
     fun setBassBoostEnabled(enabled: Boolean) {

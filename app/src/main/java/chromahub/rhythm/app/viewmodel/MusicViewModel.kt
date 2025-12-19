@@ -58,6 +58,7 @@ import java.io.File
 import chromahub.rhythm.app.data.LyricsData // Import LyricsData
 import chromahub.rhythm.app.util.PendingWriteRequest // Import for metadata write requests
 import chromahub.rhythm.app.data.stats.PlaybackStatsRepository // Import for enhanced stats tracking
+import chromahub.rhythm.app.cast.CastManager // Import for Cast device management
 
 class MusicViewModel(application: Application) : AndroidViewModel(application) {
     private val TAG = "MusicViewModel"
@@ -68,6 +69,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     
     // Audio device manager (exposed for UI components that need device detection)
     val audioDeviceManager = AudioDeviceManager(application)
+    
+    // Cast manager for Chromecast/TV device support
+    val castManager = CastManager.getInstance(application).apply {
+        initialize()
+    }
     
     // Settings manager
     val appSettings = AppSettings.getInstance(application)
@@ -2864,6 +2870,54 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     fun showOutputSwitcherDialog() {
         audioDeviceManager.showOutputSwitcherDialog()
     }
+    
+    /**
+     * Check if Cast is available
+     */
+    fun isCastAvailable(): Boolean {
+        return castManager.isCastAvailable.value
+    }
+    
+    /**
+     * Check if currently connected to a Cast device
+     */
+    fun isCasting(): Boolean {
+        return castManager.isCasting.value
+    }
+    
+    /**
+     * Get the name of the connected Cast device
+     */
+    fun getCastDeviceName(): String? {
+        return castManager.castDeviceName.value
+    }
+    
+    /**
+     * Start Cast playback with the current song
+     */
+    fun startCastPlayback() {
+        val currentSong = _currentSong.value ?: return
+        val queueData = _currentQueue.value
+        val currentIndex = queueData.songs.indexOfFirst { song -> song.id == currentSong.id }.coerceAtLeast(0)
+        
+        if (queueData.songs.isNotEmpty()) {
+            mediaController?.let { controller ->
+                castManager.playQueue(
+                    songs = queueData.songs,
+                    startIndex = currentIndex,
+                    startPosition = controller.currentPosition,
+                    autoPlay = controller.isPlaying
+                )
+            }
+        }
+    }
+    
+    /**
+     * Stop Cast playback and return to local
+     */
+    fun stopCastPlayback() {
+        castManager.endSession()
+    }
 
     private fun cleanupResources() {
         Log.d(TAG, "ViewModel being cleared - cleaning up resources")
@@ -2879,6 +2933,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         
         // Clean up audio device manager
         audioDeviceManager.cleanup()
+        
+        // Clean up Cast manager
+        castManager.release()
         
         // Clean up sleep timer
         sleepTimerJob?.cancel()
@@ -4991,6 +5048,18 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     // Equalizer functionality
+    fun isEqualizerSupported(): Boolean {
+        // Check if Equalizer is available on the device
+        return try {
+            // Try to create a dummy equalizer to check availability
+            val dummy = android.media.audiofx.Equalizer(0, 0)
+            dummy.release()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+    
     fun setEqualizerEnabled(enabled: Boolean) {
         val context = getApplication<Application>()
         

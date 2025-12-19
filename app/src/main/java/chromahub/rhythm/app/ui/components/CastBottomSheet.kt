@@ -95,10 +95,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import chromahub.rhythm.app.R
 import chromahub.rhythm.app.data.AppSettings
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.util.PlayerStateTransfer
 import chromahub.rhythm.app.viewmodel.MusicViewModel
+import com.google.android.gms.cast.framework.CastButtonFactory
+import com.google.android.gms.cast.framework.CastContext
 import kotlinx.coroutines.delay
 
 /**
@@ -135,7 +138,7 @@ fun CastBottomSheet(
     
     // Get current playback device info (if available)
     val currentDevice by remember { mutableStateOf<CastDevice?>(
-        CastDevice("local", "This Phone", CastDeviceType.PHONE, isConnected = true)
+        CastDevice("local", context.getString(R.string.bottomsheet_this_phone), CastDeviceType.PHONE, isConnected = true)
     ) }
     
     val contentAlpha by animateFloatAsState(
@@ -177,8 +180,7 @@ fun CastBottomSheet(
             ) {
                 CastHeader(
                     isConnected = currentDevice != null,
-                    connectedDeviceName = currentDevice?.name,
-                    haptics = haptics
+                    connectedDeviceName = currentDevice?.name
                 )
             }
             
@@ -207,7 +209,46 @@ fun CastBottomSheet(
                             HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                             // Use native Android output switcher
                             musicViewModel.showOutputSwitcherDialog()
-                            Toast.makeText(context, "Opening output switcher...", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.bottomsheet_opening_switcher), Toast.LENGTH_SHORT).show()
+                        },
+                        haptics = haptics
+                    )
+                }
+                
+                // Cast to TV/Chromecast Card
+                item {
+                    CastToDeviceCard(
+                        isCasting = musicViewModel.isCasting(),
+                        castDeviceName = musicViewModel.getCastDeviceName(),
+                        onCastClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            try {
+                                // Show the Cast dialog
+                                val castContext = CastContext.getSharedInstance(context)
+                                val sessionManager = castContext.sessionManager
+                                if (musicViewModel.isCasting()) {
+                                    // Disconnect from Cast device
+                                    musicViewModel.stopCastPlayback()
+                                    Toast.makeText(context, context.getString(R.string.bottomsheet_disconnected_cast), Toast.LENGTH_SHORT).show()
+                                } else {
+                                    // Show Cast device selection dialog
+                                    // The CastContext handles this via the MediaRouter
+                                    val mediaRouter = androidx.mediarouter.media.MediaRouter.getInstance(context)
+                                    val routeSelector = androidx.mediarouter.media.MediaRouteSelector.Builder()
+                                        .addControlCategory(com.google.android.gms.cast.CastMediaControlIntent.categoryForCast(
+                                            com.google.android.gms.cast.CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID
+                                        ))
+                                        .build()
+                                    
+                                    // Show the route chooser dialog
+                                    androidx.mediarouter.app.MediaRouteChooserDialog(context).apply {
+                                        this.routeSelector = routeSelector
+                                        show()
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                Toast.makeText(context, context.getString(R.string.bottomsheet_cast_unavailable, e.message ?: ""), Toast.LENGTH_SHORT).show()
+                            }
                         },
                         haptics = haptics
                     )
@@ -231,19 +272,9 @@ fun CastBottomSheet(
 private fun CastHeader(
     isConnected: Boolean,
     connectedDeviceName: String?,
-    haptics: androidx.compose.ui.hapticfeedback.HapticFeedback,
     modifier: Modifier = Modifier
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "castPulse")
-    val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.5f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulseAlpha"
-    )
+    val context = LocalContext.current
     
     Row(
         modifier = modifier
@@ -253,57 +284,38 @@ private fun CastHeader(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Column {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            Text(
+                text = context.getString(R.string.bottomsheet_cast_stream),
+                style = MaterialTheme.typography.displayMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Box(
+                modifier = Modifier
+                    .padding(top = 6.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        shape = CircleShape
+                    )
             ) {
-                // Cast icon with glow effect when connected
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (isConnected) {
-                                Brush.radialGradient(
-                                    colors = listOf(
-                                        MaterialTheme.colorScheme.primary.copy(alpha = pulseAlpha * 0.3f),
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                                    )
-                                )
-                            } else {
-                                Brush.radialGradient(
-                                    colors = listOf(
-                                        MaterialTheme.colorScheme.surfaceContainerHigh,
-                                        MaterialTheme.colorScheme.surfaceContainerHigh
-                                    )
-                                )
-                            }
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = if (isConnected) Icons.Rounded.CastConnected else Icons.Rounded.Cast,
-                        contentDescription = null,
-                        tint = if (isConnected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-                
-                Column {
-                    Text(
-                        text = "Cast & Stream",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    
-                    Text(
-                        text = if (isConnected) "Connected to $connectedDeviceName" else "Stream to your devices",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                Text(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    style = MaterialTheme.typography.labelLarge,
+                    text = if (isConnected) context.getString(R.string.bottomsheet_connected_to_device, connectedDeviceName ?: "") else context.getString(R.string.bottomsheet_stream_to_devices),
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 1,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
+        }
+        
+        if (isConnected) {
+            Icon(
+                imageVector = Icons.Rounded.CastConnected,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(32.dp)
+            )
         }
     }
 }
@@ -314,6 +326,7 @@ private fun CurrentDeviceCard(
     haptics: androidx.compose.ui.hapticfeedback.HapticFeedback,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val infiniteTransition = rememberInfiniteTransition(label = "connectedPulse")
     val borderAlpha by infiniteTransition.animateFloat(
         initialValue = 0.3f,
@@ -325,82 +338,76 @@ private fun CurrentDeviceCard(
         label = "borderAlpha"
     )
     
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .border(
-                width = 2.dp,
-                brush = Brush.horizontalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primary.copy(alpha = borderAlpha),
-                        MaterialTheme.colorScheme.tertiary.copy(alpha = borderAlpha)
-                    )
-                ),
-                shape = RoundedCornerShape(20.dp)
-            ),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Device icon
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = getDeviceIcon(device.deviceType),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-            
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = device.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-//                    Box(
-//                        modifier = Modifier
-//                            .size(8.dp)
-//                            .clip(CircleShape)
-//                            .background(Color.Green)
+//    Card(
+//        modifier = modifier
+//            .fillMaxWidth()
+//            .border(
+//                width = 2.dp,
+//                brush = Brush.horizontalGradient(
+//                    colors = listOf(
+//                        MaterialTheme.colorScheme.primary.copy(alpha = borderAlpha),
+//                        MaterialTheme.colorScheme.tertiary.copy(alpha = borderAlpha)
 //                    )
-                    Text(
-                        text = "Playing Now",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-            
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = "Active",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-    }
+//                ),
+//                shape = RoundedCornerShape(20.dp)
+//            ),
+//        shape = RoundedCornerShape(20.dp),
+//        colors = CardDefaults.cardColors(
+//            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+//        ),
+//        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+//    ) {
+//        Row(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .padding(20.dp),
+//            verticalAlignment = Alignment.CenterVertically,
+//            horizontalArrangement = Arrangement.spacedBy(16.dp)
+//        ) {
+//            // Device icon
+//            Box(
+//                modifier = Modifier
+//                    .size(56.dp)
+//                    .clip(CircleShape)
+//                    .background(MaterialTheme.colorScheme.primary),
+//                contentAlignment = Alignment.Center
+//            ) {
+//                Icon(
+//                    imageVector = getDeviceIcon(device.deviceType),
+//                    contentDescription = null,
+//                    tint = MaterialTheme.colorScheme.onPrimary,
+//                    modifier = Modifier.size(28.dp)
+//                )
+//            }
+//
+//            Column(modifier = Modifier.weight(1f)) {
+//                Text(
+//                    text = device.name,
+//                    style = MaterialTheme.typography.titleMedium,
+//                    fontWeight = FontWeight.SemiBold,
+//                    color = MaterialTheme.colorScheme.onSurface
+//                )
+//
+//                Row(
+//                    verticalAlignment = Alignment.CenterVertically,
+//                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+//                ) {
+//                    Text(
+//                        text = context.getString(R.string.bottomsheet_playing_now),
+//                        style = MaterialTheme.typography.bodySmall,
+//                        color = MaterialTheme.colorScheme.onSurfaceVariant
+//                    )
+//                }
+//            }
+//
+//            Icon(
+//                imageVector = Icons.Default.Check,
+//                contentDescription = context.getString(R.string.bottomsheet_active_device),
+//                tint = MaterialTheme.colorScheme.primary,
+//                modifier = Modifier.size(24.dp)
+//            )
+//        }
+//    }
 }
 
 @Composable
@@ -409,6 +416,7 @@ private fun OutputSwitcherCard(
     haptics: androidx.compose.ui.hapticfeedback.HapticFeedback,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -436,14 +444,14 @@ private fun OutputSwitcherCard(
                 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Switch Output Device",
+                        text = context.getString(R.string.bottomsheet_switch_output),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     
                     Text(
-                        text = "Connect to Bluetooth, Cast, or other devices",
+                        text = context.getString(R.string.bottomsheet_connect_devices),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -465,7 +473,7 @@ private fun OutputSwitcherCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Open Output Switcher",
+                    text = context.getString(R.string.bottomsheet_open_switcher),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -475,7 +483,123 @@ private fun OutputSwitcherCard(
 }
 
 @Composable
+private fun CastToDeviceCard(
+    isCasting: Boolean,
+    castDeviceName: String?,
+    onCastClick: () -> Unit,
+    haptics: androidx.compose.ui.hapticfeedback.HapticFeedback,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val infiniteTransition = rememberInfiniteTransition(label = "castPulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = if (isCasting) 1.05f else 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseScale"
+    )
+    
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .then(if (isCasting) Modifier.graphicsLayer { scaleX = pulseScale; scaleY = pulseScale } else Modifier),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isCasting) 
+                MaterialTheme.colorScheme.primaryContainer 
+            else 
+                MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(
+                    imageVector = if (isCasting) Icons.Default.CastConnected else Icons.Default.Tv,
+                    contentDescription = null,
+                    tint = if (isCasting) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(28.dp)
+                )
+                
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = if (isCasting) context.getString(R.string.bottomsheet_connected_to_device, castDeviceName ?: "") else context.getString(R.string.bottomsheet_cast_to_tv),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (isCasting) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                    )
+                    
+                    Text(
+                        text = if (isCasting) context.getString(R.string.bottomsheet_tap_disconnect) else context.getString(R.string.bottomsheet_cast_description),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (isCasting) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            if (isCasting) {
+                OutlinedButton(
+                    onClick = onCastClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    contentPadding = PaddingValues(16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = context.getString(R.string.bottomsheet_disconnect),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            } else {
+                Button(
+                    onClick = onCastClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    contentPadding = PaddingValues(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.tertiary,
+                        contentColor = MaterialTheme.colorScheme.onTertiary
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Tv,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = context.getString(R.string.bottomsheet_find_devices),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun CastInfoCard(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -500,7 +624,7 @@ private fun CastInfoCard(modifier: Modifier = Modifier) {
             
             Column {
                 Text(
-                    text = "About Casting",
+                    text = context.getString(R.string.bottomsheet_about_casting),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -509,7 +633,7 @@ private fun CastInfoCard(modifier: Modifier = Modifier) {
                 Spacer(modifier = Modifier.height(4.dp))
                 
                 Text(
-                    text = "Use the output switcher to cast your music to Bluetooth devices, Chromecast, or other compatible devices. Android's native media routing handles seamless playback transfer.",
+                    text = context.getString(R.string.bottomsheet_casting_info),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 18.sp
@@ -529,12 +653,14 @@ private fun getDeviceIcon(deviceType: CastDeviceType): ImageVector {
     }
 }
 
+@Composable
 private fun getDeviceTypeName(deviceType: CastDeviceType): String {
+    val context = LocalContext.current
     return when (deviceType) {
-        CastDeviceType.TV -> "Television"
-        CastDeviceType.SPEAKER -> "Smart Speaker"
-        CastDeviceType.SOUNDBAR -> "Soundbar"
-        CastDeviceType.PHONE -> "Phone"
-        CastDeviceType.UNKNOWN -> "Cast Device"
+        CastDeviceType.TV -> context.getString(R.string.device_type_television)
+        CastDeviceType.SPEAKER -> context.getString(R.string.device_type_smart_speaker)
+        CastDeviceType.SOUNDBAR -> context.getString(R.string.device_type_soundbar)
+        CastDeviceType.PHONE -> context.getString(R.string.device_type_phone)
+        CastDeviceType.UNKNOWN -> context.getString(R.string.device_type_cast_device)
     }
 }

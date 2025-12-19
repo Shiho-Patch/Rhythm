@@ -767,10 +767,10 @@ private fun ModernScrollableContent(
     // Time-based greeting with festive override
     val greeting = remember(activeFestiveTheme) {
         when (activeFestiveTheme) {
-            FestiveThemeType.CHRISTMAS -> "Merry Christmas"
-            FestiveThemeType.NEW_YEAR -> "Happy New Year"
-            FestiveThemeType.HALLOWEEN -> "Happy Halloween"
-            FestiveThemeType.VALENTINES -> "Happy Valentine's"
+            FestiveThemeType.CHRISTMAS -> context.getString(R.string.home_greeting_christmas)
+            FestiveThemeType.NEW_YEAR -> context.getString(R.string.home_greeting_new_year)
+            FestiveThemeType.HALLOWEEN -> context.getString(R.string.home_greeting_halloween)
+            FestiveThemeType.VALENTINES -> context.getString(R.string.home_greeting_valentines)
             else -> {
                 val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
                 when {
@@ -1996,10 +1996,11 @@ private fun ModernArtistsSection(
     onArtistClick: (Artist) -> Unit,
     onViewAllArtists: () -> Unit
 ) {
+    val context = LocalContext.current
     Column {
         ModernSectionTitle(
-            title = "Top Artists",
-            subtitle = "Your favorite musicians",
+            title = context.getString(R.string.home_top_artists),
+            subtitle = context.getString(R.string.home_top_artists_subtitle),
             viewAllAction = onViewAllArtists
         )
         

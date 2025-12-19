@@ -287,7 +287,7 @@ fun LyricsEditorBottomSheet(
                                 ),
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
                             ) {
-                                Text("Reset", style = MaterialTheme.typography.labelMedium)
+                                Text(context.getString(R.string.bottomsheet_reset), style = MaterialTheme.typography.labelMedium)
                             }
                         }
                     }
@@ -347,7 +347,7 @@ fun LyricsEditorBottomSheet(
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = "Earlier",
+                                    text = context.getString(R.string.bottomsheet_lyrics_earlier),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = if (hasSyncedLyrics) 
                                         MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
@@ -395,7 +395,7 @@ fun LyricsEditorBottomSheet(
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = "Earlier",
+                                    text = context.getString(R.string.bottomsheet_lyrics_earlier),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = if (hasSyncedLyrics) 
                                         MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
@@ -443,7 +443,7 @@ fun LyricsEditorBottomSheet(
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = "Later",
+                                    text = context.getString(R.string.bottomsheet_lyrics_later),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = if (hasSyncedLyrics) 
                                         MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f)
@@ -491,7 +491,7 @@ fun LyricsEditorBottomSheet(
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = "Later",
+                                    text = context.getString(R.string.bottomsheet_lyrics_later),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = if (hasSyncedLyrics) 
                                         MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f)
@@ -565,7 +565,7 @@ fun LyricsEditorBottomSheet(
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Load Lyrics")
+                            Text(context.getString(R.string.bottomsheet_lyrics_load))
                         }
 
                         // Save File Button
@@ -591,7 +591,7 @@ fun LyricsEditorBottomSheet(
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Save Lyrics")
+                            Text(context.getString(R.string.bottomsheet_lyrics_save))
                         }
                     }
                 }

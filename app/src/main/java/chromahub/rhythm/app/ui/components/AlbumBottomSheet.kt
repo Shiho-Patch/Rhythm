@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import chromahub.rhythm.app.R
 import chromahub.rhythm.app.data.Album
 import chromahub.rhythm.app.data.Song
 import chromahub.rhythm.app.data.AppSettings
@@ -601,7 +602,7 @@ fun AlbumBottomSheet(
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = "Play All",
+                                        text = context.getString(R.string.bottomsheet_play_all),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.SemiBold
                                     )
@@ -701,7 +702,7 @@ fun AlbumBottomSheet(
                         ) {
                             Column {
                                 Text(
-                                    text = "Tracks",
+                                    text = context.getString(R.string.bottomsheet_tracks),
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -786,7 +787,7 @@ fun AlbumBottomSheet(
                                     ) {
                                         // Header
                                         Text(
-                                            text = "Sort by",
+                                            text = context.getString(R.string.bottomsheet_sort_by),
                                             style = MaterialTheme.typography.labelLarge,
                                             color = MaterialTheme.colorScheme.primary,
                                             fontWeight = FontWeight.SemiBold,
@@ -1037,7 +1038,7 @@ fun AlbumBottomSheet(
                                 }
 
                                 Text(
-                                    text = "No songs in this album",
+                                    text = context.getString(R.string.bottomsheet_no_songs_album),
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     textAlign = TextAlign.Center

@@ -76,6 +76,13 @@ android {
         includeInBundle = false
     }
 
+    packaging {
+        resources {
+            merges += "/META-INF/INDEX.LIST"
+            merges += "**/io.netty.versions.properties"
+        }
+    }
+
     applicationVariants.all {
         outputs.all {
             (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName =
@@ -135,6 +142,13 @@ dependencies {
     
     // MediaRouter
     implementation("androidx.mediarouter:mediarouter:1.8.1")
+    
+    // Google Cast SDK for Chromecast support
+    implementation("com.google.android.gms:play-services-cast-framework:22.2.0")
+    
+    // Ktor for HTTP server (Cast media serving)
+    implementation("io.ktor:ktor-server-core:3.3.3")
+    implementation("io.ktor:ktor-server-netty:3.3.3")
     
     // Coil for image loading
     implementation("io.coil-kt:coil-compose:2.7.0")

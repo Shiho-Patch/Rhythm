@@ -323,7 +323,7 @@ fun LibraryTabOrderBottomSheet(
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Reset")
+                        Text(context.getString(R.string.bottomsheet_reset))
                     }
                     
                     // Save button
@@ -350,7 +350,7 @@ fun LibraryTabOrderBottomSheet(
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Save")
+                        Text(context.getString(R.string.bottomsheet_save))
                     }
                 }
                 

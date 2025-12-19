@@ -107,6 +107,7 @@ fun QueueBottomSheet(
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 ) {
     val haptic = LocalHapticFeedback.current
+    val context = LocalContext.current
     // Animation states
     var showContent by remember { mutableStateOf(false) }
     
@@ -222,7 +223,7 @@ fun QueueBottomSheet(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "UP NEXT",
+                                text = context.getString(R.string.bottomsheet_up_next),
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary

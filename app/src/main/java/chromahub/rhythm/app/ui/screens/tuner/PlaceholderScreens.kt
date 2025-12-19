@@ -1312,6 +1312,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
     var showOperationProgress by remember { mutableStateOf(false) }
     var operationProgressText by remember { mutableStateOf("") }
     var showCleanupConfirmDialog by remember { mutableStateOf(false) }
+    var showRestartDialog by remember { mutableStateOf(false) }
 
     val settingGroups = listOf(
         SettingGroup(
@@ -1390,6 +1391,8 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                             val playlistsJson = GsonUtils.gson.toJson(filteredPlaylists)
                             appSettings.setPlaylists(playlistsJson)
                         }
+                        // Show restart dialog
+                        showRestartDialog = true
                     }
                 )
             ) + if (defaultPlaylists.isNotEmpty()) {
@@ -1626,11 +1629,15 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
     if (showImportDialog) {
         chromahub.rhythm.app.ui.components.PlaylistImportDialog(
             onDismiss = { showImportDialog = false },
-            onImport = { uri, onResult, onRestartRequired ->
+            onImport = { uri, onResult, _ ->
                 showImportDialog = false
                 showOperationProgress = true
                 operationProgressText = context.getString(R.string.operation_importing_playlist)
-                musicViewModel.importPlaylist(uri, onResult, onRestartRequired)
+                musicViewModel.importPlaylist(uri, onResult) {
+                    // When import completes successfully, show restart dialog
+                    showOperationProgress = false
+                    showRestartDialog = true
+                }
             }
         )
     }
@@ -1696,6 +1703,21 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
                 }
             },
             shape = RoundedCornerShape(24.dp)
+        )
+    }
+
+    // App Restart Dialog for default playlists toggle
+    if (showRestartDialog) {
+        chromahub.rhythm.app.ui.components.AppRestartDialog(
+            onDismiss = { showRestartDialog = false },
+            onRestart = {
+                showRestartDialog = false
+                chromahub.rhythm.app.util.AppRestarter.restartApp(context)
+            },
+            onContinue = {
+                showRestartDialog = false
+                // Continue without restart
+            }
         )
     }
 
@@ -2674,7 +2696,7 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
     var tempDelimiters by remember { mutableStateOf(artistSeparatorDelimiters) }
 
     CollapsibleHeaderScreen(
-        title = "Artists",
+        title = context.getString(R.string.artists_title),
         showBackButton = true,
         onBackClick = {
             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
@@ -2683,12 +2705,12 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
     ) { modifier ->
         val settingGroups = listOf(
             SettingGroup(
-                title = "Multi-Artist Parsing",
+                title = context.getString(R.string.artist_multi_parsing),
                 items = listOf(
                     SettingItem(
                         Icons.Default.Person,
-                        "Enable Artist Separation",
-                        "Split multi-artist tags (e.g., \"Artist1/Artist2\")",
+                        context.getString(R.string.artist_enable_separation),
+                        context.getString(R.string.artist_enable_separation_desc),
                         toggleState = artistSeparatorEnabled,
                         onToggleChange = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
@@ -2697,8 +2719,8 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
                     ),
                     SettingItem(
                         Icons.Default.Settings,
-                        "Configure Delimiters",
-                        "Current: ${artistSeparatorDelimiters.toCharArray().joinToString(", ")}",
+                        context.getString(R.string.artist_configure_delimiters),
+                        context.getString(R.string.artist_current_delimiters, artistSeparatorDelimiters.toCharArray().joinToString(", ")),
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                             tempDelimiters = artistSeparatorDelimiters
@@ -2708,12 +2730,12 @@ fun ArtistSeparatorsSettingsScreen(onBackClick: () -> Unit) {
                 ),
             ),
             SettingGroup(
-                title = "Library Organization",
+                title = context.getString(R.string.artist_library_organization),
                 items = listOf(
                     SettingItem(
                         Icons.Default.Album,
-                        "Group by Album Artist",
-                        "Show collaboration albums under main artist",
+                        context.getString(R.string.artist_group_by_album_artist),
+                        context.getString(R.string.artist_group_by_album_artist_desc),
                         toggleState = groupByAlbumArtist,
                         onToggleChange = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
@@ -11714,6 +11736,9 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
     val musicViewModel: MusicViewModel = viewModel()
     val scope = rememberCoroutineScope()
 
+    // Check if equalizer is supported
+    val isEqualizerSupported = remember { musicViewModel.isEqualizerSupported() }
+
     // Collect states from settings
     val equalizerEnabledState by musicViewModel.equalizerEnabled.collectAsState()
     val equalizerPresetState by musicViewModel.equalizerPreset.collectAsState()
@@ -11873,7 +11898,7 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
             item {
                 Card(
                     colors = CardDefaults.cardColors(
-                        containerColor = if (isEqualizerEnabled)
+                        containerColor = if (isEqualizerEnabled && isEqualizerSupported)
                             MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
                         else
                             MaterialTheme.colorScheme.surfaceContainer
@@ -11890,7 +11915,7 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                         Icon(
                             imageVector = Icons.Rounded.Equalizer,
                             contentDescription = null,
-                            tint = if (isEqualizerEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = if (isEqualizerEnabled && isEqualizerSupported) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(32.dp)
                         )
                         Spacer(modifier = Modifier.width(16.dp))
@@ -11900,26 +11925,31 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Text(
-                                    text = if (isEqualizerEnabled) "Active" else "Disabled",
+                                    text = when {
+                                        !isEqualizerSupported -> "Not Supported"
+                                        isEqualizerEnabled -> "Active"
+                                        else -> "Disabled"
+                                    },
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold
                                 )
-//                                if (isEqualizerEnabled) {
-//                                    PlayingEqIcon(
-//                                        modifier = Modifier.size(width = 20.dp, height = 16.dp),
-//                                        color = MaterialTheme.colorScheme.primary,
-//                                        isPlaying = true,
-//                                        bars = 3
-//                                    )
-//                                }
+                            }
+                            if (!isEqualizerSupported) {
+                                Text(
+                                    text = "Equalizer is not supported on this device",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
                         }
                         TunerAnimatedSwitch(
-                            checked = isEqualizerEnabled,
+                            checked = isEqualizerEnabled && isEqualizerSupported,
                             onCheckedChange = { enabled ->
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                isEqualizerEnabled = enabled
-                                musicViewModel.setEqualizerEnabled(enabled)
+                                if (isEqualizerSupported) {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    isEqualizerEnabled = enabled
+                                    musicViewModel.setEqualizerEnabled(enabled)
+                                }
                             }
                         )
                     }
@@ -11929,7 +11959,7 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
             // Presets Section with animation
             item {
                 AnimatedVisibility(
-                    visible = isEqualizerEnabled,
+                    visible = isEqualizerEnabled && isEqualizerSupported,
                     enter = fadeIn() + expandVertically(),
                     exit = fadeOut() + shrinkVertically()
                 ) {
@@ -12053,7 +12083,7 @@ fun EqualizerSettingsScreen(onBackClick: () -> Unit) {
             // Frequency Bands Section with animation
             item {
                 AnimatedVisibility(
-                    visible = isEqualizerEnabled,
+                    visible = isEqualizerEnabled && isEqualizerSupported,
                     enter = fadeIn() + expandVertically(),
                     exit = fadeOut() + shrinkVertically()
                 ) {

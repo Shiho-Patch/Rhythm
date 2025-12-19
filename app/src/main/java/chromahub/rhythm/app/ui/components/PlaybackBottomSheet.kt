@@ -377,7 +377,7 @@ private fun PlaybackHeader(
     ) {
         Column {
             Text(
-                text = "Playback",
+                text = context.getString(R.string.bottomsheet_playback),
                 style = MaterialTheme.typography.displayMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface
@@ -589,7 +589,7 @@ private fun ActiveDeviceCard(
                     
                     Column {
                         Text(
-                            text = "No device connected",
+                            text = context.getString(R.string.bottomsheet_no_device),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                         )
@@ -907,13 +907,13 @@ private fun VolumeControlCard(
                     ) {
                         Icon(
                             imageVector = RhythmIcons.VolumeUp,
-                            contentDescription = "Max volume",
+                            contentDescription = context.getString(R.string.bottomsheet_max),
                             tint = MaterialTheme.colorScheme.onPrimaryContainer,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Max",
+                            text = context.getString(R.string.bottomsheet_max),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer

@@ -211,6 +211,16 @@ import chromahub.rhythm.app.util.AudioQualityDetector
 
 enum class LibraryTab { SONGS, PLAYLISTS, ALBUMS, ARTISTS, EXPLORER }
 
+// Playlist sort order enum for library tab
+enum class LibraryPlaylistSortOrder {
+    NAME_ASC,
+    NAME_DESC,
+    DATE_CREATED_ASC,
+    DATE_CREATED_DESC,
+    SONG_COUNT_ASC,
+    SONG_COUNT_DESC
+}
+
 @Composable
 fun LibraryScreen(
     songs: List<Song>,
@@ -798,7 +808,7 @@ fun LibraryScreen(
 
                     }
                     
-                    // Sort dropdown like AlbumBottomSheet (only show for Songs and Albums)
+                    // Sort dropdown like AlbumBottomSheet (only show for Songs, Albums, and Playlists)
                     val currentTabId = visibleTabIds.getOrNull(selectedTabIndex)
                     if (currentTabId == "SONGS" || currentTabId == "ALBUMS") {
                         var showSortMenu by remember { mutableStateOf(false) }
@@ -958,6 +968,146 @@ fun LibraryScreen(
                         }
                     }
                 }
+                    
+                    // Playlist Sort dropdown
+                    if (currentTabId == "PLAYLISTS") {
+                        val playlistSortOrderString by appSettings.playlistSortOrder.collectAsState()
+                        val playlistSortOrder = try {
+                            LibraryPlaylistSortOrder.valueOf(playlistSortOrderString)
+                        } catch (e: Exception) {
+                            LibraryPlaylistSortOrder.NAME_ASC
+                        }
+                        var showPlaylistSortMenu by remember { mutableStateOf(false) }
+                        
+                        Box {
+                            // Enhanced sort button
+                            val sortButtonScale by animateFloatAsState(
+                                targetValue = if (showPlaylistSortMenu) 0.95f else 1f,
+                                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                                label = "playlistSortButtonScale"
+                            )
+                            
+                            FilledTonalButton(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    showPlaylistSortMenu = true
+                                },
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                ),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+                                modifier = Modifier.graphicsLayer {
+                                    scaleX = sortButtonScale
+                                    scaleY = sortButtonScale
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Rounded.Sort,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+
+                                Spacer(modifier = Modifier.width(8.dp))
+
+                                // Sort order text
+                                val sortText = when (playlistSortOrder) {
+                                    LibraryPlaylistSortOrder.NAME_ASC, LibraryPlaylistSortOrder.NAME_DESC -> context.getString(R.string.sort_name)
+                                    LibraryPlaylistSortOrder.DATE_CREATED_ASC, LibraryPlaylistSortOrder.DATE_CREATED_DESC -> context.getString(R.string.sort_date_created)
+                                    LibraryPlaylistSortOrder.SONG_COUNT_ASC, LibraryPlaylistSortOrder.SONG_COUNT_DESC -> context.getString(R.string.sort_song_count)
+                                }
+
+                                Text(
+                                    text = sortText,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                
+                                Spacer(modifier = Modifier.width(4.dp))
+                                
+                                val sortArrowIcon = if (playlistSortOrder.name.endsWith("_ASC")) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward
+                                
+                                Icon(
+                                    imageVector = sortArrowIcon,
+                                    contentDescription = if (playlistSortOrder.name.endsWith("_ASC")) "Ascending" else "Descending",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            
+                            DropdownMenu(
+                                expanded = showPlaylistSortMenu,
+                                onDismissRequest = { showPlaylistSortMenu = false },
+                                shape = RoundedCornerShape(16.dp),
+                                modifier = Modifier.padding(4.dp)
+                            ) {
+                                LibraryPlaylistSortOrder.values().forEach { order ->
+                                    val isSelected = playlistSortOrder == order
+                                    Surface(
+                                        color = if (isSelected) 
+                                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
+                                        else 
+                                            Color.Transparent,
+                                        shape = RoundedCornerShape(12.dp),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                                    ) {
+                                        DropdownMenuItem(
+                                            text = { 
+                                                Text(
+                                                    text = when (order) {
+                                                        LibraryPlaylistSortOrder.NAME_ASC, LibraryPlaylistSortOrder.NAME_DESC -> context.getString(R.string.sort_name)
+                                                        LibraryPlaylistSortOrder.DATE_CREATED_ASC, LibraryPlaylistSortOrder.DATE_CREATED_DESC -> context.getString(R.string.sort_date_created)
+                                                        LibraryPlaylistSortOrder.SONG_COUNT_ASC, LibraryPlaylistSortOrder.SONG_COUNT_DESC -> context.getString(R.string.sort_song_count)
+                                                    },
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                                    color = if (isSelected)
+                                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                                    else
+                                                        MaterialTheme.colorScheme.onSurface
+                                                )
+                                            },
+                                            leadingIcon = {
+                                                Icon(
+                                                    imageVector = when (order) {
+                                                        LibraryPlaylistSortOrder.NAME_ASC, LibraryPlaylistSortOrder.NAME_DESC -> Icons.Filled.SortByAlpha
+                                                        LibraryPlaylistSortOrder.DATE_CREATED_ASC, LibraryPlaylistSortOrder.DATE_CREATED_DESC -> Icons.Filled.DateRange
+                                                        LibraryPlaylistSortOrder.SONG_COUNT_ASC, LibraryPlaylistSortOrder.SONG_COUNT_DESC -> Icons.Filled.MusicNote
+                                                    },
+                                                    contentDescription = null,
+                                                    tint = if (isSelected)
+                                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                                    else
+                                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            },
+                                            trailingIcon = {
+                                                Icon(
+                                                    imageVector = if (order.name.endsWith("_ASC")) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
+                                                    contentDescription = if (order.name.endsWith("_ASC")) "Ascending" else "Descending",
+                                                    tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            },
+                                            onClick = {
+                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                                showPlaylistSortMenu = false
+                                                if (playlistSortOrder != order) {
+                                                    appSettings.setPlaylistSortOrder(order.name)
+                                                }
+                                            },
+                                            colors = androidx.compose.material3.MenuDefaults.itemColors(
+                                                textColor = if (isSelected) 
+                                                    MaterialTheme.colorScheme.onPrimaryContainer 
+                                                else 
+                                                    MaterialTheme.colorScheme.onSurface
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 },
                 colors = TopAppBarDefaults.largeTopAppBarColors(
                     containerColor = Color.Transparent,
@@ -2040,17 +2190,30 @@ fun SingleCardPlaylistsContent(
 ) {
     val context = LocalContext.current
     val playlistViewType by appSettings.playlistViewType.collectAsState()
+    val playlistSortOrderString by appSettings.playlistSortOrder.collectAsState()
+    val playlistSortOrder = try {
+        LibraryPlaylistSortOrder.valueOf(playlistSortOrderString)
+    } catch (e: Exception) {
+        LibraryPlaylistSortOrder.NAME_ASC
+    }
     
     // Loading state for initial render
     var isLoading by remember { mutableStateOf(true) }
     var preparedPlaylists by remember { mutableStateOf<List<Playlist>>(emptyList()) }
     
-    // Prepare playlists asynchronously to avoid blocking UI on tab switch
-    LaunchedEffect(playlists) {
+    // Prepare and sort playlists asynchronously to avoid blocking UI on tab switch
+    LaunchedEffect(playlists, playlistSortOrder) {
         isLoading = true
         preparedPlaylists = withContext(Dispatchers.Default) {
-            // Pre-process playlists in background
-            playlists.toList()
+            // Sort playlists based on selected order
+            when (playlistSortOrder) {
+                LibraryPlaylistSortOrder.NAME_ASC -> playlists.sortedBy { it.name.lowercase() }
+                LibraryPlaylistSortOrder.NAME_DESC -> playlists.sortedByDescending { it.name.lowercase() }
+                LibraryPlaylistSortOrder.DATE_CREATED_ASC -> playlists.sortedBy { it.id.toLongOrNull() ?: 0L }
+                LibraryPlaylistSortOrder.DATE_CREATED_DESC -> playlists.sortedByDescending { it.id.toLongOrNull() ?: 0L }
+                LibraryPlaylistSortOrder.SONG_COUNT_ASC -> playlists.sortedBy { it.songs.size }
+                LibraryPlaylistSortOrder.SONG_COUNT_DESC -> playlists.sortedByDescending { it.songs.size }
+            }
         }
         isLoading = false
     }

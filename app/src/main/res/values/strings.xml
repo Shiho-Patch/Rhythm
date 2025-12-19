@@ -55,12 +55,6 @@
     <!-- Content Descriptions -->
     <string name="cd_navigate">Navigate</string>
     <string name="cd_configure">Configure</string>
-    <string name="cd_delete_playlist">Delete playlist</string>
-    <string name="cd_remove">Remove</string>
-    <string name="cd_rhythm_logo">Rhythm Logo</string>
-    <string name="cd_view_github_profile">View GitHub Profile</string>
-    <string name="cd_report_bug">Report Bug</string>
-    <string name="cd_telegram_support">Telegram Support</string>
     
     <!-- Settings - Notifications -->
     <string name="settings_notifications">Notifications</string>
@@ -131,6 +125,46 @@
     <string name="dialog_delete">Delete</string>
     <string name="dialog_cancel">Cancel</string>
     <string name="dialog_save">Save</string>
+    
+    <!-- Playlist Detail Screen -->
+    <string name="playlist_rename_title">Rename Playlist</string>
+    <string name="playlist_name_label">Playlist Name</string>
+    <string name="playlist_delete_title">Delete Playlist</string>
+    <string name="playlist_operation_failed">Operation Failed</string>
+    <string name="playlist_operation_complete">Operation Complete</string>
+    <string name="playlist_more_options">More options</string>
+    <string name="playlist_done_reordering">Done reordering</string>
+    <string name="playlist_reorder_songs">Reorder songs</string>
+    <string name="playlist_cancel_selection">Cancel selection</string>
+    <string name="playlist_select_songs">Select songs</string>
+    <string name="playlist_sort_songs">Sort songs</string>
+    <string name="playlist_export">Export playlist</string>
+    <string name="playlist_import">Import playlist</string>
+    <string name="playlist_rename">Rename playlist</string>
+    <string name="playlist_delete">Delete playlist</string>
+    <string name="playlist_play_all">Play All</string>
+    <string name="playlist_shuffle_play">Shuffle play</string>
+    <string name="playlist_search_songs">Search songs</string>
+    <string name="playlist_search_in_playlist">Search songs in playlist</string>
+    <string name="playlist_clear_search">Clear search</string>
+    <string name="playlist_add_songs">Add Songs</string>
+    <string name="playlist_add_songs_to_playlist">Add songs to playlist</string>
+    <string name="playlist_reorder_songs_title">Reorder Songs</string>
+    <string name="playlist_remove_song">Remove Song</string>
+    <string name="playlist_remove_song_confirm">Remove \'%1$s\' from this playlist?</string>
+    <string name="playlist_remove_songs_count">Remove %1$d Songs</string>
+    <string name="playlist_removed_from_playlist">Removed %1$s from playlist</string>
+    <string name="playlist_move_up">Move up</string>
+    <string name="playlist_move_down">Move down</string>
+    <string name="playlist_remove">Remove</string>
+    <string name="playlist_exporting">Exporting</string>
+    <string name="playlist_importing">Importing</string>
+    
+    <!-- Restart Dialog -->
+    <string name="restart_recommended">Restart Recommended</string>
+    <string name="restart_default_playlists_message">To apply changes to default playlists, we recommend restarting the app. You can continue using the app, but some playlists may not appear correctly until restart.</string>
+    <string name="restart_now">Restart Now</string>
+    <string name="continue_without_restart">Continue Without Restart</string>
     
     <!-- Settings - Media Scan -->
     <string name="settings_media_scan">Media Scan</string>
@@ -358,6 +392,24 @@
     <string name="library_check_permissions">Check storage permissions if files don\'t appear</string>
     <string name="library_creating_playlist">Creating playlist and adding %1$d songs…</string>
     <string name="library_playlist_name_empty">Playlist name cannot be empty</string>
+    <string name="library_no_playlists">No playlists yet</string>
+    <string name="library_no_playlists_desc">Create your first playlist using the + button</string>
+    <string name="library_no_albums">No albums yet</string>
+    <string name="library_playlist_count">%1$d playlist</string>
+    <string name="library_playlists_count">%1$d playlists</string>
+    <string name="library_album_count">%1$d album</string>
+    <string name="library_albums_count">%1$d albums</string>
+    
+    <!-- Sort Options -->
+    <string name="sort_name">Name</string>
+    <string name="sort_date_created">Date Created</string>
+    <string name="sort_song_count">Song Count</string>
+    <string name="sort_title">Title</string>
+    <string name="sort_artist">Artist</string>
+    <string name="sort_date_added">Date Added</string>
+    <string name="sort_date_modified">Date Modified</string>
+    <string name="sort_ascending">Ascending</string>
+    <string name="sort_descending">Descending</string>
     
     <!-- Storage Permission -->
     <string name="storage_permission_required">Storage Permission Required</string>
@@ -1015,12 +1067,6 @@
     <string name="settings_experimental_features_desc">Try out cutting-edge features</string>
     
     <!-- Playlist Actions -->
-    <string name="playlist_name_label">Playlist Name</string>
-    <string name="playlist_rename">Rename Playlist</string>
-    <string name="playlist_delete_title">Delete Playlist</string>
-    <string name="playlist_remove_song">Remove Song</string>
-    <string name="playlist_export">Export playlist</string>
-    <string name="playlist_import">Import playlist</string>
     <string name="playlist_rename_action">Rename playlist</string>
     <string name="playlist_delete_action">Delete playlist</string>
     <string name="playlist_search">Search songs</string>
@@ -1029,7 +1075,6 @@
     <string name="playlist_all_in_playlist">All songs are already in this playlist.</string>
     <string name="playlist_name_field">Playlist name</string>
     <string name="playlist_delete_confirm">Are you sure you want to delete \'%1$s\'? This action cannot be undone.</string>
-    <string name="playlist_remove_song_confirm">Remove \'%1$s\' from this playlist?</string>
     
     <!-- Player Actions -->
     <string name="player_load_lyrics">Load Lyrics</string>
@@ -1150,7 +1195,6 @@
     <string name="cd_albums">Albums</string>
     <string name="cd_artists">Artists</string>
     <string name="cd_songs">Songs</string>
-    <string name="cd_selected">Selected</string>
     <string name="cd_rhythm_splash">Rhythm</string>
     <string name="cd_search_in_playlist">Search songs in playlist</string>
     <string name="cd_shuffle_play_action">Shuffle play</string>
@@ -1207,6 +1251,125 @@
     <string name="bottomsheet_up_next">UP NEXT</string>
     <string name="bottomsheet_albums">Albums</string>
     <string name="bottomsheet_songs">Songs</string>
+    
+    <!-- Bottom Sheet: Common -->
+    <string name="bottomsheet_reset">Reset</string>
+    <string name="bottomsheet_save">Save</string>
+    <string name="bottomsheet_cancel">Cancel</string>
+    <string name="bottomsheet_close">Close</string>
+    <string name="bottomsheet_delete">Delete</string>
+    <string name="bottomsheet_clear_all">Clear All</string>
+    <string name="bottomsheet_add">Add</string>
+    <string name="bottomsheet_import">Import</string>
+    <string name="bottomsheet_export">Export</string>
+    
+    <!-- Bottom Sheet: Lyrics Editor -->
+    <string name="bottomsheet_lyrics_earlier">Earlier</string>
+    <string name="bottomsheet_lyrics_later">Later</string>
+    <string name="bottomsheet_lyrics_load">Load Lyrics</string>
+    <string name="bottomsheet_lyrics_save">Save Lyrics</string>
+    
+    <!-- Bottom Sheet: Sleep Timer -->
+    <string name="bottomsheet_timer_remaining">remaining</string>
+    <string name="bottomsheet_timer_custom_desc">Set a specific time duration</string>
+    <string name="bottomsheet_timer_custom_title">Set Custom Time</string>
+    <string name="bottomsheet_timer_set">Set Timer</string>
+    <string name="bottomsheet_timer_edit">Edit</string>
+    <string name="bottomsheet_timer_hours_minutes">Set hours and minutes for the sleep timer</string>
+    
+    <!-- Bottom Sheet: Playback -->
+    <string name="bottomsheet_playback">Playback</string>
+    <string name="bottomsheet_no_device">No device connected</string>
+    <string name="bottomsheet_max">Max</string>
+    
+    <!-- Bottom Sheet: Album -->
+    <string name="bottomsheet_play_all">Play All</string>
+    <string name="bottomsheet_tracks">Tracks</string>
+    <string name="bottomsheet_sort_by">Sort by</string>
+    <string name="bottomsheet_no_songs_album">No songs in this album</string>
+    
+    <!-- Bottom Sheet: Home Section Order -->
+    <string name="bottomsheet_home_section_order">Home Section Order</string>
+    <string name="bottomsheet_reorder_toggle_visibility">Reorder and toggle visibility</string>
+    
+    <!-- Bottom Sheet: Cast -->
+    <string name="bottomsheet_cast_stream">Cast &amp; Stream</string>
+    <string name="bottomsheet_playing_now">Playing Now</string>
+    <string name="bottomsheet_switch_output">Switch Output Device</string>
+    <string name="bottomsheet_connect_devices">Connect to Bluetooth, Cast, or other devices</string>
+    <string name="bottomsheet_open_switcher">Open Output Switcher</string>
+    <string name="bottomsheet_about_casting">About Casting</string>
+    <string name="bottomsheet_casting_info">Use the output switcher to cast your music to Bluetooth devices, Chromecast, or other compatible devices. Android\'s native media routing handles seamless playback transfer.</string>
+    <string name="bottomsheet_cast_to_tv">Cast to TV or Speaker</string>
+    <string name="bottomsheet_cast_description">Stream music to Chromecast, smart TVs, or speakers</string>
+    <string name="bottomsheet_find_devices">Find Cast Devices</string>
+    <string name="bottomsheet_tap_disconnect">Tap to disconnect from this device</string>
+    <string name="bottomsheet_disconnect">Disconnect</string>
+    <string name="bottomsheet_stream_to_devices">Stream to your devices</string>
+    <string name="bottomsheet_this_phone">This Phone</string>
+    <string name="bottomsheet_opening_switcher">Opening output switcher…</string>
+    <string name="bottomsheet_disconnected_cast">Disconnected from Cast device</string>
+    <string name="bottomsheet_cast_unavailable">Cast not available: %1$s</string>
+    <string name="bottomsheet_connected_to_device">Connected to %1$s</string>
+    <string name="bottomsheet_active_device">Active</string>
+    <string name="device_type_television">Television</string>
+    <string name="device_type_smart_speaker">Smart Speaker</string>
+    <string name="device_type_soundbar">Soundbar</string>
+    <string name="device_type_phone">Phone</string>
+    <string name="device_type_cast_device">Cast Device</string>
+    
+    <!-- Bottom Sheet: Backup/Restore -->
+    <string name="bottomsheet_backup_success_title">Backup Created Successfully</string>
+    <string name="bottomsheet_backup_success_msg">Your complete Rhythm backup has been created including:\n\n• All playlists and their songs\n• Favorites and play history\n• App settings and preferences\n• Equalizer configurations\n• Theme customizations</string>
+    <string name="bottomsheet_restore_success_title">Restore Completed Successfully</string>
+    <string name="bottomsheet_restore_success_msg">Your Rhythm data has been restored successfully including:\n\n• All playlists and their songs\n• Favorites and play history\n• App settings and preferences\n• Equalizer configurations\n• Theme customizations</string>
+    <string name="bottomsheet_restart_now">Restart Now</string>
+    <string name="bottomsheet_ok">OK</string>
+    <string name="bottomsheet_error">Error</string>
+    
+    <!-- Bottom Sheet: Cache Management -->
+    <string name="bottomsheet_clearing_cache">Clearing cache…</string>
+    <string name="bottomsheet_cache_cleared">Cache cleared!</string>
+    <string name="bottomsheet_clear_all_cache">Clear All Cache</string>
+    
+    <!-- Bottom Sheet: Blacklist -->
+    <string name="bottomsheet_blacklist_close">Close</string>
+    
+    <!-- Bottom Sheet: Library Tab Order -->
+    <string name="bottomsheet_library_tab_order">Library Tab Order</string>
+    
+    <!-- Bottom Sheet: Device Configuration / AutoEQ -->
+    <string name="bottomsheet_manage_autoeq">Manage AutoEQ</string>
+    <string name="bottomsheet_autoeq_desc">Configure your audio devices with optimized AutoEQ profiles for the best listening experience.</string>
+    <string name="bottomsheet_no_devices">No devices configured</string>
+    <string name="bottomsheet_add_device_hint">Add your headphones or speakers to get personalized EQ settings</string>
+    <string name="bottomsheet_import_eq">Import EQ Profile</string>
+    <string name="bottomsheet_paste_eq">Paste EQ settings from autoeq.app or other sources.</string>
+    <string name="bottomsheet_supported_formats">Supported formats:\n• FixedBandEQ text (AutoEQ)\n• JSON format\n• CSV (10 band values)</string>
+    <string name="bottomsheet_export_eq">Share your EQ settings with others or save for backup.</string>
+    <string name="bottomsheet_active_profile">Active Profile: %1$s</string>
+    <string name="bottomsheet_no_eq_export">No active EQ settings to export. Please enable the equalizer and configure it first.</string>
+    <string name="bottomsheet_device_type">Device Type</string>
+    <string name="bottomsheet_choose_profile">Choose an AutoEQ profile for %1$s</string>
+    <string name="bottomsheet_delete_device">Delete Device</string>
+    <string name="bottomsheet_delete_device_confirm">Are you sure you want to delete \'%1$s\'? This action cannot be undone.</string>
+    
+    <!-- Bottom Sheet: Song Info / Metadata Editor -->
+    <string name="bottomsheet_change">Change</string>
+    <string name="bottomsheet_remove">Remove</string>
+    <string name="bottomsheet_title">Title</string>
+    <string name="bottomsheet_artist">Artist</string>
+    <string name="bottomsheet_album">Album</string>
+    <string name="bottomsheet_genre">Genre</string>
+    <string name="bottomsheet_year">Year</string>
+    <string name="bottomsheet_track">Track</string>
+    <string name="bottomsheet_saving">Saving…</string>
+    <string name="bottomsheet_save_changes">Save Changes</string>
+    <string name="bottomsheet_irreversible">Irreversible Changes</string>
+    <string name="bottomsheet_proceed">Proceed</string>
+    
+    <!-- Bottom Sheet: Player Chip Order -->
+    <string name="bottomsheet_player_chip_order">Player Chip Order</string>
     
     <!-- Audio Quality Labels -->
     <string name="audio_quality_dolby_atmos">Dolby Atmos</string>
@@ -1371,9 +1534,468 @@
     <string name="home_greeting_morning">Good Morning</string>
     <string name="home_greeting_afternoon">Good Afternoon</string>
     <string name="home_greeting_evening">Good Evening</string>
+    <string name="home_greeting_christmas">Merry Christmas</string>
+    <string name="home_greeting_new_year">Happy New Year</string>
+    <string name="home_greeting_halloween">Happy Halloween</string>
+    <string name="home_greeting_valentines">Happy Valentine\'s</string>
+    
+    <!-- Home Screen Section Titles -->
+    <string name="home_top_artists">Top Artists</string>
+    <string name="home_top_artists_subtitle">Your favorite musicians</string>
     
     <!-- Content Descriptions (additional) -->
     <string name="cd_reorder_home_sections">Reorder home sections</string>
     <string name="cd_artist">Artist %1$s</string>
     <string name="cd_view_detailed_stats">View detailed stats</string>
+    <string name="cd_selected">Selected</string>
+    <string name="cd_remove">Remove</string>
+    <string name="cd_delete_playlist">Delete playlist</string>
+    <string name="cd_rhythm_logo">Rhythm Logo</string>
+    <string name="cd_report_bug">Report Bug</string>
+    <string name="cd_telegram_support">Telegram Support</string>
+    <string name="cd_view_github_profile">View GitHub Profile</string>
+    <string name="cd_error">Error</string>
+    <string name="cd_updates_disabled">Updates disabled</string>
+    <string name="cd_update_available">Update available</string>
+    <string name="cd_manual_check_only">Manual check only</string>
+    <string name="cd_up_to_date">Up to date</string>
+    
+    <!-- Queue &amp; Playlist Dialogs -->
+    <string name="queue_action_dialog">Queue Action Dialog</string>
+    <string name="queue_ask_when_not_empty">Ask what to do when queue is not empty</string>
+    <string name="playlist_action_dialog">Playlist Action Dialog</string>
+    <string name="playlist_load_entire_queue">Load entire playlist to queue</string>
+    <string name="playlist_play_only_selected">Play only selected song</string>
+    
+    <!-- Artist Settings -->
+    <string name="artists_title">Artists</string>
+    <string name="artist_multi_parsing">Multi-Artist Parsing</string>
+    <string name="artist_enable_separation">Enable Artist Separation</string>
+    <string name="artist_enable_separation_desc">Split multi-artist tags (e.g., \"Artist1/Artist2\")</string>
+    <string name="artist_configure_delimiters">Configure Delimiters</string>
+    <string name="artist_current_delimiters">Current: %1$s</string>
+    <string name="artist_library_organization">Library Organization</string>
+    <string name="artist_group_by_album_artist">Group by Album Artist</string>
+    <string name="artist_group_by_album_artist_desc">Show collaboration albums under main artist</string>
+    <string name="artist_about_multi_parsing">About Multi-Artist Parsing</string>
+    <string name="artist_parsing_description">When enabled, Rhythm will automatically split artist tags containing multiple artists. This is useful for songs downloaded with yt-dlp or other tools that use delimiters like \'/\' to separate artists.\n\nBackslash (\\\\) can be used to escape delimiters.</string>
+    <string name="artist_examples">Examples</string>
+    <string name="artist_select_separators">Select artist separators</string>
+    <string name="artist_delimiter_slash">Slash</string>
+    <string name="artist_delimiter_semicolon">Semicolon</string>
+    <string name="artist_delimiter_comma">Comma</string>
+    <string name="artist_delimiter_plus">Plus</string>
+    <string name="artist_delimiter_ampersand">Ampersand</string>
+    <string name="save_changes">Save Changes</string>
+    
+    <!-- About Screen -->
+    <string name="about_title">About</string>
+    <string name="about_version">Version</string>
+    <string name="about_build">Build</string>
+    <string name="about_target_sdk">Target SDK</string>
+    <string name="about_architecture">Architecture</string>
+    <string name="about_arm_arch">ARM64 &amp; ARM32</string>
+    <string name="about_lead_developer">Lead Developer &amp; Project Architect</string>
+    <string name="about_manages_izzyondroid">Manages updates on IzzyOnDroid</string>
+    <string name="about_collab_lead">Collab &amp; Project Booming\'s Lead Dev</string>
+    <string name="about_canvas_api">Spotify Canvas API Integration</string>
+    
+    <!-- Equalizer -->
+    <string name="equalizer_title">Equalizer</string>
+    <string name="equalizer_my_devices">My Devices</string>
+    
+    <!-- Common Actions & Dialogs -->
+    <string name="action_save_changes">Save Changes</string>
+    <string name="content_desc_selected">Selected</string>
+    <string name="content_desc_remove">Remove</string>
+    <string name="content_desc_delete_playlist">Delete playlist</string>
+    <string name="content_desc_refresh_devices">Refresh devices</string>
+    <string name="content_desc_switch_device">Switch device</string>
+    <string name="content_desc_volume">Volume</string>
+    <string name="content_desc_decrease_volume">Decrease volume</string>
+    <string name="content_desc_increase_volume">Increase volume</string>
+    <string name="content_desc_mute">Mute</string>
+    <string name="content_desc_unmute">Unmute</string>
+    <string name="content_desc_playback_speed">Playback Speed</string>
+    <string name="content_desc_playback_settings">Playback Settings</string>
+    <string name="content_desc_shuffle_play">Shuffle play</string>
+    <string name="content_desc_sort_songs">Sort songs</string>
+    <string name="content_desc_ascending">Ascending</string>
+    <string name="content_desc_descending">Descending</string>
+    <string name="content_desc_more_options">More options</string>
+    <string name="content_desc_add_to_playlist">Add to playlist</string>
+    <string name="content_desc_favorite">Favorite</string>
+    <string name="content_desc_now_playing">Now playing</string>
+    <string name="content_desc_drag_reorder">Drag to reorder</string>
+    <string name="content_desc_remove_from_queue">Remove from queue</string>
+    <string name="content_desc_add_songs">Add songs</string>
+    <string name="content_desc_clear_queue">Clear queue</string>
+    <string name="content_desc_play_album">Play album</string>
+    <string name="content_desc_move_up">Move up</string>
+    <string name="content_desc_move_down">Move down</string>
+    <string name="content_desc_show_hide">Show/hide</string>
+    <string name="content_desc_hide_section">Hide section</string>
+    <string name="content_desc_show_section">Show section</string>
+    <string name="content_desc_hide_tab">Hide tab</string>
+    <string name="content_desc_show_tab">Show tab</string>
+    <string name="content_desc_hide_chip">Hide chip</string>
+    <string name="content_desc_show_chip">Show chip</string>
+    <string name="content_desc_edit_metadata">Edit metadata</string>
+    <string name="content_desc_album_artwork">Album artwork</string>
+    
+    <!-- Additional UI strings -->
+    <string name="playlist_play_one">Play only selected song</string>
+    <string name="up_next_section">UP NEXT</string>
+    
+    <!-- Sort Orders -->
+    <string name="sort_track_number">Track Number</string>
+    <string name="sort_title_asc">Title (A-Z)</string>
+    <string name="sort_title_desc">Title (Z-A)</string>
+    <string name="sort_duration_short_first">Duration (Short first)</string>
+    <string name="sort_duration_long_first">Duration (Long first)</string>
+    
+    <!-- Context Menu Actions -->
+    <string name="action_play_next">Play next</string>
+    <string name="action_add_to_queue">Add to queue</string>
+    <string name="action_remove_from_favorites">Remove from favorites</string>
+    <string name="action_add_to_favorites">Add to favorites</string>
+    <string name="action_song_info">Song info</string>
+    <string name="action_add_to_blacklist">Add to blacklist</string>
+    <string name="action_hide_song">Hide song</string>
+    <string name="action_play_all">Play All</string>
+    
+    <!-- Blacklist/Whitelist -->
+    <string name="blacklist_track">Blacklist Track</string>
+    <string name="unblacklist_track">Un-Blacklist Track</string>
+    <string name="blacklist_folder">Blacklist Folder</string>
+    <string name="unblacklist_folder">Un-Blacklist Folder</string>
+    <string name="whitelist_track">Whitelist Track</string>
+    <string name="unwhitelist_track">Un-Whitelist Track</string>
+    <string name="whitelist_folder">Whitelist Folder</string>
+    <string name="unwhitelist_folder">Un-Whitelist Folder</string>
+    <string name="song_added_to_blacklist">Song added to blacklist</string>
+    <string name="song_removed_from_blacklist">Song removed from blacklist</string>
+    <string name="folder_added_to_blacklist">Folder added to blacklist</string>
+    <string name="folder_removed_from_blacklist">Folder removed from blacklist</string>
+    
+    <!-- Device & Audio -->
+    <string name="device_bluetooth">Bluetooth device</string>
+    <string name="device_wired_headphones_alt">Wired headphones</string>
+    <string name="device_speaker">Phone speaker</string>
+    <string name="device_audio_generic">Audio device</string>
+    <string name="volume_system">System Volume</string>
+    <string name="volume_app">App Volume</string>
+    <string name="volume_switch_hint">Tap to switch between app and system volume</string>
+    <string name="playback_use_system_volume">Use System Volume</string>
+    <string name="playback_use_system_volume_desc">Control system volume instead of app volume</string>
+    <string name="playback_gapless_title">Gapless Playback</string>
+    <string name="eq_profile_applied">Applied %1$s profile</string>
+    
+    <!-- Multi-Artist Parsing -->
+    <string name="multi_artist_parsing_title">Multi-Artist Parsing</string>
+    <string name="multi_artist_parsing_about">About Multi-Artist Parsing</string>
+    <string name="multi_artist_parsing_desc">When enabled, Rhythm will automatically split artist tags containing multiple artists. This is useful for songs downloaded with yt-dlp or other tools that use delimiters like \'/\' to separate artists.\\n\\nBackslash (\\\\) can be used to escape delimiters.</string>
+    <string name="multi_artist_parsing_examples">Examples</string>
+    <string name="multi_artist_parsing_configure">Configure Delimiters</string>
+    <string name="multi_artist_parsing_select_separators">Select artist separators</string>
+    <string name="delimiter_slash">Slash</string>
+    <string name="delimiter_semicolon">Semicolon</string>
+    <string name="delimiter_comma">Comma</string>
+    <string name="delimiter_plus">Plus</string>
+    <string name="delimiter_ampersand">Ampersand</string>
+    
+    <!-- About Screen (additional strings) -->
+    <string name="about_app_description">A modern, feature-rich music player for Android</string>
+    <string name="about_arch_value">ARM64 &amp; ARM32</string>
+    <string name="about_lead_dev">Lead Developer &amp; Project Architect</string>
+    <string name="about_izzy_role">Manages updates on IzzyOnDroid</string>
+    
+    <!-- Sleep Timer -->
+    <string name="sleep_timer_active_status">Active \u2022 %1$s remaining</string>
+    <string name="sleep_timer_no_music">No music playing</string>
+    <string name="sleep_timer_set_control">Set automatic playback control</string>
+    <string name="sleep_timer_fade_out">Fade Out</string>
+    <string name="sleep_timer_pause">Pause</string>
+    <string name="sleep_timer_stop">Stop</string>
+    
+    <!-- Home Sections -->
+    <string name="home_section_greeting">Greeting</string>
+    <string name="home_section_recently_played">Recently Played</string>
+    <string name="home_section_discover">Discover Carousel</string>
+    <string name="home_section_top_artists">Top Artists</string>
+    <string name="home_section_new_releases">New Releases</string>
+    <string name="home_section_recently_added">Recently Added</string>
+    <string name="home_section_recommended">Recommended</string>
+    <string name="home_section_listening_stats">Listening Stats</string>
+    <string name="home_section_mood">Mood Sections</string>
+    <string name="home_section_one_visible">At least one section must be visible</string>
+    
+    <!-- Library Tabs -->
+    <string name="library_tab_songs">Songs</string>
+    <string name="library_tab_playlists">Playlists</string>
+    <string name="library_tab_albums">Albums</string>
+    <string name="library_tab_artists">Artists</string>
+    <string name="library_tab_explorer">Explorer</string>
+    <string name="library_tab_one_visible">At least one tab must be visible</string>
+    <string name="library_tab_order_reset">Tab order and visibility reset to default</string>
+    <string name="library_tab_order_saved">Tab order and visibility saved</string>
+    
+    <!-- Player Chips -->
+    <string name="player_chip_favorite">Favorite</string>
+    <string name="player_chip_speed">Playback Speed</string>
+    <string name="player_chip_equalizer">Equalizer</string>
+    <string name="player_chip_sleep_timer">Sleep Timer</string>
+    <string name="player_chip_lyrics">Lyrics</string>
+    <string name="player_chip_album">Album</string>
+    <string name="player_chip_artist">Artist</string>
+    <string name="player_chip_cast">Cast</string>
+    <string name="player_chip_one_visible">At least one chip must be visible</string>
+    <string name="player_chip_order_reset">Reset to default order and visibility</string>
+    
+    <!-- AutoEQ & Device Configuration -->
+    <string name="autoeq_manage">Manage AutoEQ</string>
+    <string name="autoeq_configure_desc">Configure your audio devices with optimized AutoEQ profiles for the best listening experience.</string>
+    <string name="autoeq_device_recognized">Device Recognized</string>
+    <string name="autoeq_new_device">New Device Detected</string>
+    <string name="autoeq_no_devices">No devices configured</string>
+    <string name="autoeq_add_prompt">Add your headphones or speakers to get personalized EQ settings</string>
+    <string name="autoeq_delete_device_title">Delete Device</string>
+    <string name="autoeq_delete_device_msg">Are you sure you want to delete \'%1$s\'? This action cannot be undone.</string>
+    <string name="autoeq_import_profile">Import EQ Profile</string>
+    <string name="autoeq_import_paste_hint">Paste EQ settings from autoeq.app or other sources.</string>
+    <string name="autoeq_supported_formats">Supported formats:\\n\u2022 FixedBandEQ text (AutoEQ)\\n\u2022 JSON format\\n\u2022 CSV (10 band values)</string>
+    <string name="autoeq_eq_settings_label">EQ Settings</string>
+    <string name="autoeq_paste_placeholder">Paste EQ data here\u2026</string>
+    <string name="autoeq_button_file">File</string>
+    <string name="autoeq_button_paste">Paste</string>
+    <string name="autoeq_button_add">Add</string>
+    <string name="autoeq_button_import">Import</string>
+    <string name="autoeq_button_export">Export</string>
+    <string name="autoeq_failed_read_file">Failed to read file</string>
+    
+    <!-- Backup/Restore -->
+    <string name="backup_invalid_format">Invalid backup format or corrupted data</string>
+    <string name="backup_unable_to_read">Unable to read the backup file</string>
+    <string name="backup_restore_failed">Failed to restore from file: %1$s</string>
+    <string name="backup_create_failed">Failed to create backup: %1$s</string>
+    <string name="backup_clipboard_label">Rhythm Backup</string>
+    <string name="backup_status_never">Never</string>
+    <string name="backup_status_enabled">Enabled</string>
+    <string name="backup_status_manual">Manual</string>
+    <string name="backup_creating">Creating backup\u2026</string>
+    <string name="backup_create_button">Create Backup</string>
+    <string name="backup_restoring">Restoring\u2026</string>
+    <string name="backup_from_clipboard">From Clipboard</string>
+    <string name="backup_from_file">From File</string>
+    <string name="backup_opening">Opening\u2026</string>
+    <string name="backup_no_clipboard_data">No backup data found in clipboard. Please copy a backup first.</string>
+    <string name="backup_restore_clipboard_failed">Failed to restore backup: %1$s</string>
+    
+    <!-- Licenses -->
+    <string name="license_autoeq_name">AutoEQ</string>
+    <string name="license_autoeq_desc">Automatic headphone equalization from frequency responses by Jaakko Pasanen</string>
+    <string name="license_mit">MIT License</string>
+    <string name="license_jetpack_name">Jetpack Compose</string>
+    <string name="license_jetpack_desc">Android\'s modern toolkit for building native UI</string>
+    <string name="license_apache">Apache License 2.0</string>
+    <string name="license_material3_name">Material 3 Components</string>
+    <string name="license_material3_desc">Material Design 3 components for Android</string>
+    <string name="license_media3_name">Media3 ExoPlayer</string>
+    <string name="license_media3_desc">Modern media playback library for Android</string>
+    <string name="license_coroutines_name">Kotlin Coroutines</string>
+    <string name="license_coroutines_desc">Asynchronous programming framework for Kotlin</string>
+    <string name="license_coil_name">Coil</string>
+    <string name="license_coil_desc">Image loading library for Android backed by Kotlin Coroutines</string>
+    <string name="license_retrofit_name">Retrofit</string>
+    <string name="license_retrofit_desc">Type-safe HTTP client for Android and Java</string>
+    
+    <!-- Lyrics Editor -->
+    <string name="lyrics_loaded_success">Lyrics loaded successfully</string>
+    <string name="lyrics_load_error">Error loading lyrics: %1$s</string>
+    <string name="lyrics_saved_success">Lyrics saved successfully</string>
+    <string name="lyrics_save_error">Error saving lyrics: %1$s</string>
+    
+    <!-- Media Scan -->
+    <string name="media_scan_error_parsing_folder">Error parsing folder path</string>
+    
+    <!-- Song Info -->
+    <string name="song_info_unknown">Unknown</string>
+    <string name="song_info_quality_hires_lossless">Hi-Res Lossless</string>
+    <string name="song_info_quality_cd">CD Quality</string>
+    <string name="song_info_quality_type">Quality Type</string>
+    <string name="song_info_quality_label">Quality Label</string>
+    <string name="song_info_quality_category">Quality Category</string>
+    <string name="song_info_category_lossless">Lossless</string>
+    <string name="song_info_category_lossy">Lossy</string>
+    <string name="song_info_category_surround">Surround</string>
+    
+    <!-- Common UI Text -->
+    <string name="exoplayer_settings">ExoPlayer Settings</string>
+    <string name="button_add">Add</string>
+    <string name="button_delete">Delete</string>
+    <string name="button_import">Import</string>
+    <string name="button_export">Export</string>
+    <string name="text_file">File</string>
+    <string name="text_paste">Paste</string>
+    <string name="logo_content_desc">Rhythm Logo</string>
+    
+    <!-- PlaceholderScreens - Settings Labels -->
+    <string name="settings_about_lyrics">About Lyrics Sources</string>
+    <string name="settings_adjust_decorations">Adjust the amount of festive decorations shown</string>
+    <string name="settings_artwork_corner_radius">Adjusts the roundness of album artwork corners</string>
+    <string name="settings_canvas_backgrounds_desc">Canvas backgrounds add animated visuals to supported songs</string>
+    <string name="settings_choose_header">Choose what to show in header</string>
+    <string name="settings_customize_compact_player">Customize the compact player that appears at the bottom of your screen.</string>
+    <string name="settings_enable_auto_scroll">Enable Auto-scroll</string>
+    <string name="settings_enable_bass_boost">Enable Bass Boost</string>
+    <string name="settings_enable_canvas">Enable Canvas</string>
+    <string name="settings_enable_disco_mode">Enable Disco Mode</string>
+    <string name="settings_enable_festive_theme">Enable Festive Theme</string>
+    <string name="settings_enable_virtualizer">Enable Virtualizer</string>
+    <string name="settings_festive_theme">Festive Theme</string>
+    <string name="settings_mini_player">Mini Player</string>
+    <string name="settings_toggle_decorations">Toggle individual decoration elements by position</string>
+    <string name="settings_virtualizer">Virtualizer</string>
+    <string name="settings_custom_separators">Custom Separators</string>
+    <string name="settings_enable_parsing">Enable Parsing</string>
+    <string name="settings_show_examples">Show Examples</string>
+    <string name="settings_example_original">Original</string>
+    <string name="settings_example_result">Result</string>
+    
+    <!-- Cache & Storage -->
+    <string name="cache_mb_format">%1$.1f MB</string>
+    <string name="cache_size_64mb">64 MB</string>
+    <string name="cache_size_2gb">2 GB</string>
+    <string name="cache_clear_all_desc">Remove all cached data</string>
+    
+    <!-- Version Info -->
+    <string name="version_format">V %1$s</string>
+    <string name="version_with_code">v%1$s</string>
+    <string name="released_date">Released: %1$s</string>
+    <string name="crashed_on_date">Crashed on: %1$s</string>
+    <string name="file_size_format">(%1$s)</string>
+    <string name="download_progress">%1$d%%</string>
+    
+    <!-- GitHub & Links -->
+    <string name="github_username_format">\@%1$s</string>
+    <string name="bullet_point">\u2022</string>
+    <string name="original_quoted">\"%1$s\"</string>
+    
+    <!-- Contributors -->
+    <string name="credits_material_design">Google Material Design Team for design principles</string>
+    
+    <!-- Counts & Numbers -->
+    <string name="count_format">%1$d</string>
+    <string name="index_number">%1$d</string>
+    
+    <!-- More PlaceholderScreens Strings -->
+    <string name="settings_double_tap_artwork">Double tap artwork for quick play/pause</string>
+    <string name="settings_enable_lyrics_hint">Enable lyrics to see synchronized lyrics while playing</string>
+    <string name="settings_full_player">Full Player</string>
+    <string name="settings_header_customization">Header Customization</string>
+    <string name="settings_header_display">Header Display</string>
+    <string name="settings_hue">Hue</string>
+    <string name="settings_layout_options">Layout Options</string>
+    <string name="settings_lightness">Lightness</string>
+    <string name="settings_miniplayer">MiniPlayer</string>
+    <string name="settings_no_crash_logs">No crash logs found. Good job!</string>
+    <string name="settings_personalize_player">Personalize your player experience with custom chip layouts, visual effects, and display preferences.</string>
+    <string name="settings_player_controls">Player Controls</string>
+    <string name="settings_player_screen">Player Screen</string>
+    <string name="settings_player_tips">Player Tips</string>
+    <string name="settings_presets">Presets</string>
+    <string name="settings_progress_display">Progress Display</string>
+    <string name="settings_progress_hidden">Progress hidden</string>
+    <string name="settings_quick_actions">Quick Actions</string>
+    <string name="settings_reorder_toggle_sections">Reorder &amp; Toggle Sections</string>
+    <string name="settings_saturation">Saturation</string>
+    <string name="settings_section_order_visibility">Section Order &amp; Visibility</string>
+    <string name="settings_sleep_timer_placeholder">Sleep timer controls will be implemented here</string>
+    <string name="settings_start_collapsed">Start all screens with collapsed header</string>
+    <string name="settings_statistics_update">Statistics update based on listening habits</string>
+    <string name="settings_swipe_down_dismiss">Swipe down on mini player or full player to dismiss</string>
+    <string name="settings_swipe_up_open">Swipe up on mini player to open full player</string>
+    <string name="settings_tap_chip_order">Tap \'Chip Order &amp; Visibility\' to customize action chips</string>
+    <string name="settings_text_alignment">Text Alignment</string>
+    <string name="settings_quick_brown_fox">The quick brown fox jumps over the lazy dog</string>
+    <string name="settings_toggle_widgets">Toggle widgets to customize your home screen</string>
+    <string name="settings_visibility">Visibility</string>
+    <string name="settings_when_show_header">When to show %1$s in header</string>
+    <string name="settings_widget_item_counts">Widget Item Counts</string>
+    
+    <!-- Playlist Management -->
+    <string name="playlist_user_count">%1$d</string>
+    <string name="playlist_default_count">%1$d</string>
+    <string name="playlist_total_count">%1$d</string>
+    
+    <!-- Media Scan -->
+    <string name="media_filtered_count">%1$d</string>
+    <string name="media_all_songs_count">%1$d</string>
+    <string name="media_folders_count">%1$d</string>
+    
+    <!-- Time Formats -->
+    <string name="time_half_second">0.5s</string>
+    <string name="time_twelve_seconds">12s</string>
+    
+    <!-- Additional PlaceholderScreens UI Strings -->
+    <string name="settings_modern_music_player">A modern, feature-rich music player for Android</string>
+    <string name="settings_about_lyrics_sources">About Lyrics Sources</string>
+    <string name="settings_about_multi_artist">About Multi-Artist Parsing</string>
+    <string name="settings_adjust_snowflake_size">Adjust snowflake size (smaller size = more snowflakes)</string>
+    <string name="settings_adjust_festive_decorations">Adjust the amount of festive decorations shown</string>
+    <string name="settings_adjust_artwork_corners">Adjusts the roundness of album artwork corners</string>
+    <string name="settings_always_start_collapsed">Always Start Collapsed</string>
+    <string name="settings_artwork">Artwork</string>
+    <string name="settings_artwork_size">Artwork Size</string>
+    <string name="settings_bass_boost">Bass Boost</string>
+    <string name="settings_cache_actions">Cache Actions</string>
+    <string name="settings_cache_settings">Cache Settings</string>
+    <string name="settings_canvas_backgrounds_info">Canvas backgrounds add animated visuals to supported songs</string>
+    <string name="settings_carousel_style">Carousel Style</string>
+    <string name="settings_choose_festive_theme">Choose festive theme</string>
+    <string name="settings_choose_album_display">Choose how albums are displayed</string>
+    <string name="settings_choose_header_content">Choose what to show in header</string>
+    <string name="settings_clear_all_cache">Clear All Cache</string>
+    <string name="settings_coming_soon">Coming Soon</string>
+    <string name="settings_coming_soon_lowercase">Coming soon</string>
+    <string name="settings_configure_delimiters">Configure Delimiters</string>
+    <string name="settings_corner_radius">Corner Radius</string>
+    <string name="settings_customize_home_layout">Customize home screen layout</string>
+    <string name="settings_customize_miniplayer">Customize the compact player that appears at the bottom of your screen.</string>
+    <string name="settings_decoration_elements">Decoration Elements</string>
+    <string name="settings_decoration_intensity">Decoration Intensity</string>
+    <string name="settings_disable_unused_gestures">Disable unused gestures for faster response</string>
+    <string name="settings_disable_unused_sections">Disable unused sections for faster loading</string>
+    <string name="settings_discover_carousel">Discover Carousel</string>
+    <string name="settings_discover_carousel_info">Discover carousel showcases featured albums</string>
+    <string name="settings_display_options">Display Options</string>
+    <string name="settings_examples">Examples</string>
+    <string name="settings_intensity">Intensity</string>
+    <string name="settings_more_festivals">More festivals will be added in future updates</string>
+    <string name="settings_remove_all_cache">Remove all cached data</string>
+    <string name="settings_save_changes">Save Changes</string>
+    <string name="settings_select_festival">Select Festival</string>
+    <string name="settings_select_artist_separators">Select artist separators</string>
+    <string name="settings_snowflake_display_area">Snowflake Display Area</string>
+    <string name="settings_snowflake_size">Snowflake Size</string>
+    <string name="settings_toggle_decoration_elements">Toggle individual decoration elements by position</string>
+    <string name="settings_multi_artist_parsing_info">When enabled, Rhythm will automatically split artist tags containing multiple artists. This is useful for songs downloaded with yt-dlp or other tools that use delimiters like \'/\' to separate artists.\n\nBackslash (\\) can be used to escape delimiters.</string>
+    <string name="settings_embedded_lyrics_info">• Embedded lyrics are stored in your audio files\n</string>
+    <string name="settings_material_design_credit">• Google Material Design Team for design principles\n</string>
+    <string name="settings_bullet_point">•</string>
+    <string name="settings_backslash">\\</string>
+    <string name="settings_db_unit">dB</string>
+    
+    <!-- Format Strings with Placeholders -->
+    <string name="settings_crashed_on">Crashed on: %1$s</string>
+    <string name="settings_released_format">Released: %1$s</string>
+    <string name="settings_version_prefix">V %1$s</string>
+    <string name="settings_version_format">Version %1$s</string>
+    <string name="settings_app_version">v%1$s</string>
+    <string name="settings_github_username">\@%1$s</string>
+    <string name="settings_readable_size">%1$s</string>
+    <string name="settings_cache_size_2gb">2 GB</string>
+    <string name="settings_cache_size_64mb">64 MB</string>
+    <string name="settings_list_item_prefix">  • %1$s:</string>
+    
 </resources>

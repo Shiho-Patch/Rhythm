@@ -304,7 +304,7 @@ fun SleepTimerBottomSheetNew(
                                         color = MaterialTheme.colorScheme.onPrimaryContainer
                                     )
                                     Text(
-                                        text = "remaining",
+                                        text = context.getString(R.string.bottomsheet_timer_remaining),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                                     )
@@ -332,7 +332,7 @@ fun SleepTimerBottomSheetNew(
                                 ) {
                                     Icon(Icons.Rounded.Stop, contentDescription = null, modifier = Modifier.size(18.dp))
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Cancel")
+                                    Text(context.getString(R.string.bottomsheet_cancel))
                                 }
                                 
                                 Button(
@@ -345,7 +345,7 @@ fun SleepTimerBottomSheetNew(
                                 ) {
                                     Icon(Icons.Rounded.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Edit")
+                                    Text(context.getString(R.string.bottomsheet_timer_edit))
                                 }
                             }
                         }
@@ -464,7 +464,7 @@ fun SleepTimerBottomSheetNew(
                                         fontWeight = FontWeight.SemiBold
                                     )
                                     Text(
-                                        text = "Set a specific time duration",
+                                        text = context.getString(R.string.bottomsheet_timer_custom_desc),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -489,7 +489,7 @@ fun SleepTimerBottomSheetNew(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Set Custom Time")
+                                Text(context.getString(R.string.bottomsheet_timer_custom_title))
                             }
                         }
                     }
@@ -651,7 +651,7 @@ private fun Material3TimePickerDialog(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
-                    text = "Set hours and minutes for the sleep timer",
+                    text = context.getString(R.string.bottomsheet_timer_hours_minutes),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -691,7 +691,7 @@ private fun Material3TimePickerDialog(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Cancel")
+                        Text(context.getString(R.string.bottomsheet_cancel))
                     }
                     
                     Button(
@@ -700,7 +700,7 @@ private fun Material3TimePickerDialog(
                         },
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Set Timer")
+                        Text(context.getString(R.string.bottomsheet_timer_set))
                     }
                 }
             }

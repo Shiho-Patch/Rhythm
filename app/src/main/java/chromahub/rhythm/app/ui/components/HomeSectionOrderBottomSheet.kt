@@ -156,7 +156,7 @@ fun HomeSectionOrderBottomSheet(
                 ) {
                     Column {
                         Text(
-                            text = "Home Section Order",
+                            text = context.getString(R.string.bottomsheet_home_section_order),
                             style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -172,7 +172,7 @@ fun HomeSectionOrderBottomSheet(
                             Text(
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 style = MaterialTheme.typography.labelLarge,
-                                text = "Reorder and toggle visibility",
+                                text = context.getString(R.string.bottomsheet_reorder_toggle_visibility),
                                 overflow = TextOverflow.Ellipsis,
                                 maxLines = 1,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -376,7 +376,7 @@ fun HomeSectionOrderBottomSheet(
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Reset")
+                    Text(context.getString(R.string.bottomsheet_reset))
                 }
                 
                 // Save button
@@ -416,7 +416,7 @@ fun HomeSectionOrderBottomSheet(
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Save")
+                    Text(context.getString(R.string.bottomsheet_save))
                 }
             }
         }

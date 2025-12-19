@@ -83,6 +83,7 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_ARTIST_VIEW_TYPE = "artist_view_type"
         private const val KEY_PLAYLIST_VIEW_TYPE = "playlist_view_type"
         private const val KEY_ALBUM_SORT_ORDER = "album_sort_order"
+        private const val KEY_PLAYLIST_SORT_ORDER = "playlist_sort_order"
         private const val KEY_ARTIST_COLLABORATION_MODE = "artist_collaboration_mode"
         private const val KEY_LIBRARY_TAB_ORDER = "library_tab_order"
         private const val KEY_PLAYER_CHIP_ORDER = "player_chip_order"
@@ -459,6 +460,10 @@ class AppSettings private constructor(context: Context) {
     // Album Sort Order
     private val _albumSortOrder = MutableStateFlow(prefs.getString(KEY_ALBUM_SORT_ORDER, "TRACK_NUMBER") ?: "TRACK_NUMBER")
     val albumSortOrder: StateFlow<String> = _albumSortOrder.asStateFlow()
+    
+    // Playlist Sort Order
+    private val _playlistSortOrder = MutableStateFlow(prefs.getString(KEY_PLAYLIST_SORT_ORDER, "NAME_ASC") ?: "NAME_ASC")
+    val playlistSortOrder: StateFlow<String> = _playlistSortOrder.asStateFlow()
     
     // Artist Collaboration Mode
     private val _artistCollaborationMode = MutableStateFlow(prefs.getBoolean(KEY_ARTIST_COLLABORATION_MODE, false))
@@ -1180,6 +1185,11 @@ class AppSettings private constructor(context: Context) {
     fun setAlbumSortOrder(sortOrder: String) {
         prefs.edit().putString(KEY_ALBUM_SORT_ORDER, sortOrder).apply()
         _albumSortOrder.value = sortOrder
+    }
+    
+    fun setPlaylistSortOrder(sortOrder: String) {
+        prefs.edit().putString(KEY_PLAYLIST_SORT_ORDER, sortOrder).apply()
+        _playlistSortOrder.value = sortOrder
     }
     
     fun setArtistCollaborationMode(enabled: Boolean) {
