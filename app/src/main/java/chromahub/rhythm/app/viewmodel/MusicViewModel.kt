@@ -3084,6 +3084,49 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Reorder songs in a playlist by moving a song from one position to another
+     */
+    fun reorderPlaylistSongs(playlistId: String, fromIndex: Int, toIndex: Int) {
+        _playlists.value = _playlists.value.map { playlist ->
+            if (playlist.id == playlistId && fromIndex != toIndex) {
+                val mutableSongs = playlist.songs.toMutableList()
+                if (fromIndex in mutableSongs.indices && toIndex in mutableSongs.indices) {
+                    val song = mutableSongs.removeAt(fromIndex)
+                    mutableSongs.add(toIndex, song)
+                    playlist.copy(
+                        songs = mutableSongs,
+                        dateModified = System.currentTimeMillis()
+                    )
+                } else {
+                    playlist
+                }
+            } else {
+                playlist
+            }
+        }
+        savePlaylists()
+        Log.d(TAG, "Reordered song in playlist from $fromIndex to $toIndex")
+    }
+
+    /**
+     * Update the entire song list for a playlist (for sorting or batch reordering)
+     */
+    fun updatePlaylistSongs(playlistId: String, newSongList: List<Song>) {
+        _playlists.value = _playlists.value.map { playlist ->
+            if (playlist.id == playlistId) {
+                playlist.copy(
+                    songs = newSongList,
+                    dateModified = System.currentTimeMillis()
+                )
+            } else {
+                playlist
+            }
+        }
+        savePlaylists()
+        Log.d(TAG, "Updated song list for playlist: $playlistId")
+    }
+
     fun deletePlaylist(playlistId: String) {
         // Prevent deleting default playlists
         if (playlistId == "1" || playlistId == "2" || playlistId == "3") {

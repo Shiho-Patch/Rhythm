@@ -24,7 +24,7 @@
     <string name="skip_previous">Skip Previous</string>
     
     <!-- Widget Settings -->
-    <string name="settings_widget">Widget Settings</string>
+    <string name="settings_widget">Widget</string>
     <string name="settings_widget_desc">Customize home screen widgets</string>
     <string name="widget_preview_title">Widget Preview</string>
     <string name="widget_preview_desc">Changes will be applied to all active widgets on your home screen. Long-press the widget to resize it and see different layouts.</string>
@@ -87,6 +87,8 @@
     <string name="settings_crossfade_desc">Smooth transition between songs</string>
     <string name="settings_crossfade_duration">Crossfade Duration</string>
     <string name="settings_crossfade_duration_desc">%1$.1f seconds</string>
+    <string name="settings_stop_playback_on_close">Stop Playback on App Close</string>
+    <string name="settings_stop_playback_on_close_desc">Stop music when the app is closed from recent apps</string>
     <string name="settings_time_display">Time Display</string>
     <string name="settings_use_hours">Use Hours in Time Format</string>
     <string name="settings_use_hours_enabled">Shows 1:32:26 for long tracks</string>
@@ -966,7 +968,7 @@
     <!-- Settings Screen -->
     <string name="settings_title">Settings</string>
     <string name="settings_section_appearance">Appearance</string>
-    <string name="settings_theme_customization">Theme Customization</string>
+    <string name="settings_theme_customization">Theme</string>
     <string name="settings_theme_customization_desc">Customize colors, fonts, and appearance</string>
     <string name="settings_library_tab_order">Library Tab Order</string>
     <string name="settings_library_tab_order_desc">Reorder tabs in the library</string>
@@ -1267,17 +1269,17 @@
     <string name="ui_error_generic">Error</string>
     
     <!-- Settings Screen - Complete -->
-    <string name="settings_home_customization">Home Screen</string>
+    <string name="settings_home_customization">Home</string>
     <string name="settings_home_customization_desc">Customize home screen sections and layout</string>
-    <string name="settings_player_customization">Player Screen</string>
+    <string name="settings_player_customization">Player</string>
     <string name="settings_player_customization_desc">Customize player controls and chips</string>
     <string name="settings_miniplayer_customization">Mini Player</string>
     <string name="settings_miniplayer_customization_desc">Customize compact player appearance</string>
     <string name="settings_gestures">Gestures</string>
     <string name="settings_gestures_desc">Configure swipe and touch gestures</string>
-    <string name="settings_artist_parsing">Artist Parsing</string>
+    <string name="settings_artist_parsing">Artists</string>
     <string name="settings_artist_parsing_desc">Configure multi-artist detection and display</string>
-    <string name="settings_rhythm_stats">Listening Stats</string>
+    <string name="settings_rhythm_stats">Rhythm Stats</string>
     <string name="settings_rhythm_stats_desc">View your listening history and insights</string>
     
     <!-- Rhythm Stats Screen -->

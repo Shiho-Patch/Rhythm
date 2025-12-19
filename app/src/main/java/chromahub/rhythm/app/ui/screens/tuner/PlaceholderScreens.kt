@@ -488,6 +488,7 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
     val useHoursInTimeFormat by appSettings.useHoursInTimeFormat.collectAsState()
     val crossfadeEnabled by appSettings.crossfade.collectAsState()
     val crossfadeDuration by appSettings.crossfadeDuration.collectAsState()
+    val stopPlaybackOnAppClose by appSettings.stopPlaybackOnAppClose.collectAsState()
 
     var showPlaylistBehaviorDialog by remember { mutableStateOf(false) }
     var showQueueDialogSettingDialog by remember { mutableStateOf(false) }
@@ -556,24 +557,31 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                         context.getString(R.string.settings_remember_shuffle_mode_desc),
                         toggleState = shuffleModePersistence,
                         onToggleChange = { appSettings.setShuffleModePersistence(it) }
+                    ),
+                    SettingItem(
+                        androidx.compose.material.icons.Icons.Default.Stop,
+                        context.getString(R.string.settings_stop_playback_on_close),
+                        context.getString(R.string.settings_stop_playback_on_close_desc),
+                        toggleState = stopPlaybackOnAppClose,
+                        onToggleChange = { appSettings.setStopPlaybackOnAppClose(it) }
                     )
                 )
             ),
-//            SettingGroup(
-//                title = context.getString(R.string.settings_audio_effects),
-//                items = listOf(
-//                    SettingItem(
-//                        RhythmIcons.Tune,
-//                        context.getString(R.string.settings_crossfade),
-//                        if (crossfadeEnabled)
-//                            context.getString(R.string.settings_crossfade_duration_desc, crossfadeDuration)
-//                        else
-//                            context.getString(R.string.settings_crossfade_desc),
-//                        toggleState = crossfadeEnabled,
-//                        onToggleChange = { appSettings.setCrossfade(it) }
-//                    )
-//                )
-//            ),
+            SettingGroup(
+                title = context.getString(R.string.settings_audio_effects),
+                items = listOf(
+                    SettingItem(
+                        RhythmIcons.Tune,
+                        context.getString(R.string.settings_crossfade),
+                        if (crossfadeEnabled)
+                            context.getString(R.string.settings_crossfade_duration_desc, crossfadeDuration)
+                        else
+                            context.getString(R.string.settings_crossfade_desc),
+                        toggleState = crossfadeEnabled,
+                        onToggleChange = { appSettings.setCrossfade(it) }
+                    )
+                )
+            ),
             SettingGroup(
                 title = context.getString(R.string.settings_time_display),
                 items = listOf(
@@ -627,63 +635,63 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
             }
             
             // Crossfade Duration Slider (shown when crossfade is enabled)
-//            if (crossfadeEnabled) {
-//                item(key = "crossfade_duration_slider") {
-//                    Spacer(modifier = Modifier.height(16.dp))
-//                    Card(
-//                        modifier = Modifier.fillMaxWidth(),
-//                        shape = RoundedCornerShape(18.dp),
-//                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-//                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-//                    ) {
-//                        Column(
-//                            modifier = Modifier
-//                                .fillMaxWidth()
-//                                .padding(20.dp)
-//                        ) {
-//                            Row(
-//                                modifier = Modifier.fillMaxWidth(),
-//                                horizontalArrangement = Arrangement.SpaceBetween,
-//                                verticalAlignment = Alignment.CenterVertically
-//                            ) {
-//                                Text(
-//                                    text = context.getString(R.string.settings_crossfade_duration),
-//                                    style = MaterialTheme.typography.titleMedium,
-//                                    fontWeight = FontWeight.Medium
-//                                )
-//                                Text(
-//                                    text = context.getString(R.string.settings_crossfade_duration_desc, crossfadeDuration),
-//                                    style = MaterialTheme.typography.bodyMedium,
-//                                    color = MaterialTheme.colorScheme.primary
-//                                )
-//                            }
-//                            Spacer(modifier = Modifier.height(12.dp))
-//                            Slider(
-//                                value = crossfadeDuration,
-//                                onValueChange = { appSettings.setCrossfadeDuration(it) },
-//                                valueRange = 0.5f..12f,
-//                                steps = 22,
-//                                modifier = Modifier.fillMaxWidth()
-//                            )
-//                            Row(
-//                                modifier = Modifier.fillMaxWidth(),
-//                                horizontalArrangement = Arrangement.SpaceBetween
-//                            ) {
-//                                Text(
-//                                    text = "0.5s",
-//                                    style = MaterialTheme.typography.labelSmall,
-//                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-//                                )
-//                                Text(
-//                                    text = "12s",
-//                                    style = MaterialTheme.typography.labelSmall,
-//                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-//                                )
-//                            }
-//                        }
-//                    }
-//                }
-//            }
+            if (crossfadeEnabled) {
+                item(key = "crossfade_duration_slider") {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = context.getString(R.string.settings_crossfade_duration),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = context.getString(R.string.settings_crossfade_duration_desc, crossfadeDuration),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Slider(
+                                value = crossfadeDuration,
+                                onValueChange = { appSettings.setCrossfadeDuration(it) },
+                                valueRange = 0.5f..12f,
+                                steps = 22,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "0.5s",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = "12s",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            }
             
             item(key = "queue_playback_bottom_spacer") { Spacer(modifier = Modifier.height(100.dp)) }
         }

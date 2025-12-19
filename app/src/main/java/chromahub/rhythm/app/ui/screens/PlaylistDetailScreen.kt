@@ -131,7 +131,9 @@ fun PlaylistDetailScreen(
     onSearchClick: () -> Unit = {},
     onExportPlaylist: ((PlaylistImportExportUtils.PlaylistExportFormat) -> Unit)? = null,
     onExportPlaylistToCustomLocation: ((PlaylistImportExportUtils.PlaylistExportFormat, Uri) -> Unit)? = null,
-    onImportPlaylist: ((Uri, (Result<String>) -> Unit, (() -> Unit)?) -> Unit)? = null
+    onImportPlaylist: ((Uri, (Result<String>) -> Unit, (() -> Unit)?) -> Unit)? = null,
+    onReorderSongs: ((Int, Int) -> Unit)? = null,
+    onUpdatePlaylistSongs: ((List<Song>) -> Unit)? = null
 ) {
     var showMenu by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
@@ -146,6 +148,8 @@ fun PlaylistDetailScreen(
     var showSearchBar by remember { mutableStateOf(false) }
     var showQueueOptionsDialog by remember { mutableStateOf(false) }
     var selectedSongForQueue by remember { mutableStateOf<Song?>(null) }
+    var isReorderMode by remember { mutableStateOf(false) }
+    var showSortMenu by remember { mutableStateOf(false) }
 
     val haptics = LocalHapticFeedback.current
     val context = LocalContext.current
@@ -522,6 +526,42 @@ fun PlaylistDetailScreen(
                     modifier = Modifier,
                     shape = RoundedCornerShape(16.dp)
                 ) {
+                    // Reorder songs option
+                    if (onReorderSongs != null && playlist.songs.isNotEmpty()) {
+                        DropdownMenuItem(
+                            text = { Text(if (isReorderMode) "Done reordering" else "Reorder songs") },
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                showMenu = false
+                                isReorderMode = !isReorderMode
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = if (isReorderMode) Icons.Default.Check else Icons.Default.Reorder,
+                                    contentDescription = null
+                                )
+                            }
+                        )
+                    }
+                    
+                    // Sort songs option (submenu)
+                    if (onUpdatePlaylistSongs != null && playlist.songs.size > 1) {
+                        DropdownMenuItem(
+                            text = { Text("Sort songs") },
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                showMenu = false
+                                showSortMenu = true
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Sort,
+                                    contentDescription = null
+                                )
+                            }
+                        )
+                    }
+                    
                     // Export playlist option
                     if (onExportPlaylist != null || onExportPlaylistToCustomLocation != null) {
                         DropdownMenuItem(
@@ -585,6 +625,102 @@ fun PlaylistDetailScreen(
                                 imageVector = RhythmIcons.Delete,
                                 contentDescription = null
                             )
+                        }
+                    )
+                }
+                
+                // Sort menu dropdown
+                DropdownMenu(
+                    expanded = showSortMenu,
+                    onDismissRequest = { showSortMenu = false },
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("By title (A-Z)") },
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            showSortMenu = false
+                            onUpdatePlaylistSongs?.invoke(playlist.songs.sortedBy { it.title.lowercase() })
+                        },
+                        leadingIcon = {
+                            Icon(Icons.Default.SortByAlpha, contentDescription = null)
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("By title (Z-A)") },
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            showSortMenu = false
+                            onUpdatePlaylistSongs?.invoke(playlist.songs.sortedByDescending { it.title.lowercase() })
+                        },
+                        leadingIcon = {
+                            Icon(Icons.Default.SortByAlpha, contentDescription = null)
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("By artist (A-Z)") },
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            showSortMenu = false
+                            onUpdatePlaylistSongs?.invoke(playlist.songs.sortedBy { it.artist.lowercase() })
+                        },
+                        leadingIcon = {
+                            Icon(RhythmIcons.Artist, contentDescription = null)
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("By album (A-Z)") },
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            showSortMenu = false
+                            onUpdatePlaylistSongs?.invoke(playlist.songs.sortedBy { it.album.lowercase() })
+                        },
+                        leadingIcon = {
+                            Icon(RhythmIcons.Music.Album, contentDescription = null)
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("By duration (shortest)") },
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            showSortMenu = false
+                            onUpdatePlaylistSongs?.invoke(playlist.songs.sortedBy { it.duration })
+                        },
+                        leadingIcon = {
+                            Icon(Icons.Default.Timer, contentDescription = null)
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("By duration (longest)") },
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            showSortMenu = false
+                            onUpdatePlaylistSongs?.invoke(playlist.songs.sortedByDescending { it.duration })
+                        },
+                        leadingIcon = {
+                            Icon(Icons.Default.Timer, contentDescription = null)
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("By date added (newest)") },
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            showSortMenu = false
+                            onUpdatePlaylistSongs?.invoke(playlist.songs.sortedByDescending { it.dateAdded })
+                        },
+                        leadingIcon = {
+                            Icon(Icons.Default.DateRange, contentDescription = null)
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("By date added (oldest)") },
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            showSortMenu = false
+                            onUpdatePlaylistSongs?.invoke(playlist.songs.sortedBy { it.dateAdded })
+                        },
+                        leadingIcon = {
+                            Icon(Icons.Default.DateRange, contentDescription = null)
                         }
                     )
                 }
@@ -873,11 +1009,60 @@ fun PlaylistDetailScreen(
                         }
                     }
                 } else {
-                    itemsIndexed(filteredSongs, key = { index, song -> "${song.id}-$index" }) { _, song ->
+                    // Reorder mode banner
+                    if (isReorderMode) {
+                        item {
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 8.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Reorder,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                        Text(
+                                            text = "Reorder mode - Use arrows to move songs",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                    }
+                                    TextButton(
+                                        onClick = {
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            isReorderMode = false
+                                        }
+                                    ) {
+                                        Text("Done")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    itemsIndexed(filteredSongs, key = { index, song -> "${song.id}-$index" }) { index, song ->
                         AnimateIn {
                             PlaylistSongItem(
                                 song = song,
                                 onClick = {
+                                    if (isReorderMode) {
+                                        // Don't play in reorder mode
+                                        return@PlaylistSongItem
+                                    }
                                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
                                     when (playlistClickBehavior) {
                                         "play_all" -> {
@@ -895,10 +1080,25 @@ fun PlaylistDetailScreen(
                                         }
                                     }
                                 },
-                                onRemove = { message -> onRemoveSong(song, message) },
+                                onRemove = if (isReorderMode) null else { message -> onRemoveSong(song, message) },
                                 currentSong = currentSong,
                                 isPlaying = isPlaying,
-                                useHoursFormat = useHoursFormat
+                                useHoursFormat = useHoursFormat,
+                                isReorderMode = isReorderMode,
+                                index = index,
+                                totalCount = filteredSongs.size,
+                                onMoveUp = if (isReorderMode && index > 0) {
+                                    {
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                        onReorderSongs?.invoke(index, index - 1)
+                                    }
+                                } else null,
+                                onMoveDown = if (isReorderMode && index < filteredSongs.size - 1) {
+                                    {
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                        onReorderSongs?.invoke(index, index + 1)
+                                    }
+                                } else null
                             )
                         }
                     }
@@ -971,10 +1171,15 @@ private fun AnimateIn(
 fun PlaylistSongItem(
     song: Song,
     onClick: () -> Unit,
-    onRemove: (String) -> Unit = {},
+    onRemove: ((String) -> Unit)? = null,
     currentSong: Song? = null,
     isPlaying: Boolean = false,
-    useHoursFormat: Boolean = false
+    useHoursFormat: Boolean = false,
+    isReorderMode: Boolean = false,
+    index: Int = 0,
+    totalCount: Int = 0,
+    onMoveUp: (() -> Unit)? = null,
+    onMoveDown: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     var showRemoveDialog by remember { mutableStateOf(false) }
@@ -998,8 +1203,8 @@ fun PlaylistSongItem(
         label = "containerColor"
     )
     
-    // Remove confirmation dialog
-    if (showRemoveDialog) {
+    // Remove confirmation dialog (only show if onRemove is provided)
+    if (showRemoveDialog && onRemove != null) {
         AlertDialog(
             onDismissRequest = { showRemoveDialog = false },
             icon = {
@@ -1015,7 +1220,7 @@ fun PlaylistSongItem(
                 Button(
                     onClick = {
                         HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove) // Use captured haptics
-                        onRemove("Removed ${song.title} from playlist")
+                        onRemove?.invoke("Removed ${song.title} from playlist")
                         showRemoveDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(
@@ -1148,8 +1353,8 @@ fun PlaylistSongItem(
                 }
             }
             
-            // Duration display
-            if (song.duration > 0) {
+            // Duration display (hide in reorder mode to make room for buttons)
+            if (song.duration > 0 && !isReorderMode) {
                 Text(
                     text = formatDuration(song.duration, useHoursFormat),
                     style = MaterialTheme.typography.bodySmall,
@@ -1158,23 +1363,67 @@ fun PlaylistSongItem(
                 )
             }
             
-            // Enhanced remove button with confirmation
-            FilledIconButton(
-                onClick = {
-                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove) // Use captured haptics
-                    showRemoveDialog = true
-                },
-                colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f),
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer
-                ),
-                modifier = Modifier.size(40.dp)
-            ) {
-                Icon(
-                    imageVector = RhythmIcons.Remove,
-                    contentDescription = "Remove from playlist",
-                    modifier = Modifier.size(20.dp)
-                )
+            // Show reorder buttons or remove button depending on mode
+            if (isReorderMode) {
+                // Reorder buttons
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    // Move up button
+                    FilledIconButton(
+                        onClick = { onMoveUp?.invoke() },
+                        enabled = onMoveUp != null,
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                        ),
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowUpward,
+                            contentDescription = "Move up",
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    
+                    // Move down button
+                    FilledIconButton(
+                        onClick = { onMoveDown?.invoke() },
+                        enabled = onMoveDown != null,
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                        ),
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowDownward,
+                            contentDescription = "Move down",
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            } else if (onRemove != null) {
+                // Enhanced remove button with confirmation
+                FilledIconButton(
+                    onClick = {
+                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove) // Use captured haptics
+                        showRemoveDialog = true
+                    },
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f),
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    ),
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = RhythmIcons.Remove,
+                        contentDescription = "Remove from playlist",
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }

@@ -1569,7 +1569,13 @@ fun RhythmNavigation(
                                     viewModel.setTargetPlaylistForAddingSongs(playlistId)
                                     navController.navigate(Screen.AddToPlaylist.route)
                                 },
-                                onSkipNext = onSkipNext
+                                onSkipNext = onSkipNext,
+                                onReorderSongs = { fromIndex, toIndex ->
+                                    viewModel.reorderPlaylistSongs(playlistId, fromIndex, toIndex)
+                                },
+                                onUpdatePlaylistSongs = { newSongList ->
+                                    viewModel.updatePlaylistSongs(playlistId, newSongList)
+                                }
                             )
                         }
                     }

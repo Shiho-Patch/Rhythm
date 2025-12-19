@@ -259,6 +259,7 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_SAVED_REPEAT_MODE = "saved_repeat_mode"
         private const val KEY_PLAYBACK_SPEED = "playback_speed"
         private const val KEY_USE_HOURS_IN_TIME_FORMAT = "use_hours_in_time_format"
+        private const val KEY_STOP_PLAYBACK_ON_APP_CLOSE = "stop_playback_on_app_close"
         
         // Widget Settings
         private const val KEY_WIDGET_SHOW_ALBUM_ART = "widget_show_album_art"
@@ -613,6 +614,10 @@ class AppSettings private constructor(context: Context) {
     // Time Format Settings - Show hours:minutes:seconds for longer tracks (>60 min)
     private val _useHoursInTimeFormat = MutableStateFlow(prefs.getBoolean(KEY_USE_HOURS_IN_TIME_FORMAT, false))
     val useHoursInTimeFormat: StateFlow<Boolean> = _useHoursInTimeFormat.asStateFlow()
+    
+    // Stop Playback on App Close
+    private val _stopPlaybackOnAppClose = MutableStateFlow(prefs.getBoolean(KEY_STOP_PLAYBACK_ON_APP_CLOSE, false))
+    val stopPlaybackOnAppClose: StateFlow<Boolean> = _stopPlaybackOnAppClose.asStateFlow()
     
     // Cache Settings
     private val _maxCacheSize = MutableStateFlow(safeLong(KEY_MAX_CACHE_SIZE, 1024L * 1024L * 512L)) // 512MB default
@@ -1383,6 +1388,12 @@ class AppSettings private constructor(context: Context) {
     fun setUseHoursInTimeFormat(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_USE_HOURS_IN_TIME_FORMAT, enabled).apply()
         _useHoursInTimeFormat.value = enabled
+    }
+    
+    // Stop Playback on App Close Methods
+    fun setStopPlaybackOnAppClose(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_STOP_PLAYBACK_ON_APP_CLOSE, enabled).apply()
+        _stopPlaybackOnAppClose.value = enabled
     }
     
     // Cache Settings Methods
