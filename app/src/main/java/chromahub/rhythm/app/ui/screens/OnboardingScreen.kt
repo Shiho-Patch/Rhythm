@@ -689,7 +689,7 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
             ) {
                 Box(
                     modifier = Modifier
-                        .size(170.dp)
+                        .size(120.dp)
                         .clip(CircleShape),
 //                        .background(
 //                            Brush.radialGradient(
@@ -710,7 +710,7 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
                 }
             }
             
-            Spacer(modifier = Modifier.height(20.dp))
+//            Spacer(modifier = Modifier.height(20.dp))
             
             // App name with staggered animation
             Column(
@@ -738,6 +738,8 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
                         color = MaterialTheme.colorScheme.onBackground
                     )
                 }
+
+                Spacer(modifier = Modifier.height(20.dp))
                 
                 // Subtitle with modern styling and delayed animation
                 AnimatedVisibility(
@@ -752,7 +754,7 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
                 ) {
                     Text(
                         text = context.getString(R.string.onboarding_welcome_subtitle),
-                        style = MaterialTheme.typography.titleMedium.copy(
+                        style = MaterialTheme.typography.titleSmall.copy(
                             letterSpacing = 0.4.sp
                         ),
                         fontWeight = FontWeight.SemiBold,
@@ -762,7 +764,7 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
                 }
             }
             
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(34.dp))
             
             // Minimal description with better typography and animation
             AnimatedVisibility(
@@ -776,7 +778,7 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
                 Text(
                     text = context.getString(R.string.onboarding_welcome_desc),
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         lineHeight = 22.sp
                     ),
                     textAlign = TextAlign.Center,
@@ -833,34 +835,34 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
                 }
             }
             
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            // Feature highlights with animated appearance
-            AnimatedVisibility(
-                visible = true,
-                enter = fadeIn(animationSpec = tween(800, delayMillis = 1000)) +
-                        expandVertically(animationSpec = tween(600, delayMillis = 1000))
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                ) {
-                    WelcomeFeatureChip(
-                        icon = Icons.Filled.MusicNote,
-                        text = context.getString(R.string.onboarding_offline)
-                    )
-                    WelcomeFeatureChip(
-                        icon = Icons.Filled.Palette,
-                        text = context.getString(R.string.onboarding_customizable)
-                    )
-                    WelcomeFeatureChip(
-                        icon = Icons.Filled.Security,
-                        text = context.getString(R.string.onboarding_private)
-                    )
-                }
-            }
+//            Spacer(modifier = Modifier.height(32.dp))
+//
+//            // Feature highlights with animated appearance
+//            AnimatedVisibility(
+//                visible = true,
+//                enter = fadeIn(animationSpec = tween(800, delayMillis = 1000)) +
+//                        expandVertically(animationSpec = tween(600, delayMillis = 1000))
+//            ) {
+//                Row(
+//                    horizontalArrangement = Arrangement.spacedBy(15.dp, Alignment.CenterHorizontally),
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .padding(horizontal = 12.dp)
+//                ) {
+//                    WelcomeFeatureChip(
+//                        icon = Icons.Filled.MusicNote,
+//                        text = context.getString(R.string.onboarding_offline)
+//                    )
+//                    WelcomeFeatureChip(
+//                        icon = Icons.Filled.Palette,
+//                        text = context.getString(R.string.onboarding_customizable)
+//                    )
+//                    WelcomeFeatureChip(
+//                        icon = Icons.Filled.Security,
+//                        text = context.getString(R.string.onboarding_private)
+//                    )
+//                }
+//            }
             
             Spacer(modifier = Modifier.height(24.dp))
             
