@@ -580,7 +580,8 @@ fun PlaylistDetailScreen(
                     )
                 }
             }
-            if (playlist.id != "1" && playlist.id != "2" && playlist.id != "3") {
+            if (true) {
+                val isDefault = playlist.id == "1" || playlist.id == "2" || playlist.id == "3"
                 FilledIconButton(
                     onClick = {
                         HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
@@ -607,7 +608,7 @@ fun PlaylistDetailScreen(
                     shape = RoundedCornerShape(18.dp)
                 ) {
                     // Reorder songs option
-                    if (onReorderSongs != null && playlist.songs.isNotEmpty()) {
+                    if (isDefault || (onReorderSongs != null && playlist.songs.isNotEmpty())) {
                         Surface(
                             color = MaterialTheme.colorScheme.surface,
                             shape = RoundedCornerShape(16.dp),
@@ -655,7 +656,7 @@ fun PlaylistDetailScreen(
                     }
                     
                     // Select songs option (multi-select mode)
-                    if (playlist.songs.isNotEmpty()) {
+                    if (!isDefault && playlist.songs.isNotEmpty()) {
                         Surface(
                             color = MaterialTheme.colorScheme.surface,
                             shape = RoundedCornerShape(16.dp),
@@ -704,7 +705,7 @@ fun PlaylistDetailScreen(
                     }
                     
                     // Sort songs option (submenu)
-                    if (onUpdatePlaylistSongs != null && playlist.songs.size > 1) {
+                    if (isDefault || (onUpdatePlaylistSongs != null && playlist.songs.size > 1)) {
                         Surface(
                             color = MaterialTheme.colorScheme.surface,
                             shape = RoundedCornerShape(16.dp),
@@ -747,7 +748,7 @@ fun PlaylistDetailScreen(
                     }
                     
                     // Export playlist option
-                    if (onExportPlaylist != null || onExportPlaylistToCustomLocation != null) {
+                    if (!isDefault && (onExportPlaylist != null || onExportPlaylistToCustomLocation != null)) {
                         Surface(
                             color = MaterialTheme.colorScheme.surface,
                             shape = RoundedCornerShape(16.dp),
@@ -790,7 +791,7 @@ fun PlaylistDetailScreen(
                     }
                     
                     // Import playlist option
-                    if (onImportPlaylist != null) {
+                    if (!isDefault && onImportPlaylist != null) {
                         Surface(
                             color = MaterialTheme.colorScheme.surface,
                             shape = RoundedCornerShape(16.dp),
@@ -833,86 +834,90 @@ fun PlaylistDetailScreen(
                     }
                     
                     // Rename playlist option
-                    Surface(
-                        color = MaterialTheme.colorScheme.surface,
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
-                    ) {
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    "Rename playlist",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            },
-                            leadingIcon = {
-                                Surface(
-                                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f),
-                                    shape = CircleShape,
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = RhythmIcons.Edit,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(6.dp)
+                    if (!isDefault) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.surface,
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        "Rename playlist",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
+                                },
+                                leadingIcon = {
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f),
+                                        shape = CircleShape,
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = RhythmIcons.Edit,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(6.dp)
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    showMenu = false
+                                    newPlaylistName = playlist.name
+                                    showRenameDialog = true
                                 }
-                            },
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                showMenu = false
-                                newPlaylistName = playlist.name
-                                showRenameDialog = true
-                            }
-                        )
+                            )
+                        }
                     }
                     
                     // Delete playlist option
-                    Surface(
-                        color = MaterialTheme.colorScheme.surface,
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
-                    ) {
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    "Delete playlist",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                            },
-                            leadingIcon = {
-                                Surface(
-                                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f),
-                                    shape = CircleShape,
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = RhythmIcons.Delete,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onErrorContainer,
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(6.dp)
+                    if (!isDefault) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.surface,
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        "Delete playlist",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.error
                                     )
+                                },
+                                leadingIcon = {
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f),
+                                        shape = CircleShape,
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = RhythmIcons.Delete,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onErrorContainer,
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(6.dp)
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    showMenu = false
+                                    showDeleteDialog = true
                                 }
-                            },
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                showMenu = false
-                                showDeleteDialog = true
-                            }
-                        )
+                            )
+                        }
                     }
                 }
                 
