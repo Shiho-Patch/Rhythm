@@ -405,9 +405,6 @@ fun EqualizerScreen(
     val haptics = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
 
-    // Check if equalizer is supported
-    val isEqualizerSupported = remember { viewModel.isEqualizerSupported() }
-
     // Collect states from settings
     val equalizerEnabledState by viewModel.equalizerEnabled.collectAsState()
     val equalizerPresetState by viewModel.equalizerPreset.collectAsState()
@@ -572,7 +569,7 @@ fun EqualizerScreen(
             item {
                 Card(
                     colors = CardDefaults.cardColors(
-                        containerColor = if (isEqualizerEnabled && isEqualizerSupported)
+                        containerColor = if (isEqualizerEnabled)
                             MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
                         else
                             MaterialTheme.colorScheme.surfaceContainer
@@ -589,7 +586,7 @@ fun EqualizerScreen(
                         Icon(
                             imageVector = Icons.Rounded.Equalizer,
                             contentDescription = null,
-                            tint = if (isEqualizerEnabled && isEqualizerSupported) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = if (isEqualizerEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(32.dp)
                         )
                         Spacer(modifier = Modifier.width(16.dp))
@@ -600,7 +597,6 @@ fun EqualizerScreen(
                             ) {
                                 Text(
                                     text = when {
-                                        !isEqualizerSupported -> "Not Supported"
                                         isEqualizerEnabled -> "Active"
                                         else -> "Disabled"
                                     },
@@ -608,22 +604,13 @@ fun EqualizerScreen(
                                     fontWeight = FontWeight.Bold
                                 )
                             }
-                            if (!isEqualizerSupported) {
-                                Text(
-                                    text = "Equalizer is not supported on this device",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
                         }
                         TunerAnimatedSwitch(
-                            checked = isEqualizerEnabled && isEqualizerSupported,
+                            checked = isEqualizerEnabled,
                             onCheckedChange = { enabled ->
-                                if (isEqualizerSupported) {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                    isEqualizerEnabled = enabled
-                                    viewModel.setEqualizerEnabled(enabled)
-                                }
+                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                isEqualizerEnabled = enabled
+                                viewModel.setEqualizerEnabled(enabled)
                             }
                         )
                     }
@@ -633,7 +620,7 @@ fun EqualizerScreen(
             // Presets Section with animation
             item {
                 AnimatedVisibility(
-                    visible = isEqualizerEnabled && isEqualizerSupported,
+                    visible = isEqualizerEnabled,
                     enter = fadeIn() + expandVertically(),
                     exit = fadeOut() + shrinkVertically()
                 ) {
@@ -751,7 +738,7 @@ fun EqualizerScreen(
             // Frequency Bands Section with animation
             item {
                 AnimatedVisibility(
-                    visible = isEqualizerEnabled && isEqualizerSupported,
+                    visible = isEqualizerEnabled,
                     enter = fadeIn() + expandVertically(),
                     exit = fadeOut() + shrinkVertically()
                 ) {

@@ -1630,7 +1630,8 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     }
     
     fun isEqualizerSupported(): Boolean {
-        return equalizer != null
+        // All devices now support equalizer with software implementation
+        return true
     }
     
     fun applyEqualizerPreset(levels: FloatArray) {

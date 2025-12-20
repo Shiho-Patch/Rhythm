@@ -5049,15 +5049,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     
     // Equalizer functionality
     fun isEqualizerSupported(): Boolean {
-        // Check if Equalizer is available on the device
-        return try {
-            // Try to create a dummy equalizer to check availability
-            val dummy = android.media.audiofx.Equalizer(0, 0)
-            dummy.release()
-            true
-        } catch (e: Exception) {
-            false
-        }
+        // All devices now support equalizer with software implementation
+        return true
     }
     
     fun setEqualizerEnabled(enabled: Boolean) {
