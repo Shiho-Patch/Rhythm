@@ -308,12 +308,36 @@ fun SearchScreen(
     
     val haptics = LocalHapticFeedback.current
     
+    // Screen entrance animation
+    var showContent by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(50)
+        showContent = true
+    }
+    
+    val contentAlpha by animateFloatAsState(
+        targetValue = if (showContent) 1f else 0f,
+        animationSpec = tween(durationMillis = 400),
+        label = "contentAlpha"
+    )
+    
+    val contentOffset by animateFloatAsState(
+        targetValue = if (showContent) 0f else 30f,
+        animationSpec = tween(durationMillis = 450),
+        label = "contentOffset"
+    )
+
     Scaffold(
         bottomBar = {}
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .graphicsLayer {
+                    alpha = contentAlpha
+                    translationY = contentOffset
+                }
                 .padding(paddingValues)
         ) {
             // Enhanced Material 3 SearchBar with modern design and animations

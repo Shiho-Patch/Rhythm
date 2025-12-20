@@ -80,6 +80,26 @@ fun AddToPlaylistScreen(
         selectedSongs = emptySet()
     }
     
+    // Screen entrance animation
+    var showContent by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(50)
+        showContent = true
+    }
+    
+    val contentAlpha by animateFloatAsState(
+        targetValue = if (showContent) 1f else 0f,
+        animationSpec = tween(durationMillis = 400),
+        label = "contentAlpha"
+    )
+    
+    val contentOffset by animateFloatAsState(
+        targetValue = if (showContent) 0f else 30f,
+        animationSpec = tween(durationMillis = 450),
+        label = "contentOffset"
+    )
+
     CollapsibleHeaderScreen(
         title = if (isSelectionMode) {
             "${selectedSongs.size} selected"
@@ -272,6 +292,10 @@ fun AddToPlaylistScreen(
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
+                    .graphicsLayer {
+                        alpha = contentAlpha
+                        translationY = contentOffset
+                    }
                     .padding(horizontal = 16.dp),
                 contentPadding = PaddingValues(vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)

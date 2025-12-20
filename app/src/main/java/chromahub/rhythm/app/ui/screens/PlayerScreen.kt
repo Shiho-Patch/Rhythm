@@ -179,7 +179,6 @@ import java.util.Locale
 import kotlin.math.abs
 import chromahub.rhythm.app.ui.components.M3CircularLoader
 import android.view.animation.OvershootInterpolator
-import chromahub.rhythm.app.ui.screens.tuner.EqualizerSettingsScreen
 import chromahub.rhythm.app.ui.screens.SleepTimerBottomSheetNew
 import chromahub.rhythm.app.ui.components.SyncedLyricsView
 import androidx.compose.foundation.layout.WindowInsets
@@ -202,6 +201,8 @@ import chromahub.rhythm.app.data.CanvasRepository
 import chromahub.rhythm.app.data.CanvasData
 import chromahub.rhythm.app.data.Album
 import chromahub.rhythm.app.data.Artist
+import chromahub.rhythm.app.ui.navigation.Screen
+import androidx.navigation.NavController
 
 // Experimental API opt-ins required for:
 // - Material3 ModalBottomSheet and related APIs
@@ -274,7 +275,8 @@ fun PlayerScreen(
     onPlayArtistSongs: (List<Song>) -> Unit = {},
     onShuffleArtistSongs: (List<Song>) -> Unit = {},
     appSettings: chromahub.rhythm.app.data.AppSettings,
-    musicViewModel: chromahub.rhythm.app.viewmodel.MusicViewModel
+    musicViewModel: chromahub.rhythm.app.viewmodel.MusicViewModel,
+    navController: NavController
 ) {
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
@@ -364,7 +366,6 @@ fun PlayerScreen(
     val isLargeHeight = configuration.screenHeightDp > 800
     
     // Bottom sheet states
-    var showEqualizerBottomSheet by remember { mutableStateOf(false) }
     var showSleepTimerBottomSheet by remember { mutableStateOf(false) }
     var showLyricsEditorDialog by remember { mutableStateOf(false) }
     var showPlaybackSpeedDialog by remember { mutableStateOf(false) }
@@ -2954,7 +2955,7 @@ fun PlayerScreen(
                                                             haptic,
                                                             HapticFeedbackType.LongPress
                                                         )
-                                                        showEqualizerBottomSheet = true
+                                                        navController.navigate(Screen.Equalizer.route)
                                                     },
                                                     label = {
                                                         Text(
@@ -3594,23 +3595,6 @@ fun PlayerScreen(
             }
         }
         }
-    
-    // Bottom sheets
-    if (showEqualizerBottomSheet) {
-        // Use full-screen dialog for equalizer settings
-        androidx.compose.ui.window.Dialog(
-            onDismissRequest = { showEqualizerBottomSheet = false },
-            properties = androidx.compose.ui.window.DialogProperties(
-                dismissOnBackPress = true,
-                dismissOnClickOutside = false,
-                usePlatformDefaultWidth = false
-            )
-        ) {
-            EqualizerSettingsScreen(
-                onBackClick = { showEqualizerBottomSheet = false }
-            )
-        }
-    }
     
     if (showPlaybackSpeedDialog) {
         PlaybackSpeedDialog(

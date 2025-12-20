@@ -120,6 +120,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import chromahub.rhythm.app.ui.theme.RhythmTheme
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.ui.navigation.Screen
 
 // Define routes for navigation
 object SettingsRoutes {
@@ -938,7 +939,6 @@ fun SettingsScreenWrapper(
             SettingsRoutes.THEME_CUSTOMIZATION -> ThemeCustomizationSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.PLAYER_CUSTOMIZATION -> PlayerCustomizationSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.MINIPLAYER_CUSTOMIZATION -> MiniPlayerCustomizationSettingsScreen(onBackClick = { currentRoute = null })
-            SettingsRoutes.EQUALIZER -> EqualizerSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.SLEEP_TIMER -> SleepTimerSettingsScreen(onBackClick = { currentRoute = null })
             SettingsRoutes.CRASH_LOG_HISTORY -> CrashLogHistorySettingsScreen(onBackClick = { currentRoute = null }, appSettings = appSettings)
             SettingsRoutes.QUEUE_PLAYBACK -> QueuePlaybackSettingsScreen(onBackClick = { currentRoute = null })
@@ -951,6 +951,8 @@ fun SettingsScreenWrapper(
                 onNavigateTo = { route -> 
                     if (route == SettingsRoutes.LISTENING_STATS) {
                         navController.navigate("listening_stats")
+                    } else if (route == SettingsRoutes.EQUALIZER) {
+                        navController.navigate(Screen.Equalizer.route)
                     } else {
                         currentRoute = route
                     }

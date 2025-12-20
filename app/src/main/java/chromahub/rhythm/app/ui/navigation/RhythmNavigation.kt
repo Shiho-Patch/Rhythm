@@ -92,6 +92,7 @@ import chromahub.rhythm.app.ui.screens.LibraryScreen
 import chromahub.rhythm.app.ui.components.RhythmIcons.Delete
 import chromahub.rhythm.app.ui.screens.HomeScreen
 import chromahub.rhythm.app.ui.screens.ListeningStatsScreen
+import chromahub.rhythm.app.ui.screens.EqualizerScreen
 import chromahub.rhythm.app.ui.screens.PlayerScreen
 
 import chromahub.rhythm.app.ui.screens.PlaylistDetailScreen
@@ -188,6 +189,7 @@ sealed class Screen(val route: String) {
     
     // Stats Screen
     object ListeningStats : Screen("listening_stats")
+    object Equalizer : Screen("equalizer")
 }
 
 @Composable
@@ -856,32 +858,21 @@ fun RhythmNavigation(
                     composable(
                         Screen.Search.route,
                         enterTransition = {
-                            fadeIn(animationSpec = tween(350)) +
-                                    scaleIn(
-                                        initialScale = 0.85f,
-                                        animationSpec = tween(400, easing = EaseOutQuint)
-                                    )
+                            fadeIn(animationSpec = tween(300)) +
+                                slideInVertically(
+                                    initialOffsetY = { it / 4 },
+                                    animationSpec = tween(350, easing = EaseInOutQuart)
+                                )
                         },
                         exitTransition = {
-                            fadeOut(animationSpec = tween(350)) +
-                                    scaleOut(
-                                        targetScale = 0.85f,
-                                        animationSpec = tween(300, easing = EaseInOutQuart)
-                                    )
-                        },
-                        popEnterTransition = {
-                            fadeIn(animationSpec = tween(350)) +
-                                    scaleIn(
-                                        initialScale = 0.85f,
-                                        animationSpec = tween(400, easing = EaseOutQuint)
-                                    )
+                            fadeOut(animationSpec = tween(300))
                         },
                         popExitTransition = {
-                            fadeOut(animationSpec = tween(350)) +
-                                    scaleOut(
-                                        targetScale = 0.85f,
-                                        animationSpec = tween(300, easing = EaseInOutQuart)
-                                    )
+                            fadeOut(animationSpec = tween(300)) +
+                                slideOutVertically(
+                                    targetOffsetY = { it / 4 },
+                                    animationSpec = tween(350, easing = EaseInOutQuart)
+                                )
                         }
                     ) {
                         SearchScreen(
@@ -1008,8 +999,27 @@ fun RhythmNavigation(
                         ThemeCustomizationSettingsScreen(onBackClick = { navController.popBackStack() })
                     }
                     
-                    composable(Screen.TunerEqualizer.route) {
-                        EqualizerSettingsScreen(onBackClick = { navController.popBackStack() })
+                    composable(
+                        route = Screen.Equalizer.route,
+                        enterTransition = {
+                            fadeIn(animationSpec = tween(300)) +
+                                slideInVertically(
+                                    initialOffsetY = { it / 4 },
+                                    animationSpec = tween(350, easing = EaseInOutQuart)
+                                )
+                        },
+                        exitTransition = {
+                            fadeOut(animationSpec = tween(300))
+                        },
+                        popExitTransition = {
+                            fadeOut(animationSpec = tween(300)) +
+                                slideOutVertically(
+                                    targetOffsetY = { it / 4 },
+                                    animationSpec = tween(350, easing = EaseInOutQuart)
+                                )
+                        }
+                    ) {
+                        EqualizerScreen(navController = navController)
                     }
                     
                     composable(Screen.TunerSleepTimer.route) {
@@ -1049,6 +1059,29 @@ fun RhythmNavigation(
                         }
                     ) {
                         ListeningStatsScreen(navController = navController)
+                    }
+                    
+                    composable(
+                        route = Screen.Equalizer.route,
+                        enterTransition = {
+                            fadeIn(animationSpec = tween(300)) +
+                                slideInVertically(
+                                    initialOffsetY = { it / 4 },
+                                    animationSpec = tween(350, easing = EaseInOutQuart)
+                                )
+                        },
+                        exitTransition = {
+                            fadeOut(animationSpec = tween(300))
+                        },
+                        popExitTransition = {
+                            fadeOut(animationSpec = tween(300)) +
+                                slideOutVertically(
+                                    targetOffsetY = { it / 4 },
+                                    animationSpec = tween(350, easing = EaseInOutQuart)
+                                )
+                        }
+                    ) {
+                        EqualizerScreen(navController = navController)
                     }
 
                     composable(
@@ -1497,7 +1530,8 @@ fun RhythmNavigation(
                             onPlayArtistSongs = { songs -> viewModel.playSongs(songs) },
                             onShuffleArtistSongs = { songs -> viewModel.playShuffled(songs) },
                             appSettings = appSettings,
-                            musicViewModel = viewModel
+                            musicViewModel = viewModel,
+                            navController = navController
                         )
                     }
 
@@ -1602,7 +1636,26 @@ fun RhythmNavigation(
 
                     // Add to playlist screen
                     @OptIn(ExperimentalMaterial3Api::class)
-                    composable(Screen.AddToPlaylist.route) {
+                    composable(
+                        Screen.AddToPlaylist.route,
+                        enterTransition = {
+                            fadeIn(animationSpec = tween(300)) +
+                                slideInVertically(
+                                    initialOffsetY = { it / 4 },
+                                    animationSpec = tween(350, easing = EaseInOutQuart)
+                                )
+                        },
+                        exitTransition = {
+                            fadeOut(animationSpec = tween(300))
+                        },
+                        popExitTransition = {
+                            fadeOut(animationSpec = tween(300)) +
+                                slideOutVertically(
+                                    targetOffsetY = { it / 4 },
+                                    animationSpec = tween(350, easing = EaseInOutQuart)
+                                )
+                        }
+                    ) {
                         val songToAdd = viewModel.selectedSongForPlaylist.collectAsState().value
                         val targetPlaylistId = viewModel.targetPlaylistId.collectAsState().value
 
