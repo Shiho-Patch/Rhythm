@@ -158,3 +158,24 @@ fun AutoScrollingText(
         }
     }
 }
+
+/**
+ * A simple marquee text component that automatically scrolls text when it overflows.
+ * This is a convenience wrapper around AutoScrollingTextOnDemand with sensible defaults.
+ */
+@Composable
+fun MarqueeText(
+    text: String,
+    modifier: Modifier = Modifier,
+    style: TextStyle = LocalTextStyle.current,
+    gradientEdgeColor: Color = Color.Transparent,
+    enabled: Boolean = true
+) {
+    AutoScrollingTextOnDemand(
+        text = text,
+        style = style,
+        gradientEdgeColor = gradientEdgeColor,
+        modifier = modifier,
+        enabled = enabled
+    )
+}

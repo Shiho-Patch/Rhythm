@@ -16,6 +16,7 @@ import androidx.core.content.ContextCompat
 import androidx.compose.foundation.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.itemsIndexed
@@ -53,6 +54,7 @@ import chromahub.rhythm.app.data.AppSettings
 import chromahub.rhythm.app.ui.components.M3PlaceholderType
 import chromahub.rhythm.app.ui.components.SimpleCircularLoader
 import chromahub.rhythm.app.ui.components.formatDuration
+import chromahub.rhythm.app.ui.components.MarqueeText
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.util.MediaUtils
 import chromahub.rhythm.app.util.HapticUtils
@@ -261,29 +263,32 @@ fun SongInfoBottomSheet(
                             modifier = Modifier.weight(1f),
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Text(
+                            MarqueeText(
                                 text = song.title,
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                                color = MaterialTheme.colorScheme.onSurface
+                                style = MaterialTheme.typography.headlineSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                ),
+                                gradientEdgeColor = MaterialTheme.colorScheme.surface,
+                                modifier = Modifier.fillMaxWidth()
                             )
                             
-                            Text(
+                            MarqueeText(
                                 text = song.artist,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                ),
+                                gradientEdgeColor = MaterialTheme.colorScheme.surface,
+                                modifier = Modifier.fillMaxWidth()
                             )
                             
-                            Text(
+                            MarqueeText(
                                 text = song.album,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                ),
+                                gradientEdgeColor = MaterialTheme.colorScheme.surface,
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
                         
@@ -798,7 +803,10 @@ private fun MetadataGridSection(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.height(((metadataItems.size / 2 + metadataItems.size % 2) * 80).dp)
                 ) {
-                    itemsIndexed(metadataItems) { index, item ->
+                    itemsIndexed(
+                        items = metadataItems,
+                        span = { index, item -> if (index == metadataItems.lastIndex && metadataItems.size % 2 == 1) GridItemSpan(2) else GridItemSpan(1) }
+                    ) { index, item ->
                         AnimatedVisibility(
                             visible = true,
                             enter = fadeIn(
