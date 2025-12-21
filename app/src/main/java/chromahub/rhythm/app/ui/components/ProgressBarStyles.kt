@@ -93,100 +93,9 @@ private fun DrawScope.drawThumb(
     when (thumbStyle) {
         ThumbStyle.NONE -> { /* No thumb */ }
         ThumbStyle.CIRCLE -> {
-            // Outer glow/shadow effect
-            drawCircle(
-                color = progressColor.copy(alpha = 0.3f),
-                radius = thumbSize / 2 + 2f,
-                center = position
-            )
-            drawCircle(
-                color = progressColor,
-                radius = thumbSize / 2,
-                center = position
-            )
-            // Inner highlight
-            drawCircle(
-                color = Color.White.copy(alpha = 0.3f),
-                radius = thumbSize / 4,
-                center = Offset(position.x - thumbSize / 8, position.y - thumbSize / 8)
-            )
-        }
-        ThumbStyle.PILL -> {
-            val pillWidth = thumbSize * 0.5f
-            val pillHeight = thumbSize * 1.4f
-            // Shadow
-            drawRoundRect(
-                color = progressColor.copy(alpha = 0.3f),
-                topLeft = Offset(position.x - pillWidth / 2 - 1f, position.y - pillHeight / 2 - 1f),
-                size = Size(pillWidth + 2f, pillHeight + 2f),
-                cornerRadius = CornerRadius(pillWidth / 2)
-            )
-            drawRoundRect(
-                color = progressColor,
-                topLeft = Offset(position.x - pillWidth / 2, position.y - pillHeight / 2),
-                size = Size(pillWidth, pillHeight),
-                cornerRadius = CornerRadius(pillWidth / 2)
-            )
-        }
-        ThumbStyle.DIAMOND -> {
-            val path = Path().apply {
-                moveTo(position.x, position.y - thumbSize / 2) // Top
-                lineTo(position.x + thumbSize / 2, position.y) // Right
-                lineTo(position.x, position.y + thumbSize / 2) // Bottom
-                lineTo(position.x - thumbSize / 2, position.y) // Left
-                close()
-            }
-            // Shadow
-            drawPath(path, progressColor.copy(alpha = 0.3f))
-            // Scale down slightly for main shape
-            val innerPath = Path().apply {
-                val inset = 2f
-                moveTo(position.x, position.y - thumbSize / 2 + inset)
-                lineTo(position.x + thumbSize / 2 - inset, position.y)
-                lineTo(position.x, position.y + thumbSize / 2 - inset)
-                lineTo(position.x - thumbSize / 2 + inset, position.y)
-                close()
-            }
-            drawPath(innerPath, progressColor)
-        }
-        ThumbStyle.LINE -> {
-            val lineHeight = thumbSize * 1.6f
-            val lineWidth = thumbSize * 0.25f
-            // Glow
-            drawRoundRect(
-                color = progressColor.copy(alpha = 0.4f),
-                topLeft = Offset(position.x - lineWidth, position.y - lineHeight / 2),
-                size = Size(lineWidth * 2, lineHeight),
-                cornerRadius = CornerRadius(lineWidth)
-            )
-            drawRoundRect(
-                color = progressColor,
-                topLeft = Offset(position.x - lineWidth / 2, position.y - lineHeight / 2),
-                size = Size(lineWidth, lineHeight),
-                cornerRadius = CornerRadius(lineWidth / 2)
-            )
-        }
-        ThumbStyle.SQUARE -> {
-            val squareSize = thumbSize * 0.8f
-            val cornerRadius = squareSize * 0.25f
-            // Shadow
-            drawRoundRect(
-                color = progressColor.copy(alpha = 0.3f),
-                topLeft = Offset(position.x - squareSize / 2 - 1f, position.y - squareSize / 2 - 1f),
-                size = Size(squareSize + 2f, squareSize + 2f),
-                cornerRadius = CornerRadius(cornerRadius)
-            )
-            drawRoundRect(
-                color = progressColor,
-                topLeft = Offset(position.x - squareSize / 2, position.y - squareSize / 2),
-                size = Size(squareSize, squareSize),
-                cornerRadius = CornerRadius(cornerRadius)
-            )
-        }
-        ThumbStyle.GLOW -> {
-            // Multiple glow layers
-            for (i in 3 downTo 0) {
-                val alpha = 0.15f * (4 - i)
+            // Multi-layered glow effect
+            for (i in 4 downTo 0) {
+                val alpha = 0.08f * (5 - i)
                 val radius = thumbSize / 2 + (i * 3f)
                 drawCircle(
                     color = progressColor.copy(alpha = alpha),
@@ -194,44 +103,270 @@ private fun DrawScope.drawThumb(
                     center = position
                 )
             }
+            // Main circle with gradient
             drawCircle(
                 color = progressColor,
-                radius = thumbSize / 2.5f,
+                radius = thumbSize / 2,
                 center = position
             )
-            // Bright center
+            // Inner highlight with radial gradient effect
+            val highlightRadius = thumbSize / 2.2f
             drawCircle(
-                color = Color.White.copy(alpha = 0.5f),
-                radius = thumbSize / 5f,
+                color = Color.White.copy(alpha = 0.4f),
+                radius = highlightRadius,
+                center = Offset(position.x - thumbSize / 5, position.y - thumbSize / 5)
+            )
+            // Subtle inner shadow
+            drawCircle(
+                color = Color.Black.copy(alpha = 0.1f),
+                radius = thumbSize / 3,
+                center = Offset(position.x + thumbSize / 6, position.y + thumbSize / 6)
+            )
+        }
+        ThumbStyle.PILL -> {
+            val pillWidth = thumbSize * 0.9f
+            val pillHeight = thumbSize * 1.6f
+            val cornerRadius = pillHeight / 2
+
+            // Soft shadow with multiple layers
+            for (i in 2 downTo 0) {
+                val alpha = 0.1f * (3 - i)
+                val offset = i * 2f
+                drawRoundRect(
+                    color = progressColor.copy(alpha = alpha),
+                    topLeft = Offset(position.x - pillWidth / 2 - offset, position.y - pillHeight / 2 - offset),
+                    size = Size(pillWidth + offset * 2, pillHeight + offset * 2),
+                    cornerRadius = CornerRadius(cornerRadius + offset)
+                )
+            }
+
+            // Main pill shape
+            drawRoundRect(
+                color = progressColor,
+                topLeft = Offset(position.x - pillWidth / 2, position.y - pillHeight / 2),
+                size = Size(pillWidth, pillHeight),
+                cornerRadius = CornerRadius(cornerRadius)
+            )
+
+            // Highlight stripe
+            drawRoundRect(
+                color = Color.White.copy(alpha = 0.3f),
+                topLeft = Offset(position.x - pillWidth / 2 + 3f, position.y - pillHeight / 2 + 3f),
+                size = Size(pillWidth - 6f, pillHeight / 2.5f),
+                cornerRadius = CornerRadius((pillHeight / 2.5f) / 2)
+            )
+        }
+        ThumbStyle.DIAMOND -> {
+            val diamondSize = thumbSize * 1.1f
+
+            // Outer glow
+            val glowPath = Path().apply {
+                moveTo(position.x, position.y - diamondSize / 2 - 4f)
+                lineTo(position.x + diamondSize / 2 + 4f, position.y)
+                lineTo(position.x, position.y + diamondSize / 2 + 4f)
+                lineTo(position.x - diamondSize / 2 - 4f, position.y)
+                close()
+            }
+            drawPath(glowPath, progressColor.copy(alpha = 0.2f))
+
+            // Main diamond
+            val mainPath = Path().apply {
+                moveTo(position.x, position.y - diamondSize / 2)
+                lineTo(position.x + diamondSize / 2, position.y)
+                lineTo(position.x, position.y + diamondSize / 2)
+                lineTo(position.x - diamondSize / 2, position.y)
+                close()
+            }
+            drawPath(mainPath, progressColor)
+
+            // Inner highlight facets
+            val highlightPath = Path().apply {
+                moveTo(position.x, position.y - diamondSize / 2 + 4f)
+                lineTo(position.x + diamondSize / 2 - 4f, position.y)
+                lineTo(position.x, position.y - 2f)
+                close()
+            }
+            drawPath(highlightPath, Color.White.copy(alpha = 0.4f))
+
+            // Bottom shadow facet
+            val shadowPath = Path().apply {
+                moveTo(position.x, position.y + diamondSize / 2 - 4f)
+                lineTo(position.x + diamondSize / 2 - 4f, position.y)
+                lineTo(position.x, position.y + 2f)
+                close()
+            }
+            drawPath(shadowPath, Color.Black.copy(alpha = 0.2f))
+        }
+        ThumbStyle.LINE -> {
+            val lineHeight = thumbSize * 3.2f
+            val lineWidth = thumbSize * 0.4f
+
+            // Soft glow around the line
+            drawRoundRect(
+                color = progressColor.copy(alpha = 0.25f),
+                topLeft = Offset(position.x - lineWidth - 3f, position.y - lineHeight / 2 - 3f),
+                size = Size(lineWidth * 2 + 6f, lineHeight + 6f),
+                cornerRadius = CornerRadius(lineWidth + 3f)
+            )
+
+            // Main line
+            drawRoundRect(
+                color = progressColor,
+                topLeft = Offset(position.x - lineWidth / 2, position.y - lineHeight / 2),
+                size = Size(lineWidth, lineHeight),
+                cornerRadius = CornerRadius(lineWidth / 2)
+            )
+
+            // Center highlight
+            drawRoundRect(
+                color = Color.White.copy(alpha = 0.3f),
+                topLeft = Offset(position.x - lineWidth / 3, position.y - lineHeight / 3),
+                size = Size(lineWidth * 0.66f, lineHeight * 0.66f),
+                cornerRadius = CornerRadius(lineWidth / 3)
+            )
+        }
+        ThumbStyle.SQUARE -> {
+            val squareSize = thumbSize * 1.2f
+            val cornerRadius = squareSize * 0.2f
+
+            // Multi-layer shadow effect
+            for (i in 3 downTo 0) {
+                val alpha = 0.08f * (4 - i)
+                val offset = i * 1.5f
+                drawRoundRect(
+                    color = progressColor.copy(alpha = alpha),
+                    topLeft = Offset(position.x - squareSize / 2 - offset, position.y - squareSize / 2 - offset),
+                    size = Size(squareSize + offset * 2, squareSize + offset * 2),
+                    cornerRadius = CornerRadius(cornerRadius + offset * 0.5f)
+                )
+            }
+
+            // Main square
+            drawRoundRect(
+                color = progressColor,
+                topLeft = Offset(position.x - squareSize / 2, position.y - squareSize / 2),
+                size = Size(squareSize, squareSize),
+                cornerRadius = CornerRadius(cornerRadius)
+            )
+
+            // Inner highlight
+            drawRoundRect(
+                color = Color.White.copy(alpha = 0.4f),
+                topLeft = Offset(position.x - squareSize / 2 + 4f, position.y - squareSize / 2 + 4f),
+                size = Size(squareSize - 8f, squareSize - 8f),
+                cornerRadius = CornerRadius(cornerRadius - 2f)
+            )
+
+            // Subtle inner shadow
+            drawRoundRect(
+                color = Color.Black.copy(alpha = 0.15f),
+                topLeft = Offset(position.x - squareSize / 2 + squareSize * 0.65f, position.y - squareSize / 2 + squareSize * 0.65f),
+                size = Size(squareSize * 0.3f, squareSize * 0.3f),
+                cornerRadius = CornerRadius(cornerRadius * 0.3f)
+            )
+        }
+        ThumbStyle.GLOW -> {
+            // Advanced multi-layer glow with varying alphas and sizes
+            val glowLayers = 6
+            for (i in glowLayers downTo 0) {
+                val progress = i.toFloat() / glowLayers
+                val alpha = 0.12f * (1f - progress * 0.7f)
+                val radius = thumbSize / 2 + (i * 6f)
+                drawCircle(
+                    color = progressColor.copy(alpha = alpha),
+                    radius = radius,
+                    center = position
+                )
+            }
+
+            // Pulsing inner core
+            drawCircle(
+                color = progressColor.copy(alpha = 0.9f),
+                radius = thumbSize / 2f,
                 center = position
+            )
+
+            // Bright center highlight
+            drawCircle(
+                color = Color.White.copy(alpha = 0.6f),
+                radius = thumbSize / 3f,
+                center = position
+            )
+
+            // Subtle color variation in core
+            drawCircle(
+                color = progressColor.copy(alpha = 0.3f),
+                radius = thumbSize / 4.5f,
+                center = Offset(position.x - thumbSize / 9, position.y - thumbSize / 9)
             )
         }
         ThumbStyle.ARROW -> {
-            val arrowWidth = thumbSize * 0.8f
-            val arrowHeight = thumbSize * 0.6f
-            val path = Path().apply {
-                moveTo(position.x - arrowWidth / 3, position.y - arrowHeight / 2) // Top left
-                lineTo(position.x + arrowWidth / 2, position.y) // Right point
-                lineTo(position.x - arrowWidth / 3, position.y + arrowHeight / 2) // Bottom left
-                lineTo(position.x - arrowWidth / 6, position.y) // Inner left
+            val arrowWidth = thumbSize * 1.4f
+            val arrowHeight = thumbSize * 1.1f
+
+            // Arrow shadow/glow
+            val shadowPath = Path().apply {
+                moveTo(position.x - arrowWidth / 3 - 3f, position.y - arrowHeight / 2 - 3f)
+                lineTo(position.x + arrowWidth / 2 + 3f, position.y)
+                lineTo(position.x - arrowWidth / 3 - 3f, position.y + arrowHeight / 2 + 3f)
+                lineTo(position.x - arrowWidth / 6 - 3f, position.y)
                 close()
             }
-            drawPath(path, progressColor)
+            drawPath(shadowPath, progressColor.copy(alpha = 0.2f))
+
+            // Main arrow
+            val arrowPath = Path().apply {
+                moveTo(position.x - arrowWidth / 3, position.y - arrowHeight / 2)
+                lineTo(position.x + arrowWidth / 2, position.y)
+                lineTo(position.x - arrowWidth / 3, position.y + arrowHeight / 2)
+                lineTo(position.x - arrowWidth / 6, position.y)
+                close()
+            }
+            drawPath(arrowPath, progressColor)
+
+            // Arrow tip highlight
+            val highlightPath = Path().apply {
+                moveTo(position.x + arrowWidth / 2 - 4f, position.y)
+                lineTo(position.x + arrowWidth / 3, position.y - arrowHeight / 3)
+                lineTo(position.x + arrowWidth / 3, position.y + arrowHeight / 3)
+                close()
+            }
+            drawPath(highlightPath, Color.White.copy(alpha = 0.4f))
         }
         ThumbStyle.DOT -> {
-            val dotSize = thumbSize * 0.4f
-            // Outer ring
-            drawCircle(
-                color = progressColor.copy(alpha = 0.4f),
-                radius = dotSize + 3f,
-                center = position,
-                style = Stroke(width = 2f)
-            )
-            // Inner dot
+            val dotSize = thumbSize * 0.7f
+
+            // Outer ripple rings
+            for (i in 2 downTo 0) {
+                val alpha = 0.15f * (3 - i)
+                val radius = dotSize + (i * 6f)
+                drawCircle(
+                    color = progressColor.copy(alpha = alpha),
+                    radius = radius,
+                    center = position,
+                    style = Stroke(width = 2f)
+                )
+            }
+
+            // Main dot with gradient effect
             drawCircle(
                 color = progressColor,
                 radius = dotSize,
                 center = position
+            )
+
+            // Inner highlight
+            drawCircle(
+                color = Color.White.copy(alpha = 0.5f),
+                radius = dotSize * 0.5f,
+                center = Offset(position.x - dotSize * 0.25f, position.y - dotSize * 0.25f)
+            )
+
+            // Subtle shadow
+            drawCircle(
+                color = Color.Black.copy(alpha = 0.2f),
+                radius = dotSize * 0.4f,
+                center = Offset(position.x + dotSize * 0.2f, position.y + dotSize * 0.2f)
             )
         }
     }
@@ -253,7 +388,8 @@ fun StyledProgressBar(
     showThumb: Boolean = false,
     thumbStyle: ThumbStyle = ThumbStyle.CIRCLE,
     thumbSize: Dp = 12.dp,
-    waveFrequency: Float = 4f
+    waveAmplitudeWhenPlaying: Dp = 3.dp,
+    waveLength: Dp = 40.dp
 ) {
     when (style) {
         ProgressStyle.NORMAL -> NormalProgressBar(
@@ -273,7 +409,8 @@ fun StyledProgressBar(
             trackColor = trackColor,
             height = height,
             isPlaying = isPlaying && animated,
-            waveFrequency = waveFrequency
+            waveAmplitudeWhenPlaying = waveAmplitudeWhenPlaying,
+            waveLength = waveLength
         )
         ProgressStyle.ROUNDED -> RoundedProgressBar(
             progress = progress,
@@ -404,12 +541,12 @@ private fun WavyProgressBar(
     trackColor: Color,
     height: Dp,
     isPlaying: Boolean,
-    waveFrequency: Float = 6f
+    waveAmplitudeWhenPlaying: Dp = 3.dp,
+    waveLength: Dp = 40.dp
 ) {
     // Smooth wave amplitude animation - only show wave when playing
-    val targetAmplitude = if (isPlaying) height.value / 3f else 0f
     val animatedAmplitude by animateDpAsState(
-        targetValue = targetAmplitude.dp,
+        targetValue = if (isPlaying) waveAmplitudeWhenPlaying else 0.dp,
         animationSpec = tween(300, easing = FastOutSlowInEasing),
         label = "WaveAmplitudeAnim"
     )
@@ -428,7 +565,7 @@ private fun WavyProgressBar(
                 phaseShiftAnim.snapTo(start)
                 phaseShiftAnim.animateTo(
                     targetValue = start + fullRotation,
-                    animationSpec = tween(durationMillis = 2000, easing = LinearEasing)
+                    animationSpec = tween(durationMillis = 4000, easing = LinearEasing)
                 )
             }
         }
@@ -457,46 +594,59 @@ private fun WavyProgressBar(
         // Draw wavy progress
         if (progressWidth > 0) {
             if (waveAmplitude > 0.01f) {
-                // Draw smooth wavy line using quadratic bezier curves
+                // Draw wavy line
                 val path = Path()
-                val waveLength = width / waveFrequency
-                val step = (waveLength / 10f).coerceAtLeast(1.5f).coerceAtMost(strokeWidth)
-                
-                fun yAt(x: Float): Float {
-                    val s = sin((x / width * waveFrequency * PI) + phaseShift).toFloat()
-                    return (centerY + waveAmplitude * s).coerceIn(
-                        centerY - waveAmplitude - strokeWidth / 2f,
-                        centerY + waveAmplitude + strokeWidth / 2f
-                    )
+                val waveLengthPx = waveLength.toPx()
+                val waveFrequency = if (waveLengthPx > 0f) {
+                    ((2 * PI) / waveLengthPx).toFloat()
+                } else {
+                    0f
                 }
                 
-                var prevX = 0f
-                var prevY = yAt(prevX)
-                path.moveTo(prevX, prevY)
+                val waveStartDrawX = 0f
+                val waveEndDrawX = progressWidth.coerceAtLeast(waveStartDrawX)
                 
-                var x = prevX + step
-                while (x < progressWidth) {
-                    val y = yAt(x)
-                    val midX = (prevX + x) * 0.5f
-                    val midY = (prevY + y) * 0.5f
-                    path.quadraticBezierTo(prevX, prevY, midX, midY)
-                    prevX = x
-                    prevY = y
-                    x += step
-                }
-                val endY = yAt(progressWidth)
-                path.quadraticBezierTo(prevX, prevY, progressWidth, endY)
-                
-                drawPath(
-                    path = path,
-                    color = progressColor,
-                    style = Stroke(
-                        width = strokeWidth,
-                        cap = StrokeCap.Round,
-                        join = StrokeJoin.Round,
-                        miter = 1f
+                if (waveEndDrawX > waveStartDrawX) {
+                    val periodPx = ((2 * PI) / waveFrequency).toFloat()
+                    val samplesPerCycle = 20f
+                    val waveStep = (periodPx / samplesPerCycle).coerceAtLeast(1.2f).coerceAtMost(strokeWidth)
+
+                    fun yAt(x: Float): Float {
+                        val s = sin(waveFrequency * x + phaseShift)
+                        return (centerY + waveAmplitude * s).coerceIn(
+                            centerY - waveAmplitude - strokeWidth / 2f,
+                            centerY + waveAmplitude + strokeWidth / 2f
+                        )
+                    }
+
+                    var prevX = waveStartDrawX
+                    var prevY = yAt(prevX)
+                    path.moveTo(prevX, prevY)
+
+                    var x = prevX + waveStep
+                    while (x < waveEndDrawX) {
+                        val y = yAt(x)
+                        val midX = (prevX + x) * 0.5f
+                        val midY = (prevY + y) * 0.5f
+                        path.quadraticBezierTo(prevX, prevY, midX, midY)
+                        prevX = x
+                        prevY = y
+                        x += waveStep
+                    }
+                    val endY = yAt(waveEndDrawX)
+                    path.quadraticBezierTo(prevX, prevY, waveEndDrawX, endY)
+
+                    drawPath(
+                        path = path,
+                        color = progressColor,
+                        style = Stroke(
+                            width = strokeWidth,
+                            cap = StrokeCap.Round,
+                            join = StrokeJoin.Round,
+                            miter = 1f
+                        )
                     )
-                )
+                }
             } else {
                 // Draw straight line when paused
                 drawLine(
@@ -1006,7 +1156,7 @@ private fun WavyCircularProgress(
                 phaseShiftAnim.snapTo(start)
                 phaseShiftAnim.animateTo(
                     targetValue = start + fullRotation,
-                    animationSpec = tween(durationMillis = 2000, easing = LinearEasing)
+                    animationSpec = tween(durationMillis = 4000, easing = LinearEasing)
                 )
             }
         }

@@ -492,7 +492,8 @@ fun MiniPlayer(
                     trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
                     isPlaying = isPlaying,
                     height = 4.dp,
-                    waveFrequency = 6f // More waves for MiniPlayer
+                    waveAmplitudeWhenPlaying = 3.dp,
+                    waveLength = 30.dp // Shorter wavelength = more waves for MiniPlayer
                 )
             }
 

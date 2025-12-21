@@ -2055,7 +2055,8 @@ fun PlayerScreen(
                                         showThumb = thumbStyle != ThumbStyle.NONE,
                                         thumbStyle = thumbStyle,
                                         thumbSize = 14.dp,
-                                        waveFrequency = 2.5f // Fewer waves for Player screen
+                                        waveAmplitudeWhenPlaying = 3.dp,
+                                        waveLength = 60.dp // Longer wavelength = fewer waves for Player screen
                                     )
                                     
                                     // Enhanced seeking preview indicator
