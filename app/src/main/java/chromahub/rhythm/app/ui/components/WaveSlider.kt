@@ -77,7 +77,7 @@ fun WaveSlider(
     trackHeight: Dp = 6.dp,
     thumbRadius: Dp = 8.dp,
     waveAmplitudeWhenPlaying: Dp = 3.dp,
-    waveLength: Dp = 80.dp,
+    waveLength: Dp = 40.dp,
     thumbLineHeightWhenInteracting: Dp = 24.dp,
     hideInactiveTrackPortion: Boolean = true
 ) {
@@ -119,7 +119,7 @@ fun WaveSlider(
                 phaseShiftAnim.snapTo(start)
                 phaseShiftAnim.animateTo(
                     targetValue = start + fullRotation,
-                    animationSpec = tween(durationMillis = 2000, easing = LinearEasing)
+                    animationSpec = tween(durationMillis = 4000, easing = LinearEasing)
                 )
             }
         }
