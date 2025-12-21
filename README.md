@@ -71,13 +71,16 @@ Rhythm is not just another music player - it's a complete audio experience desig
 ### 🎵 **Professional Audio Engine**
 - 🎧 **Media3 ExoPlayer** - Studio-quality audio playback
 - 🔊 **Gapless Playback** - Perfect transitions between tracks
-- 📻 **Smart Audio Focus** - Handles calls and notifications elegantly
-- 🎼 **Format Support** - FLAC, ALAC, MP3, AAC, OGG, WAV, and more
-- 🔉 **Volume Control** - Independent app volume or system integration
+- 🎵 **AutoEQ Integration** - Device-tuned presets for 6032+ devices with import/export
+- 🎼 **10-Band Equalizer** - Professional-grade audio customization
+- 📊 **Rhythm Stats** - Comprehensive playback statistics and insights
+- 🔄 **Smart Audio Focus** - Handles calls and notifications elegantly
+- 📻 **Volume Control** - Independent app volume or system integration
+- 🎯 **Audio Quality Detection** - Dolby, DTS, Lossless, and Hi-Res badges
 
 ### 🎵 **Audio Format Support & Limitations**
 
-Rhythm uses **Media3 ExoPlayer 1.8.0** for professional-grade audio playback with comprehensive format support. Here's what you can expect:
+Rhythm uses **Media3 ExoPlayer 1.9.0** for professional-grade audio playback with comprehensive format support. Here's what you can expect:
 
 #### ✅ **Fully Supported Formats** (Out-of-the-Box)
 | Format | Container | Quality | Notes |
@@ -132,18 +135,23 @@ Rhythm automatically detects and displays audio quality badges:
 > **Note**: If a format doesn't play, it may be due to device/exoplayer limitations rather than app issues. Try converting to a supported format or check your device's audio capabilities.
 
 ### 🧠 **Intelligent Features**
-- 🎤 **Synchronized Lyrics** - Real-time lyrics with LRCLib integration
-- 🔍 **Smart Search** - Lightning-fast fuzzy search across your library
-- 🎲 **Advanced Shuffle** - True random, artist-aware, and weighted algorithms
-- 💾 **Auto-Resume** - Picks up exactly where you left off
-- 📊 **Rich Metadata** - Beautiful album art and comprehensive tag support
+- 🎤 **Advanced Lyrics** - Synchronized lyrics with LRCLib, embedded extraction, word-by-word display, and manual sync adjustment
+- 🔍 **Smart Search** - Lightning-fast fuzzy search across your library with settings search
+- 🎲 **Advanced Shuffle** - True random, artist-aware, and weighted algorithms with persistent settings
+- 📋 **Enhanced Playlists** - Reorder, sort, multi-select, import/export, grid view, and smart playback options
+- 💾 **Auto-Resume** - Picks up exactly where you left off with RAM removal controls
+- 📊 **Rich Metadata** - Beautiful album art and comprehensive tag support with embedded lyrics
+- ⚙️ **Smart Settings** - Default playlists toggle, gesture controls, player customization, and theme management
+- 🎨 **Theme Engine** - Dynamic colors, custom schemes, system fonts, festive themes, and Material You
 
 ### 🌐 **Connected Experience**
-- 🌍 **LRCLib Integration** - Community-driven synced lyrics
-- 🔄 **Auto-Updates** - Stay up-to-date via GitHub releases
+- 🌍 **LRCLib Integration** - Community-driven synced lyrics with priority settings
+- 🔄 **Auto-Updates** - Stay up-to-date via GitHub releases with Obtainium support
 - 🎨 **Spotify Canvas** - Dynamic visual experience for your music
 - 🖼️ **Online Artwork** - Fetch high-quality album art from Deezer
 - 📱 **Telegram Support** - Join our active community
+- 🌐 **Multilingual** - Support for multiple languages with ongoing translations
+- 🎭 **Festive Themes** - Diwali, Christmas, and seasonal theme engines
 
 ### 📲 **Home Screen Widgets**
 - 🎛️ **Modern Design** - Android 16 expressive style with rounded corners and vibrant colors
@@ -152,6 +160,7 @@ Rhythm automatically detects and displays audio quality badges:
 - 🎨 **Material 3 Colors** - Dynamic theming with translucent backgrounds and proper contrast
 - 🔄 **Dual Support** - Both legacy RemoteViews and modern Glance implementations
 - 📦 **Complete Grid Coverage** - 2x1, 2x2, 2x3, 3x2, 3x3, 4x2, 4x4, 5x2, 5x5 layouts available
+- 📊 **Rhythm Stats Widget** - Dedicated statistics widget with real-time data
 
 ---
 
@@ -206,8 +215,10 @@ Rhythm automatically detects and displays audio quality badges:
 
 ### 📦 **Get Rhythm Now**
 
-[![Download APK](https://img.shields.io/github/v/release/cromaguy/Rhythm?style=for-the-badge&logo=github&color=9c27b0&label=Download%20APK)](https://github.com/cromaguy/Rhythm/releases/latest)
-[![IzzyOnDroid](https://img.shields.io/endpoint?url=https://apt.izzysoft.de/fdroid/api/v1/shield/chromahub.rhythm.app&style=for-the-badge&logo=f-droid&label=IzzyOnDroid&color=3f51b5)](https://apt.izzysoft.de/fdroid/index/apk/chromahub.rhythm.app)
+[<img src="assets/badge-github.png" alt="Download APK" height="28">](https://github.com/cromaguy/Rhythm/releases/latest)
+[<img src="assets/badge-izzyondroid.png" alt="IzzyOnDroid" height="28">](https://apt.izzysoft.de/fdroid/index/apk/chromahub.rhythm.app)
+[<img src="assets/badge-openapk.png" alt="OpenAPK" height="28">](https://www.openapk.net/rhythm/chromahub.rhythm.app/)
+[<img src="assets/badge-obtainium.png" alt="Obtainium" height="28">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/cromaguy/Rhythm/)
 
 **System Requirements:** Android 8.0+ (API 26) • 2GB RAM • 50MB Storage
 
@@ -226,7 +237,15 @@ Rhythm automatically detects and displays audio quality badges:
 
 > **Note:** The APK is signed with our official keystore for security
 
-#### 🔒 **F-Droid (IzzyOnDroid Repository)**
+#### � **Obtainium (Universal App Manager)**
+1. 📱 Install [Obtainium](https://github.com/ImranR98/Obtainium) from F-Droid or GitHub
+2. ➕ Add this repository: `https://github.com/cromaguy/Rhythm/`
+3. 🔍 Search for "Rhythm" and install
+4. 🔄 Enjoy automatic updates from GitHub releases!
+
+> **Recommended for tech-savvy users who want direct GitHub integration**
+
+#### �🔒 **F-Droid (IzzyOnDroid Repository)**
 1. 📱 Install [F-Droid](https://f-droid.org/) if you haven't already
 2. ➕ Add IzzyOnDroid repository: `https://apt.izzysoft.de/fdroid/repo`
 3. 🔍 Search for "Rhythm" in F-Droid
@@ -278,9 +297,12 @@ Rhythm features a 9-step guided setup to personalize your music experience:
 - Set up custom color schemes
 
 #### 6. **📚 Library Organization**
-- **Library Tab Management**: Reorder Songs, Playlists, Albums, Artists, and Explorer tabs
-- **Playlist Management**: Create, import, export, and organize playlists
-- Configure advanced library settings in Tuner > Theme Customization
+- **Advanced Tab Management**: Reorder Songs, Playlists, Albums, Artists, and Explorer tabs with show/hide controls
+- **Tab Visibility Control**: Show/hide tabs based on your preferences
+- **Playlist Management**: Create, import, export, reorder, sort, multi-select, and grid view playlists
+- **Explorer Enhancement**: Folder-based browsing with playlist creation from folders
+- **Genre Browsing**: Dedicated genre tab with smart categorization
+- Configure detailed library settings in Tuner > Theme Customization
 - Additional display and sorting options available in app settings
 
 #### 7. **🔍 Media Scanning**
@@ -338,24 +360,38 @@ Rhythm requests the following permissions for optimal functionality:
 #### **Playback Controls**
 - **Play/Pause**: Tap the play button or use notification controls
 - **Skip Tracks**: Use next/previous buttons or swipe gestures
-- **Shuffle/Repeat**: Access from player controls or notification
-- **Volume**: Use device volume buttons or in-app slider
-- **Seek**: Drag the progress bar to jump to any position
+- **Shuffle/Repeat**: Access from player controls or notification with persistent modes
+- **Volume**: Use device volume buttons or in-app slider with independent control
+- **Seek**: Drag the progress bar or tap lyrics to jump to any position
+- **Queue Management**: Add next, reorder, and manage upcoming tracks
+- **Sleep Timer**: Set automatic playback stop time
+- **External Player**: Switch to other music apps seamlessly
 
 #### **Library Management**
-- **Add to Playlists**: Long-press songs to create or add to playlists
+- **Add to Playlists**: Long-press songs to create or add to playlists with smart dialogs
 - **Edit Metadata**: View and edit song information and album art
   - ⚠️ **Android 11+ Limitation**: Can only modify files created by Rhythm due to scoped storage restrictions
   - Files imported from other sources will be read-only
   - Metadata changes will still update in the app's library
+- **Advanced Playlists**: Reorder songs, sort by criteria, multi-select removal, grid view
+- **Genre Browsing**: Explore music by genre with smart categorization
+- **Explorer**: Folder-based browsing with playlist creation capabilities
+- **Import/Export**: Full playlist import/export functionality
 - **Blacklist Folders**: Exclude unwanted folders from your library
 - **Backup/Restore**: Protect your playlists and settings
 
 #### **Customization**
-- **Themes**: Switch between light/dark modes and custom colors
-- **Equalizer**: Access system equalizer for audio adjustments
+- **Themes**: Switch between light/dark modes, system default, and custom color schemes
+- **AutoEQ**: Device-tuned audio presets for 6032+ devices with import/export
+- **Equalizer**: Access 10-band professional equalizer for audio adjustments
+- **Player Customization**: Customize progress bars, gestures, and player appearance
+- **Gestures**: Control gesture usage on mini and full player
+- **Fonts**: System fonts with ability to import custom fonts
+- **Carousel Styles**: Reorder home screen sections and customize layouts
+- **Time & Home Formatting**: Customize time display and home screen appearance
 - **Sleep Timer**: Set automatic playback stop time
 - **Output Selection**: Choose audio output device (speaker, Bluetooth, etc.)
+- **Default Playlists**: Toggle visibility of system-generated playlists
 
 #### **Home Screen Widgets**
 - **Add Widget**: Long-press home screen → Widgets → Rhythm Music
@@ -419,7 +455,7 @@ Rhythm requests the following permissions for optimal functionality:
 |:---:|:---:|:---|
 | 🎨 **UI Framework** | **Jetpack Compose** | Modern declarative UI toolkit for Android |
 | 🎭 **Design System** | **Material 3** | Latest Material Design components and theming |
-| 🎵 **Audio Engine** | **Media3 ExoPlayer** | Professional-grade media playback |
+| **🎵 Audio Engine** | **Media3 ExoPlayer 1.9.0** | Professional-grade media playback |
 | 📲 **Widgets** | **Glance 1.1.1** | Modern reactive widgets with Material 3 |
 | 💻 **Language** | **Kotlin 100%** | Modern, safe, and concise programming |
 | 🏗️ **Architecture** | **MVVM + Clean** | Separation of concerns and testability |
@@ -466,14 +502,6 @@ app/
 - ✅ **Dependency Injection** - Loose coupling and testability
 - ✅ **Observer Pattern** - Reactive data flow with Flow and StateFlow
 - ✅ **State Hoisting** - Compose best practices for state management
-
-### 🌐 **External Integrations**
-
-- **LRCLib** - Community-driven synced lyrics database (Free)
-- **Deezer API** - High-quality album artwork and artist images (Free)
-- **Spotify Canvas API** - Dynamic visual experience for tracks (Community)
-- **GitHub API** - Automatic update checking and releases (Free)
-- **YouTube Music API** - Fallback for missing metadata and artwork (Community)
 
 ---
 
@@ -787,27 +815,11 @@ SOFTWARE.
 | 📥 **Latest Release** | [Download APK](https://github.com/cromaguy/Rhythm/releases/latest) |
 | 🐙 **GitHub Repository** | [cromaguy/Rhythm](https://github.com/cromaguy/Rhythm) |
 | 📱 **IzzyOnDroid** | [F-Droid Repo](https://apt.izzysoft.de/fdroid/index/apk/chromahub.rhythm.app) |
+| 📱 **Obtainium** | [Add Source](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/cromaguy/Rhythm/) |
+| 📱 **OpenAPK** | [Download](https://www.openapk.net/rhythm/chromahub.rhythm.app/) |
 | 💬 **Telegram Support** | [Join Group](https://t.me/RhythmSupport) |
 | 🐛 **Issue Tracker** | [Report Bug](https://github.com/cromaguy/Rhythm/issues) |
 | 💡 **Discussions** | [Community Forum](https://github.com/cromaguy/Rhythm/discussions) |
-| ⭐ **Star on GitHub** | [Show Support](https://github.com/cromaguy/Rhythm/stargazers) |
-
-</div>
-
----
-
-## 📊 **Project Stats**
-
-<div align="center">
-
-![GitHub all releases](https://img.shields.io/github/downloads/cromaguy/Rhythm/total?style=for-the-badge&logo=download&color=00bcd4)
-![GitHub stars](https://img.shields.io/github/stars/cromaguy/Rhythm?style=for-the-badge&logo=star&color=ffc107)
-![GitHub forks](https://img.shields.io/github/forks/cromaguy/Rhythm?style=for-the-badge&logo=fork&color=4caf50)
-![GitHub issues](https://img.shields.io/github/issues/cromaguy/Rhythm?style=for-the-badge&logo=issue&color=f44336)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/cromaguy/Rhythm?style=for-the-badge&logo=pullrequest&color=673ab7)
-![GitHub last commit](https://img.shields.io/github/last-commit/cromaguy/Rhythm?style=for-the-badge&logo=git&color=ff9800)
-![GitHub repo size](https://img.shields.io/github/repo-size/cromaguy/Rhythm?style=for-the-badge&logo=storage&color=9c27b0)
-![GitHub license](https://img.shields.io/github/license/cromaguy/Rhythm?style=for-the-badge&logo=license&color=ff6f00)
 
 </div>
 
@@ -820,8 +832,6 @@ SOFTWARE.
 <br>
 
 [![Download Now](https://img.shields.io/badge/📱_Download_Now-Get_Latest_APK-4caf50?style=for-the-badge&logoColor=white)](https://github.com/cromaguy/Rhythm/releases/latest)
-[![Visit Website](https://img.shields.io/badge/🌐_Visit_Website-Learn_More-2196f3?style=for-the-badge&logoColor=white)](https://rhythmweb.vercel.app/)
-[![Star on GitHub](https://img.shields.io/badge/⭐_Star_on_GitHub-Show_Support-ffc107?style=for-the-badge&logoColor=white)](https://github.com/cromaguy/Rhythm)
 [![Join Community](https://img.shields.io/badge/💬_Join_Telegram-Get_Help-0088cc?style=for-the-badge&logoColor=white)](https://t.me/RhythmSupport)
 
 <br><br>
