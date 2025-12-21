@@ -1,9 +1,10 @@
 ---
 name: Bug Report
-description: Report a bug or issue with Rhythm
+about: Used for reporting issues faced by users and want them addressed
 title: "[BUG] "
-labels: ["bug"]
-assignees: []
+labels: bug
+assignees: cromaguy
+
 ---
 
 ## Bug Description

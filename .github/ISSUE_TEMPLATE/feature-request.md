@@ -1,9 +1,10 @@
 ---
 name: Feature Request
-description: Suggest a new feature or enhancement for Rhythm
+about: Used for requesting features taking into account the complexity to implement
 title: "[FEATURE] "
-labels: ["enhancement"]
-assignees: []
+labels: feature request
+assignees: cromaguy
+
 ---
 
 ## Feature Summary
