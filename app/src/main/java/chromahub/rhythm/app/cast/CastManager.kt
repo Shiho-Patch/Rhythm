@@ -37,6 +37,7 @@ class CastManager(private val context: Context) {
     private var sessionManager: SessionManager? = null
     private var castSession: CastSession? = null
     private var castPlayer: CastPlayer? = null
+    private var localPlayer: androidx.media3.common.Player? = null
     
     // State flows
     private val _isCastAvailable = MutableStateFlow(false)
@@ -78,6 +79,9 @@ class CastManager(private val context: Context) {
             
             // Set up remote media client callbacks
             setupRemoteMediaCallbacks()
+            
+            // Transfer playback from local to cast
+            transferToCast()
         }
         
         override fun onSessionStartFailed(session: CastSession, error: Int) {
@@ -92,6 +96,10 @@ class CastManager(private val context: Context) {
         
         override fun onSessionEnded(session: CastSession, error: Int) {
             Log.d(TAG, "Cast session ended: $error")
+            
+            // Transfer playback back to local before cleaning up
+            transferFromCast()
+            
             castSession = null
             castPlayer = null
             _isCasting.value = false
@@ -116,6 +124,11 @@ class CastManager(private val context: Context) {
             
             startMediaServer()
             setupRemoteMediaCallbacks()
+            
+            // Transfer playback to cast if resuming
+            if (!wasSuspended) {
+                transferToCast()
+            }
         }
         
         override fun onSessionResumeFailed(session: CastSession, error: Int) {
@@ -245,6 +258,68 @@ class CastManager(private val context: Context) {
      */
     fun endSession() {
         sessionManager?.endCurrentSession(true)
+    }
+    
+    /**
+     * Set the local player reference for state transfer
+     */
+    fun setLocalPlayer(player: androidx.media3.common.Player) {
+        this.localPlayer = player
+    }
+    
+    /**
+     * Transfer playback from local player to Cast device
+     */
+    fun transferToCast() {
+        val local = localPlayer ?: return
+        val cast = castPlayer ?: return
+        
+        try {
+            // Save current state from local player
+            val currentPosition = local.currentPosition
+            val isPlaying = local.isPlaying
+            val currentMediaItem = local.currentMediaItem
+            
+            // For now, just log the transfer - full implementation would require
+            // CastPlayer to implement Player interface or manual state sync
+            Log.d(TAG, "Transferring playback to Cast - Position: $currentPosition, Playing: $isPlaying")
+            
+            // TODO: Implement actual state transfer when CastPlayer supports Player interface
+            // PlayerStateTransfer.transferPlayback(local, cast)
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error transferring to Cast", e)
+        }
+    }
+    
+    /**
+     * Transfer playback from Cast device back to local player
+     */
+    fun transferFromCast() {
+        val cast = castPlayer ?: return
+        val local = localPlayer ?: return
+        
+        try {
+            // Get current state from cast player
+            val currentPosition = getCurrentPosition()
+            val isPlaying = isPlaying()
+            
+            // Resume on local player at the same position
+            local.seekTo(currentPosition)
+            if (isPlaying) {
+                local.play()
+            } else {
+                local.pause()
+            }
+            
+            Log.d(TAG, "Transferred playback from Cast - Position: $currentPosition, Playing: $isPlaying")
+            
+            // TODO: Implement actual state transfer when CastPlayer supports Player interface
+            // PlayerStateTransfer.transferPlayback(cast, local)
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error transferring from Cast", e)
+        }
     }
     
     /**

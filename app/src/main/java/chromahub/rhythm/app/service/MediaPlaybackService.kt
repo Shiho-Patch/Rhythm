@@ -32,6 +32,7 @@ import chromahub.rhythm.app.MainActivity
 import chromahub.rhythm.app.data.AppSettings
 import chromahub.rhythm.app.data.Song
 import chromahub.rhythm.app.widget.WidgetUpdater
+import chromahub.rhythm.app.util.AudioCapabilitiesMonitor
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
@@ -94,6 +95,9 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             }
         }
     }
+
+    // Audio device change monitor
+    private lateinit var audioCapabilitiesMonitor: AudioCapabilitiesMonitor
 
     private val repeatCommand: CommandButton
         get() = when (val mode = controller?.repeatMode ?: Player.REPEAT_MODE_OFF) {
@@ -212,6 +216,33 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             registerReceiver(favoriteChangeReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
         } else {
             registerReceiver(favoriteChangeReceiver, filter)
+        }
+
+        // Initialize audio capabilities monitor
+        audioCapabilitiesMonitor = AudioCapabilitiesMonitor(this).apply {
+            val deviceChangeListener = object : AudioCapabilitiesMonitor.Listener {
+                override fun onAudioDeviceChanged(deviceType: String) {
+                    Log.d(TAG, "Audio device changed: $deviceType")
+                    // Handle device change - pause on disconnection to prevent audio loss
+                    when {
+                        deviceType.contains("disconnected", ignoreCase = true) -> {
+                            Log.i(TAG, "Audio device disconnected: $deviceType - pausing playback")
+                            // Pause playback when audio device is disconnected
+                            player.pause()
+                        }
+                        deviceType.contains("connected", ignoreCase = true) -> {
+                            Log.i(TAG, "Audio device connected: $deviceType")
+                            // Could potentially resume playback here if desired
+                        }
+                        else -> {
+                            Log.i(TAG, "Audio device changed: $deviceType")
+                        }
+                    }
+                }
+            }
+            setListener(deviceChangeListener)
+            // Start monitoring for device changes
+            startMonitoring(deviceChangeListener)
         }
 
         try {
@@ -342,7 +373,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                     .build(),
                 true // Handle audio focus automatically
             )
-            .setHandleAudioBecomingNoisy(true) // Pause on headphone disconnect
+            .setHandleAudioBecomingNoisy(false) // Manual device change handling via AudioCapabilitiesMonitor
             .setWakeMode(C.WAKE_MODE_LOCAL) // Keep CPU awake during playback
             // NOTE: Wake lock handling is enabled by default in Media3 1.9.0
             // This prevents buffering issues during background playback
@@ -1048,6 +1079,14 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             unregisterReceiver(favoriteChangeReceiver)
         } catch (e: Exception) {
             Log.w(TAG, "Error unregistering favorite change receiver", e)
+        }
+        
+        // Clean up audio capabilities monitor
+        try {
+            audioCapabilitiesMonitor.stopMonitoring()
+            audioCapabilitiesMonitor.clearListener()
+        } catch (e: Exception) {
+            Log.w(TAG, "Error cleaning up audio capabilities monitor", e)
         }
         
         // Cancel all coroutines and pending jobs

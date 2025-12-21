@@ -28,6 +28,20 @@ class AudioCapabilitiesMonitor(private val context: Context) {
     }
     
     private var listener: Listener? = null
+    
+    /**
+     * Set the listener for audio device changes
+     */
+    fun setListener(listener: Listener?) {
+        this.listener = listener
+    }
+    
+    /**
+     * Clear the listener
+     */
+    fun clearListener() {
+        this.listener = null
+    }
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     
     private val headsetReceiver = object : BroadcastReceiver() {

@@ -1572,6 +1572,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                     mediaController?.addListener(playerListener)
                     _serviceConnected.value = true
                     
+                    // Set the local player in CastManager for state transfer
+                    castManager.setLocalPlayer(mediaController!!)
+                    
                     // Update shuffle and repeat mode from controller
                     mediaController?.let { controller ->
                         _isShuffleEnabled.value = controller.shuffleModeEnabled
