@@ -72,6 +72,7 @@ import chromahub.rhythm.app.data.Song
 import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.util.EqualizerUtils
+import chromahub.rhythm.app.MainActivity
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -624,50 +625,46 @@ fun EqualizerScreen(
                 }
                 
                 // Open System Equalizer option
-//                Surface(
-//                    color = MaterialTheme.colorScheme.surface,
-//                    shape = RoundedCornerShape(16.dp),
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .padding(horizontal = 8.dp, vertical = 2.dp)
-//                ) {
-//                    DropdownMenuItem(
-//                        text = {
-//                            Text(
-//                                "System Equalizer",
-//                                style = MaterialTheme.typography.bodyMedium,
-//                                fontWeight = FontWeight.Medium,
-//                                color = MaterialTheme.colorScheme.onSurface
-//                            )
-//                        },
-//                        leadingIcon = {
-//                            Surface(
-//                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
-//                                shape = CircleShape,
-//                                modifier = Modifier.size(32.dp)
-//                            ) {
-//                                Icon(
-//                                    imageVector = Icons.Rounded.Equalizer,
-//                                    contentDescription = null,
-//                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-//                                    modifier = Modifier
-//                                        .fillMaxSize()
-//                                        .padding(6.dp)
-//                                )
-//                            }
-//                        },
-//                        onClick = {
-//                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-//                            showMenu = false
-//                            try {
-//                                val intent = Intent(AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL)
-//                                context.startActivity(intent)
-//                            } catch (e: Exception) {
-//                                Toast.makeText(context, "System equalizer not available", Toast.LENGTH_SHORT).show()
-//                            }
-//                        }
-//                    )
-//                }
+                Surface(
+                    color = MaterialTheme.colorScheme.surface,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                ) {
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                "System Equalizer",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        },
+                        leadingIcon = {
+                            Surface(
+                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                                shape = CircleShape,
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Equalizer,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(6.dp)
+                                )
+                            }
+                        },
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                            showMenu = false
+                            val activity = context as? Activity
+                            viewModel.openSystemEqualizer(activity, MainActivity.DISPLAY_AUDIO_EFFECT_CONTROL_PANEL_REQUEST)
+                        }
+                    )
+                }
             }
         }
     ) { modifier ->
@@ -1555,144 +1552,71 @@ fun EqualizerScreen(
                         }
 
                         // Open System Equalizer Card
-//                        Card(
-//                            colors = CardDefaults.cardColors(
-//                                containerColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f)
-//                            ),
-//                            shape = RoundedCornerShape(14.dp),
-//                            modifier = Modifier.fillMaxWidth(),
-//                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-//                        ) {
-//                            Column(
-//                                modifier = Modifier
-//                                    .fillMaxWidth()
-//                                    .padding(20.dp)
-//                            ) {
-//                                Row(
-//                                    modifier = Modifier.fillMaxWidth(),
-//                                    verticalAlignment = Alignment.CenterVertically,
-//                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-//                                ) {
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f)
+                            ),
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(20.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.ArrowOutward,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "Open System Equalizer",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+
+                                        Text(
+                                            text = "Access Android's built-in equalizer settings",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                OutlinedButton(
+                                    onClick = {
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        val activity = context as? Activity
+                                        viewModel.openSystemEqualizer(activity, MainActivity.DISPLAY_AUDIO_EFFECT_CONTROL_PANEL_REQUEST)
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(16.dp),
+                                    contentPadding = PaddingValues(16.dp)
+                                ) {
 //                                    Icon(
-//                                        imageVector = Icons.Rounded.ArrowOutward,
+//                                        imageVector = Icons.Rounded.Settings,
 //                                        contentDescription = null,
-//                                        tint = MaterialTheme.colorScheme.primary
+//                                        modifier = Modifier.size(20.dp)
 //                                    )
-//                                    Column(modifier = Modifier.weight(1f)) {
-//                                        Text(
-//                                            text = "Open System Equalizer",
-//                                            style = MaterialTheme.typography.titleMedium,
-//                                            fontWeight = FontWeight.SemiBold,
-//                                            color = MaterialTheme.colorScheme.onSurface
-//                                        )
-//
-//                                        Text(
-//                                            text = "Access Android's built-in equalizer settings",
-//                                            style = MaterialTheme.typography.bodySmall,
-//                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-//                                        )
-//                                    }
-//                                }
-//
-//                                Spacer(modifier = Modifier.height(16.dp))
-//
-//                                OutlinedButton(
-//                                    onClick = {
-//                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-//
-//                                        fun tryOpenSystemEqualizerApp(ctx: Context) {
-//                                            // Try common system equalizer apps and audio effect apps
-//                                            val equalizerPackages = listOf(
-//                                                "com.android.musicfx", // Android MusicFX (most common)
-//                                                "com.huawei.android.audioeffect", // Huawei AudioFX
-//                                                "com.samsung.android.audiofx", // Samsung AudioFX
-//                                                "com.sonyericsson.soundenhancement", // Sony audio enhancement
-//                                                "com.android.audiofx", // Generic AudioFX
-//                                                "com.google.android.audiofx", // Google AudioFX
-//                                                "com.realtek.audio", // Realtek audio
-//                                                "com.dolby.daxservice", // Dolby
-//                                                "com.dolby.daxappui", // Dolby UI
-//                                                "com.maxxaudio.mxplayer.audiofx", // MaxxAudio
-//                                                "com.audiofx.app", // AudioFX app
-//                                                "com.ape.apps.audiofx", // APE AudioFX
-//                                                "com.dev.audiofx", // Dev AudioFX
-//                                                "com.waves.maxxaudio", // Waves MaxxAudio
-//                                                "com.bassbooster.audiofx", // Bass Booster
-//                                                "com.equalizer.audiofx", // Equalizer
-//                                                "com.music.audiofx", // Music AudioFX
-//                                                "com.android.settings" // Only as last resort
-//                                            )
-//
-//                                            for (packageName in equalizerPackages) {
-//                                                try {
-//                                                    // First try to get launch intent for the package
-//                                                    val launchIntent = ctx.packageManager.getLaunchIntentForPackage(packageName)
-//                                                    if (launchIntent != null) {
-//                                                        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-//                                                        ctx.startActivity(launchIntent)
-//                                                        Toast.makeText(ctx, "Opening system equalizer", Toast.LENGTH_SHORT).show()
-//                                                        return
-//                                                    }
-//
-//                                                    // If no launch intent, try to create intent for audio effects
-//                                                    val audioIntent = Intent(AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL).apply {
-//                                                        setPackage(packageName)
-//                                                        putExtra(AudioEffect.EXTRA_PACKAGE_NAME, ctx.packageName)
-//                                                        putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_MUSIC)
-//                                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-//                                                    }
-//
-//                                                    if (audioIntent.resolveActivity(ctx.packageManager) != null) {
-//                                                        ctx.startActivity(audioIntent)
-//                                                        Toast.makeText(ctx, "Opening system equalizer", Toast.LENGTH_SHORT).show()
-//                                                        return
-//                                                    }
-//                                                } catch (e: Exception) {
-//                                                    // Continue to next package
-//                                                }
-//                                            }
-//
-//                                            // If no equalizer app found, show message
-//                                            Toast.makeText(ctx, "System equalizer not available on this device", Toast.LENGTH_LONG).show()
-//                                        }
-//
-//                                        try {
-//                                            val intent = Intent(AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL).apply {
-//                                                putExtra(AudioEffect.EXTRA_PACKAGE_NAME, context.packageName)
-//                                                putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_MUSIC)
-//                                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-//                                            }
-//
-//                                            // Check if there's an app that can handle this intent
-//                                            if (intent.resolveActivity(context.packageManager) != null) {
-//                                                context.startActivity(intent)
-//                                            } else {
-//                                                // Try to find and open a system equalizer app directly
-//                                                tryOpenSystemEqualizerApp(context)
-//                                            }
-//                                        } catch (e: Exception) {
-//                                            // Try to find and open a system equalizer app directly
-//                                            tryOpenSystemEqualizerApp(context)
-//                                        }
-//                                    },
-//                                    modifier = Modifier.fillMaxWidth(),
-//                                    shape = RoundedCornerShape(16.dp),
-//                                    contentPadding = PaddingValues(16.dp)
-//                                ) {
-////                                    Icon(
-////                                        imageVector = Icons.Rounded.Settings,
-////                                        contentDescription = null,
-////                                        modifier = Modifier.size(20.dp)
-////                                    )
-////                                    Spacer(modifier = Modifier.width(8.dp))
-//                                    Text(
-//                                        text = "Open Equalizer",
-//                                        style = MaterialTheme.typography.labelLarge,
-//                                        fontWeight = FontWeight.SemiBold
-//                                    )
-//                                }
-//                            }
-//                        }
+//                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Open Equalizer",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }

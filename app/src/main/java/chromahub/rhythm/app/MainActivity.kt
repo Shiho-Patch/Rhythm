@@ -147,6 +147,10 @@ class MainActivity : ComponentActivity() {
     private val appUpdaterViewModel: AppUpdaterViewModel by viewModels() // Inject AppUpdaterViewModel
     private lateinit var appSettings: AppSettings // Declare AppSettings
     
+    companion object {
+        const val DISPLAY_AUDIO_EFFECT_CONTROL_PANEL_REQUEST = 1002
+    }
+    
     // Track coroutine jobs to prevent memory leaks
     private val lifecycleScopeJobs = mutableListOf<kotlinx.coroutines.Job>()
 

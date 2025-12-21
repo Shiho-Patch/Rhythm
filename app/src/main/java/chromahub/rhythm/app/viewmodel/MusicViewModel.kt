@@ -1,5 +1,6 @@
 package chromahub.rhythm.app.viewmodel
 
+import android.app.Activity
 import android.app.Application
 
 import android.content.ComponentName
@@ -408,6 +409,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
 
     private var controllerFuture: ListenableFuture<MediaController>? = null
     private var mediaController: MediaController? = null
+    
+    // Audio session ID for equalizer integration
+    val audioSessionId: Int
+        get() = mediaController?.audioSessionId ?: AudioEffect.ERROR_BAD_VALUE
     
     // For tracking progress 
     private var progressUpdateJob: Job? = null
@@ -3819,10 +3824,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * Opens the system equalizer for the current audio session
      */
-    fun openSystemEqualizer() {
+    fun openSystemEqualizer(activity: Activity? = null, requestCode: Int = 0) {
         val context = getApplication<Application>()
         // Simply use EqualizerUtils which handles the system equalizer opening properly
-        EqualizerUtils.openSystemEqualizer(context)
+        EqualizerUtils.openSystemEqualizer(context, audioSessionId, activity, requestCode)
     }
 
     // Playback settings functions

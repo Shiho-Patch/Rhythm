@@ -935,6 +935,8 @@
     <string name="virtualizer">Virtualizer</string>
     <string name="system_equalizer">System Equalizer</string>
     <string name="system_equalizer_desc">Access your device\'s built-in equalizer</string>
+    <string name="no_equalizer">No system equalizer found</string>
+    <string name="no_audio_ID">No audio session ID available</string>
     
     <!-- Sleep Timer -->
     <string name="sleep_timer">Sleep Timer</string>
