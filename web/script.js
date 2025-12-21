@@ -229,6 +229,35 @@ const updateData = {
             <p><strong>Happy listening with Rhythm 2.9! 🎵</strong></p>
         `
     },
+    update7: {
+        image: "assets/Banner.png",
+        headline: "Rhythm Holiday Update 2025: Features & Improvements from v3.2 to v3.7 🎄🎵",
+        date: "December 21, 2025",
+        writer: "Anjishnu Nandi",
+        details: `
+            <p>🎄✨ As the year 2025 wraps up like a perfectly mixed playlist, we're here with a holiday special edition of Rhythm updates! From v3.2 to v3.7, we've been busy cooking up features that'll make your music experience sing. "Ho ho ho! Merry updates!" says Santa Code, as he delivers the goods. Let's dive into this festive changelog extravaganza!</p>
+            
+            <p>🎵 <strong>v3.2 Maintenance Update:</strong> "Hey there, playlist maestro! Want smart playback options?" Our new Playlist Action Dialog lets you play, queue, or replace with style. The Queue Action Dialog? "Play next, add to queue, or replace everything - your call!" Active song highlighting makes sure you never lose your place, and the playlist detail screen brings smart playback options to the party.</p>
+            
+            <p>🎨 <strong>v3.3 Maintenance Update:</strong> "Behold, the new External Player!" shouts the UI wizard. We've added carousel styles and the ability to reorder sections - "Rearrange to your heart's content!" Home and time formatting settings let you customize your space, while the new Festive Theme Engine brings holiday cheer. "Crash? What crash?" We fixed that pesky NullPointerException from MediaStore, plus missing callbacks and metadata editor woes. "UI, theme, and performance? Improved beyond belief!"</p>
+            
+            <p>⚙️ <strong>v3.4 Maintenance Update:</strong> "Player Settings and Artist Settings, at your service!" declares the settings guru. Playlists now maintain original order with proper progress tracking. "No more UI, theme, or performance hiccups - we've got you covered!"</p>
+            
+            <p>🎛️ <strong>v3.5 Stable - Feature Update:</strong> "Gesture control and progress customization? Yes please!" Control gestures on mini and full players, customize progress bars, and check out the new Rhythm Stats screen expanding your widget. "Many mixed UI improvements - smoother than a jazz solo!" Song names now auto-scroll instead of overflowing, and under-the-hood optimizations make everything faster. "Performance boost? Activated!"</p>
+            
+            <p>🔊 <strong>v3.5 Stable - Maintenance Update:</strong> "AutoEQ for 61 devices? Tuned to perfection!" The equalizer now supports 10 bands with better UI, Rhythm Stats got a glow-up, and more UI/performance improvements. "Shuffle toggle fixed - queue list updates like magic!" Stats widget now follows service data flawlessly. "No more widget woes!"</p>
+            
+            <p>🎤 <strong>v3.6 Stable - Feature Update:</strong> "AutoEQ presets for 6032 devices? With import/export? Mind blown!" The lyrics parser now combines untimestamped lines with timestamped ones, the Christmas theme got even more festive, and UI/performance improvements abound. "Lyrics and themes - holiday ready!"</p>
+            
+            <p>📱 <strong>v3.7 Stable - Maintenance Update:</strong> "Playlist screen reordering, sorting, and multi-remove? Check!" Turn default playlists on/off in settings, stop playback when the app's removed from RAM, and enjoy Auto-EQ device preset detection. "Equalizer fixed and UI improved - crystal clear!" Onboarding overflow fixed, library tab reordering issues resolved, player seek and playback enhanced, and translations polished. "Settings, library, player - all upgraded!"</p>
+            
+            <p>🎄 "Whew, what a ride!" exclaims the development team, wiping sweat from their brows. "From playlist heroes to equalizer wizards, we've packed in features that'll make your holidays merry and bright!"</p>
+            
+            <p>🎉 As we bid adieu to 2025 and welcome 2026, thank you for being the beat in our Rhythm! May your playlists be filled with joy, your audio crystal clear, and your music experiences unforgettable. Happy New Year, music lovers! 🥂</p>
+            
+            <p>Thank you for using Rhythm! Report issues on GitHub.</p>
+        `
+    },
     update6: {
         image: "assets/Banner.png",
         headline: "3.1 Stable Release is here!",
