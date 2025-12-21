@@ -1800,6 +1800,7 @@
     <string name="license_jetpack_name">Jetpack Compose</string>
     <string name="license_jetpack_desc">Android\'s modern toolkit for building native UI</string>
     <string name="license_apache">Apache License 2.0</string>
+    <string name="license_gpl3">GNU General Public License v3.0</string>
     <string name="license_material3_name">Material 3 Components</string>
     <string name="license_material3_desc">Material Design 3 components for Android</string>
     <string name="license_media3_name">Media3 ExoPlayer</string>

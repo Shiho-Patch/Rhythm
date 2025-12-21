@@ -81,7 +81,7 @@ This project follows a code of conduct to ensure a welcoming environment for all
 
 ## License
 
-By contributing to this project, you agree that your contributions will be licensed under the same license as the project (Apache License 2.0).
+By contributing to this project, you agree that your contributions will be licensed under the same license as the project (GNU General Public License v3.0).
 
 ## Questions?
 

@@ -18,7 +18,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Android-34A853?style=for-the-badge&logo=android&logoColor=white&labelColor=1a73e8)](https://android.com)
 [![API Level](https://img.shields.io/badge/API-26%2B-4285f4?style=for-the-badge&logo=android&logoColor=white)](https://android-arsenal.com/api?level=26)
 [![Kotlin](https://img.shields.io/badge/Kotlin-100%25-7c4dff?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org/)
-[![License](https://img.shields.io/badge/License-Apache%202.0-ff6f00?style=for-the-badge&logo=apache&logoColor=white)](LICENSE)
+[![License](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
 
 [![Release](https://img.shields.io/github/v/release/cromaguy/Rhythm?style=for-the-badge&logo=github&color=673ab7&logoColor=white)](https://github.com/cromaguy/Rhythm/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/cromaguy/Rhythm/total?style=for-the-badge&logo=download&color=00bcd4&logoColor=white)](https://github.com/cromaguy/Rhythm/releases)
@@ -371,9 +371,9 @@ Rhythm requests the following permissions for optimal functionality:
 #### **Library Management**
 - **Add to Playlists**: Long-press songs to create or add to playlists with smart dialogs
 - **Edit Metadata**: View and edit song information and album art
-  - ⚠️ **Android 11+ Limitation**: Can only modify files created by Rhythm due to scoped storage restrictions
-  - Files imported from other sources will be read-only
-  - Metadata changes will still update in the app's library
+  - Full file editing support with proper permission handling
+  - Changes are saved directly to audio files
+  - Supports batch operations and artwork editing
 - **Advanced Playlists**: Reorder songs, sort by criteria, multi-select removal, grid view
 - **Genre Browsing**: Explore music by genre with smart categorization
 - **Explorer**: Folder-based browsing with playlist creation capabilities
@@ -411,18 +411,17 @@ Rhythm requests the following permissions for optimal functionality:
 - Restart the app after granting permissions
 - Check that storage access is enabled for your music folders
 
-#### **Metadata Editing Limitations (Android 11+)**
-- **Cannot modify files**: Due to Android's scoped storage security model, apps can only modify files they created
-- **Read-only files**: Music files imported from other sources, downloads, or file transfers cannot be edited
-- **What still works**: 
-  - ✅ Metadata changes update in Rhythm's library (playlists, sorting, search)
-  - ✅ Files created/recorded by Rhythm can be edited
-  - ✅ View all metadata for any file
-- **Why this happens**: 
-  - Android 11+ prevents apps from modifying files they don't own to protect user data
-  - This is a system-level security restriction, not an app limitation
-  - Other music players face the same restriction
-- **Workaround**: Use a desktop app or dedicated metadata editor that has broader file access
+#### **Metadata Editing**
+- **Full Support**: Edit metadata directly in audio files with proper permission handling
+- **What works**: 
+  - ✅ Modify song title, artist, album, genre, year, and track number
+  - ✅ Edit album artwork and embedded images
+  - ✅ Batch operations for multiple files
+  - ✅ Changes persist across app restarts and device reboots
+- **Permission Requirements**: 
+  - Requires storage permissions to modify files
+  - Go to **Settings → Apps → Rhythm → Permissions** to grant manually
+  - Restart the app after granting permissions
 
 #### **Media Scanning Problems**
 - Ensure music files are in accessible locations
@@ -534,7 +533,7 @@ Rhythm is built on the shoulders of giants. We use the following open source lib
 
 </details>
 
-**All libraries are licensed under Apache License 2.0**, which permits use, reproduction, and distribution with proper attribution.
+**This project is licensed under GPL-3.0. Libraries used have their respective open source licenses**, which permit use, reproduction, and distribution with proper attribution.
 
 ### 🙏 **Special Thanks**
 
@@ -611,7 +610,7 @@ We're grateful to these amazing individuals who have contributed to making Rhyth
 
 ## 📄 **License**
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
 
 ---
 
@@ -660,6 +659,6 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 <br>
 
-<sub>© 2025 Team ChromaHub. All rights reserved. Licensed under Apache License 2.0.</sub>
+<sub>© 2025 Team ChromaHub. All rights reserved. Licensed under GNU General Public License v3.0.</sub>
 
 </div>
