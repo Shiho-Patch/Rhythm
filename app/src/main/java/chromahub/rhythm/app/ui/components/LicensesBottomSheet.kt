@@ -109,14 +109,15 @@ fun LicensesBottomSheet(
             // Libraries Card
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                 ),
                 shape = RoundedCornerShape(20.dp),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                 LicenseSheetItem(
                     name = "AutoEQ",
@@ -279,6 +280,24 @@ fun LicensesBottomSheet(
                     context = context,
                     haptic = haptic
                 )
+                
+                LicenseSheetItem(
+                    name = "Google Cast SDK",
+                    description = "SDK for Google Cast (Chromecast) integration",
+                    license = "Apache License 2.0",
+                    url = "https://developers.google.com/cast/docs/android_sender",
+                    context = context,
+                    haptic = haptic
+                )
+                
+                LicenseSheetItem(
+                    name = "Ktor",
+                    description = "Asynchronous framework for creating microservices and web applications",
+                    license = "Apache License 2.0",
+                    url = "https://ktor.io/",
+                    context = context,
+                    haptic = haptic
+                )
                 }
             }
 
@@ -287,24 +306,25 @@ fun LicensesBottomSheet(
             // License info card
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
                 ),
                 shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Icon(
                         imageVector = RhythmIcons.Actions.Info,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier.size(24.dp)
                     )
-                    Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = context.getString(R.string.licenses_apache),
@@ -344,16 +364,18 @@ private fun LicenseSheetItem(
             context.startActivity(intent)
         },
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f)
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth()
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -382,8 +404,6 @@ private fun LicenseSheetItem(
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.width(12.dp))
 
             Icon(
                 imageVector = RhythmIcons.Forward,

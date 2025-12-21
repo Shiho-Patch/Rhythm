@@ -18,7 +18,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Android-34A853?style=for-the-badge&logo=android&logoColor=white&labelColor=1a73e8)](https://android.com)
 [![API Level](https://img.shields.io/badge/API-26%2B-4285f4?style=for-the-badge&logo=android&logoColor=white)](https://android-arsenal.com/api?level=26)
 [![Kotlin](https://img.shields.io/badge/Kotlin-100%25-7c4dff?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org/)
-[![License](https://img.shields.io/badge/License-MIT-ff6f00?style=for-the-badge&logo=open-source-initiative&logoColor=white)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache%202.0-ff6f00?style=for-the-badge&logo=apache&logoColor=white)](LICENSE)
 
 [![Release](https://img.shields.io/github/v/release/cromaguy/Rhythm?style=for-the-badge&logo=github&color=673ab7&logoColor=white)](https://github.com/cromaguy/Rhythm/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/cromaguy/Rhythm/total?style=for-the-badge&logo=download&color=00bcd4&logoColor=white)](https://github.com/cromaguy/Rhythm/releases)
@@ -551,192 +551,25 @@ We're grateful to:
 
 We believe great software is built by great communities! Here's how you can help make Rhythm even better:
 
-### 🐛 **Report Issues**
+📖 **Quick Links:**
+- [📋 Contributing Guidelines](CONTRIBUTING.md)
+- [🤝 Code of Conduct](CODE_OF_CONDUCT.md)
+- [🔒 Security Policy](SECURITY.md)
+- [📝 Changelog](CHANGELOG.md)
 
-Found a bug? Help us squash it!
+### Ways to Contribute
 
-1. 🔍 Check if the issue already exists in our [Issue Tracker](https://github.com/cromaguy/Rhythm/issues)
-2. 📝 Create a new issue with:
-   - Clear title and description
-   - Steps to reproduce
-   - Expected vs actual behavior
-   - Device info (Android version, device model)
-   - Screenshots/logs if applicable
-3. 🏷️ Add appropriate labels
+- 🐛 **Report Issues** - Found a bug? [Open an issue](https://github.com/cromaguy/Rhythm/issues)
+- 💡 **Suggest Features** - Have an idea? [Create a feature request](https://github.com/cromaguy/Rhythm/issues)
+- 👨‍💻 **Code Contributions** - Ready to contribute code? See our [Contributing Guidelines](CONTRIBUTING.md)
+- 🌍 **Translations** - Help translate Rhythm to your language
+- 💬 **Community Support** - Help other users in [Discussions](https://github.com/cromaguy/Rhythm/discussions)
 
-### 💡 **Suggest Features**
+### Getting Started
 
-Have an idea? We'd love to hear it!
-
-1. 💭 Check existing [Feature Requests](https://github.com/cromaguy/Rhythm/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement)
-2. 📋 Create a new feature request with:
-   - Clear use case
-   - Expected behavior
-   - Why it would benefit users
-   - Optional: UI mockups or references
-3. 💬 Discuss with the community
-
-### 👨‍💻 **Code Contributions**
-
-Ready to contribute code? Awesome! Follow these steps:
-
-```bash
-# 1. Fork the repository
-# Click "Fork" button on GitHub
-
-# 2. Clone your fork
-git clone https://github.com/YOUR_USERNAME/Rhythm.git
-cd Rhythm
-
-# 3. Create a feature branch
-git checkout -b feature/amazing-feature
-
-# 4. Make your changes
-# Follow our coding standards (see below)
-
-# 5. Test your changes
-./gradlew test
-# Test on actual device/emulator
-
-# 6. Commit with clear messages
-git commit -m "feat: add amazing feature"
-# Use conventional commits format
-
-# 7. Push to your fork
-git push origin feature/amazing-feature
-
-# 8. Create a Pull Request
-# Go to GitHub and click "New Pull Request"
-# Provide detailed description of changes
-```
-
-### 📋 **Coding Standards**
-
-- ✅ Follow [Kotlin coding conventions](https://kotlinlang.org/docs/coding-conventions.html)
-- ✅ Use **Jetpack Compose** best practices
-- ✅ Maintain **Material 3** design consistency
-- ✅ Write **clean, readable code** with meaningful names
-- ✅ Add **comments** for complex logic
-- ✅ Write **unit tests** for new features
-- ✅ Update **documentation** as needed
-- ✅ Keep **dependencies** up to date
-- ✅ Use **StateFlow** for reactive state management
-- ✅ Follow **MVVM** architecture pattern
-
-### 🎨 **UI/UX Contributions**
-
-Design skills? Help improve our UI/UX!
-
-- Create mockups for new features
-- Suggest improvements to existing screens
-- Design new icons or assets
-- Improve accessibility features
-- Enhance animations and transitions
-
-### 📝 **Documentation**
-
-Help others understand Rhythm better:
-
-- Improve README documentation
-- Write tutorials or guides
-- Translate to other languages
-- Create video tutorials
-- Document APIs and functions
-
-### 🌍 **Translations**
-
-Help make Rhythm accessible to users worldwide:
-
-- Translate strings to your native language
-- Review and improve existing translations
-- Add support for right-to-left (RTL) languages
-- Test translations in the app
-- Update translations for new features
-
-**Current Translation Status:**
-- 🇬🇧 English (100% - Default)
-- 🇪🇸 Spanish - `values-es` (Needs Update)
-- 🇫🇷 French - `values-fr` (Needs Update)
-- 🇩🇪 German - `values-de` (Needs Update)
-- 🇮🇹 Italian - `values-it` (Needs Update)
-- 🇵🇹 Portuguese - `values-pt` (Needs Update)
-- 🇷🇺 Russian - `values-ru` (Needs Update)
-- 🇯🇵 Japanese - `values-ja` (Needs Update)
-- 🇰🇷 Korean - `values-ko` (Needs Update)
-- 🇨🇳 Chinese - `values-zh` (Needs Update)
-- 🇳🇱 Dutch - `values-nl` (Needs Update)
-- 🇵🇱 Polish - `values-pl` (Needs Update)
-- 🇹🇷 Turkish - `values-tr` (Needs Update)
-- 🇻🇳 Vietnamese - `values-vi` (Needs Update)
-- 🇮🇳 Hindi - `values-hi` (Needs Update)
-- 🇸🇦 Arabic - `values-ar` (Needs Update)
-
-**How to Contribute Translations:**
-
-1. **Fork the Repository**
-   ```bash
-   git clone https://github.com/cromaguy/Rhythm.git
-   cd Rhythm
-   ```
-
-2. **Navigate to Strings Resources**
-   - Main strings file: `app/src/main/res/values/strings.xml`
-   - Translation files: `app/src/main/res/values-{language}/strings.xml`
-   - Example: Spanish translations go in `values-es/strings.xml`
-
-3. **Edit or Create Translation File**
-   - Copy `values/strings.xml` to `values-{language_code}/strings.xml`
-   - Translate the string values (not the names)
-   - Keep formatting placeholders like `%1$s`, `%1$d`, `&amp;`, etc.
-   - Preserve special characters and escape sequences
-
-4. **Example Translation**
-   ```xml
-   <!-- English (values/strings.xml) -->
-   <string name="home_greeting_morning">Good morning</string>
-   
-   <!-- Spanish (values-es/strings.xml) -->
-   <string name="home_greeting_morning">Buenos días</string>
-   
-   <!-- French (values-fr/strings.xml) -->
-   <string name="home_greeting_morning">Bonjour</string>
-   ```
-
-5. **Test Your Translation**
-   - Build and run the app
-   - Change device language to test
-   - Ensure text fits in UI elements
-   - Check for proper RTL support if applicable
-
-6. **Submit Pull Request**
-   - Commit your changes with clear message: `Add/Update {language} translation`
-   - Push to your fork
-   - Open a Pull Request with description of changes
-
-**Translation Guidelines:**
-- ✅ Keep the meaning and tone consistent
-- ✅ Use natural, native expressions
-- ✅ Respect cultural context
-- ✅ Maintain consistency across similar terms
-- ✅ Keep technical terms where appropriate (e.g., "Equalizer")
-- ✅ Test on actual device with your language
-- ❌ Don't translate brand names ("Rhythm", "Material You")
-- ❌ Don't change placeholder formats (`%1$s`, `%1$d`)
-- ❌ Don't remove HTML entities (`&amp;`, `\'`)
-
-**Need Help?**
-- Join our [Telegram group](https://t.me/RhythmSupport) for translation discussions
-- Check [Android localization guide](https://developer.android.com/guide/topics/resources/localization)
-- Ask questions in [GitHub Discussions](https://github.com/cromaguy/Rhythm/discussions)
-
-### 💬 **Community Support**
-
-Help fellow users:
-
-- Answer questions in [Discussions](https://github.com/cromaguy/Rhythm/discussions)
-- Join our [Telegram group](https://t.me/RhythmSupport)
-- Share your experience
-- Help with testing beta releases
+1. Read our [Contributing Guidelines](CONTRIBUTING.md)
+2. Check existing [Issues](https://github.com/cromaguy/Rhythm/issues) and [Pull Requests](https://github.com/cromaguy/Rhythm/pulls)
+3. Join our [Telegram Community](https://t.me/RhythmSupport) for discussions
 
 ---
 
@@ -778,31 +611,7 @@ We're grateful to these amazing individuals who have contributed to making Rhyth
 
 ## 📄 **License**
 
-```
-MIT License
-
-Copyright (c) 2025 Team ChromaHub
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
-**TL;DR:** You can freely use, modify, and distribute this software. See [LICENSE](LICENSE) file for complete details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ---
 
@@ -851,6 +660,6 @@ SOFTWARE.
 
 <br>
 
-<sub>© 2025 Team ChromaHub. All rights reserved. Licensed under MIT License.</sub>
+<sub>© 2025 Team ChromaHub. All rights reserved. Licensed under Apache License 2.0.</sub>
 
 </div>
