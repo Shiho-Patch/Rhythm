@@ -110,6 +110,7 @@ fun SongInfoBottomSheet(
     onDismiss: () -> Unit,
     appSettings: AppSettings,
     onEditSong: ((title: String, artist: String, album: String, genre: String, year: Int, trackNumber: Int) -> Unit)? = null,
+    onShowLyricsEditor: (() -> Unit)? = null,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 ) {
     val context = LocalContext.current
@@ -633,7 +634,8 @@ fun SongInfoBottomSheet(
                 onSave = { title, artist, album, genre, year, trackNumber ->
                     onEditSong?.invoke(title, artist, album, genre, year, trackNumber)
                     showEditSheet = false
-                }
+                },
+                onShowLyricsEditor = onShowLyricsEditor
             )
         }
     }
@@ -900,7 +902,8 @@ private fun MetadataGridItem(
 private fun EditSongSheet(
     song: Song,
     onDismiss: () -> Unit,
-    onSave: (title: String, artist: String, album: String, genre: String, year: Int, trackNumber: Int) -> Unit
+    onSave: (title: String, artist: String, album: String, genre: String, year: Int, trackNumber: Int) -> Unit,
+    onShowLyricsEditor: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -1079,7 +1082,7 @@ private fun EditSongSheet(
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp, vertical = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.Start
                 ) {
                     Text(
                         text = context.getString(R.string.edit_metadata),
@@ -1087,25 +1090,6 @@ private fun EditSongSheet(
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    
-                    // Reset button
-                    FilledTonalIconButton(
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                            resetToOriginal()
-                        },
-                        colors = IconButtonDefaults.filledTonalIconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        ),
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.RestartAlt,
-                            contentDescription = "Reset to original",
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
                 }
             }
 
@@ -1184,24 +1168,63 @@ private fun EditSongSheet(
                         Text("Change")
                     }
                     
-                    // Remove artwork button (only show if artwork is selected)
-                    if (selectedImageUri != null) {
-                        OutlinedButton(
-                            onClick = { selectedImageUri = null },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = MaterialTheme.colorScheme.error
-                            )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Close,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Remove")
-                        }
+                    // Reset button
+                    OutlinedButton(
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            resetToOriginal()
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.RestartAlt,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Reset")
+                    }
+                    
+                    // Edit Lyrics button
+//                    FilledTonalButton(
+//                        onClick = {
+//                            onShowLyricsEditor?.invoke()
+//                        },
+//                        modifier = Modifier.weight(1f),
+//                        shape = RoundedCornerShape(16.dp),
+//                        colors = ButtonDefaults.filledTonalButtonColors(
+//                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+//                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+//                        )
+//                    ) {
+//                        Icon(
+//                            imageVector = Icons.Rounded.Edit,
+//                            contentDescription = null,
+//                            modifier = Modifier.size(18.dp)
+//                        )
+//                        Spacer(modifier = Modifier.width(8.dp))
+//                        Text("Lyrics")
+//                    }
+                }
+                
+                // Remove artwork button (only show if artwork is selected)
+                if (selectedImageUri != null) {
+                    OutlinedButton(
+                        onClick = { selectedImageUri = null },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Remove Selected Image")
                     }
                 }
             }

@@ -855,7 +855,8 @@ fun PlayerScreen(
                     // Log additional debug info
                     android.util.Log.w("PlayerScreen", "Metadata update failed for song: ${song.title}", e)
                 }
-            }
+            },
+            onShowLyricsEditor = { showLyricsEditorDialog = true }
         )
     }
 
