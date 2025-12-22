@@ -18,6 +18,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -34,12 +36,16 @@ import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.Color
 import chromahub.rhythm.app.ui.components.AutoScrollingTextOnDemand
+import chromahub.rhythm.app.ui.components.WaveSlider
 import chromahub.rhythm.app.ui.theme.RhythmTheme
 import chromahub.rhythm.app.util.MediaUtils
 import chromahub.rhythm.app.viewmodel.MusicViewModel
 import chromahub.rhythm.app.viewmodel.ThemeViewModel
 import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -184,32 +190,65 @@ fun ExternalPlaybackBottomSheet(
             .fillMaxWidth()
             .systemBarsPadding(),
         shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        color = Color.Transparent,
         tonalElevation = 6.dp,
         shadowElevation = 8.dp
     ) {
         Box {
-            // Gradient overlay for depth
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0f)
+                            colorStops = arrayOf(
+                                0f to MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.8f),
+                                0.4f to MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f),
+                                0.7f to MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f),
+                                1f to MaterialTheme.colorScheme.surfaceContainerHigh
                             )
                         )
                     )
-            )
-            
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Album art background (doesn't affect layout)
+                currentSong?.artworkUri?.let { artUri ->
+                    AsyncImage(
+                        model = artUri,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .layout { measurable, constraints ->
+                                val placeable = measurable.measure(constraints)
+                                layout(0, 0) {
+                                    placeable.place(0, 0)
+                                }
+                            }
+                            .fillMaxSize()
+                            .blur(20.dp)
+                            .graphicsLayer { alpha = 0.3f }
+                    )
+                }
+
+                // Additional gradient overlay for depth
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0f)
+                                )
+                            )
+                        )
+                )
+
+                // Content
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                 // Drag handle
 //                Box(
 //                    modifier = Modifier
@@ -296,31 +335,31 @@ fun ExternalPlaybackBottomSheet(
                         horizontalArrangement = Arrangement.spacedBy(20.dp)
                     ) {
                         // Album Art with shadow
-                        currentSong?.artworkUri?.let { artUri ->
-                            AsyncImage(
-                                model = artUri,
-                                contentDescription = "Album Art",
-                                modifier = Modifier
-                                    .size(88.dp)
-                                    .shadow(0.dp, RoundedCornerShape(16.dp))
-                                    .clip(RoundedCornerShape(16.dp)),
-                                contentScale = ContentScale.Crop
-                            )
-                        } ?: Surface(
-                            modifier = Modifier.size(88.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            tonalElevation = 2.dp
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_music_note),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(36.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
+//                        currentSong?.artworkUri?.let { artUri ->
+//                            AsyncImage(
+//                                model = artUri,
+//                                contentDescription = "Album Art",
+//                                modifier = Modifier
+//                                    .size(88.dp)
+//                                    .shadow(0.dp, RoundedCornerShape(16.dp))
+//                                    .clip(RoundedCornerShape(16.dp)),
+//                                contentScale = ContentScale.Crop
+//                            )
+//                        } ?: Surface(
+//                            modifier = Modifier.size(88.dp),
+//                            shape = RoundedCornerShape(16.dp),
+//                            color = MaterialTheme.colorScheme.surfaceVariant,
+//                            tonalElevation = 2.dp
+//                        ) {
+//                            Box(contentAlignment = Alignment.Center) {
+//                                Icon(
+//                                    painter = painterResource(R.drawable.ic_music_note),
+//                                    contentDescription = null,
+//                                    modifier = Modifier.size(36.dp),
+//                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+//                                )
+//                            }
+//                        }
 
                         // Song Info with better hierarchy
                         Column(
@@ -329,20 +368,25 @@ fun ExternalPlaybackBottomSheet(
                             AutoScrollingTextOnDemand(
                                 text = currentSong?.title ?: "Unknown Title",
                                 style = MaterialTheme.typography.titleLarge.copy(
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
                                 ),
                                 gradientEdgeColor = MaterialTheme.colorScheme.surfaceContainerHighest
                             )
                             Spacer(modifier = Modifier.height(6.dp))
                             AutoScrollingTextOnDemand(
                                 text = currentSong?.artist ?: "Unknown Artist",
-                                style = MaterialTheme.typography.bodyLarge,
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                ),
                                 gradientEdgeColor = MaterialTheme.colorScheme.surfaceContainerHighest
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             AutoScrollingTextOnDemand(
                                 text = currentSong?.album ?: "Unknown album",
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                                ),
                                 gradientEdgeColor = MaterialTheme.colorScheme.surfaceContainerHighest
                             )
                         }
@@ -362,18 +406,16 @@ fun ExternalPlaybackBottomSheet(
                         Column(
                             modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
                         ) {
-                            Slider(
+                            WaveSlider(
                                 value = progress,
                                 onValueChange = { newProgress ->
                                     val positionMs = (song.duration * newProgress).toLong()
                                     musicViewModel.seekTo(positionMs)
                                 },
                                 modifier = Modifier.fillMaxWidth(),
-                                colors = SliderDefaults.colors(
-                                    thumbColor = MaterialTheme.colorScheme.primary,
-                                    activeTrackColor = MaterialTheme.colorScheme.primary,
-                                    inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
-                                )
+                                waveColor = MaterialTheme.colorScheme.primary,
+                                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                                isPlaying = isPlaying
                             )
                             
                             Spacer(modifier = Modifier.height(4.dp))
@@ -527,9 +569,11 @@ fun ExternalPlaybackBottomSheet(
                 
                 Spacer(modifier = Modifier.height(8.dp))
             }
+
+            }
         }
-    }
     }}
+}
 
 private fun formatTime(milliseconds: Long): String {
     val totalSeconds = milliseconds / 1000

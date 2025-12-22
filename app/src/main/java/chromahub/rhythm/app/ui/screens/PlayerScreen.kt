@@ -1527,7 +1527,8 @@ fun PlayerScreen(
                                                     style = MaterialTheme.typography.headlineMedium.copy(
                                                         fontWeight = FontWeight.Bold,
                                                         letterSpacing = 0.15.sp,
-                                                        fontSize = if (isCompactHeight) 22.sp else 28.sp
+                                                        fontSize = if (isCompactHeight) 22.sp else 28.sp,
+                                                        color = if (!playerShowGradientOverlay) MaterialTheme.colorScheme.primary else Color.Unspecified
                                                     ),
                                                     gradientEdgeColor = MaterialTheme.colorScheme.background,
                                                     modifier = Modifier.padding(horizontal = 4.dp),
@@ -1556,7 +1557,8 @@ fun PlayerScreen(
                                                     style = MaterialTheme.typography.titleMedium.copy(
                                                         fontWeight = FontWeight.Medium,
                                                         letterSpacing = 0.4.sp,
-                                                        fontSize = if (isCompactHeight) 14.sp else 16.sp
+                                                        fontSize = if (isCompactHeight) 14.sp else 16.sp,
+                                                        color = if (!playerShowGradientOverlay) MaterialTheme.colorScheme.primary else Color.Unspecified
                                                     ),
                                                     gradientEdgeColor = MaterialTheme.colorScheme.background,
                                                     modifier = Modifier.padding(horizontal = 4.dp),
