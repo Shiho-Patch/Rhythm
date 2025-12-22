@@ -7,8 +7,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -28,6 +29,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import chromahub.rhythm.app.ui.components.AutoScrollingTextOnDemand
 import chromahub.rhythm.app.ui.theme.RhythmTheme
 import chromahub.rhythm.app.util.MediaUtils
 import chromahub.rhythm.app.viewmodel.MusicViewModel
@@ -76,7 +83,7 @@ class ExternalPlaybackActivity : ComponentActivity() {
             
             RhythmTheme(
                 darkTheme = if (useSystemTheme) isSystemInDarkTheme() else darkMode,
-                dynamicColor = useDynamicColors
+                dynamicColor = true
             ) {
                 ExternalPlaybackBottomSheet(
                     musicViewModel = musicViewModel,
@@ -156,7 +163,22 @@ fun ExternalPlaybackBottomSheet(
     val isPlaying by musicViewModel.isPlaying.collectAsState()
     val progress by musicViewModel.progress.collectAsState()
 
-    // Bottom sheet with rounded top corners and gradient background
+    // Animation states
+    var showContent by remember { mutableStateOf(false) }
+    var awaitingSong by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        delay(100)
+        showContent = true
+    }
+
+    LaunchedEffect(currentSong) {
+        if (currentSong != null) {
+            awaitingSong = false
+        } else if (!awaitingSong) {
+            onDismiss()
+        }
+    }
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -185,7 +207,7 @@ fun ExternalPlaybackBottomSheet(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 32.dp, vertical = 24.dp),
+                    .padding(horizontal = 20.dp, vertical = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Drag handle
@@ -199,52 +221,73 @@ fun ExternalPlaybackBottomSheet(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Rhythm Logo and Name with animation
+                // Rhythm Logo and Name with splash screen style
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier
                         .fillMaxWidth()
                 ) {
-                    Surface(
-                        modifier = Modifier.size(56.dp),
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                painter = painterResource(R.drawable.rhythm_splash_logo),
-                                contentDescription = "Rhythm Logo",
-                                modifier = Modifier.size(40.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
+                    // Logo with breathing animation like splash screen
+                    val infiniteTransition = rememberInfiniteTransition(label = "logoBreathing")
+                    val logoBreathing by infiniteTransition.animateFloat(
+                        initialValue = 0.97f,
+                        targetValue = 1.03f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(
+                                durationMillis = 2500,
+                                easing = EaseInOutSine
+                            ),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "logoBreathing"
+                    )
+
+                    Image(
+                        painter = painterResource(R.drawable.rhythm_splash_logo),
+                        contentDescription = "Rhythm Logo",
+                        modifier = Modifier
+                            .size(50.dp)
+//                            .graphicsLayer {
+//                                scaleX = logoBreathing
+//                                scaleY = logoBreathing
+//                            }
+                    )
+                    Spacer(modifier = Modifier.width(3.dp))
                     Column {
                         Text(
                             text = "Rhythm",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = MaterialTheme.colorScheme.primary
                         )
                         Text(
                             text = "Music Player",
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(28.dp))
 
-                // Album Art and Song Info Row with enhanced styling
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f),
-                    tonalElevation = 1.dp
-                ) {
+                if (currentSong == null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    // Album Art and Song Info Row with enhanced styling
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f),
+                        tonalElevation = 1.dp
+                    ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -283,29 +326,24 @@ fun ExternalPlaybackBottomSheet(
                         Column(
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text(
+                            AutoScrollingTextOnDemand(
                                 text = currentSong?.title ?: "Unknown Title",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                gradientEdgeColor = MaterialTheme.colorScheme.surfaceContainerHighest
                             )
                             Spacer(modifier = Modifier.height(6.dp))
-                            Text(
+                            AutoScrollingTextOnDemand(
                                 text = currentSong?.artist ?: "Unknown Artist",
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                gradientEdgeColor = MaterialTheme.colorScheme.surfaceContainerHighest
                             )
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text(
+                            AutoScrollingTextOnDemand(
                                 text = currentSong?.album ?: "Unknown album",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                gradientEdgeColor = MaterialTheme.colorScheme.surfaceContainerHighest
                             )
                         }
                     }
@@ -491,7 +529,7 @@ fun ExternalPlaybackBottomSheet(
             }
         }
     }
-}
+    }}
 
 private fun formatTime(milliseconds: Long): String {
     val totalSeconds = milliseconds / 1000
