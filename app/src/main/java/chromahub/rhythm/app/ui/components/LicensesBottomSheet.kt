@@ -282,15 +282,6 @@ fun LicensesBottomSheet(
                 )
                 
                 LicenseSheetItem(
-                    name = "Google Cast SDK",
-                    description = "SDK for Google Cast (Chromecast) integration",
-                    license = "Apache License 2.0",
-                    url = "https://developers.google.com/cast/docs/android_sender",
-                    context = context,
-                    haptic = haptic
-                )
-                
-                LicenseSheetItem(
                     name = "Ktor",
                     description = "Asynchronous framework for creating microservices and web applications",
                     license = "Apache License 2.0",

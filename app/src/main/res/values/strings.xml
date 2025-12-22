@@ -798,8 +798,8 @@
     <!-- Components: Licenses -->
     <string name="licenses_title">Open Source Licenses</string>
     <string name="licenses_desc">Built with amazing open source projects</string>
-    <string name="licenses_apache">Apache License 2.0</string>
-    <string name="licenses_attribution">All libraries permit use, reproduction, and distribution with proper attribution</string>
+    <string name="licenses_apache">Open Source Licenses</string>
+    <string name="licenses_attribution">This app is licensed under GPL-3.0. Libraries are licensed under Apache 2.0 or compatible licenses</string>
     
     <!-- Components: Player Chip Order -->
     <string name="player_chip_order_title">Player Chip Order</string>

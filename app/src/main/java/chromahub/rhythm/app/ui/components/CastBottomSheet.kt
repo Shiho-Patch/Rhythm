@@ -100,8 +100,6 @@ import chromahub.rhythm.app.data.AppSettings
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.util.PlayerStateTransfer
 import chromahub.rhythm.app.viewmodel.MusicViewModel
-import com.google.android.gms.cast.framework.CastButtonFactory
-import com.google.android.gms.cast.framework.CastContext
 import kotlinx.coroutines.delay
 
 /**
@@ -215,40 +213,14 @@ fun CastBottomSheet(
                     )
                 }
                 
-                // Cast to TV/Chromecast Card
+                // Cast to TV/Chromecast Card (Future Integration)
                 item {
                     CastToDeviceCard(
-                        isCasting = musicViewModel.isCasting(),
-                        castDeviceName = musicViewModel.getCastDeviceName(),
+                        isCasting = false,
+                        castDeviceName = null,
                         onCastClick = {
                             HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                            try {
-                                // Show the Cast dialog
-                                val castContext = CastContext.getSharedInstance(context)
-                                val sessionManager = castContext.sessionManager
-                                if (musicViewModel.isCasting()) {
-                                    // Disconnect from Cast device
-                                    musicViewModel.stopCastPlayback()
-                                    Toast.makeText(context, context.getString(R.string.bottomsheet_disconnected_cast), Toast.LENGTH_SHORT).show()
-                                } else {
-                                    // Show Cast device selection dialog
-                                    // The CastContext handles this via the MediaRouter
-                                    val mediaRouter = androidx.mediarouter.media.MediaRouter.getInstance(context)
-                                    val routeSelector = androidx.mediarouter.media.MediaRouteSelector.Builder()
-                                        .addControlCategory(com.google.android.gms.cast.CastMediaControlIntent.categoryForCast(
-                                            com.google.android.gms.cast.CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID
-                                        ))
-                                        .build()
-                                    
-                                    // Show the route chooser dialog
-                                    androidx.mediarouter.app.MediaRouteChooserDialog(context).apply {
-                                        this.routeSelector = routeSelector
-                                        show()
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                Toast.makeText(context, context.getString(R.string.bottomsheet_cast_unavailable, e.message ?: ""), Toast.LENGTH_SHORT).show()
-                            }
+                            Toast.makeText(context, "Cast integration coming soon", Toast.LENGTH_SHORT).show()
                         },
                         haptics = haptics
                     )
@@ -501,100 +473,100 @@ private fun CastToDeviceCard(
         ),
         label = "pulseScale"
     )
-    
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .then(if (isCasting) Modifier.graphicsLayer { scaleX = pulseScale; scaleY = pulseScale } else Modifier),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isCasting) 
-                MaterialTheme.colorScheme.primaryContainer 
-            else 
-                MaterialTheme.colorScheme.surfaceContainerHigh
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Icon(
-                    imageVector = if (isCasting) Icons.Default.CastConnected else Icons.Default.Tv,
-                    contentDescription = null,
-                    tint = if (isCasting) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(28.dp)
-                )
-                
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = if (isCasting) context.getString(R.string.bottomsheet_connected_to_device, castDeviceName ?: "") else context.getString(R.string.bottomsheet_cast_to_tv),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (isCasting) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
-                    )
-                    
-                    Text(
-                        text = if (isCasting) context.getString(R.string.bottomsheet_tap_disconnect) else context.getString(R.string.bottomsheet_cast_description),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (isCasting) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            if (isCasting) {
-                OutlinedButton(
-                    onClick = onCastClick,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    contentPadding = PaddingValues(16.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = context.getString(R.string.bottomsheet_disconnect),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            } else {
-                Button(
-                    onClick = onCastClick,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    contentPadding = PaddingValues(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.tertiary,
-                        contentColor = MaterialTheme.colorScheme.onTertiary
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Tv,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = context.getString(R.string.bottomsheet_find_devices),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
-        }
-    }
+//
+//    Card(
+//        modifier = modifier
+//            .fillMaxWidth()
+//            .then(if (isCasting) Modifier.graphicsLayer { scaleX = pulseScale; scaleY = pulseScale } else Modifier),
+//        shape = RoundedCornerShape(20.dp),
+//        colors = CardDefaults.cardColors(
+//            containerColor = if (isCasting)
+//                MaterialTheme.colorScheme.primaryContainer
+//            else
+//                MaterialTheme.colorScheme.surfaceContainerHigh
+//        ),
+//        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+//    ) {
+//        Column(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .padding(20.dp)
+//        ) {
+//            Row(
+//                modifier = Modifier.fillMaxWidth(),
+//                verticalAlignment = Alignment.CenterVertically,
+//                horizontalArrangement = Arrangement.spacedBy(12.dp)
+//            ) {
+//                Icon(
+//                    imageVector = if (isCasting) Icons.Default.CastConnected else Icons.Default.Tv,
+//                    contentDescription = null,
+//                    tint = if (isCasting) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary,
+//                    modifier = Modifier.size(28.dp)
+//                )
+//
+//                Column(modifier = Modifier.weight(1f)) {
+//                    Text(
+//                        text = if (isCasting) context.getString(R.string.bottomsheet_connected_to_device, castDeviceName ?: "") else context.getString(R.string.bottomsheet_cast_to_tv),
+//                        style = MaterialTheme.typography.titleMedium,
+//                        fontWeight = FontWeight.SemiBold,
+//                        color = if (isCasting) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+//                    )
+//
+//                    Text(
+//                        text = if (isCasting) context.getString(R.string.bottomsheet_tap_disconnect) else context.getString(R.string.bottomsheet_cast_description),
+//                        style = MaterialTheme.typography.bodySmall,
+//                        color = if (isCasting) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
+//                    )
+//                }
+//            }
+//
+//            Spacer(modifier = Modifier.height(16.dp))
+//
+//            if (isCasting) {
+//                OutlinedButton(
+//                    onClick = onCastClick,
+//                    modifier = Modifier.fillMaxWidth(),
+//                    shape = RoundedCornerShape(16.dp),
+//                    contentPadding = PaddingValues(16.dp)
+//                ) {
+//                    Icon(
+//                        imageVector = Icons.Default.Close,
+//                        contentDescription = null,
+//                        modifier = Modifier.size(20.dp)
+//                    )
+//                    Spacer(modifier = Modifier.width(8.dp))
+//                    Text(
+//                        text = context.getString(R.string.bottomsheet_disconnect),
+//                        style = MaterialTheme.typography.labelLarge,
+//                        fontWeight = FontWeight.SemiBold
+//                    )
+//                }
+//            } else {
+//                Button(
+//                    onClick = onCastClick,
+//                    modifier = Modifier.fillMaxWidth(),
+//                    shape = RoundedCornerShape(16.dp),
+//                    contentPadding = PaddingValues(16.dp),
+//                    colors = ButtonDefaults.buttonColors(
+//                        containerColor = MaterialTheme.colorScheme.tertiary,
+//                        contentColor = MaterialTheme.colorScheme.onTertiary
+//                    )
+//                ) {
+//                    Icon(
+//                        imageVector = Icons.Default.Tv,
+//                        contentDescription = null,
+//                        modifier = Modifier.size(20.dp)
+//                    )
+//                    Spacer(modifier = Modifier.width(8.dp))
+//                    Text(
+//                        text = context.getString(R.string.bottomsheet_find_devices),
+//                        style = MaterialTheme.typography.labelLarge,
+//                        fontWeight = FontWeight.SemiBold
+//                    )
+//                }
+//            }
+//        }
+//    }
 }
 
 @Composable
