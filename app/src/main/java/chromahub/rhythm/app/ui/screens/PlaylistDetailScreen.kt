@@ -84,6 +84,7 @@ import chromahub.rhythm.app.ui.components.MiniPlayer
 import chromahub.rhythm.app.ui.components.RhythmIcons
 import chromahub.rhythm.app.ui.components.RhythmIcons.Search
 import chromahub.rhythm.app.ui.LocalMiniPlayerPadding
+import chromahub.rhythm.app.ui.UiConstants
 import chromahub.rhythm.app.ui.components.CollapsibleHeaderScreen
 import chromahub.rhythm.app.ui.components.PlaylistExportDialog
 import chromahub.rhythm.app.ui.components.PlaylistImportDialog
@@ -1552,11 +1553,11 @@ fun PlaylistDetailScreen(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(horizontal = 24.dp)
-                    .padding(bottom = 24.dp + LocalMiniPlayerPadding.current.calculateBottomPadding())
+                    .padding(bottom = if (LocalMiniPlayerPadding.current.calculateBottomPadding() >= UiConstants.MiniPlayerHeight) UiConstants.MiniPlayerHeight + 0.dp else 8.dp)
                     .offset(y = barOffset)
                     .graphicsLayer { alpha = barAlpha },
                 shape = RoundedCornerShape(32.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                color = MaterialTheme.colorScheme.surfaceContainer,
                 tonalElevation = 8.dp,
                 shadowElevation = 0.dp,
 //                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))

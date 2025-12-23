@@ -807,7 +807,7 @@ fun AlbumBottomSheet(
                                                             color = if (isSelected)
                                                                 MaterialTheme.colorScheme.onPrimaryContainer
                                                             else
-                                                                MaterialTheme.colorScheme.surface
+                                                                MaterialTheme.colorScheme.onSurface
                                                         )
                                                     },
                                                     leadingIcon = {
