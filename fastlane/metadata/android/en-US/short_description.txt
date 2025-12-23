@@ -1,1 +1,1 @@
-A privacy-first music player with powerful library management and more.
+Your Music, Your Rhythm - Privacy-first player with Material 3 design.

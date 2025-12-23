@@ -4,7 +4,7 @@
 <ul>
 <li><b>100% Private:</b> No tracking, no ads, works completely offline</li>
 <li><b>Beautiful Design:</b> Material 3 with dynamic colors that adapt to your device</li>
-<li><b>Lossless Audio:</b> Supports FLAC, ALAC, WAV, MP3, AAC, OGG with gapless playback</li>
+<li><b>Lossless Audio:</b> Supports FLAC, ALAC, WAV, MP3, AAC, OGG with gapless playback (Media3 ExoPlayer 1.9.0)</li>
 <li><b>Smart & Fast:</b> Intelligent library organization with powerful search</li>
 <li><b>Fully Featured:</b> Lyrics editor, equalizer, sleep timer, custom playlists</li>
 </ul>
@@ -15,7 +15,7 @@
 <li><b>Lyrics Editor:</b> View and edit time-synced lyrics directly in the player</li>
 <li><b>Queue Control:</b> Powerful queue management with Play Next and Add to Queue</li>
 <li><b>Playlists:</b> Create unlimited playlists, import/export M3U files, and manage favorites</li>
-<li><b>Audio Quality:</b> Built-in 5-band equalizer with presets, crossfade, and normalization</li>
+<li><b>Audio Quality:</b> Built-in 10-band equalizer with AutoEQ presets for 6000+ devices, normalization, and mute/unmute</li>
 <li><b>Sleep Timer:</b> Set timer with fade-out, pause, or stop actions</li>
 <li><b>Themes:</b> Dark/light modes, dynamic colors, and custom accent colors</li>
 <li><b>Folder Explorer:</b> Browse music by folders with blacklist/whitelist support</li>
