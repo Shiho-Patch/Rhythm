@@ -779,112 +779,68 @@ fun AlbumBottomSheet(
                                     DropdownMenu(
                                         expanded = showSortMenu,
                                         onDismissRequest = { showSortMenu = false },
-                                        shape = RoundedCornerShape(20.dp),
-                                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                        tonalElevation = 8.dp,
-                                        shadowElevation = 8.dp,
-                                        modifier = Modifier.padding(8.dp)
+                                        shape = RoundedCornerShape(16.dp),
+                                        modifier = Modifier.padding(4.dp)
                                     ) {
-                                        // Header
-                                        Text(
-                                            text = context.getString(R.string.bottomsheet_sort_by),
-                                            style = MaterialTheme.typography.labelLarge,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            fontWeight = FontWeight.SemiBold,
-                                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                                        )
-                                        
-//                                        HorizontalDivider(
-//                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-//                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-//                                        )
-                                        
                                         AlbumSortOrder.entries.forEach { order ->
                                             val isSelected = sortOrder == order
                                             Surface(
-                                                color = if (isSelected)
-                                                    MaterialTheme.colorScheme.primaryContainer
-                                                else
+                                                color = if (isSelected) 
+                                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
+                                                else 
                                                     Color.Transparent,
-                                                shape = RoundedCornerShape(14.dp),
+                                                shape = RoundedCornerShape(12.dp),
                                                 modifier = Modifier
                                                     .fillMaxWidth()
-                                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                                                    .padding(horizontal = 8.dp, vertical = 2.dp)
                                             ) {
                                                 DropdownMenuItem(
-                                                    text = {
-                                                        Column {
-                                                            Text(
-                                                                text = when (order) {
-                                                                    AlbumSortOrder.TRACK_NUMBER -> "Track Number"
-                                                                    AlbumSortOrder.TITLE_ASC -> "Title (A-Z)"
-                                                                    AlbumSortOrder.TITLE_DESC -> "Title (Z-A)"
-                                                                    AlbumSortOrder.DURATION_ASC -> "Duration (Short first)"
-                                                                    AlbumSortOrder.DURATION_DESC -> "Duration (Long first)"
-                                                                },
-                                                                style = MaterialTheme.typography.bodyMedium,
-                                                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                                                color = if (isSelected)
-                                                                    MaterialTheme.colorScheme.onPrimaryContainer
-                                                                else
-                                                                    MaterialTheme.colorScheme.onSurface
-                                                            )
-                                                        }
+                                                    text = { 
+                                                        Text(
+                                                            text = when (order) {
+                                                                AlbumSortOrder.TRACK_NUMBER -> "Track Number"
+                                                                AlbumSortOrder.TITLE_ASC, AlbumSortOrder.TITLE_DESC -> "Title"
+                                                                AlbumSortOrder.DURATION_ASC, AlbumSortOrder.DURATION_DESC -> "Duration"
+                                                            },
+                                                            style = MaterialTheme.typography.bodyMedium,
+                                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                                            color = if (isSelected)
+                                                                MaterialTheme.colorScheme.onPrimaryContainer
+                                                            else
+                                                                MaterialTheme.colorScheme.surface
+                                                        )
                                                     },
                                                     leadingIcon = {
-                                                        Surface(
-                                                            shape = RoundedCornerShape(14.dp),
-                                                            color = if (isSelected)
-                                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                                                        Icon(
+                                                            imageVector = when (order) {
+                                                                AlbumSortOrder.TRACK_NUMBER -> Icons.Filled.FormatListNumbered
+                                                                AlbumSortOrder.TITLE_ASC, AlbumSortOrder.TITLE_DESC -> Icons.Filled.SortByAlpha
+                                                                AlbumSortOrder.DURATION_ASC, AlbumSortOrder.DURATION_DESC -> Icons.Filled.AccessTime
+                                                            },
+                                                            contentDescription = null,
+                                                            tint = if (isSelected)
+                                                                MaterialTheme.colorScheme.onPrimaryContainer
                                                             else
-                                                                MaterialTheme.colorScheme.surfaceVariant,
-                                                            modifier = Modifier.size(32.dp)
-                                                        ) {
-                                                            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                                                                Icon(
-                                                                    imageVector = when (order) {
-                                                                        AlbumSortOrder.TRACK_NUMBER -> Icons.Filled.FormatListNumbered
-                                                                        AlbumSortOrder.TITLE_ASC, AlbumSortOrder.TITLE_DESC -> Icons.Filled.SortByAlpha
-                                                                        AlbumSortOrder.DURATION_ASC, AlbumSortOrder.DURATION_DESC -> Icons.Filled.AccessTime
-                                                                    },
-                                                                    contentDescription = null,
-                                                                    tint = if (isSelected)
-                                                                        MaterialTheme.colorScheme.primary
-                                                                    else
-                                                                        MaterialTheme.colorScheme.onSurfaceVariant,
-                                                                    modifier = Modifier.size(18.dp)
-                                                                )
-                                                            }
-                                                        }
+                                                                MaterialTheme.colorScheme.onSurfaceVariant
+                                                        )
                                                     },
                                                     trailingIcon = {
-                                                        if (isSelected) {
-                                                            Icon(
-                                                                imageVector = Icons.Filled.Check,
-                                                                contentDescription = "Selected",
-                                                                tint = MaterialTheme.colorScheme.primary,
-                                                                modifier = Modifier.size(20.dp)
-                                                            )
-                                                        } else {
-                                                            when (order) {
-                                                                AlbumSortOrder.TITLE_ASC, AlbumSortOrder.DURATION_ASC -> {
-                                                                    Icon(
-                                                                        imageVector = Icons.Default.ArrowUpward,
-                                                                        contentDescription = "Ascending",
-                                                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                                                                        modifier = Modifier.size(16.dp)
-                                                                    )
-                                                                }
-                                                                AlbumSortOrder.TITLE_DESC, AlbumSortOrder.DURATION_DESC -> {
-                                                                    Icon(
-                                                                        imageVector = Icons.Default.ArrowDownward,
-                                                                        contentDescription = "Descending",
-                                                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                                                                        modifier = Modifier.size(16.dp)
-                                                                    )
-                                                                }
-                                                                else -> {}
+                                                        when (order) {
+                                                            AlbumSortOrder.TITLE_ASC, AlbumSortOrder.DURATION_ASC -> {
+                                                                Icon(
+                                                                    imageVector = Icons.Default.ArrowUpward,
+                                                                    contentDescription = "Ascending",
+                                                                    tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                                                )
                                                             }
+                                                            AlbumSortOrder.TITLE_DESC, AlbumSortOrder.DURATION_DESC -> {
+                                                                Icon(
+                                                                    imageVector = Icons.Default.ArrowDownward,
+                                                                    contentDescription = "Descending",
+                                                                    tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                                                )
+                                                            }
+                                                            else -> {}
                                                         }
                                                     },
                                                     onClick = {
@@ -893,11 +849,10 @@ fun AlbumBottomSheet(
                                                         showSortMenu = false
                                                         appSettings.setAlbumSortOrder(order.name)
                                                     },
-                                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                                                    colors = MenuDefaults.itemColors(
-                                                        textColor = if (isSelected)
+                                                    colors = androidx.compose.material3.MenuDefaults.itemColors(
+                                                        textColor = if (isSelected) 
                                                             MaterialTheme.colorScheme.onPrimaryContainer
-                                                        else
+                                                        else 
                                                             MaterialTheme.colorScheme.onSurface
                                                     )
                                                 )
@@ -1161,7 +1116,7 @@ fun ExpressiveSongItem(
         ) {
             // Track number
             Box(
-                modifier = Modifier.size(36.dp),
+                modifier = Modifier.size(42.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(

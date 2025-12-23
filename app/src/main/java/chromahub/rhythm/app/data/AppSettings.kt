@@ -617,7 +617,7 @@ class AppSettings private constructor(context: Context) {
     val playbackSpeed: StateFlow<Float> = _playbackSpeed.asStateFlow()
     
     // Time Format Settings - Show hours:minutes:seconds for longer tracks (>60 min)
-    private val _useHoursInTimeFormat = MutableStateFlow(prefs.getBoolean(KEY_USE_HOURS_IN_TIME_FORMAT, false))
+    private val _useHoursInTimeFormat = MutableStateFlow(prefs.getBoolean(KEY_USE_HOURS_IN_TIME_FORMAT, true))
     val useHoursInTimeFormat: StateFlow<Boolean> = _useHoursInTimeFormat.asStateFlow()
     
     // Stop Playback on App Close
