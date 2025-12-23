@@ -143,9 +143,6 @@ dependencies {
     // MediaRouter
     implementation("androidx.mediarouter:mediarouter:1.8.1")
     
-    // Google Cast SDK for Chromecast support
-    implementation("com.google.android.gms:play-services-cast-framework:22.2.0")
-    
     // Ktor for HTTP server (Cast media serving)
     implementation("io.ktor:ktor-server-core:3.3.3")
     implementation("io.ktor:ktor-server-netty:3.3.3")
