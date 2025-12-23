@@ -4,7 +4,12 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.EaseInOutCubic
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -95,6 +100,12 @@ fun ListeningStatsScreen(
         label = "contentOffset"
     )
     
+    val contentScale by animateFloatAsState(
+        targetValue = if (showContent) 1f else 0.95f,
+        animationSpec = tween(durationMillis = 500, easing = EaseInOutCubic),
+        label = "contentScale"
+    )
+    
     // Load stats when range changes
     LaunchedEffect(selectedRange, songs) {
         isLoading = true
@@ -122,6 +133,8 @@ fun ListeningStatsScreen(
                 .graphicsLayer {
                     alpha = contentAlpha
                     translationY = contentOffset
+                    scaleX = contentScale
+                    scaleY = contentScale
                 }
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 100.dp),
@@ -145,7 +158,7 @@ fun ListeningStatsScreen(
                     (fadeOut(animationSpec = tween(200)) + slideOutHorizontally { -it / 4 })
                 },
                 label = "statsContentTransition",
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = 24.dp)
             ) { (loading, _) ->
                 if (loading) {
                     Box(
@@ -167,32 +180,46 @@ fun ListeningStatsScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         // Cosmic Time Widget with time-of-day decoration
-                        CosmicListeningTimeWidget(stats.totalDurationMs)
+                        AnimatedCardEntrance(delay = 0) {
+                            CosmicListeningTimeWidget(stats.totalDurationMs)
+                        }
                         
                         // Quick Stats Row
-                        QuickStatsRow(stats)
+                        AnimatedCardEntrance(delay = 100) {
+                            QuickStatsRow(stats)
+                        }
                         
                         // Musical Journey Section
-                        MusicalJourneyCard(stats)
+                        AnimatedCardEntrance(delay = 200) {
+                            MusicalJourneyCard(stats)
+                        }
                         
                         // Top Vibes (Songs)
                         if (stats.topSongs.isNotEmpty()) {
-                            TopVibesCard(stats.topSongs)
+                            AnimatedCardEntrance(delay = 300) {
+                                TopVibesCard(stats.topSongs)
+                            }
                         }
                         
                         // Star Artists
                         if (stats.topArtists.isNotEmpty()) {
-                            StarArtistsCard(stats.topArtists)
+                            AnimatedCardEntrance(delay = 400) {
+                                StarArtistsCard(stats.topArtists)
+                            }
                         }
                         
                         // Genre Mix
                         if (stats.topGenres.isNotEmpty()) {
-                            GenreMixCard(stats.topGenres)
+                            AnimatedCardEntrance(delay = 500) {
+                                GenreMixCard(stats.topGenres)
+                            }
                         }
                         
                         // Beat Timeline
                         if (stats.timeline.isNotEmpty()) {
-                            BeatTimelineCard(stats.timeline)
+                            AnimatedCardEntrance(delay = 600) {
+                                BeatTimelineCard(stats.timeline)
+                            }
                         }
                     }
                 }
@@ -388,7 +415,7 @@ private fun CosmicListeningTimeWidget(totalDurationMs: Long) {
                 .background(
                     Brush.linearGradient(gradientColors)
                 )
-                .padding(24.dp)
+                .padding(20.dp)
         ) {
             // Decorative elements
             Column(
@@ -451,7 +478,7 @@ private fun CosmicListeningTimeWidget(totalDurationMs: Long) {
                     Surface(
                         shape = RoundedCornerShape(30.dp),
                         color = Color.White.copy(alpha = 0.2f),
-                        modifier = Modifier.size(72.dp)
+                        modifier = Modifier.size(60.dp)
                     ) {
                         Box(
                             contentAlignment = Alignment.Center,
@@ -461,7 +488,7 @@ private fun CosmicListeningTimeWidget(totalDurationMs: Long) {
                                 imageVector = Icons.Outlined.AccessTime,
                                 contentDescription = null,
                                 tint = Color.White,
-                                modifier = Modifier.size(36.dp)
+                                modifier = Modifier.size(28.dp)
                             )
                         }
                     }
@@ -529,7 +556,7 @@ private fun QuickStatsRow(stats: PlaybackStatsRepository.PlaybackStatsSummary) {
     val context = LocalContext.current
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         QuickStatChip(
             icon = Icons.Outlined.PlayCircle,
@@ -566,14 +593,14 @@ private fun QuickStatChip(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Surface(
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(44.dp)
+                modifier = Modifier.size(36.dp)
             ) {
                 Box(
                     contentAlignment = Alignment.Center,
@@ -582,14 +609,14 @@ private fun QuickStatChip(
                     if (emoji.isNotEmpty()) {
                         Text(
                             text = emoji,
-                            style = MaterialTheme.typography.titleLarge
+                            style = MaterialTheme.typography.titleMedium
                         )
                     } else {
                         Icon(
                             imageVector = icon,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(22.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
@@ -610,6 +637,52 @@ private fun QuickStatChip(
 }
 
 /**
+ * Animated card entrance with staggered delay
+ */
+@Composable
+private fun AnimatedCardEntrance(
+    delay: Int,
+    content: @Composable () -> Unit
+) {
+    var visible by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(Unit) {
+        delay(delay.toLong())
+        visible = true
+    }
+    
+    val cardAlpha by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = tween(durationMillis = 400, delayMillis = 0),
+        label = "cardAlpha"
+    )
+    
+    val cardOffset by animateFloatAsState(
+        targetValue = if (visible) 0f else 20f,
+        animationSpec = tween(durationMillis = 400, delayMillis = 0),
+        label = "cardOffset"
+    )
+    
+    val cardScale by animateFloatAsState(
+        targetValue = if (visible) 1f else 0.95f,
+        animationSpec = tween(durationMillis = 500, delayMillis = 0, easing = EaseInOutCubic),
+        label = "cardScale"
+    )
+    
+    Box(
+        modifier = Modifier
+            .graphicsLayer {
+                alpha = cardAlpha
+                translationY = cardOffset
+                scaleX = cardScale
+                scaleY = cardScale
+            }
+    ) {
+        content()
+    }
+}
+
+/**
  * Empty state view
  */
 @Composable
@@ -622,44 +695,71 @@ private fun EmptyRhythmView() {
         "🎹 Chart-topping silence!" to "Let's change that with your favorite tracks!"
     )
     val message = remember { comicMessages.random() }
-    
+
+    // Animation for the empty state
+    val infiniteTransition = rememberInfiniteTransition(label = "emptyStatePulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.05f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = EaseInOutCubic),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseScale"
+    )
+
+    val iconRotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 10f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(3000, easing = EaseInOutCubic),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "iconRotation"
+    )
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(32.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        )
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-                            Color.Transparent
-                        )
-                    )
-                )
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(40.dp),
+                    .padding(32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
-                // Comic-style speech bubble
+                // Enhanced speech bubble with better styling
                 Surface(
-                    shape = RoundedCornerShape(24.dp),
+                    shape = RoundedCornerShape(20.dp),
                     color = MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier.padding(8.dp)
+                    shadowElevation = 0.dp,
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 ) {
                     Column(
                         modifier = Modifier.padding(20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.BarChart,
+                                contentDescription = null,
+                                modifier = Modifier.size(64.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
                         Text(
                             text = message.first,
                             style = MaterialTheme.typography.headlineSmall,
@@ -675,32 +775,6 @@ private fun EmptyRhythmView() {
                         )
                     }
                 }
-                
-                // Animated icon
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                    modifier = Modifier.size(120.dp)
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.BarChart,
-                            contentDescription = null,
-                            modifier = Modifier.size(56.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-                
-                Text(
-                    text = "✨ Your musical journey awaits! ✨",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Medium
-                )
             }
         }
     }
@@ -762,7 +836,7 @@ private fun JourneyStatRow(icon: ImageVector, label: String, value: String) {
                 MaterialTheme.colorScheme.surfaceContainerLow,
                 RoundedCornerShape(12.dp)
             )
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 12.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -1020,7 +1094,7 @@ private fun RhythmRankItem(
         modifier = Modifier
             .fillMaxWidth()
             .background(bgColor, RoundedCornerShape(12.dp))
-            .padding(12.dp),
+            .padding(8.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -1035,7 +1109,7 @@ private fun RhythmRankItem(
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(36.dp)
+                .size(28.dp)
                 .background(rankBgColor, RoundedCornerShape(10.dp))
         ) {
             Text(
@@ -1100,7 +1174,7 @@ private fun RhythmSectionCard(
         )
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Row(
@@ -1108,9 +1182,10 @@ private fun RhythmSectionCard(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Surface(
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(32.dp),
+                    shadowElevation = 0.dp
                 ) {
                     Box(
                         contentAlignment = Alignment.Center,
@@ -1120,7 +1195,7 @@ private fun RhythmSectionCard(
                             imageVector = icon,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(16.dp)
                         )
                     }
                 }
