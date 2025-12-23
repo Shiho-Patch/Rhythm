@@ -250,7 +250,7 @@ private fun RhythmTimeRangeTabs(
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
         shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        color = MaterialTheme.colorScheme.surface,
         tonalElevation = 0.dp
     ) {
         LazyRow(
@@ -276,7 +276,7 @@ private fun RhythmTimeRangeTabs(
                     targetValue = if (isSelected) 
                         MaterialTheme.colorScheme.primary 
                     else 
-                        MaterialTheme.colorScheme.surfaceContainerLow,
+                        MaterialTheme.colorScheme.surfaceContainer,
                     animationSpec = spring(
                         dampingRatio = Spring.DampingRatioMediumBouncy,
                         stiffness = Spring.StiffnessLow
@@ -722,7 +722,7 @@ private fun EmptyRhythmView() {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(32.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {

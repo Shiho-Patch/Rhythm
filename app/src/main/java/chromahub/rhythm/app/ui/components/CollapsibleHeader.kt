@@ -48,6 +48,7 @@ import chromahub.rhythm.app.ui.theme.RhythmTheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.graphics.graphicsLayer
@@ -188,7 +189,9 @@ fun CollapsibleHeaderScreen(
                                         fontFamily = FontFamily.Default,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = fontSize
-                                    )
+                                    ),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
