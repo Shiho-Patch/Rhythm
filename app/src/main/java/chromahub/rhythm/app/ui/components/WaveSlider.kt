@@ -150,7 +150,15 @@ fun WaveSlider(
             onValueChange = { newValue ->
                 val currentStep = (newValue * 100).toInt()
                 if (currentStep != lastHapticStep.intValue) {
-                    hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    try {
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    } catch (e: SecurityException) {
+                        // Permission not granted or other security issue
+                        android.util.Log.w("WaveSlider", "Haptic feedback failed due to security exception: ${e.message}")
+                    } catch (e: Exception) {
+                        // Handle any other exceptions that might occur
+                        android.util.Log.w("WaveSlider", "Haptic feedback failed: ${e.message}")
+                    }
                     lastHapticStep.intValue = currentStep
                 }
                 onValueChange(newValue)

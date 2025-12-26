@@ -31,7 +31,15 @@ object HapticUtils {
         val isEnabled = appSettings.hapticFeedbackEnabled.value
         
         if (isEnabled) {
-            hapticFeedback.performHapticFeedback(type)
+            try {
+                hapticFeedback.performHapticFeedback(type)
+            } catch (e: SecurityException) {
+                // Permission not granted or other security issue
+                android.util.Log.w("HapticUtils", "Haptic feedback failed due to security exception: ${e.message}")
+            } catch (e: Exception) {
+                // Handle any other exceptions that might occur
+                android.util.Log.w("HapticUtils", "Haptic feedback failed: ${e.message}")
+            }
         }
     }
 }
