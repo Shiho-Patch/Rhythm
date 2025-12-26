@@ -186,6 +186,19 @@ fun MediaScanLoader(
                     onScanComplete()
                 }
             }
+            "RecoveryFailed" -> {
+                displayProgress = 0.5f
+                currentStep = "MediaStore temporarily unavailable - retrying..."
+                delay(3000)
+                if (!isComplete) {
+                    displayProgress = 1.0f
+                    currentStep = "Using cached music library..."
+                    delay(1000)
+                    isComplete = true
+                    delay(500)
+                    onScanComplete()
+                }
+            }
             else -> {
                 // Fallback to old behavior for unknown stages
                 displayProgress = 0.3f

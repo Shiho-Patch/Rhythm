@@ -11,9 +11,9 @@
       "type": "SINGLE",
       "filters": [],
       "attributes": [],
-      "versionCode": 1080153,
-      "versionName": "1.8.100.4",
-      "outputFile": "app-release.apk"
+      "versionCode": 39295822,
+      "versionName": "3.9.295.822 Beta",
+      "outputFile": "Rhythm-3.9.295.822 Beta-release.apk"
     }
   ],
   "elementType": "File",
@@ -22,14 +22,14 @@
       "minApi": 28,
       "maxApi": 30,
       "baselineProfiles": [
-        "baselineProfiles/1/app-release.dm"
+        "baselineProfiles/1/Rhythm-3.9.295.822 Beta-release.dm"
       ]
     },
     {
       "minApi": 31,
       "maxApi": 2147483647,
       "baselineProfiles": [
-        "baselineProfiles/0/app-release.dm"
+        "baselineProfiles/0/Rhythm-3.9.295.822 Beta-release.dm"
       ]
     }
   ],

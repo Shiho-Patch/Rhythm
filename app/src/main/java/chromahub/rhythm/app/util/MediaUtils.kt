@@ -106,15 +106,21 @@ object MediaUtils {
             
             context.contentResolver.query(collection, projection, selection, selectionArgs, null)?.use { cursor ->
                 if (cursor.moveToFirst()) {
-                    val idIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
-                    val titleIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
-                    val artistIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
-                    val albumIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
-                    val albumIdIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
-                    val durationIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
-                    val trackIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)
-                    val yearIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)
-                    
+                    val idIndex = cursor.getColumnIndex(MediaStore.Audio.Media._ID)
+                    val titleIndex = cursor.getColumnIndex(MediaStore.Audio.Media.TITLE)
+                    val artistIndex = cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST)
+                    val albumIndex = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM)
+                    val albumIdIndex = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID)
+                    val durationIndex = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)
+                    val trackIndex = cursor.getColumnIndex(MediaStore.Audio.Media.TRACK)
+                    val yearIndex = cursor.getColumnIndex(MediaStore.Audio.Media.YEAR)
+
+                    // Ensure essential columns are available
+                    if (idIndex < 0 || titleIndex < 0 || artistIndex < 0) {
+                        Log.w(TAG, "Essential MediaStore columns not available for file: $filePath")
+                        return null
+                    }
+
                     val id = cursor.getLong(idIndex)
                     val contentUri = ContentUris.withAppendedId(
                         MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,

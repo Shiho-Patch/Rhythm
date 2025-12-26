@@ -4907,8 +4907,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                     val projection = arrayOf(MediaStore.Audio.Media.DATA)
                     getApplication<Application>().contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
                         if (cursor.moveToFirst()) {
-                            val dataIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
-                            cursor.getString(dataIndex)
+                            val dataIndex = cursor.getColumnIndex(MediaStore.Audio.Media.DATA)
+                            if (dataIndex >= 0) {
+                                cursor.getString(dataIndex)
+                            } else null
                         } else null
                     }
                 }
