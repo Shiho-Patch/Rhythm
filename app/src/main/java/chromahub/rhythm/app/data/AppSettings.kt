@@ -311,6 +311,7 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_HOME_COMPACT_CARDS = "home_compact_cards"
         private const val KEY_HOME_SHOW_PLAY_BUTTONS = "home_show_play_buttons"
         private const val KEY_HOME_SECTION_ORDER = "home_section_order"
+        private const val KEY_ALBUM_BOTTOM_SHEET_GRADIENT_BLUR = "album_bottom_sheet_gradient_blur"
         
         // Artist Separator Settings
         private const val KEY_ARTIST_SEPARATOR_ENABLED = "artist_separator_enabled"
@@ -3117,5 +3118,13 @@ class AppSettings private constructor(context: Context) {
     fun setHomeSectionOrder(value: List<String>) {
         _homeSectionOrder.value = value
         prefs.edit().putString(KEY_HOME_SECTION_ORDER, value.joinToString(",")).apply()
+    }
+    
+    // Album Bottom Sheet Appearance Settings
+    private val _albumBottomSheetGradientBlur = MutableStateFlow(prefs.getBoolean(KEY_ALBUM_BOTTOM_SHEET_GRADIENT_BLUR, true))
+    val albumBottomSheetGradientBlur: StateFlow<Boolean> = _albumBottomSheetGradientBlur.asStateFlow()
+    fun setAlbumBottomSheetGradientBlur(value: Boolean) {
+        _albumBottomSheetGradientBlur.value = value
+        prefs.edit().putBoolean(KEY_ALBUM_BOTTOM_SHEET_GRADIENT_BLUR, value).apply()
     }
 }

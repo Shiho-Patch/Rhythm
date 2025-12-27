@@ -113,6 +113,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.material.icons.filled.AutoGraph
 import androidx.compose.material.icons.filled.Gesture
+import androidx.compose.material.icons.filled.LensBlur
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlayCircleFilled
 import androidx.compose.material.icons.filled.PlaylistAddCheckCircle
@@ -189,6 +190,7 @@ fun SettingsScreen(
     val defaultScreen by appSettings.defaultScreen.collectAsState()
     val showAlphabetBar by appSettings.showAlphabetBar.collectAsState()
     val showScrollToTop by appSettings.showScrollToTop.collectAsState()
+    val albumBottomSheetGradientBlur by appSettings.albumBottomSheetGradientBlur.collectAsState()
     
     var showDefaultScreenDialog by remember { mutableStateOf(false) }
     var showLyricsSourceDialog by remember { mutableStateOf(false) }
@@ -211,6 +213,7 @@ fun SettingsScreen(
                     SettingItem(Icons.Default.Widgets, context.getString(R.string.settings_widget), context.getString(R.string.settings_widget_desc), onClick = { onNavigateTo(SettingsRoutes.WIDGET) }),
                     SettingItem(Icons.Default.MusicNote, context.getString(R.string.settings_player_customization), context.getString(R.string.settings_player_customization_desc), onClick = { onNavigateTo(SettingsRoutes.PLAYER_CUSTOMIZATION) }),
                     SettingItem(Icons.Default.PlayCircleFilled, context.getString(R.string.settings_miniplayer_customization), context.getString(R.string.settings_miniplayer_customization_desc), onClick = { onNavigateTo(SettingsRoutes.MINIPLAYER_CUSTOMIZATION) }),
+                    SettingItem(Icons.Default.LensBlur, context.getString(R.string.settings_album_bottom_sheet_gradient_blur), context.getString(R.string.settings_album_bottom_sheet_gradient_blur_desc), toggleState = albumBottomSheetGradientBlur, onToggleChange = { appSettings.setAlbumBottomSheetGradientBlur(it) }),
                     // SettingItem(Icons.Default.Reorder, "Library Tab Order", "Reorder tabs in the library", onClick = { onNavigateTo(SettingsRoutes.LIBRARY_TAB_ORDER) })
                 )
             ),

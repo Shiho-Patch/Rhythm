@@ -99,6 +99,7 @@ fun AlbumBottomSheet(
     val appSettings = remember { AppSettings.getInstance(context) }
     val savedSortOrder by appSettings.albumSortOrder.collectAsState()
     val useHoursFormat by appSettings.useHoursInTimeFormat.collectAsState()
+    val albumBottomSheetGradientBlur by appSettings.albumBottomSheetGradientBlur.collectAsState()
 
     // Sort order state
     var sortOrder by remember {
@@ -221,6 +222,83 @@ fun AlbumBottomSheet(
                         )
                         .navigationBarsPadding()
                 ) {
+                    // Background artwork with blur effect for tablet (conditional)
+                    if (album.artworkUri != null && albumBottomSheetGradientBlur) {
+                        AsyncImage(
+                            model = ImageRequest.Builder(context)
+                                .apply(ImageUtils.buildImageRequest(
+                                    album.artworkUri,
+                                    album.title,
+                                    context.cacheDir,
+                                    M3PlaceholderType.ALBUM
+                                ))
+                                .build(),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .blur(25.dp)
+                                .graphicsLayer { alpha = 0.4f }
+                        )
+                    }
+
+                    // Animated gradient shimmer overlay (conditional)
+                    if (albumBottomSheetGradientBlur) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .drawBehind {
+                                    drawRect(
+                                        brush = Brush.linearGradient(
+                                            colors = listOf(
+                                                Color.Transparent,
+                                                Color.White.copy(alpha = 0.03f),
+                                                Color.Transparent
+                                            ),
+                                            start = Offset(shimmerOffset - 500f, 0f),
+                                            end = Offset(shimmerOffset, size.height)
+                                        )
+                                    )
+                                }
+                        )
+                    }
+
+                    // Multi-layer gradient overlay for depth (conditional)
+                    if (albumBottomSheetGradientBlur) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.verticalGradient(
+                                        colorStops = arrayOf(
+                                            0f to MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.4f),
+                                            0.3f to Color.Transparent,
+                                            0.7f to MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
+                                            1f to MaterialTheme.colorScheme.surface
+                                        )
+                                    )
+                                )
+                        )
+                    }
+
+                    // Radial highlight accent (conditional)
+                    if (albumBottomSheetGradientBlur) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.radialGradient(
+                                        colors = listOf(
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                                            Color.Transparent
+                                        ),
+                                        center = Offset(0.7f, 0.2f),
+                                        radius = 1000f
+                                    )
+                                )
+                        )
+                    }
+
                     Row(modifier = Modifier.fillMaxSize()) {
                         // Left side: Album info and artwork
                         Surface(
@@ -732,8 +810,8 @@ fun AlbumBottomSheet(
                             scaleY = headerScale
                         }
                 ) {
-                    // Background artwork with blur effect
-                    if (album.artworkUri != null) {
+                    // Background artwork with blur effect (conditional)
+                    if (album.artworkUri != null && albumBottomSheetGradientBlur) {
                         AsyncImage(
                             model = ImageRequest.Builder(context)
                                 .apply(ImageUtils.buildImageRequest(
@@ -752,56 +830,62 @@ fun AlbumBottomSheet(
                         )
                     }
 
-                    // Animated gradient shimmer overlay
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .drawBehind {
-                                drawRect(
-                                    brush = Brush.linearGradient(
+                    // Animated gradient shimmer overlay (conditional)
+                    if (albumBottomSheetGradientBlur) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .drawBehind {
+                                    drawRect(
+                                        brush = Brush.linearGradient(
+                                            colors = listOf(
+                                                Color.Transparent,
+                                                Color.White.copy(alpha = 0.05f),
+                                                Color.Transparent
+                                            ),
+                                            start = Offset(shimmerOffset - 500f, 0f),
+                                            end = Offset(shimmerOffset, size.height)
+                                        )
+                                    )
+                                }
+                        )
+                    }
+
+                    // Multi-layer gradient overlay for depth (conditional)
+                    if (albumBottomSheetGradientBlur) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.verticalGradient(
+                                        colorStops = arrayOf(
+                                            0f to MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.3f),
+                                            0.4f to Color.Transparent,
+                                            0.7f to MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                                            1f to MaterialTheme.colorScheme.surface
+                                        )
+                                    )
+                                )
+                        )
+                    }
+
+                    // Radial highlight accent (conditional)
+                    if (albumBottomSheetGradientBlur) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.radialGradient(
                                         colors = listOf(
-                                            Color.Transparent,
-                                            Color.White.copy(alpha = 0.05f),
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                                             Color.Transparent
                                         ),
-                                        start = Offset(shimmerOffset - 500f, 0f),
-                                        end = Offset(shimmerOffset, size.height)
+                                        center = Offset(0.3f, 0.3f),
+                                        radius = 800f
                                     )
                                 )
-                            }
-                    )
-
-                    // Multi-layer gradient overlay for depth
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                Brush.verticalGradient(
-                                    colorStops = arrayOf(
-                                        0f to MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.3f),
-                                        0.4f to Color.Transparent,
-                                        0.7f to MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
-                                        1f to MaterialTheme.colorScheme.surface
-                                    )
-                                )
-                            )
-                    )
-
-                    // Radial highlight accent
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                Brush.radialGradient(
-                                    colors = listOf(
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                                        Color.Transparent
-                                    ),
-                                    center = Offset(0.3f, 0.3f),
-                                    radius = 800f
-                                )
-                            )
-                    )
+                        )
+                    }
 
                     // Drag handle with animation
                     Box(
