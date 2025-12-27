@@ -40,14 +40,9 @@ object PlaylistImportExportUtils {
                 null,
                 null
             )?.use { cursor ->
-                val idIndex = cursor.getColumnIndex(android.provider.MediaStore.Audio.Media._ID)
-                val dataIndex = cursor.getColumnIndex(android.provider.MediaStore.Audio.Media.DATA)
-
-                if (idIndex < 0 || dataIndex < 0) {
-                    Log.e("PlaylistImportExportUtils", "Essential MediaStore columns not available")
-                    return@use
-                }
-
+                val idIndex = cursor.getColumnIndexOrThrow(android.provider.MediaStore.Audio.Media._ID)
+                val dataIndex = cursor.getColumnIndexOrThrow(android.provider.MediaStore.Audio.Media.DATA)
+                
                 while (cursor.moveToNext()) {
                     val id = cursor.getLong(idIndex).toString()
                     val filePath = cursor.getString(dataIndex) ?: continue

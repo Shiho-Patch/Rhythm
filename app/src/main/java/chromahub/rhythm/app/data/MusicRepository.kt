@@ -2,7 +2,6 @@ package chromahub.rhythm.app.data
 
 import android.content.ContentUris
 import android.content.Context
-import android.content.Intent
 import android.database.ContentObserver
 import android.net.Uri
 import android.os.Build
@@ -337,89 +336,116 @@ class MusicRepository(context: Context) {
                     songs.ensureCapacity(count)
                 }
                 
-                // Cache all column indices once - be defensive about missing columns
-                val columnIndices = ColumnIndices(
-                    id = cursor.getColumnIndex(MediaStore.Audio.Media._ID),
-                    title = cursor.getColumnIndex(MediaStore.Audio.Media.TITLE),
-                    artist = cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST),
-                    album = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM),
-                    albumId = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID),
-                    duration = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION),
-                    track = cursor.getColumnIndex(MediaStore.Audio.Media.TRACK),
-                    year = cursor.getColumnIndex(MediaStore.Audio.Media.YEAR),
-                    dateAdded = cursor.getColumnIndex(MediaStore.Audio.Media.DATE_ADDED),
-                    size = cursor.getColumnIndex(MediaStore.Audio.Media.SIZE),
-                    genre = cursor.getColumnIndex(MediaStore.Audio.Media.GENRE),
-                    albumArtist = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ARTIST) // May be -1 on older devices
-                )
-
-                // Validate that essential columns are available
-                if (columnIndices.id < 0 || columnIndices.title < 0 || columnIndices.artist < 0) {
-                    Log.e(TAG, "Essential MediaStore columns not available: id=${columnIndices.id}, title=${columnIndices.title}, artist=${columnIndices.artist}")
-
-                    // Special handling for Android 9 and 10 where MediaStore can be unreliable
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
-                        Log.w(TAG, "Android ${Build.VERSION.SDK_INT} detected - MediaStore may be temporarily unavailable. Attempting recovery...")
-
-                        // Try to trigger MediaStore refresh for Android 9/10
-                        try {
-                            val mediaScannerIntent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
-                            mediaScannerIntent.data = Uri.parse("file://")
-                            context.sendBroadcast(mediaScannerIntent)
-                            Log.d(TAG, "Triggered MediaStore refresh broadcast")
-
-                            // Wait a moment for MediaStore to refresh
-                            kotlinx.coroutines.delay(2000)
-
-                            // Retry the query once more
-                            Log.d(TAG, "Retrying MediaStore query after refresh...")
-                            context.contentResolver.query(
-                                collection,
-                                projection,
-                                selection,
-                                null,
-                                sortOrder
-                            )?.use { retryCursor ->
-                                if (retryCursor.moveToFirst()) {
-                                    val retryIndices = ColumnIndices(
-                                        id = retryCursor.getColumnIndex(MediaStore.Audio.Media._ID),
-                                        title = retryCursor.getColumnIndex(MediaStore.Audio.Media.TITLE),
-                                        artist = retryCursor.getColumnIndex(MediaStore.Audio.Media.ARTIST),
-                                        album = retryCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM),
-                                        albumId = retryCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID),
-                                        duration = retryCursor.getColumnIndex(MediaStore.Audio.Media.DURATION),
-                                        track = retryCursor.getColumnIndex(MediaStore.Audio.Media.TRACK),
-                                        year = retryCursor.getColumnIndex(MediaStore.Audio.Media.YEAR),
-                                        dateAdded = retryCursor.getColumnIndex(MediaStore.Audio.Media.DATE_ADDED),
-                                        size = retryCursor.getColumnIndex(MediaStore.Audio.Media.SIZE),
-                                        genre = retryCursor.getColumnIndex(MediaStore.Audio.Media.GENRE),
-                                        albumArtist = retryCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ARTIST)
-                                    )
-
-                                    if (retryIndices.id >= 0 && retryIndices.title >= 0 && retryIndices.artist >= 0) {
-                                        Log.d(TAG, "MediaStore retry successful - proceeding with scan")
-                                        // Continue with the retry cursor and indices
-                                        return@withContext processCursorWithIndices(retryCursor, retryIndices, count, startTime, allowedFormats, minimumDuration)
-                                    }
-                                }
-                            }
-                        } catch (e: Exception) {
-                            Log.w(TAG, "MediaStore refresh attempt failed", e)
-                        }
-
-                        // If we reach here, recovery failed - provide helpful error message
-                        Log.e(TAG, "MediaStore recovery failed on Android ${Build.VERSION.SDK_INT}. This is common on Android 9/10 devices.")
-                        _scanProgress.value = ScanProgress(0, 0, "RecoveryFailed", 0)
-                        return@withContext emptyList()
-                    } else {
-                        // For other Android versions, fail immediately
-                        _scanProgress.value = ScanProgress(0, 0, "Error", 0)
-                        return@withContext emptyList()
-                    }
+                // Cache all column indices once
+                val columnIndices = try {
+                    ColumnIndices(
+                        id = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID),
+                        title = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE),
+                        artist = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST),
+                        album = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM),
+                        albumId = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID),
+                        duration = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION),
+                        track = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK),
+                        year = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR),
+                        dateAdded = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED),
+                        size = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE),
+                        genre = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.GENRE),
+                        albumArtist = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ARTIST) // May be -1 on older devices
+                    )
+                } catch (e: IllegalArgumentException) {
+                    Log.e(TAG, "Required column not found in MediaStore", e)
+                    _scanProgress.value = ScanProgress(0, 0, "Error", 0)
+                    return@withContext emptyList()
                 }
 
-                // Process the cursor with the validated column indices
-                return@withContext processCursorWithIndices(cursor, columnIndices, count, startTime, allowedFormats, minimumDuration)
+                var processedCount = 0
+                val batchSize = 100
+                val pathColumnIndex = cursor.getColumnIndex(MediaStore.Audio.Media.DATA)
+                
+                while (cursor.moveToNext()) {
+                    try {
+                        val song = createSongFromCursor(cursor, columnIndices)
+                        if (song != null) {
+                            // Duplicate detection by ID
+                            if (seenIds.contains(song.id)) {
+                                Log.d(TAG, "Skipping duplicate ID: ${song.id} - ${song.title}")
+                                duplicatesFound++
+                                processedCount++
+                                continue
+                            }
+                            
+                            // Duplicate detection by path
+                            if (pathColumnIndex >= 0) {
+                                val path = cursor.getString(pathColumnIndex)
+                                if (path != null && seenPaths.contains(path)) {
+                                    Log.d(TAG, "Skipping duplicate path: $path - ${song.title}")
+                                    duplicatesFound++
+                                    processedCount++
+                                    continue
+                                }
+                                
+                                // Format filtering
+                                if (allowedFormats != null && path.isNotEmpty()) {
+                                    val extension = path.substringAfterLast('.', "").lowercase()
+                                    if (extension.isNotEmpty() && !allowedFormats.contains(extension)) {
+                                        filteredByFormat++
+                                        processedCount++
+                                        continue
+                                    }
+                                }
+                                
+                                seenPaths.add(path)
+                            }
+                            
+                            // Duration filtering (quality check)
+                            if (minimumDuration > 0 && song.duration < minimumDuration) {
+                                filteredByQuality++
+                                processedCount++
+                                continue
+                            }
+                            
+                            // Note: Bitrate filtering is done later since we need to extract metadata
+                            // For now, we add the song and can filter in post-processing if needed
+                            
+                            seenIds.add(song.id)
+                            songs.add(song)
+                        }
+                        
+                        processedCount++
+                        
+                        // Update progress periodically
+                        if (processedCount % 10 == 0) {
+                            _scanProgress.value = ScanProgress(processedCount, count, "Songs", 0)
+                        }
+                        
+                        // Yield control periodically to avoid blocking
+                        if (processedCount % batchSize == 0) {
+                            yield()
+                        }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Error processing song at position ${cursor.position}", e)
+                        errors.add(cursor.position to e)
+                        processedCount++
+                        continue
+                    }
+                }
+                
+                val endTime = System.currentTimeMillis()
+                val duration = endTime - startTime
+                Log.d(TAG, "Loaded ${songs.size} songs in ${duration}ms")
+                Log.d(TAG, "Filtering stats - Duplicates: $duplicatesFound, Format: $filteredByFormat, Quality: $filteredByQuality, Errors: ${errors.size}")
+                
+                // Update cache
+                cachedSongs = songs
+                cacheTimestamp = System.currentTimeMillis()
+                
+                // Update scan progress to complete
+                _scanProgress.value = ScanProgress(songs.size, count, "Complete", duration)
+                
+                // Log errors if any
+                if (errors.isNotEmpty()) {
+                    Log.w(TAG, "Scan completed with ${errors.size} errors. First error: ${errors.first().second.message}")
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Critical error during song scan", e)
@@ -430,111 +456,7 @@ class MusicRepository(context: Context) {
 
         return@withContext songs
     }
-
-    /**
-     * Helper function to process cursor with given column indices
-     */
-    private suspend fun processCursorWithIndices(
-        cursor: android.database.Cursor,
-        columnIndices: ColumnIndices,
-        count: Int,
-        startTime: Long,
-        allowedFormats: Set<String>? = null,
-        minimumDuration: Long = 0L
-    ): List<Song> = withContext(Dispatchers.IO) {
-        val songs = mutableListOf<Song>()
-        val errors = mutableListOf<Pair<Int, Exception>>()
-        val seenIds = mutableSetOf<String>()
-        val seenPaths = mutableSetOf<String>()
-        var duplicatesFound = 0
-        var filteredByFormat = 0
-        var filteredByQuality = 0
-
-        var processedCount = 0
-        val batchSize = 100
-        val pathColumnIndex = cursor.getColumnIndex(MediaStore.Audio.Media.DATA)
-
-        while (cursor.moveToNext()) {
-            try {
-                val song = createSongFromCursor(cursor, columnIndices)
-                if (song != null) {
-                    // Duplicate detection by ID
-                    if (seenIds.contains(song.id)) {
-                        duplicatesFound++
-                        continue
-                    }
-                    seenIds.add(song.id)
-
-                    // Duplicate detection by path (if available)
-                    if (pathColumnIndex >= 0) {
-                        val filePath = cursor.getString(pathColumnIndex)
-                        if (filePath != null && seenPaths.contains(filePath)) {
-                            duplicatesFound++
-                            continue
-                        }
-
-                        // Format filtering
-                        if (allowedFormats != null && filePath != null && filePath.isNotEmpty()) {
-                            val extension = filePath.substringAfterLast('.', "").lowercase()
-                            if (extension.isNotEmpty() && !allowedFormats.contains(extension)) {
-                                filteredByFormat++
-                                continue
-                            }
-                        }
-
-                        if (filePath != null) {
-                            seenPaths.add(filePath)
-                        }
-                    }
-
-                    // Duration filtering (quality check)
-                    if (minimumDuration > 0 && song.duration < minimumDuration) {
-                        filteredByQuality++
-                        continue
-                    }
-
-                    songs.add(song)
-                }
-
-                processedCount++
-
-                // Update progress periodically
-                if (processedCount % 50 == 0) {
-                    _scanProgress.value = ScanProgress(processedCount, count, "Songs", System.currentTimeMillis() - startTime)
-                }
-
-                // Yield control periodically to avoid blocking
-                if (processedCount % batchSize == 0) {
-                    yield()
-                }
-            } catch (e: Exception) {
-                Log.w(TAG, "Error processing song at position ${cursor.position}", e)
-                errors.add(cursor.position to e)
-                processedCount++
-                continue
-            }
-        }
-
-        val endTime = System.currentTimeMillis()
-        val duration = endTime - startTime
-        Log.d(TAG, "Loaded ${songs.size} songs in ${duration}ms")
-        Log.d(TAG, "Filtering stats - Duplicates: $duplicatesFound, Format: $filteredByFormat, Quality: $filteredByQuality, Errors: ${errors.size}")
-
-        // Update cache
-        cachedSongs = songs
-        cacheTimestamp = System.currentTimeMillis()
-
-        // Update scan progress to complete
-        _scanProgress.value = ScanProgress(songs.size, count, "Complete", duration)
-
-        // Log errors if any
-        if (errors.isNotEmpty()) {
-            Log.w(TAG, "Scan completed with ${errors.size} errors. First error: ${errors.first().second.message}")
-        }
-
-        return@withContext songs
-    }
-
+    
     /**
      * Perform incremental scan for newly added songs only
      */
@@ -591,24 +513,23 @@ class MusicRepository(context: Context) {
                     return@withContext emptyList()
                 }
 
-                val columnIndices = ColumnIndices(
-                    id = cursor.getColumnIndex(MediaStore.Audio.Media._ID),
-                    title = cursor.getColumnIndex(MediaStore.Audio.Media.TITLE),
-                    artist = cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST),
-                    album = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM),
-                    albumId = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID),
-                    duration = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION),
-                    track = cursor.getColumnIndex(MediaStore.Audio.Media.TRACK),
-                    year = cursor.getColumnIndex(MediaStore.Audio.Media.YEAR),
-                    dateAdded = cursor.getColumnIndex(MediaStore.Audio.Media.DATE_ADDED),
-                    size = cursor.getColumnIndex(MediaStore.Audio.Media.SIZE),
-                    genre = cursor.getColumnIndex(MediaStore.Audio.Media.GENRE),
-                    albumArtist = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ARTIST)
-                )
-
-                // Validate that essential columns are available
-                if (columnIndices.id < 0 || columnIndices.title < 0 || columnIndices.artist < 0) {
-                    Log.e(TAG, "Essential MediaStore columns not available in incremental scan: id=${columnIndices.id}, title=${columnIndices.title}, artist=${columnIndices.artist}")
+                val columnIndices = try {
+                    ColumnIndices(
+                        id = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID),
+                        title = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE),
+                        artist = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST),
+                        album = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM),
+                        albumId = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID),
+                        duration = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION),
+                        track = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK),
+                        year = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR),
+                        dateAdded = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED),
+                        size = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE),
+                        genre = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.GENRE),
+                        albumArtist = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ARTIST)
+                    )
+                } catch (e: IllegalArgumentException) {
+                    Log.e(TAG, "Required column not found in MediaStore", e)
                     return@withContext emptyList()
                 }
 
@@ -663,18 +584,18 @@ class MusicRepository(context: Context) {
     }
     
     private data class ColumnIndices(
-        val id: Int,           // Required
-        val title: Int,        // Required
-        val artist: Int,       // Required
-        val album: Int,        // Optional (-1 if not available)
-        val albumId: Int,      // Optional (-1 if not available)
-        val duration: Int,     // Optional (-1 if not available)
-        val track: Int,        // Optional (-1 if not available)
-        val year: Int,         // Optional (-1 if not available)
-        val dateAdded: Int,    // Optional (-1 if not available)
-        val size: Int,         // Optional (-1 if not available)
-        val genre: Int,        // Optional (-1 if not available)
-        val albumArtist: Int   // Optional (-1 if not available)
+        val id: Int,
+        val title: Int,
+        val artist: Int,
+        val album: Int,
+        val albumId: Int,
+        val duration: Int,
+        val track: Int,
+        val year: Int,
+        val dateAdded: Int,
+        val size: Int,
+        val genre: Int,
+        val albumArtist: Int // May be -1 if not available on older devices
     )
     
     private fun createSongFromCursor(cursor: android.database.Cursor, indices: ColumnIndices): Song? {
@@ -682,27 +603,27 @@ class MusicRepository(context: Context) {
             val id = cursor.getLong(indices.id)
             val title = cursor.getString(indices.title)?.trim() ?: return null
             val rawArtist = cursor.getString(indices.artist)?.trim() ?: "Unknown Artist"
-
+            
             // Parse multiple artists from the artist string using configured delimiters
             val appSettings = AppSettings.getInstance(context)
             val artistSeparatorEnabled = appSettings.artistSeparatorEnabled.value
             val delimiters = appSettings.artistSeparatorDelimiters.value
-
+            
             // Get primary artist for the Song object (first artist in the list)
             val artist = chromahub.rhythm.app.util.ArtistSeparator.getPrimaryArtist(
                 rawArtist,
                 delimiters,
                 artistSeparatorEnabled
             )
-
-            val album = if (indices.album >= 0) cursor.getString(indices.album)?.trim() ?: "Unknown Album" else "Unknown Album"
-            val albumId = if (indices.albumId >= 0) cursor.getLong(indices.albumId) else -1L
-            val duration = if (indices.duration >= 0) cursor.getLong(indices.duration) else 0L
-            val track = if (indices.track >= 0) cursor.getInt(indices.track) else 0
-            val year = if (indices.year >= 0) cursor.getInt(indices.year) else 0
-            val dateAdded = if (indices.dateAdded >= 0) cursor.getLong(indices.dateAdded) * 1000L else System.currentTimeMillis()
-            val size = if (indices.size >= 0) cursor.getLong(indices.size) else 0L
-            val genreId = if (indices.genre >= 0) cursor.getString(indices.genre)?.trim() else null
+            
+            val album = cursor.getString(indices.album)?.trim() ?: "Unknown Album"
+            val albumId = cursor.getLong(indices.albumId)
+            val duration = cursor.getLong(indices.duration)
+            val track = cursor.getInt(indices.track)
+            val year = cursor.getInt(indices.year)
+            val dateAdded = cursor.getLong(indices.dateAdded) * 1000L
+            val size = cursor.getLong(indices.size)
+            val genreId = cursor.getString(indices.genre)?.trim()
             val albumArtist = if (indices.albumArtist >= 0) {
                 cursor.getString(indices.albumArtist)?.trim()?.takeIf { it.isNotBlank() }
             } else null

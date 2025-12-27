@@ -161,11 +161,9 @@ fun SongInfoBottomSheet(
                         context.contentResolver.query(it.uri, projection, null, null, null)
                             ?.use { cursor ->
                                 if (cursor.moveToFirst()) {
-                                    val dataIndex = cursor.getColumnIndex(MediaStore.Audio.Media.DATA)
-                                    if (dataIndex >= 0) {
-                                        val filePath = cursor.getString(dataIndex)
-                                        File(filePath).parent
-                                    } else null
+                                    val dataIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
+                                    val filePath = cursor.getString(dataIndex)
+                                    File(filePath).parent
                                 } else null
                             }
                     }
