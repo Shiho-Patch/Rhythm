@@ -41,6 +41,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import chromahub.rhythm.app.R
@@ -89,6 +91,9 @@ fun AlbumBottomSheet(
     val scope = rememberCoroutineScope()
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
+
+    // Detect tablet mode
+    val isTablet = configuration.screenWidthDp >= 600
 
     // App settings for persistence
     val appSettings = remember { AppSettings.getInstance(context) }
@@ -185,16 +190,520 @@ fun AlbumBottomSheet(
         derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0 }
     }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = Color.Transparent,
-        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
-        dragHandle = null,
-        modifier = Modifier
-            .fillMaxHeight()
-            .imePadding()
-    ) {
+    if (isTablet) {
+        // Tablet layout: Dialog with side-by-side layout
+        Dialog(
+            onDismissRequest = onDismiss,
+            properties = DialogProperties(
+                dismissOnBackPress = true,
+                dismissOnClickOutside = true,
+                usePlatformDefaultWidth = false
+            )
+        ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                shape = RoundedCornerShape(32.dp),
+                color = Color.Transparent
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.surfaceContainerLow,
+                                    MaterialTheme.colorScheme.surface,
+                                    MaterialTheme.colorScheme.surface
+                                )
+                            )
+                        )
+                        .navigationBarsPadding()
+                ) {
+                    Row(modifier = Modifier.fillMaxSize()) {
+                        // Left side: Album info and artwork
+                        Surface(
+                            modifier = Modifier
+                                .weight(0.4f)
+                                .fillMaxHeight(),
+                            color = Color.Transparent
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(32.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                // Close button
+                                Box(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    contentAlignment = Alignment.TopEnd
+                                ) {
+                                    IconButton(
+                                        onClick = onDismiss,
+                                        modifier = Modifier.size(44.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Close,
+                                            contentDescription = "Close",
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                // Album artwork
+                                Surface(
+                                    modifier = Modifier
+                                        .size(200.dp)
+                                        .graphicsLayer {
+                                            alpha = headerAlpha
+                                            scaleX = headerScale
+                                            scaleY = headerScale
+                                        },
+                                    shape = RoundedCornerShape(24.dp),
+                                    shadowElevation = 16.dp,
+                                    tonalElevation = 8.dp
+                                ) {
+                                    Box {
+                                        if (album.artworkUri != null) {
+                                            AsyncImage(
+                                                model = ImageRequest.Builder(context)
+                                                    .apply(ImageUtils.buildImageRequest(
+                                                        album.artworkUri,
+                                                        album.title,
+                                                        context.cacheDir,
+                                                        M3PlaceholderType.ALBUM
+                                                    ))
+                                                    .build(),
+                                                contentDescription = "Album artwork for ${album.title}",
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+                                        } else {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .background(
+                                                        Brush.linearGradient(
+                                                            colors = listOf(
+                                                                MaterialTheme.colorScheme.primaryContainer,
+                                                                MaterialTheme.colorScheme.tertiaryContainer
+                                                            )
+                                                        )
+                                                    ),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Filled.Album,
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                                                    modifier = Modifier.size(80.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(24.dp))
+
+                                // Album info
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text(
+                                        text = album.title,
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 3,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+
+                                    Text(
+                                        text = album.artist,
+                                        style = MaterialTheme.typography.titleLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontWeight = FontWeight.Medium,
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    // Metadata
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        if (album.year > 0) {
+                                            MetadataChip(
+                                                text = "${album.year}",
+                                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                            )
+                                        }
+
+                                        MetadataChip(
+                                            text = "${sortedSongs.size} songs",
+                                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                                        )
+                                    }
+
+                                    Text(
+                                        text = formatDuration(totalDuration, useHoursFormat) + " total",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(32.dp))
+
+                                // Action buttons
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Button(
+                                        onClick = {
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            if (sortedSongs.isNotEmpty()) {
+                                                onPlayAll(sortedSongs)
+                                            } else {
+                                                onPlayAll(album.songs)
+                                            }
+                                            onDismiss()
+                                            onPlayerClick()
+                                        },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.primary
+                                        ),
+                                        shape = RoundedCornerShape(24.dp),
+                                        contentPadding = PaddingValues(horizontal = 32.dp, vertical = 16.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.PlayArrow,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = context.getString(R.string.bottomsheet_play_all),
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+
+                                    FilledTonalButton(
+                                        onClick = {
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            if (sortedSongs.isNotEmpty()) {
+                                                onShufflePlay(sortedSongs)
+                                            } else {
+                                                onShufflePlay(album.songs)
+                                            }
+                                            onDismiss()
+                                            onPlayerClick()
+                                        },
+                                        shape = RoundedCornerShape(24.dp),
+                                        contentPadding = PaddingValues(horizontal = 32.dp, vertical = 16.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Shuffle,
+                                            contentDescription = "Shuffle play",
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = "Shuffle Play",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // Divider
+                        VerticalDivider(
+                            modifier = Modifier
+                                .width(1.dp)
+                                .fillMaxHeight(),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                        )
+
+                        // Right side: Songs list
+                        Surface(
+                            modifier = Modifier
+                                .weight(0.6f)
+                                .fillMaxHeight(),
+                            color = Color.Transparent
+                        ) {
+                            Column(modifier = Modifier.fillMaxSize()) {
+                                // Header with sort
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    color = Color.Transparent
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 24.dp, vertical = 16.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = context.getString(R.string.bottomsheet_tracks),
+                                            style = MaterialTheme.typography.titleLarge,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+
+                                        // Sort button
+                                        Box {
+                                            FilledTonalIconButton(
+                                                onClick = { showSortMenu = true },
+                                                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                                )
+                                            ) {
+                                                Icon(
+                                                    imageVector = RhythmIcons.Actions.Sort,
+                                                    contentDescription = "Sort songs",
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            }
+
+                                            DropdownMenu(
+                                                expanded = showSortMenu,
+                                                onDismissRequest = { showSortMenu = false },
+                                                shape = RoundedCornerShape(16.dp),
+                                                modifier = Modifier.padding(4.dp)
+                                            ) {
+                                                AlbumSortOrder.entries.forEach { order ->
+                                                    val isSelected = sortOrder == order
+                                                    Surface(
+                                                        color = if (isSelected)
+                                                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
+                                                        else
+                                                            Color.Transparent,
+                                                        shape = RoundedCornerShape(12.dp),
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                                                    ) {
+                                                        DropdownMenuItem(
+                                                            text = {
+                                                                Text(
+                                                                    text = when (order) {
+                                                                        AlbumSortOrder.TRACK_NUMBER -> "Track Number"
+                                                                        AlbumSortOrder.TITLE_ASC, AlbumSortOrder.TITLE_DESC -> "Title"
+                                                                        AlbumSortOrder.DURATION_ASC, AlbumSortOrder.DURATION_DESC -> "Duration"
+                                                                    },
+                                                                    style = MaterialTheme.typography.bodyMedium,
+                                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                                                    color = if (isSelected)
+                                                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                                                    else
+                                                                        MaterialTheme.colorScheme.onSurface
+                                                                )
+                                                            },
+                                                            leadingIcon = {
+                                                                Icon(
+                                                                    imageVector = when (order) {
+                                                                        AlbumSortOrder.TRACK_NUMBER -> Icons.Filled.FormatListNumbered
+                                                                        AlbumSortOrder.TITLE_ASC, AlbumSortOrder.TITLE_DESC -> Icons.Filled.SortByAlpha
+                                                                        AlbumSortOrder.DURATION_ASC, AlbumSortOrder.DURATION_DESC -> Icons.Filled.AccessTime
+                                                                    },
+                                                                    contentDescription = null,
+                                                                    tint = if (isSelected)
+                                                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                                                    else
+                                                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                                                )
+                                                            },
+                                                            trailingIcon = {
+                                                                when (order) {
+                                                                    AlbumSortOrder.TITLE_ASC, AlbumSortOrder.DURATION_ASC -> {
+                                                                        Icon(
+                                                                            imageVector = Icons.Default.ArrowUpward,
+                                                                            contentDescription = "Ascending",
+                                                                            tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                                                        )
+                                                                    }
+                                                                    AlbumSortOrder.TITLE_DESC, AlbumSortOrder.DURATION_DESC -> {
+                                                                        Icon(
+                                                                            imageVector = Icons.Default.ArrowDownward,
+                                                                            contentDescription = "Descending",
+                                                                            tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                                                        )
+                                                                    }
+                                                                    else -> {}
+                                                                }
+                                                            },
+                                                            onClick = {
+                                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                                                sortOrder = order
+                                                                showSortMenu = false
+                                                                appSettings.setAlbumSortOrder(order.name)
+                                                            },
+                                                            colors = androidx.compose.material3.MenuDefaults.itemColors(
+                                                                textColor = if (isSelected)
+                                                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                                                else
+                                                                    MaterialTheme.colorScheme.onSurface
+                                                            )
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Songs list
+                                Surface(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .weight(1f)
+                                        .padding(horizontal = 12.dp)
+                                        .graphicsLayer { translationY = contentOffset },
+                                    shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                                    color = MaterialTheme.colorScheme.surfaceContainer,
+                                    tonalElevation = 1.dp
+                                ) {
+                                    if (sortedSongs.isNotEmpty()) {
+                                        LazyColumn(
+                                            state = listState,
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp),
+                                            userScrollEnabled = true
+                                        ) {
+                                            itemsIndexed(
+                                                items = sortedSongs,
+                                                key = { _, song -> song.id }
+                                            ) { index, song ->
+                                                val shouldAnimate = index < 10
+                                                var itemVisible by remember { mutableStateOf(!shouldAnimate) }
+
+                                                val itemAlpha by animateFloatAsState(
+                                                    targetValue = if (itemVisible) 1f else 0f,
+                                                    animationSpec = tween(
+                                                        durationMillis = 300,
+                                                        easing = FastOutSlowInEasing
+                                                    ),
+                                                    label = "itemAlpha_$index"
+                                                )
+
+                                                val itemTranslation by animateFloatAsState(
+                                                    targetValue = if (itemVisible) 0f else 60f,
+                                                    animationSpec = spring(
+                                                        dampingRatio = Spring.DampingRatioLowBouncy,
+                                                        stiffness = Spring.StiffnessMediumLow
+                                                    ),
+                                                    label = "itemTranslation_$index"
+                                                )
+
+                                                val itemScale by animateFloatAsState(
+                                                    targetValue = if (itemVisible) 1f else 0.9f,
+                                                    animationSpec = spring(
+                                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                        stiffness = Spring.StiffnessMedium
+                                                    ),
+                                                    label = "itemScale_$index"
+                                                )
+
+                                                if (shouldAnimate) {
+                                                    LaunchedEffect(Unit) {
+                                                        delay(50L * index + 100L)
+                                                        itemVisible = true
+                                                    }
+                                                }
+
+                                                Box(
+                                                    modifier = Modifier
+                                                        .graphicsLayer {
+                                                            alpha = itemAlpha
+                                                            translationX = itemTranslation
+                                                            scaleX = itemScale
+                                                            scaleY = itemScale
+                                                        }
+                                                ) {
+                                                    ExpressiveSongItem(
+                                                        song = song,
+                                                        index = index + 1,
+                                                        onClick = {
+                                                            onSongClick(song)
+                                                            onDismiss()
+                                                            onPlayerClick()
+                                                        },
+                                                        onAddToQueue = { onAddToQueue(song) },
+                                                        onAddToPlaylist = { onAddSongToPlaylist(song) },
+                                                        onPlayNext = { onPlayNext(song) },
+                                                        onToggleFavorite = { onToggleFavorite(song) },
+                                                        isFavorite = favoriteSongs.contains(song.id),
+                                                        onShowSongInfo = { onShowSongInfo(song) },
+                                                        onAddToBlacklist = { onAddToBlacklist(song) },
+                                                        currentSong = currentSong,
+                                                        isPlaying = isPlaying,
+                                                        useHoursFormat = useHoursFormat,
+                                                        haptics = haptics,
+                                                        modifier = Modifier.animateItem()
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        Box(
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Column(
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                                            ) {
+                                                Surface(
+                                                    shape = CircleShape,
+                                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                                    modifier = Modifier.size(80.dp)
+                                                ) {
+                                                    Box(contentAlignment = Alignment.Center) {
+                                                        Icon(
+                                                            imageVector = Icons.Filled.MusicOff,
+                                                            contentDescription = null,
+                                                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                                            modifier = Modifier.size(40.dp)
+                                                        )
+                                                    }
+                                                }
+
+                                                Text(
+                                                    text = context.getString(R.string.bottomsheet_no_songs_album),
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    textAlign = TextAlign.Center
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        // Phone layout: Bottom sheet
         Box(
             modifier = Modifier
                 .fillMaxSize()
