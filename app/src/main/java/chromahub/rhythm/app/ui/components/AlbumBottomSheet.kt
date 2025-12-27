@@ -511,12 +511,6 @@ fun AlbumBottomSheet(
                         }
 
                         // Divider
-                        VerticalDivider(
-                            modifier = Modifier
-                                .width(1.dp)
-                                .fillMaxHeight(),
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
-                        )
 
                         // Right side: Songs list
                         Surface(
@@ -782,128 +776,142 @@ fun AlbumBottomSheet(
         }
     } else {
         // Phone layout: Bottom sheet
-        Box(
+        ModalBottomSheet(
+            onDismissRequest = onDismiss,
+            sheetState = sheetState,
+            dragHandle = null,
+            containerColor = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
             modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.surfaceContainerLow,
-                            MaterialTheme.colorScheme.surface,
-                            MaterialTheme.colorScheme.surface
+                .fillMaxHeight()
+                .imePadding()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.surfaceContainerLow,
+                                MaterialTheme.colorScheme.surface,
+                                MaterialTheme.colorScheme.surface
+                            )
                         )
                     )
-                )
-                .navigationBarsPadding()
-        ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                // ═══════════════════════════════════════════════════════════════════
-                // EXPRESSIVE HEADER SECTION
-                // ═══════════════════════════════════════════════════════════════════
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(300.dp)
-                        .graphicsLayer {
-                            alpha = headerAlpha
-                            scaleX = headerScale
-                            scaleY = headerScale
-                        }
-                ) {
-                    // Background artwork with blur effect (conditional)
-                    if (album.artworkUri != null && albumBottomSheetGradientBlur) {
-                        AsyncImage(
-                            model = ImageRequest.Builder(context)
-                                .apply(ImageUtils.buildImageRequest(
-                                    album.artworkUri,
-                                    album.title,
-                                    context.cacheDir,
-                                    M3PlaceholderType.ALBUM
-                                ))
-                                .build(),
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .blur(20.dp)
-                                .graphicsLayer { alpha = 0.5f }
-                        )
-                    }
-
-                    // Animated gradient shimmer overlay (conditional)
-                    if (albumBottomSheetGradientBlur) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .drawBehind {
-                                    drawRect(
-                                        brush = Brush.linearGradient(
-                                            colors = listOf(
-                                                Color.Transparent,
-                                                Color.White.copy(alpha = 0.05f),
-                                                Color.Transparent
-                                            ),
-                                            start = Offset(shimmerOffset - 500f, 0f),
-                                            end = Offset(shimmerOffset, size.height)
-                                        )
-                                    )
-                                }
-                        )
-                    }
-
-                    // Multi-layer gradient overlay for depth (conditional)
-                    if (albumBottomSheetGradientBlur) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(
-                                    Brush.verticalGradient(
-                                        colorStops = arrayOf(
-                                            0f to MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.3f),
-                                            0.4f to Color.Transparent,
-                                            0.7f to MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
-                                            1f to MaterialTheme.colorScheme.surface
-                                        )
-                                    )
-                                )
-                        )
-                    }
-
-                    // Radial highlight accent (conditional)
-                    if (albumBottomSheetGradientBlur) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(
-                                    Brush.radialGradient(
-                                        colors = listOf(
-                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                                            Color.Transparent
-                                        ),
-                                        center = Offset(0.3f, 0.3f),
-                                        radius = 800f
-                                    )
-                                )
-                        )
-                    }
-
-                    // Drag handle with animation
+                    .navigationBarsPadding()
+            ) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    // ═══════════════════════════════════════════════════════════════════
+                    // EXPRESSIVE HEADER SECTION
+                    // ═══════════════════════════════════════════════════════════════════
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 12.dp),
-                        contentAlignment = Alignment.Center
+                            .height(300.dp)
+                            .graphicsLayer {
+                                alpha = headerAlpha
+                                scaleX = headerScale
+                                scaleY = headerScale
+                            }
                     ) {
-                        Surface(
-                            modifier = Modifier
-                                .width(40.dp)
-                                .height(4.dp),
-                            shape = RoundedCornerShape(2.dp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                        ) {}
-                    }
+                        // Background artwork with blur effect (conditional)
+                        if (album.artworkUri != null && albumBottomSheetGradientBlur) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(context)
+                                    .apply(
+                                        ImageUtils.buildImageRequest(
+                                            album.artworkUri,
+                                            album.title,
+                                            context.cacheDir,
+                                            M3PlaceholderType.ALBUM
+                                        )
+                                    )
+                                    .build(),
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .blur(20.dp)
+                                    .graphicsLayer { alpha = 0.5f }
+                            )
+                        }
 
-                    // Close button
+                        // Animated gradient shimmer overlay (conditional)
+                        if (albumBottomSheetGradientBlur) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .drawBehind {
+                                        drawRect(
+                                            brush = Brush.linearGradient(
+                                                colors = listOf(
+                                                    Color.Transparent,
+                                                    Color.White.copy(alpha = 0.05f),
+                                                    Color.Transparent
+                                                ),
+                                                start = Offset(shimmerOffset - 500f, 0f),
+                                                end = Offset(shimmerOffset, size.height)
+                                            )
+                                        )
+                                    }
+                            )
+                        }
+
+                        // Multi-layer gradient overlay for depth (conditional)
+                        if (albumBottomSheetGradientBlur) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        Brush.verticalGradient(
+                                            colorStops = arrayOf(
+                                                0f to MaterialTheme.colorScheme.surfaceContainerLow.copy(
+                                                    alpha = 0.3f
+                                                ),
+                                                0.4f to Color.Transparent,
+                                                0.7f to MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                                                1f to MaterialTheme.colorScheme.surface
+                                            )
+                                        )
+                                    )
+                            )
+                        }
+
+                        // Radial highlight accent (conditional)
+                        if (albumBottomSheetGradientBlur) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        Brush.radialGradient(
+                                            colors = listOf(
+                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                                Color.Transparent
+                                            ),
+                                            center = Offset(0.3f, 0.3f),
+                                            radius = 800f
+                                        )
+                                    )
+                            )
+                        }
+
+                        // Drag handle with animation
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Surface(
+                                modifier = Modifier
+                                    .width(40.dp)
+                                    .height(4.dp),
+                                shape = RoundedCornerShape(2.dp),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                            ) {}
+                        }
+
+                        // Close button
 //                    Surface(
 //                        onClick = {
 //                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
@@ -928,613 +936,248 @@ fun AlbumBottomSheet(
 //                        }
 //                    }
 
-                    // Main content layout
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 24.dp),
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Spacer(modifier = Modifier.height(48.dp))
-
-                        // Floating album artwork card
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(20.dp)
+                        // Main content layout
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 24.dp),
+                            verticalArrangement = Arrangement.Center
                         ) {
-                            // Album art with animated elevation
-                            val artworkScale by animateFloatAsState(
-                                targetValue = if (isVisible) 1f else 0.8f,
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessLow,
-                                    visibilityThreshold = 0.001f
-                                ),
-                                label = "artworkScale"
-                            )
+                            Spacer(modifier = Modifier.height(48.dp))
 
-                            Surface(
-                                modifier = Modifier
-                                    .size(140.dp)
-                                    .graphicsLayer {
-                                        scaleX = artworkScale
-                                        scaleY = artworkScale
-                                    },
-                                shape = RoundedCornerShape(20.dp),
-                                shadowElevation = 16.dp,
-                                tonalElevation = 8.dp
+                            // Floating album artwork card
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(20.dp)
                             ) {
-                                Box {
-                                    if (album.artworkUri != null) {
-                                        AsyncImage(
-                                            model = ImageRequest.Builder(context)
-                                                .apply(ImageUtils.buildImageRequest(
-                                                    album.artworkUri,
-                                                    album.title,
-                                                    context.cacheDir,
-                                                    M3PlaceholderType.ALBUM
-                                                ))
-                                                .build(),
-                                            contentDescription = "Album artwork for ${album.title}",
-                                            contentScale = ContentScale.Crop,
-                                            modifier = Modifier.fillMaxSize()
-                                        )
-                                    } else {
-                                        // Gradient fallback
+                                // Album art with animated elevation
+                                val artworkScale by animateFloatAsState(
+                                    targetValue = if (isVisible) 1f else 0.8f,
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessLow,
+                                        visibilityThreshold = 0.001f
+                                    ),
+                                    label = "artworkScale"
+                                )
+
+                                Surface(
+                                    modifier = Modifier
+                                        .size(140.dp)
+                                        .graphicsLayer {
+                                            scaleX = artworkScale
+                                            scaleY = artworkScale
+                                        },
+                                    shape = RoundedCornerShape(20.dp),
+                                    shadowElevation = 16.dp,
+                                    tonalElevation = 8.dp
+                                ) {
+                                    Box {
+                                        if (album.artworkUri != null) {
+                                            AsyncImage(
+                                                model = ImageRequest.Builder(context)
+                                                    .apply(
+                                                        ImageUtils.buildImageRequest(
+                                                            album.artworkUri,
+                                                            album.title,
+                                                            context.cacheDir,
+                                                            M3PlaceholderType.ALBUM
+                                                        )
+                                                    )
+                                                    .build(),
+                                                contentDescription = "Album artwork for ${album.title}",
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+                                        } else {
+                                            // Gradient fallback
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .background(
+                                                        Brush.linearGradient(
+                                                            colors = listOf(
+                                                                MaterialTheme.colorScheme.primaryContainer,
+                                                                MaterialTheme.colorScheme.tertiaryContainer
+                                                            )
+                                                        )
+                                                    ),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Filled.Album,
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(
+                                                        alpha = 0.7f
+                                                    ),
+                                                    modifier = Modifier.size(64.dp)
+                                                )
+                                            }
+                                        }
+
+                                        // Shine overlay effect
                                         Box(
                                             modifier = Modifier
                                                 .fillMaxSize()
                                                 .background(
                                                     Brush.linearGradient(
                                                         colors = listOf(
-                                                            MaterialTheme.colorScheme.primaryContainer,
-                                                            MaterialTheme.colorScheme.tertiaryContainer
-                                                        )
+                                                            Color.White.copy(alpha = 0.15f),
+                                                            Color.Transparent,
+                                                            Color.Transparent
+                                                        ),
+                                                        start = Offset(0f, 0f),
+                                                        end = Offset(300f, 300f)
                                                     )
-                                                ),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Filled.Album,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
-                                                modifier = Modifier.size(64.dp)
-                                            )
-                                        }
-                                    }
-
-                                    // Shine overlay effect
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(
-                                                Brush.linearGradient(
-                                                    colors = listOf(
-                                                        Color.White.copy(alpha = 0.15f),
-                                                        Color.Transparent,
-                                                        Color.Transparent
-                                                    ),
-                                                    start = Offset(0f, 0f),
-                                                    end = Offset(300f, 300f)
                                                 )
-                                            )
-                                    )
-                                }
-                            }
-
-                            // Album info with staggered animations
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                // Album title with entrance animation
-                                AnimatedVisibility(
-                                    visible = isVisible,
-                                    enter = fadeIn(tween(400, delayMillis = 100)) +
-                                            slideInHorizontally(
-                                                animationSpec = spring(
-                                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                                    stiffness = Spring.StiffnessLow
-                                                ),
-                                                initialOffsetX = { 50 }
-                                            )
-                                ) {
-                                    Text(
-                                        text = album.title,
-                                        style = MaterialTheme.typography.headlineSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                        lineHeight = 28.sp
-                                    )
-                                }
-
-                                // Artist name
-                                AnimatedVisibility(
-                                    visible = isVisible,
-                                    enter = fadeIn(tween(400, delayMillis = 200)) +
-                                            slideInHorizontally(
-                                                animationSpec = spring(
-                                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                                    stiffness = Spring.StiffnessLow
-                                                ),
-                                                initialOffsetX = { 50 }
-                                            )
-                                ) {
-                                    Text(
-                                        text = album.artist,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        fontWeight = FontWeight.Medium,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.height(4.dp))
-
-                                // Metadata chips row
-                                AnimatedVisibility(
-                                    visible = isVisible,
-                                    enter = fadeIn(tween(400, delayMillis = 300)) +
-                                            slideInHorizontally(
-                                                animationSpec = spring(
-                                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                                    stiffness = Spring.StiffnessLow
-                                                ),
-                                                initialOffsetX = { 50 }
-                                            )
-                                ) {
-                                    Row(
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        if (album.year > 0) {
-                                            MetadataChip(
-                                                text = "${album.year}",
-                                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                            )
-                                        }
-
-                                        MetadataChip(
-                                            text = "${sortedSongs.size} songs",
-                                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                                         )
                                     }
                                 }
 
-                                // Audio quality badges
-                                if (album.songs.isNotEmpty()) {
+                                // Album info with staggered animations
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    // Album title with entrance animation
                                     AnimatedVisibility(
                                         visible = isVisible,
-                                        enter = fadeIn(tween(400, delayMillis = 400))
+                                        enter = fadeIn(tween(400, delayMillis = 100)) +
+                                                slideInHorizontally(
+                                                    animationSpec = spring(
+                                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                        stiffness = Spring.StiffnessLow
+                                                    ),
+                                                    initialOffsetX = { 50 }
+                                                )
                                     ) {
-                                        AudioQualityBadges(
-                                            song = album.songs.first(),
-                                            modifier = Modifier.padding(top = 4.dp)
+                                        Text(
+                                            text = album.title,
+                                            style = MaterialTheme.typography.headlineSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis,
+                                            lineHeight = 28.sp
                                         )
+                                    }
+
+                                    // Artist name
+                                    AnimatedVisibility(
+                                        visible = isVisible,
+                                        enter = fadeIn(tween(400, delayMillis = 200)) +
+                                                slideInHorizontally(
+                                                    animationSpec = spring(
+                                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                        stiffness = Spring.StiffnessLow
+                                                    ),
+                                                    initialOffsetX = { 50 }
+                                                )
+                                    ) {
+                                        Text(
+                                            text = album.artist,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            fontWeight = FontWeight.Medium,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(4.dp))
+
+                                    // Metadata chips row
+                                    AnimatedVisibility(
+                                        visible = isVisible,
+                                        enter = fadeIn(tween(400, delayMillis = 300)) +
+                                                slideInHorizontally(
+                                                    animationSpec = spring(
+                                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                        stiffness = Spring.StiffnessLow
+                                                    ),
+                                                    initialOffsetX = { 50 }
+                                                )
+                                    ) {
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            if (album.year > 0) {
+                                                MetadataChip(
+                                                    text = "${album.year}",
+                                                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                                )
+                                            }
+
+                                            MetadataChip(
+                                                text = "${sortedSongs.size} songs",
+                                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                                            )
+                                        }
+                                    }
+
+                                    // Audio quality badges
+                                    if (album.songs.isNotEmpty()) {
+                                        AnimatedVisibility(
+                                            visible = isVisible,
+                                            enter = fadeIn(tween(400, delayMillis = 400))
+                                        ) {
+                                            AudioQualityBadges(
+                                                song = album.songs.first(),
+                                                modifier = Modifier.padding(top = 4.dp)
+                                            )
+                                        }
                                     }
                                 }
                             }
-                        }
 
-                        Spacer(modifier = Modifier.height(24.dp))
+                            Spacer(modifier = Modifier.height(24.dp))
 
-                        // ═══════════════════════════════════════════════════════════════════
-                        // ACTION BUTTONS ROW
-                        // ═══════════════════════════════════════════════════════════════════
-                        AnimatedVisibility(
-                            visible = isVisible,
-                            enter = fadeIn(tween(500, delayMillis = 400)) +
-                                    slideInVertically(
-                                        animationSpec = spring(
-                                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                                            stiffness = Spring.StiffnessLow
-                                        ),
-                                        initialOffsetY = { 40 }
-                                    )
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                            // ═══════════════════════════════════════════════════════════════════
+                            // ACTION BUTTONS ROW
+                            // ═══════════════════════════════════════════════════════════════════
+                            AnimatedVisibility(
+                                visible = isVisible,
+                                enter = fadeIn(tween(500, delayMillis = 400)) +
+                                        slideInVertically(
+                                            animationSpec = spring(
+                                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                stiffness = Spring.StiffnessLow
+                                            ),
+                                            initialOffsetY = { 40 }
+                                        )
                             ) {
-                                // Play All button with pulse animation
-                                var isPlayPressed by remember { mutableStateOf(false) }
-                                val playButtonScale by animateFloatAsState(
-                                    targetValue = if (isPlayPressed) 0.92f else 1f,
-                                    animationSpec = spring(
-                                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                                        stiffness = Spring.StiffnessMedium
-                                    ),
-                                    label = "playButtonScale"
-                                )
-
-                                Button(
-                                    onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                        if (sortedSongs.isNotEmpty()) {
-                                            onPlayAll(sortedSongs)
-                                        } else {
-                                            onPlayAll(album.songs)
-                                        }
-                                        scope.launch {
-                                            sheetState.hide()
-                                        }.invokeOnCompletion {
-                                            if (!sheetState.isVisible) {
-                                                onDismiss()
-                                                onPlayerClick()
-                                            }
-                                        }
-                                    },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.primary
-                                    ),
-                                    shape = RoundedCornerShape(24.dp),
-                                    contentPadding = PaddingValues(horizontal = 28.dp, vertical = 14.dp),
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .pointerInput(Unit) {
-                                            detectTapGestures(
-                                                onPress = {
-                                                    isPlayPressed = true
-                                                    tryAwaitRelease()
-                                                    isPlayPressed = false
-                                                }
-                                            )
-                                        }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.PlayArrow,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = context.getString(R.string.bottomsheet_play_all),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
-
-                                // Shuffle button with bounce effect
-                                var isShufflePressed by remember { mutableStateOf(false) }
-                                val shuffleButtonScale by animateFloatAsState(
-                                    targetValue = if (isShufflePressed) 0.85f else 1f,
-                                    animationSpec = spring(
-                                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                                        stiffness = Spring.StiffnessMedium
-                                    ),
-                                    label = "shuffleButtonScale"
-                                )
-                                val shuffleRotation by animateFloatAsState(
-                                    targetValue = if (isShufflePressed) 15f else 0f,
-                                    animationSpec = spring(
-                                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                                        stiffness = Spring.StiffnessLow
-                                    ),
-                                    label = "shuffleRotation"
-                                )
-
-                                FilledTonalIconButton(
-                                    onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                        if (sortedSongs.isNotEmpty()) {
-                                            onShufflePlay(sortedSongs)
-                                        } else {
-                                            onShufflePlay(album.songs)
-                                        }
-                                        scope.launch {
-                                            sheetState.hide()
-                                        }.invokeOnCompletion {
-                                            if (!sheetState.isVisible) {
-                                                onDismiss()
-                                                onPlayerClick()
-                                            }
-                                        }
-                                    },
-                                    modifier = Modifier
-                                        .size(52.dp)
-                                        .graphicsLayer {
-                                            scaleX = shuffleButtonScale
-                                            scaleY = shuffleButtonScale
-                                            rotationZ = shuffleRotation
-                                        }
-                                        .pointerInput(Unit) {
-                                            detectTapGestures(
-                                                onPress = {
-                                                    isShufflePressed = true
-                                                    tryAwaitRelease()
-                                                    isShufflePressed = false
-                                                }
-                                            )
-                                        },
-                                    colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                    )
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Shuffle,
-                                        contentDescription = "Shuffle play",
-                                        modifier = Modifier.size(26.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // ═══════════════════════════════════════════════════════════════════
-                // SONGS SECTION HEADER
-                // ═══════════════════════════════════════════════════════════════════
-                AnimatedVisibility(
-                    visible = isVisible && sortedSongs.isNotEmpty(),
-                    enter = fadeIn(tween(500, delayMillis = 500)) +
-                            slideInVertically(
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessLow
-                                ),
-                                initialOffsetY = { 30 }
-                            )
-                ) {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 24.dp, vertical = 16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(
-                                    text = context.getString(R.string.bottomsheet_tracks),
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = formatDuration(totalDuration, useHoursFormat) + " total",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                // Song count badge
-                                Surface(
-                                    color = MaterialTheme.colorScheme.primary,
-                                    shape = RoundedCornerShape(12.dp)
-                                ) {
-                                    Text(
-                                        text = "${sortedSongs.size}",
-                                        style = MaterialTheme.typography.labelLarge,
-                                        color = MaterialTheme.colorScheme.onPrimary,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                                    )
-                                }
-
-                                // Sort button
-                                Box {
-                                    var sortButtonPressed by remember { mutableStateOf(false) }
-                                    val sortButtonScale by animateFloatAsState(
-                                        targetValue = if (sortButtonPressed) 0.85f else 1f,
+                                    // Play All button with pulse animation
+                                    var isPlayPressed by remember { mutableStateOf(false) }
+                                    val playButtonScale by animateFloatAsState(
+                                        targetValue = if (isPlayPressed) 0.92f else 1f,
                                         animationSpec = spring(
                                             dampingRatio = Spring.DampingRatioMediumBouncy,
                                             stiffness = Spring.StiffnessMedium
                                         ),
-                                        label = "sortButtonScale"
+                                        label = "playButtonScale"
                                     )
 
-                                    FilledTonalIconButton(
+                                    Button(
                                         onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                            showSortMenu = true
-                                        },
-                                        modifier = Modifier
-                                            .size(40.dp)
-                                            .graphicsLayer {
-                                                scaleX = sortButtonScale
-                                                scaleY = sortButtonScale
+                                            HapticUtils.performHapticFeedback(
+                                                context,
+                                                haptics,
+                                                HapticFeedbackType.LongPress
+                                            )
+                                            if (sortedSongs.isNotEmpty()) {
+                                                onPlayAll(sortedSongs)
+                                            } else {
+                                                onPlayAll(album.songs)
                                             }
-                                            .pointerInput(Unit) {
-                                                detectTapGestures(
-                                                    onPress = {
-                                                        sortButtonPressed = true
-                                                        tryAwaitRelease()
-                                                        sortButtonPressed = false
-                                                    }
-                                                )
-                                            },
-                                        colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                        )
-                                    ) {
-                                        Icon(
-                                            imageVector = RhythmIcons.Actions.Sort,
-                                            contentDescription = "Sort songs",
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                    }
-
-                                    DropdownMenu(
-                                        expanded = showSortMenu,
-                                        onDismissRequest = { showSortMenu = false },
-                                        shape = RoundedCornerShape(16.dp),
-                                        modifier = Modifier.padding(4.dp)
-                                    ) {
-                                        AlbumSortOrder.entries.forEach { order ->
-                                            val isSelected = sortOrder == order
-                                            Surface(
-                                                color = if (isSelected) 
-                                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
-                                                else 
-                                                    Color.Transparent,
-                                                shape = RoundedCornerShape(12.dp),
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(horizontal = 8.dp, vertical = 2.dp)
-                                            ) {
-                                                DropdownMenuItem(
-                                                    text = { 
-                                                        Text(
-                                                            text = when (order) {
-                                                                AlbumSortOrder.TRACK_NUMBER -> "Track Number"
-                                                                AlbumSortOrder.TITLE_ASC, AlbumSortOrder.TITLE_DESC -> "Title"
-                                                                AlbumSortOrder.DURATION_ASC, AlbumSortOrder.DURATION_DESC -> "Duration"
-                                                            },
-                                                            style = MaterialTheme.typography.bodyMedium,
-                                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                                            color = if (isSelected)
-                                                                MaterialTheme.colorScheme.onPrimaryContainer
-                                                            else
-                                                                MaterialTheme.colorScheme.onSurface
-                                                        )
-                                                    },
-                                                    leadingIcon = {
-                                                        Icon(
-                                                            imageVector = when (order) {
-                                                                AlbumSortOrder.TRACK_NUMBER -> Icons.Filled.FormatListNumbered
-                                                                AlbumSortOrder.TITLE_ASC, AlbumSortOrder.TITLE_DESC -> Icons.Filled.SortByAlpha
-                                                                AlbumSortOrder.DURATION_ASC, AlbumSortOrder.DURATION_DESC -> Icons.Filled.AccessTime
-                                                            },
-                                                            contentDescription = null,
-                                                            tint = if (isSelected)
-                                                                MaterialTheme.colorScheme.onPrimaryContainer
-                                                            else
-                                                                MaterialTheme.colorScheme.onSurfaceVariant
-                                                        )
-                                                    },
-                                                    trailingIcon = {
-                                                        when (order) {
-                                                            AlbumSortOrder.TITLE_ASC, AlbumSortOrder.DURATION_ASC -> {
-                                                                Icon(
-                                                                    imageVector = Icons.Default.ArrowUpward,
-                                                                    contentDescription = "Ascending",
-                                                                    tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
-                                                                )
-                                                            }
-                                                            AlbumSortOrder.TITLE_DESC, AlbumSortOrder.DURATION_DESC -> {
-                                                                Icon(
-                                                                    imageVector = Icons.Default.ArrowDownward,
-                                                                    contentDescription = "Descending",
-                                                                    tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
-                                                                )
-                                                            }
-                                                            else -> {}
-                                                        }
-                                                    },
-                                                    onClick = {
-                                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                                        sortOrder = order
-                                                        showSortMenu = false
-                                                        appSettings.setAlbumSortOrder(order.name)
-                                                    },
-                                                    colors = androidx.compose.material3.MenuDefaults.itemColors(
-                                                        textColor = if (isSelected) 
-                                                            MaterialTheme.colorScheme.onPrimaryContainer
-                                                        else 
-                                                            MaterialTheme.colorScheme.onSurface
-                                                    )
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // ═══════════════════════════════════════════════════════════════════
-                // SONGS LIST
-                // ═══════════════════════════════════════════════════════════════════
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(horizontal = 12.dp)
-                        .graphicsLayer { translationY = contentOffset },
-                    shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainer,
-                    tonalElevation = 1.dp
-                ) {
-                    if (sortedSongs.isNotEmpty()) {
-                        LazyColumn(
-                            state = listState,
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(top = 8.dp, bottom = 100.dp),
-                            userScrollEnabled = true
-                        ) {
-                            itemsIndexed(
-                                items = sortedSongs,
-                                key = { _, song -> song.id }
-                            ) { index, song ->
-                                // Staggered animation with smooth entrance for first 10 items
-                                val shouldAnimate = index < 10
-                                var itemVisible by remember { mutableStateOf(!shouldAnimate) }
-                                
-                                // Animation progress for stagger effect
-                                val itemAlpha by animateFloatAsState(
-                                    targetValue = if (itemVisible) 1f else 0f,
-                                    animationSpec = tween(
-                                        durationMillis = 300,
-                                        easing = FastOutSlowInEasing
-                                    ),
-                                    label = "itemAlpha_$index"
-                                )
-                                
-                                val itemTranslation by animateFloatAsState(
-                                    targetValue = if (itemVisible) 0f else 60f,
-                                    animationSpec = spring(
-                                        dampingRatio = Spring.DampingRatioLowBouncy,
-                                        stiffness = Spring.StiffnessMediumLow
-                                    ),
-                                    label = "itemTranslation_$index"
-                                )
-                                
-                                val itemScale by animateFloatAsState(
-                                    targetValue = if (itemVisible) 1f else 0.9f,
-                                    animationSpec = spring(
-                                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                                        stiffness = Spring.StiffnessMedium
-                                    ),
-                                    label = "itemScale_$index"
-                                )
-                                
-                                if (shouldAnimate) {
-                                    LaunchedEffect(Unit) {
-                                        delay(50L * index + 100L) // Staggered delay with initial offset
-                                        itemVisible = true
-                                    }
-                                }
-
-                                Box(
-                                    modifier = Modifier
-                                        .graphicsLayer {
-                                            alpha = itemAlpha
-                                            translationX = itemTranslation
-                                            scaleX = itemScale
-                                            scaleY = itemScale
-                                        }
-                                ) {
-                                    ExpressiveSongItem(
-                                        song = song,
-                                        index = index + 1,
-                                        onClick = {
-                                            onSongClick(song)
                                             scope.launch {
                                                 sheetState.hide()
                                             }.invokeOnCompletion {
@@ -1544,53 +1187,454 @@ fun AlbumBottomSheet(
                                                 }
                                             }
                                         },
-                                        onAddToQueue = { onAddToQueue(song) },
-                                        onAddToPlaylist = { onAddSongToPlaylist(song) },
-                                        onPlayNext = { onPlayNext(song) },
-                                        onToggleFavorite = { onToggleFavorite(song) },
-                                        isFavorite = favoriteSongs.contains(song.id),
-                                        onShowSongInfo = { onShowSongInfo(song) },
-                                        onAddToBlacklist = { onAddToBlacklist(song) },
-                                        currentSong = currentSong,
-                                        isPlaying = isPlaying,
-                                        useHoursFormat = useHoursFormat,
-                                        haptics = haptics,
-                                        modifier = Modifier.animateItem()
-                                    )
-                                }
-                            }
-                        }
-                    } else {
-                        // Empty state
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
-                                Surface(
-                                    shape = CircleShape,
-                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                    modifier = Modifier.size(80.dp)
-                                ) {
-                                    Box(contentAlignment = Alignment.Center) {
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.primary
+                                        ),
+                                        shape = RoundedCornerShape(24.dp),
+                                        contentPadding = PaddingValues(
+                                            horizontal = 28.dp,
+                                            vertical = 14.dp
+                                        ),
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .pointerInput(Unit) {
+                                                detectTapGestures(
+                                                    onPress = {
+                                                        isPlayPressed = true
+                                                        tryAwaitRelease()
+                                                        isPlayPressed = false
+                                                    }
+                                                )
+                                            }
+                                    ) {
                                         Icon(
-                                            imageVector = Icons.Filled.MusicOff,
+                                            imageVector = Icons.Filled.PlayArrow,
                                             contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                                            modifier = Modifier.size(40.dp)
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = context.getString(R.string.bottomsheet_play_all),
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+
+                                    // Shuffle button with bounce effect
+                                    var isShufflePressed by remember { mutableStateOf(false) }
+                                    val shuffleButtonScale by animateFloatAsState(
+                                        targetValue = if (isShufflePressed) 0.85f else 1f,
+                                        animationSpec = spring(
+                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                            stiffness = Spring.StiffnessMedium
+                                        ),
+                                        label = "shuffleButtonScale"
+                                    )
+                                    val shuffleRotation by animateFloatAsState(
+                                        targetValue = if (isShufflePressed) 15f else 0f,
+                                        animationSpec = spring(
+                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                            stiffness = Spring.StiffnessLow
+                                        ),
+                                        label = "shuffleRotation"
+                                    )
+
+                                    FilledTonalIconButton(
+                                        onClick = {
+                                            HapticUtils.performHapticFeedback(
+                                                context,
+                                                haptics,
+                                                HapticFeedbackType.LongPress
+                                            )
+                                            if (sortedSongs.isNotEmpty()) {
+                                                onShufflePlay(sortedSongs)
+                                            } else {
+                                                onShufflePlay(album.songs)
+                                            }
+                                            scope.launch {
+                                                sheetState.hide()
+                                            }.invokeOnCompletion {
+                                                if (!sheetState.isVisible) {
+                                                    onDismiss()
+                                                    onPlayerClick()
+                                                }
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .size(52.dp)
+                                            .graphicsLayer {
+                                                scaleX = shuffleButtonScale
+                                                scaleY = shuffleButtonScale
+                                                rotationZ = shuffleRotation
+                                            }
+                                            .pointerInput(Unit) {
+                                                detectTapGestures(
+                                                    onPress = {
+                                                        isShufflePressed = true
+                                                        tryAwaitRelease()
+                                                        isShufflePressed = false
+                                                    }
+                                                )
+                                            },
+                                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                        )
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Shuffle,
+                                            contentDescription = "Shuffle play",
+                                            modifier = Modifier.size(26.dp)
                                         )
                                     }
                                 }
+                            }
+                        }
+                    }
 
-                                Text(
-                                    text = context.getString(R.string.bottomsheet_no_songs_album),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    textAlign = TextAlign.Center
+                    // ═══════════════════════════════════════════════════════════════════
+                    // SONGS SECTION HEADER
+                    // ═══════════════════════════════════════════════════════════════════
+                    AnimatedVisibility(
+                        visible = isVisible && sortedSongs.isNotEmpty(),
+                        enter = fadeIn(tween(500, delayMillis = 500)) +
+                                slideInVertically(
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessLow
+                                    ),
+                                    initialOffsetY = { 30 }
                                 )
+                    ) {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        text = context.getString(R.string.bottomsheet_tracks),
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = formatDuration(
+                                            totalDuration,
+                                            useHoursFormat
+                                        ) + " total",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    // Song count badge
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.primary,
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Text(
+                                            text = "${sortedSongs.size}",
+                                            style = MaterialTheme.typography.labelLarge,
+                                            color = MaterialTheme.colorScheme.onPrimary,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(
+                                                horizontal = 12.dp,
+                                                vertical = 6.dp
+                                            )
+                                        )
+                                    }
+
+                                    // Sort button
+                                    Box {
+                                        var sortButtonPressed by remember { mutableStateOf(false) }
+                                        val sortButtonScale by animateFloatAsState(
+                                            targetValue = if (sortButtonPressed) 0.85f else 1f,
+                                            animationSpec = spring(
+                                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                stiffness = Spring.StiffnessMedium
+                                            ),
+                                            label = "sortButtonScale"
+                                        )
+
+                                        FilledTonalIconButton(
+                                            onClick = {
+                                                HapticUtils.performHapticFeedback(
+                                                    context,
+                                                    haptics,
+                                                    HapticFeedbackType.TextHandleMove
+                                                )
+                                                showSortMenu = true
+                                            },
+                                            modifier = Modifier
+                                                .size(40.dp)
+                                                .graphicsLayer {
+                                                    scaleX = sortButtonScale
+                                                    scaleY = sortButtonScale
+                                                }
+                                                .pointerInput(Unit) {
+                                                    detectTapGestures(
+                                                        onPress = {
+                                                            sortButtonPressed = true
+                                                            tryAwaitRelease()
+                                                            sortButtonPressed = false
+                                                        }
+                                                    )
+                                                },
+                                            colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                            )
+                                        ) {
+                                            Icon(
+                                                imageVector = RhythmIcons.Actions.Sort,
+                                                contentDescription = "Sort songs",
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+
+                                        DropdownMenu(
+                                            expanded = showSortMenu,
+                                            onDismissRequest = { showSortMenu = false },
+                                            shape = RoundedCornerShape(16.dp),
+                                            modifier = Modifier.padding(4.dp)
+                                        ) {
+                                            AlbumSortOrder.entries.forEach { order ->
+                                                val isSelected = sortOrder == order
+                                                Surface(
+                                                    color = if (isSelected)
+                                                        MaterialTheme.colorScheme.primaryContainer.copy(
+                                                            alpha = 0.8f
+                                                        )
+                                                    else
+                                                        Color.Transparent,
+                                                    shape = RoundedCornerShape(12.dp),
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                                                ) {
+                                                    DropdownMenuItem(
+                                                        text = {
+                                                            Text(
+                                                                text = when (order) {
+                                                                    AlbumSortOrder.TRACK_NUMBER -> "Track Number"
+                                                                    AlbumSortOrder.TITLE_ASC, AlbumSortOrder.TITLE_DESC -> "Title"
+                                                                    AlbumSortOrder.DURATION_ASC, AlbumSortOrder.DURATION_DESC -> "Duration"
+                                                                },
+                                                                style = MaterialTheme.typography.bodyMedium,
+                                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                                                color = if (isSelected)
+                                                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                                                else
+                                                                    MaterialTheme.colorScheme.onSurface
+                                                            )
+                                                        },
+                                                        leadingIcon = {
+                                                            Icon(
+                                                                imageVector = when (order) {
+                                                                    AlbumSortOrder.TRACK_NUMBER -> Icons.Filled.FormatListNumbered
+                                                                    AlbumSortOrder.TITLE_ASC, AlbumSortOrder.TITLE_DESC -> Icons.Filled.SortByAlpha
+                                                                    AlbumSortOrder.DURATION_ASC, AlbumSortOrder.DURATION_DESC -> Icons.Filled.AccessTime
+                                                                },
+                                                                contentDescription = null,
+                                                                tint = if (isSelected)
+                                                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                                                else
+                                                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                                            )
+                                                        },
+                                                        trailingIcon = {
+                                                            when (order) {
+                                                                AlbumSortOrder.TITLE_ASC, AlbumSortOrder.DURATION_ASC -> {
+                                                                    Icon(
+                                                                        imageVector = Icons.Default.ArrowUpward,
+                                                                        contentDescription = "Ascending",
+                                                                        tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                                                    )
+                                                                }
+
+                                                                AlbumSortOrder.TITLE_DESC, AlbumSortOrder.DURATION_DESC -> {
+                                                                    Icon(
+                                                                        imageVector = Icons.Default.ArrowDownward,
+                                                                        contentDescription = "Descending",
+                                                                        tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                                                    )
+                                                                }
+
+                                                                else -> {}
+                                                            }
+                                                        },
+                                                        onClick = {
+                                                            HapticUtils.performHapticFeedback(
+                                                                context,
+                                                                haptics,
+                                                                HapticFeedbackType.LongPress
+                                                            )
+                                                            sortOrder = order
+                                                            showSortMenu = false
+                                                            appSettings.setAlbumSortOrder(order.name)
+                                                        },
+                                                        colors = androidx.compose.material3.MenuDefaults.itemColors(
+                                                            textColor = if (isSelected)
+                                                                MaterialTheme.colorScheme.onPrimaryContainer
+                                                            else
+                                                                MaterialTheme.colorScheme.onSurface
+                                                        )
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // ═══════════════════════════════════════════════════════════════════
+                    // SONGS LIST
+                    // ═══════════════════════════════════════════════════════════════════
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .padding(horizontal = 12.dp)
+                            .graphicsLayer { translationY = contentOffset },
+                        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainer,
+                        tonalElevation = 1.dp
+                    ) {
+                        if (sortedSongs.isNotEmpty()) {
+                            LazyColumn(
+                                state = listState,
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(top = 8.dp, bottom = 100.dp),
+                                userScrollEnabled = true
+                            ) {
+                                itemsIndexed(
+                                    items = sortedSongs,
+                                    key = { _, song -> song.id }
+                                ) { index, song ->
+                                    // Staggered animation with smooth entrance for first 10 items
+                                    val shouldAnimate = index < 10
+                                    var itemVisible by remember { mutableStateOf(!shouldAnimate) }
+
+                                    // Animation progress for stagger effect
+                                    val itemAlpha by animateFloatAsState(
+                                        targetValue = if (itemVisible) 1f else 0f,
+                                        animationSpec = tween(
+                                            durationMillis = 300,
+                                            easing = FastOutSlowInEasing
+                                        ),
+                                        label = "itemAlpha_$index"
+                                    )
+
+                                    val itemTranslation by animateFloatAsState(
+                                        targetValue = if (itemVisible) 0f else 60f,
+                                        animationSpec = spring(
+                                            dampingRatio = Spring.DampingRatioLowBouncy,
+                                            stiffness = Spring.StiffnessMediumLow
+                                        ),
+                                        label = "itemTranslation_$index"
+                                    )
+
+                                    val itemScale by animateFloatAsState(
+                                        targetValue = if (itemVisible) 1f else 0.9f,
+                                        animationSpec = spring(
+                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                            stiffness = Spring.StiffnessMedium
+                                        ),
+                                        label = "itemScale_$index"
+                                    )
+
+                                    if (shouldAnimate) {
+                                        LaunchedEffect(Unit) {
+                                            delay(50L * index + 100L) // Staggered delay with initial offset
+                                            itemVisible = true
+                                        }
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .graphicsLayer {
+                                                alpha = itemAlpha
+                                                translationX = itemTranslation
+                                                scaleX = itemScale
+                                                scaleY = itemScale
+                                            }
+                                    ) {
+                                        ExpressiveSongItem(
+                                            song = song,
+                                            index = index + 1,
+                                            onClick = {
+                                                onSongClick(song)
+                                                scope.launch {
+                                                    sheetState.hide()
+                                                }.invokeOnCompletion {
+                                                    if (!sheetState.isVisible) {
+                                                        onDismiss()
+                                                        onPlayerClick()
+                                                    }
+                                                }
+                                            },
+                                            onAddToQueue = { onAddToQueue(song) },
+                                            onAddToPlaylist = { onAddSongToPlaylist(song) },
+                                            onPlayNext = { onPlayNext(song) },
+                                            onToggleFavorite = { onToggleFavorite(song) },
+                                            isFavorite = favoriteSongs.contains(song.id),
+                                            onShowSongInfo = { onShowSongInfo(song) },
+                                            onAddToBlacklist = { onAddToBlacklist(song) },
+                                            currentSong = currentSong,
+                                            isPlaying = isPlaying,
+                                            useHoursFormat = useHoursFormat,
+                                            haptics = haptics,
+                                            modifier = Modifier.animateItem()
+                                        )
+                                    }
+                                }
+                            }
+                        } else {
+                            // Empty state
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                        modifier = Modifier.size(80.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(
+                                                imageVector = Icons.Filled.MusicOff,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                                    alpha = 0.6f
+                                                ),
+                                                modifier = Modifier.size(40.dp)
+                                            )
+                                        }
+                                    }
+
+                                    Text(
+                                        text = context.getString(R.string.bottomsheet_no_songs_album),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
                             }
                         }
                     }
@@ -1605,7 +1649,7 @@ fun AlbumBottomSheet(
 // ═══════════════════════════════════════════════════════════════════════════════
 
 @Composable
-private fun MetadataChip(
+fun MetadataChip(
     text: String,
     containerColor: Color,
     contentColor: Color
