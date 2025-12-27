@@ -1067,6 +1067,8 @@
     <string name="settings_crash_log_history_desc">View and manage crash reports</string>
     <string name="settings_experimental_features">Experimental Features</string>
     <string name="settings_experimental_features_desc">Try out cutting-edge features</string>
+    <string name="settings_select_option">Rhythm Settings</string>
+    <string name="settings_select_option_desc">Choose a setting from the list to configure</string>
     
     <!-- Playlist Actions -->
     <string name="playlist_rename_action">Rename playlist</string>

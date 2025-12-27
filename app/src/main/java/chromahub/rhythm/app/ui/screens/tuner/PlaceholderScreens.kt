@@ -13513,3 +13513,111 @@ private fun HomeSettingsSliderRow(
 
 
 
+
+@Composable
+fun PlaceholderSettingsScreen() {
+    val context = LocalContext.current
+    val hapticFeedback = LocalHapticFeedback.current
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        // Large settings icon
+        Surface(
+            shape = RoundedCornerShape(55.dp),
+            color = MaterialTheme.colorScheme.primaryContainer,
+            modifier = Modifier.size(120.dp)
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Icon(
+                    imageVector = RhythmIcons.Settings,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(64.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Title
+        Text(
+            text = context.getString(R.string.settings_select_option),
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            fontWeight = FontWeight.SemiBold
+        )
+
+//        Spacer(modifier = Modifier.height(16.dp))
+//
+//        // Description
+//        Text(
+//            text = context.getString(R.string.settings_select_option_desc),
+//            style = MaterialTheme.typography.bodyLarge,
+//            color = MaterialTheme.colorScheme.onSurfaceVariant,
+//            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+//            lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.2f
+//        )
+
+        Spacer(modifier = Modifier.height(48.dp))
+
+        // Additional visual elements for tablet UI
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.8f)
+                .height(200.dp),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Lightbulb,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(48.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Choose a setting from the left panel",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    fontWeight = FontWeight.Medium
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Tap on any setting option to view and modify its preferences here",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+            }
+        }
+    }
+}
+
+
+
+

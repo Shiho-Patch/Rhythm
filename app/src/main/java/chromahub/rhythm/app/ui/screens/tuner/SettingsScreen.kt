@@ -20,6 +20,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Spring
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -88,6 +90,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.graphicsLayer
@@ -118,6 +121,7 @@ import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalConfiguration
 import chromahub.rhythm.app.ui.theme.RhythmTheme
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.ui.navigation.Screen
@@ -169,7 +173,8 @@ data class SettingGroup(
 fun SettingsScreen(
     onBackClick: () -> Unit,
     onNavigateTo: (String) -> Unit, // Add navigation callback
-    scrollState: LazyListState? = null // Optional scroll state parameter
+    scrollState: LazyListState? = null, // Optional scroll state parameter
+    isTablet: Boolean = false // Whether this is displayed on a tablet
 ) {
     val hapticFeedback = LocalHapticFeedback.current
     val context = LocalContext.current
@@ -191,7 +196,7 @@ fun SettingsScreen(
 
     CollapsibleHeaderScreen(
         title = "Settings",
-        showBackButton = true,
+        showBackButton = !isTablet,
         onBackClick = {
             HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
             onBackClick()
@@ -343,7 +348,7 @@ fun SettingsScreen(
             modifier = modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background) // Ensure background color for the scrollable content
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = if (isTablet) 32.dp else 24.dp)
         ) {
             items(settingGroups, key = { "setting_${it.title}" }) { group ->
                 Spacer(modifier = Modifier.height(28.dp))
@@ -815,12 +820,15 @@ fun SettingsScreenPreview() {
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun SettingsScreenWrapper(
-    onBack: () -> Unit, 
+    onBack: () -> Unit,
     appSettings: chromahub.rhythm.app.data.AppSettings,
     navController: androidx.navigation.NavController
 ) {
+    val configuration = LocalConfiguration.current
+    val isTablet = configuration.screenWidthDp >= 600
+
     var currentRoute by rememberSaveable { mutableStateOf<String?>(null) }
-    
+
     // Hoist the main settings scroll state to persist across navigation
     val mainSettingsScrollState = rememberSaveable(
         key = "main_settings_scroll_state",
@@ -828,7 +836,7 @@ fun SettingsScreenWrapper(
     ) {
         LazyListState()
     }
-    
+
     // Handle back navigation - if we're in a subsettings screen, go back to main screen
     val handleBack = {
         if (currentRoute != null) {
@@ -837,128 +845,244 @@ fun SettingsScreenWrapper(
             onBack()
         }
     }
-    
+
     // Handle system back gestures when in subsettings
     BackHandler(enabled = currentRoute != null) {
         handleBack()
     }
-    
-    AnimatedContent(
-        targetState = currentRoute,
-        transitionSpec = {
-            if (targetState != null) {
-                // Enhanced slide in from right when navigating to a screen
-                slideInHorizontally(
-                    initialOffsetX = { it },
-                    animationSpec = tween(
-                        durationMillis = 400,
-                        easing = androidx.compose.animation.core.EaseOutCubic
-                    )
-                ) + fadeIn(
-                    animationSpec = tween(
-                        durationMillis = 350,
-                        delayMillis = 50
-                    )
-                ) + scaleIn(
-                    initialScale = 0.92f,
-                    animationSpec = tween(
-                        durationMillis = 400,
-                        easing = androidx.compose.animation.core.EaseOutCubic
-                    )
-                ) togetherWith
-                slideOutHorizontally(
-                    targetOffsetX = { -it / 4 },
-                    animationSpec = tween(
-                        durationMillis = 350,
-                        easing = androidx.compose.animation.core.EaseInCubic
-                    )
-                ) + fadeOut(
-                    animationSpec = tween(durationMillis = 250)
-                ) + scaleOut(
-                    targetScale = 0.95f,
-                    animationSpec = tween(
-                        durationMillis = 350,
-                        easing = androidx.compose.animation.core.EaseInCubic
-                    )
-                )
-            } else {
-                // Enhanced slide in from left when going back
-                slideInHorizontally(
-                    initialOffsetX = { -it / 4 },
-                    animationSpec = tween(
-                        durationMillis = 400,
-                        easing = androidx.compose.animation.core.EaseOutCubic
-                    )
-                ) + fadeIn(
-                    animationSpec = tween(
-                        durationMillis = 350,
-                        delayMillis = 50
-                    )
-                ) + scaleIn(
-                    initialScale = 0.95f,
-                    animationSpec = tween(
-                        durationMillis = 400,
-                        easing = androidx.compose.animation.core.EaseOutCubic
-                    )
-                ) togetherWith
-                slideOutHorizontally(
-                    targetOffsetX = { it },
-                    animationSpec = tween(
-                        durationMillis = 350,
-                        easing = androidx.compose.animation.core.EaseInCubic
-                    )
-                ) + fadeOut(
-                    animationSpec = tween(durationMillis = 250)
-                ) + scaleOut(
-                    targetScale = 0.92f,
-                    animationSpec = tween(
-                        durationMillis = 350,
-                        easing = androidx.compose.animation.core.EaseInCubic
-                    )
+
+    val onNavigateToSubsetting = { route: String ->
+        if (route == SettingsRoutes.LISTENING_STATS) {
+            navController.navigate("listening_stats")
+        } else if (route == SettingsRoutes.EQUALIZER) {
+            navController.navigate(Screen.Equalizer.route)
+        } else {
+            currentRoute = route
+        }
+    }
+
+    if (isTablet) {
+        // Tablet layout: Master-detail with settings always visible on left
+        Row(modifier = Modifier.fillMaxSize()) {
+            // Master pane - always visible settings list
+            Surface(
+                modifier = Modifier
+                    .weight(0.35f)
+                    .fillMaxHeight(),
+            ) {
+                SettingsScreen(
+                    onBackClick = handleBack,
+                    onNavigateTo = onNavigateToSubsetting,
+                    scrollState = mainSettingsScrollState,
+                    isTablet = true
                 )
             }
-        },
-        label = "settings_navigation",
-        contentKey = { it ?: "main_settings" }
-    ) { route ->
-        when (route) {
-            SettingsRoutes.NOTIFICATIONS -> NotificationsSettingsScreen(onBackClick = { currentRoute = null })
-            SettingsRoutes.PLAYLISTS -> PlaylistsSettingsScreen(onBackClick = { currentRoute = null })
-            SettingsRoutes.MEDIA_SCAN -> MediaScanSettingsScreen(onBackClick = { currentRoute = null })
-            SettingsRoutes.ARTIST_SEPARATORS -> ArtistSeparatorsSettingsScreen(onBackClick = { currentRoute = null })
-            SettingsRoutes.ABOUT -> chromahub.rhythm.app.ui.screens.tuner.AboutScreen(
-                onBackClick = { currentRoute = null },
-                onNavigateToUpdates = { currentRoute = SettingsRoutes.UPDATES }
-            )
-            SettingsRoutes.UPDATES -> UpdatesSettingsScreen(onBackClick = { currentRoute = null })
-            SettingsRoutes.EXPERIMENTAL_FEATURES -> ExperimentalFeaturesScreen(onBackClick = { currentRoute = null })
-            SettingsRoutes.API_MANAGEMENT -> ApiManagementSettingsScreen(onBackClick = { currentRoute = null })
-            SettingsRoutes.CACHE_MANAGEMENT -> CacheManagementSettingsScreen(onBackClick = { currentRoute = null })
-            SettingsRoutes.BACKUP_RESTORE -> BackupRestoreSettingsScreen(onBackClick = { currentRoute = null })
-            SettingsRoutes.LIBRARY_TAB_ORDER -> LibraryTabOrderSettingsScreen(onBackClick = { currentRoute = null })
-            SettingsRoutes.THEME_CUSTOMIZATION -> ThemeCustomizationSettingsScreen(onBackClick = { currentRoute = null })
-            SettingsRoutes.PLAYER_CUSTOMIZATION -> PlayerCustomizationSettingsScreen(onBackClick = { currentRoute = null })
-            SettingsRoutes.MINIPLAYER_CUSTOMIZATION -> MiniPlayerCustomizationSettingsScreen(onBackClick = { currentRoute = null })
-            SettingsRoutes.SLEEP_TIMER -> SleepTimerSettingsScreen(onBackClick = { currentRoute = null })
-            SettingsRoutes.CRASH_LOG_HISTORY -> CrashLogHistorySettingsScreen(onBackClick = { currentRoute = null }, appSettings = appSettings)
-            SettingsRoutes.QUEUE_PLAYBACK -> QueuePlaybackSettingsScreen(onBackClick = { currentRoute = null })
-            SettingsRoutes.LYRICS_SOURCE -> LyricsSourceSettingsScreen(onBackClick = { currentRoute = null })
-            SettingsRoutes.WIDGET -> WidgetSettingsScreen(onBackClick = { currentRoute = null })
-            SettingsRoutes.HOME_SCREEN -> HomeScreenCustomizationSettingsScreen(onBackClick = { currentRoute = null })
-            SettingsRoutes.GESTURES -> GesturesSettingsScreen(onBackClick = { currentRoute = null })
-            else -> SettingsScreen(
-                onBackClick = handleBack,
-                onNavigateTo = { route -> 
-                    if (route == SettingsRoutes.LISTENING_STATS) {
-                        navController.navigate("listening_stats")
-                    } else if (route == SettingsRoutes.EQUALIZER) {
-                        navController.navigate(Screen.Equalizer.route)
-                    } else {
-                        currentRoute = route
+
+            // Divider
+
+            // Detail pane - subsettings or placeholder
+            Surface(
+                modifier = Modifier
+                    .weight(0.65f)
+                    .fillMaxHeight(),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 0.dp
+            ) {
+                AnimatedContent(
+                    targetState = currentRoute,
+                    transitionSpec = {
+                        if (targetState != null) {
+                            // Slide in from right for subsettings
+                            slideInHorizontally(
+                                initialOffsetX = { it },
+                                animationSpec = tween(
+                                    durationMillis = 400,
+                                    easing = androidx.compose.animation.core.EaseOutCubic
+                                )
+                            ) + fadeIn(
+                                animationSpec = tween(
+                                    durationMillis = 350,
+                                    delayMillis = 50
+                                )
+                            ) togetherWith
+                            slideOutHorizontally(
+                                targetOffsetX = { -it / 4 },
+                                animationSpec = tween(
+                                    durationMillis = 350,
+                                    easing = androidx.compose.animation.core.EaseInCubic
+                                )
+                            ) + fadeOut(
+                                animationSpec = tween(durationMillis = 250)
+                            )
+                        } else {
+                            // Slide in from left when going back to placeholder
+                            slideInHorizontally(
+                                initialOffsetX = { -it / 4 },
+                                animationSpec = tween(
+                                    durationMillis = 400,
+                                    easing = androidx.compose.animation.core.EaseOutCubic
+                                )
+                            ) + fadeIn(
+                                animationSpec = tween(
+                                    durationMillis = 350,
+                                    delayMillis = 50
+                                )
+                            ) togetherWith
+                            slideOutHorizontally(
+                                targetOffsetX = { it },
+                                animationSpec = tween(
+                                    durationMillis = 350,
+                                    easing = androidx.compose.animation.core.EaseInCubic
+                                )
+                            ) + fadeOut(
+                                animationSpec = tween(durationMillis = 250)
+                            )
+                        }
+                    },
+                    label = "tablet_detail_navigation",
+                    contentKey = { it ?: "placeholder" }
+                ) { route ->
+                    when (route) {
+                        SettingsRoutes.NOTIFICATIONS -> NotificationsSettingsScreen(onBackClick = { currentRoute = null })
+                        SettingsRoutes.PLAYLISTS -> PlaylistsSettingsScreen(onBackClick = { currentRoute = null })
+                        SettingsRoutes.MEDIA_SCAN -> MediaScanSettingsScreen(onBackClick = { currentRoute = null })
+                        SettingsRoutes.ARTIST_SEPARATORS -> ArtistSeparatorsSettingsScreen(onBackClick = { currentRoute = null })
+                        SettingsRoutes.ABOUT -> chromahub.rhythm.app.ui.screens.tuner.AboutScreen(
+                            onBackClick = { currentRoute = null },
+                            onNavigateToUpdates = { currentRoute = SettingsRoutes.UPDATES }
+                        )
+                        SettingsRoutes.UPDATES -> UpdatesSettingsScreen(onBackClick = { currentRoute = null })
+                        SettingsRoutes.EXPERIMENTAL_FEATURES -> ExperimentalFeaturesScreen(onBackClick = { currentRoute = null })
+                        SettingsRoutes.API_MANAGEMENT -> ApiManagementSettingsScreen(onBackClick = { currentRoute = null })
+                        SettingsRoutes.CACHE_MANAGEMENT -> CacheManagementSettingsScreen(onBackClick = { currentRoute = null })
+                        SettingsRoutes.BACKUP_RESTORE -> BackupRestoreSettingsScreen(onBackClick = { currentRoute = null })
+                        SettingsRoutes.LIBRARY_TAB_ORDER -> LibraryTabOrderSettingsScreen(onBackClick = { currentRoute = null })
+                        SettingsRoutes.THEME_CUSTOMIZATION -> ThemeCustomizationSettingsScreen(onBackClick = { currentRoute = null })
+                        SettingsRoutes.PLAYER_CUSTOMIZATION -> PlayerCustomizationSettingsScreen(onBackClick = { currentRoute = null })
+                        SettingsRoutes.MINIPLAYER_CUSTOMIZATION -> MiniPlayerCustomizationSettingsScreen(onBackClick = { currentRoute = null })
+                        SettingsRoutes.SLEEP_TIMER -> SleepTimerSettingsScreen(onBackClick = { currentRoute = null })
+                        SettingsRoutes.CRASH_LOG_HISTORY -> CrashLogHistorySettingsScreen(onBackClick = { currentRoute = null }, appSettings = appSettings)
+                        SettingsRoutes.QUEUE_PLAYBACK -> QueuePlaybackSettingsScreen(onBackClick = { currentRoute = null })
+                        SettingsRoutes.LYRICS_SOURCE -> LyricsSourceSettingsScreen(onBackClick = { currentRoute = null })
+                        SettingsRoutes.WIDGET -> WidgetSettingsScreen(onBackClick = { currentRoute = null })
+                        SettingsRoutes.HOME_SCREEN -> HomeScreenCustomizationSettingsScreen(onBackClick = { currentRoute = null })
+                        SettingsRoutes.GESTURES -> GesturesSettingsScreen(onBackClick = { currentRoute = null })
+                        else -> PlaceholderSettingsScreen()
                     }
-                },
-                scrollState = mainSettingsScrollState
-            )
+                }
+            }
+        }
+    } else {
+        // Phone layout: Traditional navigation with AnimatedContent
+        AnimatedContent(
+            targetState = currentRoute,
+            transitionSpec = {
+                if (targetState != null) {
+                    // Enhanced slide in from right when navigating to a screen
+                    slideInHorizontally(
+                        initialOffsetX = { it },
+                        animationSpec = tween(
+                            durationMillis = 400,
+                            easing = androidx.compose.animation.core.EaseOutCubic
+                        )
+                    ) + fadeIn(
+                        animationSpec = tween(
+                            durationMillis = 350,
+                            delayMillis = 50
+                        )
+                    ) + scaleIn(
+                        initialScale = 0.92f,
+                        animationSpec = tween(
+                            durationMillis = 400,
+                            easing = androidx.compose.animation.core.EaseOutCubic
+                        )
+                    ) togetherWith
+                    slideOutHorizontally(
+                        targetOffsetX = { -it / 4 },
+                        animationSpec = tween(
+                            durationMillis = 350,
+                            easing = androidx.compose.animation.core.EaseInCubic
+                        )
+                    ) + fadeOut(
+                        animationSpec = tween(durationMillis = 250)
+                    ) + scaleOut(
+                        targetScale = 0.95f,
+                        animationSpec = tween(
+                            durationMillis = 350,
+                            easing = androidx.compose.animation.core.EaseInCubic
+                        )
+                    )
+                } else {
+                    // Enhanced slide in from left when going back
+                    slideInHorizontally(
+                        initialOffsetX = { -it / 4 },
+                        animationSpec = tween(
+                            durationMillis = 400,
+                            easing = androidx.compose.animation.core.EaseOutCubic
+                        )
+                    ) + fadeIn(
+                        animationSpec = tween(
+                            durationMillis = 350,
+                            delayMillis = 50
+                        )
+                    ) + scaleIn(
+                        initialScale = 0.95f,
+                        animationSpec = tween(
+                            durationMillis = 400,
+                            easing = androidx.compose.animation.core.EaseOutCubic
+                        )
+                    ) togetherWith
+                    slideOutHorizontally(
+                        targetOffsetX = { it },
+                        animationSpec = tween(
+                            durationMillis = 350,
+                            easing = androidx.compose.animation.core.EaseInCubic
+                        )
+                    ) + fadeOut(
+                        animationSpec = tween(durationMillis = 250)
+                    ) + scaleOut(
+                        targetScale = 0.92f,
+                        animationSpec = tween(
+                            durationMillis = 350,
+                            easing = androidx.compose.animation.core.EaseInCubic
+                        )
+                    )
+                }
+            },
+            label = "settings_navigation",
+            contentKey = { it ?: "main_settings" }
+        ) { route ->
+            when (route) {
+                SettingsRoutes.NOTIFICATIONS -> NotificationsSettingsScreen(onBackClick = { currentRoute = null })
+                SettingsRoutes.PLAYLISTS -> PlaylistsSettingsScreen(onBackClick = { currentRoute = null })
+                SettingsRoutes.MEDIA_SCAN -> MediaScanSettingsScreen(onBackClick = { currentRoute = null })
+                SettingsRoutes.ARTIST_SEPARATORS -> ArtistSeparatorsSettingsScreen(onBackClick = { currentRoute = null })
+                SettingsRoutes.ABOUT -> chromahub.rhythm.app.ui.screens.tuner.AboutScreen(
+                    onBackClick = { currentRoute = null },
+                    onNavigateToUpdates = { currentRoute = SettingsRoutes.UPDATES }
+                )
+                SettingsRoutes.UPDATES -> UpdatesSettingsScreen(onBackClick = { currentRoute = null })
+                SettingsRoutes.EXPERIMENTAL_FEATURES -> ExperimentalFeaturesScreen(onBackClick = { currentRoute = null })
+                SettingsRoutes.API_MANAGEMENT -> ApiManagementSettingsScreen(onBackClick = { currentRoute = null })
+                SettingsRoutes.CACHE_MANAGEMENT -> CacheManagementSettingsScreen(onBackClick = { currentRoute = null })
+                SettingsRoutes.BACKUP_RESTORE -> BackupRestoreSettingsScreen(onBackClick = { currentRoute = null })
+                SettingsRoutes.LIBRARY_TAB_ORDER -> LibraryTabOrderSettingsScreen(onBackClick = { currentRoute = null })
+                SettingsRoutes.THEME_CUSTOMIZATION -> ThemeCustomizationSettingsScreen(onBackClick = { currentRoute = null })
+                SettingsRoutes.PLAYER_CUSTOMIZATION -> PlayerCustomizationSettingsScreen(onBackClick = { currentRoute = null })
+                SettingsRoutes.MINIPLAYER_CUSTOMIZATION -> MiniPlayerCustomizationSettingsScreen(onBackClick = { currentRoute = null })
+                SettingsRoutes.SLEEP_TIMER -> SleepTimerSettingsScreen(onBackClick = { currentRoute = null })
+                SettingsRoutes.CRASH_LOG_HISTORY -> CrashLogHistorySettingsScreen(onBackClick = { currentRoute = null }, appSettings = appSettings)
+                SettingsRoutes.QUEUE_PLAYBACK -> QueuePlaybackSettingsScreen(onBackClick = { currentRoute = null })
+                SettingsRoutes.LYRICS_SOURCE -> LyricsSourceSettingsScreen(onBackClick = { currentRoute = null })
+                SettingsRoutes.WIDGET -> WidgetSettingsScreen(onBackClick = { currentRoute = null })
+                SettingsRoutes.HOME_SCREEN -> HomeScreenCustomizationSettingsScreen(onBackClick = { currentRoute = null })
+                SettingsRoutes.GESTURES -> GesturesSettingsScreen(onBackClick = { currentRoute = null })
+                else -> SettingsScreen(
+                    onBackClick = handleBack,
+                    onNavigateTo = onNavigateToSubsetting,
+                    scrollState = mainSettingsScrollState
+                )
+            }
         }
     }
 }
