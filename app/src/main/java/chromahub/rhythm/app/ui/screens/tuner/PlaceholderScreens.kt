@@ -5387,6 +5387,12 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                             "Log audio device changes (Bluetooth, headphones, etc.)",
                             toggleState = appSettings.audioDeviceLoggingEnabled.collectAsState().value,
                             onToggleChange = { appSettings.setAudioDeviceLoggingEnabled(it) }
+                        ),
+                        SettingItem(
+                            Icons.Default.RestartAlt,
+                            "Launch Onboarding",
+                            "Reset and relaunch the onboarding experience",
+                            onClick = { appSettings.setOnboardingCompleted(false) }
                         )
                     )
                 )

@@ -126,7 +126,7 @@ fun PermissionHandler(
         }
     }
 
-    var currentOnboardingStep by remember {
+    var currentOnboardingStep by remember(onboardingCompleted) {
         mutableStateOf(
             if (onboardingCompleted) OnboardingStep.COMPLETE else OnboardingStep.WELCOME
         )
