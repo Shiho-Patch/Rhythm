@@ -3,9 +3,8 @@ package chromahub.rhythm.app.ui.screens
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseInOut
-import androidx.compose.animation.core.EaseInOutSine
+import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -14,20 +13,15 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -54,15 +48,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import chromahub.rhythm.app.R
 import chromahub.rhythm.app.data.AppSettings
-import chromahub.rhythm.app.ui.theme.festive.ChristmasDecorations
 import chromahub.rhythm.app.ui.theme.festive.FestiveConfig
-import chromahub.rhythm.app.ui.theme.festive.FestiveSplashGreeting
 import chromahub.rhythm.app.ui.theme.festive.FestiveThemeEngine
 import chromahub.rhythm.app.ui.theme.festive.FestiveThemeType
 import chromahub.rhythm.app.viewmodel.MusicViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.random.Random
 
 @Composable
 fun SplashScreen(
@@ -71,12 +62,12 @@ fun SplashScreen(
 ) {
     val context = LocalContext.current
     val appSettings = remember { AppSettings.getInstance(context) }
-    
+
     // Festive theme configuration
     val festiveEnabled by appSettings.festiveThemeEnabled.collectAsState()
     val festiveTypeString by appSettings.festiveThemeType.collectAsState()
     val festiveAutoDetect by appSettings.festiveThemeAutoDetect.collectAsState()
-    
+
     val festiveConfig = remember(festiveEnabled, festiveTypeString, festiveAutoDetect) {
         FestiveConfig(
             enabled = festiveEnabled,
@@ -89,141 +80,89 @@ fun SplashScreen(
         )
     }
     val activeFestiveTheme = FestiveThemeEngine.getActiveFestiveTheme(festiveConfig)
-    
-    val infiniteTransition = rememberInfiniteTransition(label = "splashAnimations")
-    
-    // Subtle breathing animation for logo
-    val logoBreathing by infiniteTransition.animateFloat(
-        initialValue = 0.97f,
-        targetValue = 1.03f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 2500,
-                easing = EaseInOutSine
-            ),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "logoBreathing"
-    )
 
-    // Animation state flags
-    var showLogo by remember { mutableStateOf(false) }
-    var showAppName by remember { mutableStateOf(false) }
-    var showTagline by remember { mutableStateOf(false) }
+    // Animation states
+    var showContent by remember { mutableStateOf(false) }
     var showLoader by remember { mutableStateOf(false) }
     var exitSplash by remember { mutableStateOf(false) }
 
-    // Animatable values for smooth animations
-    val logoAlpha = remember { Animatable(1f) } // Start visible
-    val logoScaleAnim = remember { Animatable(1.0f) } // Start at full splash screen size
-    val logoOffsetX = remember { Animatable(0f) } // Logo position - slides left
-    
-    val appNameOffsetX = remember { Animatable(0f) } // Starts centered behind logo - slides right
-    
+    // Animatable values
+    val contentAlpha = remember { Animatable(0f) }
+    val contentScale = remember { Animatable(0.8f) }
+    val loaderOffsetY = remember { Animatable(100f) } // Start below screen
     val loaderAlpha = remember { Animatable(0f) }
-    
     val exitScale = remember { Animatable(1f) }
     val exitAlpha = remember { Animatable(1f) }
+
+    // Subtle pulse animation for logo
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val logoPulse by infiniteTransition.animateFloat(
+        initialValue = 0.95f,
+        targetValue = 1.05f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = EaseInOut),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "logoPulse"
+    )
 
     // Monitor media scanning completion
     val isInitialized by musicViewModel.isInitialized.collectAsState()
 
+    // Entrance animation
     LaunchedEffect(Unit) {
-        delay(150) // Brief initial delay to match system splash
+        delay(200) // Brief delay
 
-        // STEP 1: Logo is already visible at full size (matches system splash)
-        showLogo = true
-        delay(250) // Hold at full size briefly
-        
-        // Shrink logo to fit alongside text
-        logoScaleAnim.animateTo(
-            targetValue = 0.55f, // Shrink to smaller size for side-by-side layout
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessMedium
-            )
-        )
-
-        delay(100) // Brief pause after shrink
-
-        // STEP 2: Logo slides LEFT and App name appears with expand animation (like TabButton)
-        showAppName = true
-        // Logo slides left
+        // Show content with smooth fade and scale
+        showContent = true
         launch {
-            logoOffsetX.animateTo(
-                targetValue = -265f, // Slide left from center
+            contentAlpha.animateTo(1f, animationSpec = tween(800, easing = EaseOut))
+        }
+        launch {
+            contentScale.animateTo(1f, animationSpec = spring(
+                dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
+                stiffness = androidx.compose.animation.core.Spring.StiffnessLow
+            ))
+        }
+
+        delay(600) // Let content settle
+
+        // Show loader sliding up from bottom
+        showLoader = true
+        launch {
+            loaderOffsetY.animateTo(
+                targetValue = 0f,
                 animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioNoBouncy,
-                    stiffness = Spring.StiffnessLow
+                    dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
+                    stiffness = androidx.compose.animation.core.Spring.StiffnessLow
                 )
             )
         }
-        // App name offset happens via AnimatedVisibility now
-        appNameOffsetX.animateTo(
-            targetValue = 105f, // Slide right from center
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioNoBouncy,
-                stiffness = Spring.StiffnessLow
-            )
-        )
-
-        delay(250) // Pause for name to settle
-
-        // STEP 3: Tagline appears with expand animation
-        showTagline = true
-
-        delay(150) // Brief delay before loader
-
-        // STEP 4: Loader fades in smoothly
-        showLoader = true
-        loaderAlpha.animateTo(
-            targetValue = 1f,
-            animationSpec = tween(400, easing = EaseInOut)
-        )
+        loaderAlpha.animateTo(1f, animationSpec = tween(400))
     }
 
-
-
-    // Handle media scanning completion - exit animation
+    // Exit animation when ready
     LaunchedEffect(isInitialized) {
         if (isInitialized && !exitSplash) {
-            delay(2000)
+            delay(1500) // Brief hold
             exitSplash = true
-            
+
             launch {
-                exitScale.animateTo(0.90f, animationSpec = tween(350))
+                exitScale.animateTo(0.9f, animationSpec = tween(400))
             }
-            exitAlpha.animateTo(0f, animationSpec = tween(350))
-            
+            launch {
+                exitAlpha.animateTo(0f, animationSpec = tween(400))
+            }
+
             delay(100)
             onMediaScanComplete()
         }
     }
 
-    // Animated glow for background
-    val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.03f,
-        targetValue = 0.08f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = EaseInOutSine),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "glowAlpha"
-    )
-
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .background(
-                brush = androidx.compose.ui.graphics.Brush.radialGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primary.copy(alpha = glowAlpha),
-                        MaterialTheme.colorScheme.background
-                    ),
-                    radius = 800f
-                )
-            )
             .graphicsLayer {
                 scaleX = exitScale.value
                 scaleY = exitScale.value
@@ -231,147 +170,85 @@ fun SplashScreen(
             },
         contentAlignment = Alignment.Center
     ) {
-        // Christmas decorations - visible and larger
-//        if (festiveEnabled && activeFestiveTheme == FestiveThemeType.CHRISTMAS && showLogo) {
-//            ChristmasDecorations(intensity = 0.8f)
-//        }
-
-        // Main content with dramatic text reveal
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .graphicsLayer {
+                    alpha = contentAlpha.value
+                    scaleX = contentScale.value
+                    scaleY = contentScale.value
+                }
+                .padding(horizontal = 32.dp)
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+            // Logo and App name on same row
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                // Logo and App name on the same line
-                Box(
-                    contentAlignment = Alignment.Center
-                ) {
-                    // App name revealing with expand animation
-                    // Rendered first so it appears BEHIND the logo in z-order
-                    if (showAppName) {
-                        Row(
-                            modifier = Modifier.graphicsLayer {
-                                translationX = appNameOffsetX.value
-                            }
-                        ) {
-                            AnimatedVisibility(
-                                visible = showAppName,
-                                enter = expandHorizontally(
-                                    animationSpec = spring(
-                                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                                        stiffness = Spring.StiffnessMedium
-                                    )
-                                ) + fadeIn(
-                                    animationSpec = tween(400)
-                                ),
-                                exit = shrinkHorizontally() + fadeOut()
-                            ) {
-                                Text(
-                                    text = context.getString(R.string.common_rhythm),
-                                    style = MaterialTheme.typography.displayLarge.copy(
-                                        fontSize = 48.sp,
-                                        letterSpacing = 2.sp
-                                    ),
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-                    }
-                    
-                    // Logo with entrance animation and breathing effect (centered, then slides left)
-                    // Rendered second so it appears ON TOP of the text in z-order
-                    if (showLogo) {
-                        Image(
-                            painter = painterResource(id = R.drawable.rhythm_splash_logo),
-                            contentDescription = "Rhythm",
-                            modifier = Modifier
-                                .size(200.dp) // Larger base size to match system splash
-                                .graphicsLayer {
-                                    alpha = logoAlpha.value
-                                    scaleX = logoScaleAnim.value * logoBreathing
-                                    scaleY = logoScaleAnim.value * logoBreathing
-                                    translationX = logoOffsetX.value
-                                }
-                        )
-                    }
-                }
+                // Logo
+                Image(
+                    painter = painterResource(id = R.drawable.rhythm_splash_logo),
+                    contentDescription = "Rhythm Logo",
+                    modifier = Modifier
+                        .size(100.dp)
+                )
 
-                // Tagline with expand animation from center
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.padding(top = 8.dp)
-                ) {
-                    if (showTagline) {
-                        Row {
-                            AnimatedVisibility(
-                                visible = showTagline,
-                                enter = expandHorizontally(
-                                    animationSpec = spring(
-                                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                                        stiffness = Spring.StiffnessMedium
-                                    )
-                                ) + fadeIn(
-                                    animationSpec = tween(400)
-                                ) + slideInVertically(
-                                    animationSpec = spring(
-                                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                                        stiffness = Spring.StiffnessMedium
-                                    ),
-                                    initialOffsetY = { 50 }
-                                ),
-                                exit = shrinkHorizontally() + fadeOut()
-                            ) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text(
-                                        text = context.getString(R.string.splash_tagline),
-                                        style = MaterialTheme.typography.titleLarge.copy(
-                                            letterSpacing = 1.sp,
-                                            fontSize = 17.sp,
-                                            fontWeight = FontWeight.Medium
-                                        ),
-                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f),
-                                        textAlign = TextAlign.Center
-                                    )
-                                    
-                                    // Festive greeting below tagline
-                                    if (festiveEnabled && activeFestiveTheme != FestiveThemeType.NONE) {
-                                        Spacer(modifier = Modifier.height(12.dp))
-                                        Text(
-                                            text = when (activeFestiveTheme) {
-                                                FestiveThemeType.CHRISTMAS -> context.getString(R.string.festive_greeting_christmas)
-                                                FestiveThemeType.NEW_YEAR -> context.getString(R.string.festive_greeting_new_year)
-                                                FestiveThemeType.HALLOWEEN -> context.getString(R.string.festive_greeting_halloween)
-                                                FestiveThemeType.VALENTINES -> context.getString(R.string.festive_greeting_valentines)
-                                                else -> ""
-                                            },
-                                            style = MaterialTheme.typography.bodyLarge.copy(
-                                                fontWeight = FontWeight.Medium,
-                                                letterSpacing = 0.5.sp
-                                            ),
-                                            color = MaterialTheme.colorScheme.primary,
-                                            textAlign = TextAlign.Center
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                // App name
+                Text(
+                    text = context.getString(R.string.common_rhythm),
+                    style = MaterialTheme.typography.displayMedium.copy(
+                        fontSize = 42.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    ),
+                    color = MaterialTheme.colorScheme.primary,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            Spacer(modifier = Modifier.height(22.dp))
+
+            // Tagline
+            Text(
+                text = context.getString(R.string.splash_tagline),
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = 0.5.sp
+                ),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                textAlign = TextAlign.Center
+            )
+
+            // Festive greeting
+            if (festiveEnabled && activeFestiveTheme != FestiveThemeType.NONE) {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = when (activeFestiveTheme) {
+                        FestiveThemeType.CHRISTMAS -> context.getString(R.string.festive_greeting_christmas)
+                        FestiveThemeType.NEW_YEAR -> context.getString(R.string.festive_greeting_new_year)
+                        FestiveThemeType.HALLOWEEN -> context.getString(R.string.festive_greeting_halloween)
+                        FestiveThemeType.VALENTINES -> context.getString(R.string.festive_greeting_valentines)
+                        else -> ""
+                    },
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Medium,
+                        letterSpacing = 0.5.sp
+                    ),
+                    color = MaterialTheme.colorScheme.primary,
+                    textAlign = TextAlign.Center
+                )
             }
         }
 
-        // Loading indicator at bottom with fade in
+        // Loading indicator at bottom, sliding up
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = 80.dp)
+                .padding(bottom = 60.dp)
                 .graphicsLayer {
+                    translationY = loaderOffsetY.value
                     alpha = loaderAlpha.value
                 },
             contentAlignment = Alignment.BottomCenter
@@ -379,39 +256,40 @@ fun SplashScreen(
             if (showLoader) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
                         text = context.getString(R.string.splash_loading),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                        fontWeight = FontWeight.Medium
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Medium
+                        ),
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
                     )
 
+                    // Modern loading dots
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         repeat(3) { index ->
-                            val animationDelay = index * 150
-                            val dotScale by infiniteTransition.animateFloat(
-                                initialValue = 0.8f,
-                                targetValue = 1.2f,
+                            val dotAlpha by infiniteTransition.animateFloat(
+                                initialValue = 0.3f,
+                                targetValue = 1f,
                                 animationSpec = infiniteRepeatable(
                                     animation = tween(
-                                        600,
-                                        delayMillis = animationDelay,
+                                        800,
+                                        delayMillis = index * 200,
                                         easing = EaseInOut
                                     ),
                                     repeatMode = RepeatMode.Reverse
                                 ),
-                                label = "dot$index"
+                                label = "dotAlpha$index"
                             )
 
                             Surface(
                                 modifier = Modifier
-                                    .size(6.dp)
-                                    .scale(dotScale),
+                                    .size(8.dp)
+                                    .alpha(dotAlpha),
                                 shape = CircleShape,
                                 color = MaterialTheme.colorScheme.primary
                             ) {}
