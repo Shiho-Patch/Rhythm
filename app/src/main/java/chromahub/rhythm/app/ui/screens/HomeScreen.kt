@@ -1,8 +1,9 @@
 // Experimental API opt-ins required for:
 // - Material3 Carousel APIs (HorizontalCenteredHeroCarousel, HorizontalUncontainedCarousel)
 // - ModalBottomSheet, rememberModalBottomSheetState
+// - Window Size Class APIs
 // These will become stable in future Material3 releases
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3WindowSizeClassApi::class)
 
 package chromahub.rhythm.app.ui.screens
 
@@ -114,6 +115,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import androidx.compose.material3.windowsizeclass.WindowHeightSizeClass
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import chromahub.rhythm.app.ui.components.CollapsibleHeaderScreen
 import chromahub.rhythm.app.ui.theme.festive.FestiveConfig
 import chromahub.rhythm.app.ui.theme.festive.FestiveThemeEngine
@@ -138,6 +144,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -612,6 +619,11 @@ private fun ModernScrollableContent(
     coroutineScope: CoroutineScope
 ) {
     val context = LocalContext.current
+    val windowSizeClass = calculateWindowSizeClass(context as android.app.Activity)
+    val widthSizeClass = windowSizeClass.widthSizeClass
+    val heightSizeClass = windowSizeClass.heightSizeClass
+    val isTablet = widthSizeClass == WindowWidthSizeClass.Medium || 
+                   widthSizeClass == WindowWidthSizeClass.Expanded
     val scrollState = rememberScrollState()
     val allSongs by musicViewModel.filteredSongs.collectAsState()
     
@@ -825,8 +837,27 @@ private fun ModernScrollableContent(
             state = lazyListState,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(40.dp),
+                .padding(horizontal = when (widthSizeClass) {
+                    WindowWidthSizeClass.Compact -> 20.dp
+                    WindowWidthSizeClass.Medium -> 32.dp
+                    WindowWidthSizeClass.Expanded -> 32.dp
+                    else -> 20.dp
+                }),
+            verticalArrangement = Arrangement.spacedBy(when (widthSizeClass) {
+                WindowWidthSizeClass.Compact -> when (heightSizeClass) {
+                    WindowHeightSizeClass.Compact -> 32.dp // Landscape phone - tighter spacing
+                    else -> 40.dp // Portrait phone
+                }
+                WindowWidthSizeClass.Medium -> when (heightSizeClass) {
+                    WindowHeightSizeClass.Compact -> 40.dp // Landscape tablet
+                    else -> 48.dp // Portrait tablet
+                }
+                WindowWidthSizeClass.Expanded -> when (heightSizeClass) {
+                    WindowHeightSizeClass.Compact -> 40.dp // Landscape tablet
+                    else -> 48.dp // Portrait tablet
+                }
+                else -> 40.dp
+            }),
             contentPadding = PaddingValues(bottom = 24.dp) // No top padding to connect with topbar
         ) {
             // Update section (preserved as requested)
@@ -868,7 +899,9 @@ private fun ModernScrollableContent(
                                     recentlyPlayed = recentlyPlayed.take(recentlyPlayedCount),
                                     onSongClick = onSongClick,
                                     musicViewModel = musicViewModel,
-                                    coroutineScope = coroutineScope
+                                    coroutineScope = coroutineScope,
+                                    widthSizeClass = widthSizeClass,
+                                    heightSizeClass = heightSizeClass
                                 )
                             }
                         }
@@ -894,7 +927,9 @@ private fun ModernScrollableContent(
                                             showPlayButton = discoverShowPlayButton,
                                             showGradient = discoverShowGradient,
                                             carouselHeight = carouselHeight,
-                                            carouselStyle = discoverCarouselStyle
+                                            carouselStyle = discoverCarouselStyle,
+                                            widthSizeClass = widthSizeClass,
+                                            heightSizeClass = heightSizeClass
                                         )
                                     } else {
                                         ModernEmptyState(
@@ -916,7 +951,9 @@ private fun ModernScrollableContent(
                                         artists = availableArtists.take(artistsCount),
                                         songs = allSongs,
                                         onArtistClick = onArtistClick,
-                                        onViewAllArtists = onViewAllArtists
+                                        onViewAllArtists = onViewAllArtists,
+                                        widthSizeClass = widthSizeClass,
+                                        heightSizeClass = heightSizeClass
                                     )
                                 } else {
                                     Column {
@@ -981,7 +1018,9 @@ private fun ModernScrollableContent(
                                             ) { album ->
                                                 ModernAlbumCard(
                                                     album = album,
-                                                    onClick = { onAlbumClick(album) }
+                                                    onClick = { onAlbumClick(album) },
+                                                    widthSizeClass = widthSizeClass,
+                                                    heightSizeClass = heightSizeClass
                                                 )
                                             }
                                         }
@@ -1045,7 +1084,9 @@ private fun ModernScrollableContent(
                                             ) { album ->
                                                 ModernAlbumCard(
                                                     album = album,
-                                                    onClick = { onAlbumClick(album) }
+                                                    onClick = { onAlbumClick(album) },
+                                                    widthSizeClass = widthSizeClass,
+                                                    heightSizeClass = heightSizeClass
                                                 )
                                             }
                                         }
@@ -1349,7 +1390,9 @@ private fun ModernRecentlyPlayedSection(
     recentlyPlayed: List<Song>,
     onSongClick: (Song) -> Unit,
     musicViewModel: chromahub.rhythm.app.viewmodel.MusicViewModel,
-    coroutineScope: CoroutineScope
+    coroutineScope: CoroutineScope,
+    widthSizeClass: WindowWidthSizeClass = WindowWidthSizeClass.Compact,
+    heightSizeClass: WindowHeightSizeClass = WindowHeightSizeClass.Medium
 ) {
     val context = LocalContext.current
     Column {
@@ -1389,7 +1432,9 @@ private fun ModernRecentlyPlayedSection(
                 ) { song ->
                     ModernRecentSongCard(
                         song = song,
-                        onClick = { onSongClick(song) }
+                        onClick = { onSongClick(song) },
+                        widthSizeClass = widthSizeClass,
+                        heightSizeClass = heightSizeClass
                     )
                 }
             }
@@ -1408,10 +1453,28 @@ private fun ModernRecentlyPlayedSection(
 @Composable
 private fun ModernRecentSongCard(
     song: Song,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    widthSizeClass: WindowWidthSizeClass = WindowWidthSizeClass.Compact,
+    heightSizeClass: WindowHeightSizeClass = WindowHeightSizeClass.Medium
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
+
+    val (cardWidth, cardHeight) = when (widthSizeClass) {
+        WindowWidthSizeClass.Compact -> when (heightSizeClass) {
+            WindowHeightSizeClass.Compact -> 160.dp to 70.dp // Landscape phone - smaller
+            else -> 180.dp to 80.dp // Portrait phone
+        }
+        WindowWidthSizeClass.Medium -> when (heightSizeClass) {
+            WindowHeightSizeClass.Compact -> 150.dp to 65.dp // Landscape tablet
+            else -> 160.dp to 70.dp // Portrait tablet
+        }
+        WindowWidthSizeClass.Expanded -> when (heightSizeClass) {
+            WindowHeightSizeClass.Compact -> 150.dp to 65.dp // Landscape tablet
+            else -> 160.dp to 70.dp // Portrait tablet
+        }
+        else -> 180.dp to 80.dp
+    }
 
     Card(
         onClick = {
@@ -1419,8 +1482,8 @@ private fun ModernRecentSongCard(
             onClick()
         },
         modifier = Modifier
-            .width(180.dp) // Slightly wider for better proportion
-            .height(80.dp) // Slightly taller
+            .width(cardWidth)
+            .height(cardHeight)
             .shadow(
                 elevation = 4.dp,
                 shape = RoundedCornerShape(20.dp),
@@ -1726,7 +1789,9 @@ private fun ModernFeaturedSection(
     showPlayButton: Boolean = true,
     showGradient: Boolean = true,
     carouselHeight: Int = 260,
-    carouselStyle: Int = 0 // 0=Hero, 1=MultiBrowse, 2=Uncontained
+    carouselStyle: Int = 0, // 0=Hero, 1=MultiBrowse, 2=Uncontained
+    widthSizeClass: WindowWidthSizeClass = WindowWidthSizeClass.Compact,
+    heightSizeClass: WindowHeightSizeClass = WindowHeightSizeClass.Medium
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -1740,7 +1805,15 @@ private fun ModernFeaturedSection(
                     state = carouselState,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(carouselHeight.dp)
+                        .height(when (widthSizeClass) {
+                            WindowWidthSizeClass.Compact -> carouselHeight.dp
+                            WindowWidthSizeClass.Medium -> (carouselHeight + 40).dp
+                            WindowWidthSizeClass.Expanded -> when (heightSizeClass) {
+                                WindowHeightSizeClass.Compact -> (carouselHeight + 20).dp // Landscape tablet
+                                else -> (carouselHeight + 40).dp // Portrait tablet
+                            }
+                            else -> carouselHeight.dp
+                        })
                         .padding(vertical = 8.dp),
                     itemSpacing = 16.dp,
                     contentPadding = PaddingValues(horizontal = 32.dp),
@@ -1768,7 +1841,15 @@ private fun ModernFeaturedSection(
                     itemWidth = 300.dp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(carouselHeight.dp)
+                        .height(when (widthSizeClass) {
+                            WindowWidthSizeClass.Compact -> carouselHeight.dp
+                            WindowWidthSizeClass.Medium -> (carouselHeight + 40).dp
+                            WindowWidthSizeClass.Expanded -> when (heightSizeClass) {
+                                WindowHeightSizeClass.Compact -> (carouselHeight + 20).dp // Landscape tablet
+                                else -> (carouselHeight + 40).dp // Portrait tablet
+                            }
+                            else -> carouselHeight.dp
+                        })
                         .padding(vertical = 8.dp),
                     itemSpacing = 12.dp,
                     contentPadding = PaddingValues(horizontal = 40.dp),
@@ -1994,7 +2075,9 @@ private fun ModernArtistsSection(
     artists: List<Artist>,
     songs: List<Song>,
     onArtistClick: (Artist) -> Unit,
-    onViewAllArtists: () -> Unit
+    onViewAllArtists: () -> Unit,
+    widthSizeClass: WindowWidthSizeClass = WindowWidthSizeClass.Compact,
+    heightSizeClass: WindowHeightSizeClass = WindowHeightSizeClass.Medium
 ) {
     val context = LocalContext.current
     Column {
@@ -2021,7 +2104,9 @@ private fun ModernArtistsSection(
                 ModernArtistCard(
                     artist = artist,
                     songs = songs,
-                    onClick = { onArtistClick(artist) }
+                    onClick = { onArtistClick(artist) },
+                    widthSizeClass = widthSizeClass,
+                    heightSizeClass = heightSizeClass
                 )
             }
         }
@@ -2032,22 +2117,40 @@ private fun ModernArtistsSection(
 private fun ModernArtistCard(
     artist: Artist,
     songs: List<Song>,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    widthSizeClass: WindowWidthSizeClass = WindowWidthSizeClass.Compact,
+    heightSizeClass: WindowHeightSizeClass = WindowHeightSizeClass.Medium
 ) {
     val context = LocalContext.current
     val viewModel = viewModel<chromahub.rhythm.app.viewmodel.MusicViewModel>()
     val haptic = LocalHapticFeedback.current
     
+    val cardSize = when (widthSizeClass) {
+        WindowWidthSizeClass.Compact -> when (heightSizeClass) {
+            WindowHeightSizeClass.Compact -> 100.dp // Landscape phone
+            else -> 120.dp // Portrait phone
+        }
+        WindowWidthSizeClass.Medium -> when (heightSizeClass) {
+            WindowHeightSizeClass.Compact -> 90.dp // Landscape tablet
+            else -> 100.dp // Portrait tablet
+        }
+        WindowWidthSizeClass.Expanded -> when (heightSizeClass) {
+            WindowHeightSizeClass.Compact -> 90.dp // Landscape tablet
+            else -> 100.dp // Portrait tablet
+        }
+        else -> 120.dp
+    }
+
     Column(
         modifier = Modifier
-            .width(120.dp)
+            .width(cardSize)
             .clickable { 
                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                 onClick() 
             },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(modifier = Modifier.size(120.dp)) {
+        Box(modifier = Modifier.size(cardSize)) {
             Card(
                 modifier = Modifier.fillMaxSize(),
                 shape = CircleShape,
@@ -2127,20 +2230,38 @@ private fun ModernArtistCard(
 @Composable
 private fun ModernAlbumCard(
     album: Album,
-    onClick: (Album) -> Unit
+    onClick: (Album) -> Unit,
+    widthSizeClass: WindowWidthSizeClass = WindowWidthSizeClass.Compact,
+    heightSizeClass: WindowHeightSizeClass = WindowHeightSizeClass.Medium
 ) {
     val context = LocalContext.current
     val viewModel = viewModel<chromahub.rhythm.app.viewmodel.MusicViewModel>()
     val haptic = LocalHapticFeedback.current
     
+    val (cardWidth, cardHeight) = when (widthSizeClass) {
+        WindowWidthSizeClass.Compact -> when (heightSizeClass) {
+            WindowHeightSizeClass.Compact -> 140.dp to 210.dp // Landscape phone
+            else -> 160.dp to 240.dp // Portrait phone
+        }
+        WindowWidthSizeClass.Medium -> when (heightSizeClass) {
+            WindowHeightSizeClass.Compact -> 130.dp to 195.dp // Landscape tablet
+            else -> 140.dp to 210.dp // Portrait tablet
+        }
+        WindowWidthSizeClass.Expanded -> when (heightSizeClass) {
+            WindowHeightSizeClass.Compact -> 130.dp to 195.dp // Landscape tablet
+            else -> 140.dp to 210.dp // Portrait tablet
+        }
+        else -> 160.dp to 240.dp
+    }
+
     Card(
         onClick = {
             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
             onClick(album)
         },
         modifier = Modifier
-            .width(160.dp)
-            .height(240.dp) // Fixed height to prevent layout issues
+            .width(cardWidth)
+            .height(cardHeight) // Fixed height to prevent layout issues
             .shadow(
                 elevation = 8.dp,
                 shape = RoundedCornerShape(28.dp),
