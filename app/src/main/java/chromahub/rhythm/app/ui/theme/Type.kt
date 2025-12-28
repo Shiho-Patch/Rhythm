@@ -2,9 +2,11 @@ package chromahub.rhythm.app.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import chromahub.rhythm.app.R
 
 // Material Design 3 Typography Scale
 // Following the latest M3 typography guidelines for better readability and hierarchy
@@ -156,8 +158,9 @@ private fun getFontFamilyByName(fontName: String): FontFamily {
         "Typewriter" -> FontFamily.Monospace // Classic typewriter-inspired monospace font
         "Quicksand" -> FontFamily.Cursive  // Rounded font - softer, friendlier appearance
         "Playful" -> FontFamily.Cursive    // Fun and creative typeface
+        "Geom" -> FontFamily(Font(R.font.geom)) // Geom - modern, clean sans-serif
         "System" -> FontFamily.Default     // Default system font
-        else -> FontFamily.Default
+        else -> FontFamily(Font(R.font.geom)) // Default to Geom
     }
 }
 

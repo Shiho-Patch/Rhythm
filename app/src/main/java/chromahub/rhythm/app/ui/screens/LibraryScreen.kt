@@ -681,7 +681,6 @@ fun LibraryScreen(
                     Text(
                         text = context.getString(R.string.library_title),
                         style = MaterialTheme.typography.headlineLarge.copy(
-                            fontFamily = FontFamily.Default,
                             fontWeight = FontWeight.Bold,
                             fontSize = fontSize
                         ),

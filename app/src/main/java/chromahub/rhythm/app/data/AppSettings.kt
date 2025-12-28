@@ -424,7 +424,7 @@ class AppSettings private constructor(context: Context) {
     private val _customColorScheme = MutableStateFlow(prefs.getString(KEY_CUSTOM_COLOR_SCHEME, "Default") ?: "Default")
     val customColorScheme: StateFlow<String> = _customColorScheme.asStateFlow()
     
-    private val _customFont = MutableStateFlow(prefs.getString(KEY_CUSTOM_FONT, "System") ?: "System")
+    private val _customFont = MutableStateFlow(prefs.getString(KEY_CUSTOM_FONT, "Geom") ?: "Geom")
     val customFont: StateFlow<String> = _customFont.asStateFlow()
     
     private val _colorSource = MutableStateFlow(prefs.getString(KEY_COLOR_SOURCE, "CUSTOM") ?: "CUSTOM")
@@ -2500,7 +2500,7 @@ class AppSettings private constructor(context: Context) {
         _darkMode.value = prefs.getBoolean(KEY_DARK_MODE, true)
         _useDynamicColors.value = prefs.getBoolean(KEY_USE_DYNAMIC_COLORS, false)
         _customColorScheme.value = prefs.getString(KEY_CUSTOM_COLOR_SCHEME, "Default") ?: "Default"
-        _customFont.value = prefs.getString(KEY_CUSTOM_FONT, "System") ?: "System"
+        _customFont.value = prefs.getString(KEY_CUSTOM_FONT, "Geom") ?: "Geom"
         
         // Library Settings
         _albumViewType.value = AlbumViewType.valueOf(prefs.getString(KEY_ALBUM_VIEW_TYPE, AlbumViewType.GRID.name) ?: AlbumViewType.GRID.name)

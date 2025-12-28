@@ -9536,6 +9536,11 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
     val fontOptions = remember {
         listOf(
             FontOption(
+                name = "Geom",
+                displayName = "Geom",
+                description = "Modern, clean sans-serif font from Google"
+            ),
+            FontOption(
                 name = "System",
                 displayName = "System Default",
                 description = "Use your device's default font"

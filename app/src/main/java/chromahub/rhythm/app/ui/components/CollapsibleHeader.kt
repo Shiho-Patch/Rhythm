@@ -186,7 +186,6 @@ fun CollapsibleHeaderScreen(
                                 Text(
                                     text = title,
                                     style = MaterialTheme.typography.headlineLarge.copy(
-                                        fontFamily = FontFamily.Default,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = fontSize
                                     ),

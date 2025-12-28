@@ -289,6 +289,15 @@ fun LicensesBottomSheet(
                     context = context,
                     haptic = haptic
                 )
+                
+                LicenseSheetItem(
+                    name = "Geom Font",
+                    description = "Modern, clean sans-serif typeface from Google Fonts",
+                    license = "SIL Open Font License 1.1",
+                    url = "https://fonts.google.com/specimen/Geom",
+                    context = context,
+                    haptic = haptic
+                )
                 }
             }
 
