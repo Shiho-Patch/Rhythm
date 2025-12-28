@@ -613,6 +613,12 @@
     <string name="onboarding_permission_notifications_title">Notifications</string>
     <string name="onboarding_permission_notifications_desc">Show playback controls and music information in notifications</string>
     
+    <!-- Permission Tips -->
+    <string name="onboarding_permission_tips">Permission Tips</string>
+    <string name="onboarding_permission_tip_1">Grant all permissions for the best experience</string>
+    <string name="onboarding_permission_tip_2">You can change permissions later in Settings</string>
+    <string name="onboarding_permission_tip_3">Rhythm respects your privacy and data</string>
+    
     <!-- Onboarding Audio &amp; Playback -->
     <string name="onboarding_haptic_title">Haptic Feedback</string>
     <string name="onboarding_haptic_desc">Enable subtle vibrations on interactions for a more tactile experience.</string>

@@ -148,8 +148,13 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import java.util.Locale
 import kotlin.math.absoluteValue
+import android.app.Activity
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
 fun OnboardingScreen(
     currentStep: OnboardingStep,
@@ -167,18 +172,18 @@ fun OnboardingScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val haptic = LocalHapticFeedback.current
-    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
-    
+    val windowSizeClass = calculateWindowSizeClass(context as Activity)
+
     // Bottom sheet states
     var showLibraryTabOrderBottomSheet by remember { mutableStateOf(false) }
     var showBackupRestoreBottomSheet by remember { mutableStateOf(false) }
-    
+
     // Responsive sizing
-    val isTablet = configuration.screenWidthDp >= 600
-    val contentMaxWidth = if (isTablet) 560.dp else androidx.compose.ui.unit.Dp.Infinity
+    val isTablet = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Medium || windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded
+    val contentMaxWidth = if (isTablet) 600.dp else androidx.compose.ui.unit.Dp.Infinity
     val horizontalPadding = if (isTablet) 40.dp else 20.dp
-    val cardPadding = if (isTablet) 28.dp else 20.dp
-    
+    val cardPadding = if (isTablet) 32.dp else 20.dp
+
     // Get current step index
     val stepIndex = when (currentStep) {
         OnboardingStep.WELCOME -> 0
@@ -194,20 +199,20 @@ fun OnboardingScreen(
     }
 
     val totalSteps = 9
-    
+
     // Create pager state
     val pagerState = rememberPagerState(
         initialPage = stepIndex,
         pageCount = { totalSteps }
     )
-    
+
     // Sync pager with step changes
     LaunchedEffect(stepIndex) {
         if (pagerState.currentPage != stepIndex) {
             pagerState.animateScrollToPage(stepIndex)
         }
     }
-    
+
     // Sync step with pager changes
     LaunchedEffect(pagerState.currentPage) {
         val newStep = when (pagerState.currentPage) {
@@ -228,11 +233,12 @@ fun OnboardingScreen(
             onNextStep()
         }
     }
-    
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
+            .let { if (isTablet) it.width(contentMaxWidth) else it }
     ) {
         // Single onboarding card container for all pager content
         OnboardingCard(
@@ -261,7 +267,7 @@ fun OnboardingScreen(
                         when (step) {
                             OnboardingStep.WELCOME -> {
                                 // Welcome screen without card
-                                EnhancedWelcomeContent(onNextStep = onNextStep)
+                                EnhancedWelcomeContent(onNextStep = onNextStep, isTablet = isTablet, contentMaxWidth = contentMaxWidth)
                             }
                             OnboardingStep.PERMISSIONS -> {
                                 EnhancedPermissionContent(
@@ -275,7 +281,138 @@ fun OnboardingScreen(
                                         context.startActivity(intent)
                                         onRequestAgain() // Set loading state
                                     },
-                                    isButtonLoading = isParentLoading
+                                    isButtonLoading = isParentLoading,
+                                    isTablet = isTablet,
+                                    backButton = if (stepIndex > 0) {
+                                        {
+                                            val buttonScale = remember { Animatable(1f) }
+                                            OutlinedButton(
+                                                onClick = {
+                                                    scope.launch {
+                                                        buttonScale.animateTo(0.92f, animationSpec = tween(100))
+                                                        buttonScale.animateTo(1f, animationSpec = spring(
+                                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                            stiffness = Spring.StiffnessHigh
+                                                        ))
+                                                    }
+                                                    onPrevStep()
+                                                },
+                                                modifier = Modifier
+                                                    .height(56.dp)
+                                                    .graphicsLayer {
+                                                        scaleX = buttonScale.value
+                                                        scaleY = buttonScale.value
+                                                    },
+                                                shape = RoundedCornerShape(32.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(context.getString(R.string.onboarding_back), style = MaterialTheme.typography.labelLarge)
+                                            }
+                                        }
+                                    } else null,
+                                    nextButton = {
+                                        val nextButtonScale = remember { Animatable(1f) }
+                                        Button(
+                                            onClick = {
+                                                scope.launch {
+                                                    nextButtonScale.animateTo(0.92f, animationSpec = tween(100))
+                                                    nextButtonScale.animateTo(1f, animationSpec = spring(
+                                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                        stiffness = Spring.StiffnessHigh
+                                                    ))
+                                                }
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                // For permission step, handle based on state
+                                                when (permissionScreenState) {
+                                                    PermissionScreenState.RedirectToSettings -> {
+                                                        val intent = android.content.Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                                        intent.data = android.net.Uri.fromParts("package", context.packageName, null)
+                                                        context.startActivity(intent)
+                                                        onRequestAgain()
+                                                    }
+                                                    PermissionScreenState.PermissionsGranted -> onNextStep()
+                                                    PermissionScreenState.Loading -> { /* Do nothing while loading */ }
+                                                    else -> onNextStep() // Trigger permission request
+                                                }
+                                            },
+                                            enabled = !isParentLoading && permissionScreenState != PermissionScreenState.Loading,
+                                            modifier = Modifier
+                                                .height(56.dp)
+                                                .graphicsLayer {
+                                                    scaleX = nextButtonScale.value
+                                                    scaleY = nextButtonScale.value
+                                                },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = when (permissionScreenState) {
+                                                    PermissionScreenState.PermissionsGranted -> MaterialTheme.colorScheme.primary
+                                                    PermissionScreenState.RedirectToSettings -> MaterialTheme.colorScheme.error
+                                                    else -> MaterialTheme.colorScheme.primary
+                                                },
+                                                contentColor = when (permissionScreenState) {
+                                                    PermissionScreenState.PermissionsGranted -> MaterialTheme.colorScheme.onPrimary
+                                                    PermissionScreenState.RedirectToSettings -> MaterialTheme.colorScheme.onError
+                                                    else -> MaterialTheme.colorScheme.onPrimary
+                                                }
+                                            ),
+                                            shape = RoundedCornerShape(32.dp)
+                                        ) {
+                                            Crossfade(
+                                                targetState = isParentLoading,
+                                                animationSpec = tween(300),
+                                                label = "buttonContent"
+                                            ) { loading ->
+                                                if (loading) {
+                                                    Row(
+                                                        horizontalArrangement = Arrangement.Center,
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        M3LinearLoader(
+                                                            modifier = Modifier.size(20.dp)
+                                                        )
+                                                        Spacer(modifier = Modifier.width(8.dp))
+                                                        Text(
+                                                            context.getString(R.string.onboarding_checking),
+                                                            style = MaterialTheme.typography.labelLarge
+                                                        )
+                                                    }
+                                                } else {
+                                                    Row(
+                                                        horizontalArrangement = Arrangement.Center,
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        val buttonText = when (permissionScreenState) {
+                                                            PermissionScreenState.PermissionsGranted -> context.getString(R.string.onboarding_continue)
+                                                            PermissionScreenState.RedirectToSettings -> context.getString(R.string.onboarding_open_settings)
+                                                            else -> context.getString(R.string.onboarding_grant_access)
+                                                        }
+                                                        val buttonIcon = when (permissionScreenState) {
+                                                            PermissionScreenState.PermissionsGranted -> Icons.AutoMirrored.Filled.ArrowForward
+                                                            PermissionScreenState.RedirectToSettings -> Icons.Filled.Security
+                                                            else -> Icons.Filled.Security
+                                                        }
+
+                                                        Text(
+                                                            buttonText,
+                                                            style = MaterialTheme.typography.labelLarge.copy(
+                                                                fontWeight = FontWeight.Bold
+                                                            )
+                                                        )
+                                                        Spacer(modifier = Modifier.width(8.dp))
+                                                        Icon(
+                                                            imageVector = buttonIcon,
+                                                            contentDescription = null,
+                                                            modifier = Modifier.size(20.dp)
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 )
                             }
                             OnboardingStep.BACKUP_RESTORE -> {
@@ -283,13 +420,159 @@ fun OnboardingScreen(
                                     onNextStep = onNextStep,
                                     onSkip = onNextStep,
                                     appSettings = appSettings,
-                                    onOpenBottomSheet = { showBackupRestoreBottomSheet = true }
+                                    onOpenBottomSheet = { showBackupRestoreBottomSheet = true },
+                                    isTablet = isTablet,
+                                    backButton = if (stepIndex > 0) {
+                                        {
+                                            val buttonScale = remember { Animatable(1f) }
+                                            OutlinedButton(
+                                                onClick = {
+                                                    scope.launch {
+                                                        buttonScale.animateTo(0.92f, animationSpec = tween(100))
+                                                        buttonScale.animateTo(1f, animationSpec = spring(
+                                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                            stiffness = Spring.StiffnessHigh
+                                                        ))
+                                                    }
+                                                    onPrevStep()
+                                                },
+                                                modifier = Modifier
+                                                    .height(56.dp)
+                                                    .graphicsLayer {
+                                                        scaleX = buttonScale.value
+                                                        scaleY = buttonScale.value
+                                                    },
+                                                shape = RoundedCornerShape(32.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(context.getString(R.string.onboarding_back), style = MaterialTheme.typography.labelLarge)
+                                            }
+                                        }
+                                    } else null,
+                                    nextButton = {
+                                        val nextButtonScale = remember { Animatable(1f) }
+                                        Button(
+                                            onClick = {
+                                                scope.launch {
+                                                    nextButtonScale.animateTo(0.92f, animationSpec = tween(100))
+                                                    nextButtonScale.animateTo(1f, animationSpec = spring(
+                                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                        stiffness = Spring.StiffnessHigh
+                                                    ))
+                                                }
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                onNextStep()
+                                            },
+                                            modifier = Modifier
+                                                .height(56.dp)
+                                                .graphicsLayer {
+                                                    scaleX = nextButtonScale.value
+                                                    scaleY = nextButtonScale.value
+                                                },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = MaterialTheme.colorScheme.primary,
+                                                contentColor = MaterialTheme.colorScheme.onPrimary
+                                            ),
+                                            shape = RoundedCornerShape(32.dp)
+                                        ) {
+                                            Text(
+                                                context.getString(R.string.onboarding_next),
+                                                style = MaterialTheme.typography.labelLarge.copy(
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
                                 )
                             }
                             OnboardingStep.AUDIO_PLAYBACK -> {
                                 EnhancedAudioPlaybackContent(
                                     onNextStep = onNextStep,
-                                    appSettings = appSettings
+                                    appSettings = appSettings,
+                                    isTablet = isTablet,
+                                    backButton = if (stepIndex > 0) {
+                                        {
+                                            val buttonScale = remember { Animatable(1f) }
+                                            OutlinedButton(
+                                                onClick = {
+                                                    scope.launch {
+                                                        buttonScale.animateTo(0.92f, animationSpec = tween(100))
+                                                        buttonScale.animateTo(1f, animationSpec = spring(
+                                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                            stiffness = Spring.StiffnessHigh
+                                                        ))
+                                                    }
+                                                    onPrevStep()
+                                                },
+                                                modifier = Modifier
+                                                    .height(56.dp)
+                                                    .graphicsLayer {
+                                                        scaleX = buttonScale.value
+                                                        scaleY = buttonScale.value
+                                                    },
+                                                shape = RoundedCornerShape(32.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(context.getString(R.string.onboarding_back), style = MaterialTheme.typography.labelLarge)
+                                            }
+                                        }
+                                    } else null,
+                                    nextButton = {
+                                        val nextButtonScale = remember { Animatable(1f) }
+                                        Button(
+                                            onClick = {
+                                                scope.launch {
+                                                    nextButtonScale.animateTo(0.92f, animationSpec = tween(100))
+                                                    nextButtonScale.animateTo(1f, animationSpec = spring(
+                                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                        stiffness = Spring.StiffnessHigh
+                                                    ))
+                                                }
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                onNextStep()
+                                            },
+                                            modifier = Modifier
+                                                .height(56.dp)
+                                                .graphicsLayer {
+                                                    scaleX = nextButtonScale.value
+                                                    scaleY = nextButtonScale.value
+                                                },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = MaterialTheme.colorScheme.primary,
+                                                contentColor = MaterialTheme.colorScheme.onPrimary
+                                            ),
+                                            shape = RoundedCornerShape(32.dp)
+                                        ) {
+                                            Text(
+                                                context.getString(R.string.onboarding_next),
+                                                style = MaterialTheme.typography.labelLarge.copy(
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
                                 )
                             }
                             OnboardingStep.THEMING -> {
@@ -297,32 +580,399 @@ fun OnboardingScreen(
                                     onNextStep = onNextStep,
                                     onSkip = onNextStep,
                                     themeViewModel = themeViewModel,
-                                    appSettings = appSettings
+                                    appSettings = appSettings,
+                                    isTablet = isTablet,
+                                    backButton = if (stepIndex > 0) {
+                                        {
+                                            val buttonScale = remember { Animatable(1f) }
+                                            OutlinedButton(
+                                                onClick = {
+                                                    scope.launch {
+                                                        buttonScale.animateTo(0.92f, animationSpec = tween(100))
+                                                        buttonScale.animateTo(1f, animationSpec = spring(
+                                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                            stiffness = Spring.StiffnessHigh
+                                                        ))
+                                                    }
+                                                    onPrevStep()
+                                                },
+                                                modifier = Modifier
+                                                    .height(56.dp)
+                                                    .graphicsLayer {
+                                                        scaleX = buttonScale.value
+                                                        scaleY = buttonScale.value
+                                                    },
+                                                shape = RoundedCornerShape(32.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(context.getString(R.string.onboarding_back), style = MaterialTheme.typography.labelLarge)
+                                            }
+                                        }
+                                    } else null,
+                                    nextButton = {
+                                        val nextButtonScale = remember { Animatable(1f) }
+                                        Button(
+                                            onClick = {
+                                                scope.launch {
+                                                    nextButtonScale.animateTo(0.92f, animationSpec = tween(100))
+                                                    nextButtonScale.animateTo(1f, animationSpec = spring(
+                                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                        stiffness = Spring.StiffnessHigh
+                                                    ))
+                                                }
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                onNextStep()
+                                            },
+                                            modifier = Modifier
+                                                .height(56.dp)
+                                                .graphicsLayer {
+                                                    scaleX = nextButtonScale.value
+                                                    scaleY = nextButtonScale.value
+                                                },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = MaterialTheme.colorScheme.primary,
+                                                contentColor = MaterialTheme.colorScheme.onPrimary
+                                            ),
+                                            shape = RoundedCornerShape(32.dp)
+                                        ) {
+                                            Text(
+                                                context.getString(R.string.onboarding_next),
+                                                style = MaterialTheme.typography.labelLarge.copy(
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
                                 )
                             }
                             OnboardingStep.LIBRARY_SETUP -> {
                                 EnhancedLibrarySetupContent(
                                     onNextStep = onNextStep,
                                     appSettings = appSettings,
-                                    onOpenTabOrderBottomSheet = { showLibraryTabOrderBottomSheet = true }
+                                    onOpenTabOrderBottomSheet = { showLibraryTabOrderBottomSheet = true },
+                                    isTablet = isTablet,
+                                    backButton = if (stepIndex > 0) {
+                                        {
+                                            val buttonScale = remember { Animatable(1f) }
+                                            OutlinedButton(
+                                                onClick = {
+                                                    scope.launch {
+                                                        buttonScale.animateTo(0.92f, animationSpec = tween(100))
+                                                        buttonScale.animateTo(1f, animationSpec = spring(
+                                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                            stiffness = Spring.StiffnessHigh
+                                                        ))
+                                                    }
+                                                    onPrevStep()
+                                                },
+                                                modifier = Modifier
+                                                    .height(56.dp)
+                                                    .graphicsLayer {
+                                                        scaleX = buttonScale.value
+                                                        scaleY = buttonScale.value
+                                                    },
+                                                shape = RoundedCornerShape(32.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(context.getString(R.string.onboarding_back), style = MaterialTheme.typography.labelLarge)
+                                            }
+                                        }
+                                    } else null,
+                                    nextButton = {
+                                        val nextButtonScale = remember { Animatable(1f) }
+                                        Button(
+                                            onClick = {
+                                                scope.launch {
+                                                    nextButtonScale.animateTo(0.92f, animationSpec = tween(100))
+                                                    nextButtonScale.animateTo(1f, animationSpec = spring(
+                                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                        stiffness = Spring.StiffnessHigh
+                                                    ))
+                                                }
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                onNextStep()
+                                            },
+                                            modifier = Modifier
+                                                .height(56.dp)
+                                                .graphicsLayer {
+                                                    scaleX = nextButtonScale.value
+                                                    scaleY = nextButtonScale.value
+                                                },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = MaterialTheme.colorScheme.primary,
+                                                contentColor = MaterialTheme.colorScheme.onPrimary
+                                            ),
+                                            shape = RoundedCornerShape(32.dp)
+                                        ) {
+                                            Text(
+                                                context.getString(R.string.onboarding_next),
+                                                style = MaterialTheme.typography.labelLarge.copy(
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
                                 )
                             }
                             OnboardingStep.MEDIA_SCAN -> {
                                 EnhancedMediaScanContent(
                                     onNextStep = onNextStep,
                                     onSkip = onNextStep,
-                                    appSettings = appSettings
+                                    appSettings = appSettings,
+                                    isTablet = isTablet,
+                                    backButton = if (stepIndex > 0) {
+                                        {
+                                            val buttonScale = remember { Animatable(1f) }
+                                            OutlinedButton(
+                                                onClick = {
+                                                    scope.launch {
+                                                        buttonScale.animateTo(0.92f, animationSpec = tween(100))
+                                                        buttonScale.animateTo(1f, animationSpec = spring(
+                                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                            stiffness = Spring.StiffnessHigh
+                                                        ))
+                                                    }
+                                                    onPrevStep()
+                                                },
+                                                modifier = Modifier
+                                                    .height(56.dp)
+                                                    .graphicsLayer {
+                                                        scaleX = buttonScale.value
+                                                        scaleY = buttonScale.value
+                                                    },
+                                                shape = RoundedCornerShape(32.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(context.getString(R.string.onboarding_back), style = MaterialTheme.typography.labelLarge)
+                                            }
+                                        }
+                                    } else null,
+                                    nextButton = {
+                                        val nextButtonScale = remember { Animatable(1f) }
+                                        Button(
+                                            onClick = {
+                                                scope.launch {
+                                                    nextButtonScale.animateTo(0.92f, animationSpec = tween(100))
+                                                    nextButtonScale.animateTo(1f, animationSpec = spring(
+                                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                        stiffness = Spring.StiffnessHigh
+                                                    ))
+                                                }
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                onNextStep()
+                                            },
+                                            modifier = Modifier
+                                                .height(56.dp)
+                                                .graphicsLayer {
+                                                    scaleX = nextButtonScale.value
+                                                    scaleY = nextButtonScale.value
+                                                },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = MaterialTheme.colorScheme.primary,
+                                                contentColor = MaterialTheme.colorScheme.onPrimary
+                                            ),
+                                            shape = RoundedCornerShape(32.dp)
+                                        ) {
+                                            Text(
+                                                context.getString(R.string.onboarding_next),
+                                                style = MaterialTheme.typography.labelLarge.copy(
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
                                 )
                             }
                             OnboardingStep.UPDATER -> {
                                 EnhancedUpdaterContent(
                                     onNextStep = onNextStep,
                                     appSettings = appSettings,
-                                    updaterViewModel = updaterViewModel
+                                    updaterViewModel = updaterViewModel,
+                                    isTablet = isTablet,
+                                    backButton = if (stepIndex > 0) {
+                                        {
+                                            val buttonScale = remember { Animatable(1f) }
+                                            OutlinedButton(
+                                                onClick = {
+                                                    scope.launch {
+                                                        buttonScale.animateTo(0.92f, animationSpec = tween(100))
+                                                        buttonScale.animateTo(1f, animationSpec = spring(
+                                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                            stiffness = Spring.StiffnessHigh
+                                                        ))
+                                                    }
+                                                    onPrevStep()
+                                                },
+                                                modifier = Modifier
+                                                    .height(56.dp)
+                                                    .graphicsLayer {
+                                                        scaleX = buttonScale.value
+                                                        scaleY = buttonScale.value
+                                                    },
+                                                shape = RoundedCornerShape(32.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(context.getString(R.string.onboarding_back), style = MaterialTheme.typography.labelLarge)
+                                            }
+                                        }
+                                    } else null,
+                                    nextButton = {
+                                        val nextButtonScale = remember { Animatable(1f) }
+                                        Button(
+                                            onClick = {
+                                                scope.launch {
+                                                    nextButtonScale.animateTo(0.92f, animationSpec = tween(100))
+                                                    nextButtonScale.animateTo(1f, animationSpec = spring(
+                                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                        stiffness = Spring.StiffnessHigh
+                                                    ))
+                                                }
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                onNextStep()
+                                            },
+                                            modifier = Modifier
+                                                .height(56.dp)
+                                                .graphicsLayer {
+                                                    scaleX = nextButtonScale.value
+                                                    scaleY = nextButtonScale.value
+                                                },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = MaterialTheme.colorScheme.primary,
+                                                contentColor = MaterialTheme.colorScheme.onPrimary
+                                            ),
+                                            shape = RoundedCornerShape(32.dp)
+                                        ) {
+                                            Text(
+                                                context.getString(R.string.onboarding_next),
+                                                style = MaterialTheme.typography.labelLarge.copy(
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
                                 )
                             }
                             OnboardingStep.SETUP_FINISHED -> {
-                                EnhancedSetupFinishedContent(onFinish = onFinish)
+                                EnhancedSetupFinishedContent(
+                                    onFinish = onFinish,
+                                    isTablet = isTablet,
+                                    backButton = if (stepIndex > 0) {
+                                        {
+                                            val buttonScale = remember { Animatable(1f) }
+                                            OutlinedButton(
+                                                onClick = {
+                                                    scope.launch {
+                                                        buttonScale.animateTo(0.92f, animationSpec = tween(100))
+                                                        buttonScale.animateTo(1f, animationSpec = spring(
+                                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                            stiffness = Spring.StiffnessHigh
+                                                        ))
+                                                    }
+                                                    onPrevStep()
+                                                },
+                                                modifier = Modifier
+                                                    .height(56.dp)
+                                                    .graphicsLayer {
+                                                        scaleX = buttonScale.value
+                                                        scaleY = buttonScale.value
+                                                    },
+                                                shape = RoundedCornerShape(32.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(context.getString(R.string.onboarding_back), style = MaterialTheme.typography.labelLarge)
+                                            }
+                                        }
+                                    } else null,
+                                    nextButton = {
+                                        val nextButtonScale = remember { Animatable(1f) }
+                                        Button(
+                                            onClick = {
+                                                scope.launch {
+                                                    nextButtonScale.animateTo(0.92f, animationSpec = tween(100))
+                                                    nextButtonScale.animateTo(1f, animationSpec = spring(
+                                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                        stiffness = Spring.StiffnessHigh
+                                                    ))
+                                                }
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                onFinish()
+                                            },
+                                            modifier = Modifier
+                                                .height(56.dp)
+                                                .graphicsLayer {
+                                                    scaleX = nextButtonScale.value
+                                                    scaleY = nextButtonScale.value
+                                                },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = MaterialTheme.colorScheme.primary,
+                                                contentColor = MaterialTheme.colorScheme.onPrimary
+                                            ),
+                                            shape = RoundedCornerShape(32.dp)
+                                        ) {
+                                            Text(
+                                                context.getString(R.string.onboarding_finish_setup),
+                                                style = MaterialTheme.typography.labelLarge.copy(
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Icon(
+                                                imageVector = Icons.Filled.Check,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
+                                )
                             }
                             OnboardingStep.COMPLETE -> {
                                 // This should not be visible as we transition to the main app
@@ -335,230 +985,227 @@ fun OnboardingScreen(
         }
 
         // Bottom navigation bar
-            AnimatedVisibility(
-                visible = currentStep != OnboardingStep.WELCOME,
-                enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
-                exit = fadeOut() + slideOutVertically(targetOffsetY = { it })
+        AnimatedVisibility(
+            visible = currentStep != OnboardingStep.WELCOME && !isTablet,
+            enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
+            exit = fadeOut() + slideOutVertically(targetOffsetY = { it })
+        ) {
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 0.dp
             ) {
-                Surface(
-                    color = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 0.dp
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(horizontal = if (isTablet) 48.dp else 24.dp, vertical = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .navigationBarsPadding()
-                            .padding(horizontal = if (isTablet) 48.dp else 24.dp, vertical = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    // Back button with spring animation
+                    AnimatedVisibility(
+                        visible = stepIndex > 0,
+                        enter = fadeIn(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            )
+                        ) + expandHorizontally(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            )
+                        ),
+                        exit = fadeOut(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            )
+                        ) + shrinkHorizontally(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            )
+                        )
                     ) {
-                            // Back button with spring animation
-                        AnimatedVisibility(
-                            visible = stepIndex > 0,
-                            enter = fadeIn(
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessMedium
-                                )
-                            ) + expandHorizontally(
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessMedium
-                                )
-                            ),
-                            exit = fadeOut(
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessMedium
-                                )
-                            ) + shrinkHorizontally(
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessMedium
-                                )
-                            )
-                        ) {
-                            val buttonScale = remember { Animatable(1f) }
-                            
-                            OutlinedButton(
-                                onClick = { 
-                                    scope.launch {
-                                        buttonScale.animateTo(0.92f, animationSpec = tween(100))
-                                        buttonScale.animateTo(1f, animationSpec = spring(
-                                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                                            stiffness = Spring.StiffnessHigh
-                                        ))
-                                    }
-                                    onPrevStep() 
-                                },
-                                modifier = Modifier
-                                    .height(48.dp)
-                                    .graphicsLayer {
-                                        scaleX = buttonScale.value
-                                        scaleY = buttonScale.value
-                                    },
-                                shape = RoundedCornerShape(32.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(context.getString(R.string.onboarding_back), style = MaterialTheme.typography.labelLarge)
-                            }
-                        }
+                        val buttonScale = remember { Animatable(1f) }
 
-                        // App logo and step count - centered between back and next buttons
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.rhythm_splash_logo),
-                                contentDescription = null,
-                                modifier = Modifier.size(32.dp)
-                            )
-                            androidx.compose.animation.AnimatedContent(
-                                targetState = stepIndex,
-                                transitionSpec = {
-                                    (slideInVertically { height -> height / 2 } + fadeIn()).togetherWith(
-                                        slideOutVertically { height -> -height / 2 } + fadeOut()
-                                    )
-                                },
-                                modifier = Modifier.padding(top = 4.dp),
-                                label = "progressText"
-                            ) { step ->
-                                Text(
-                                    text = context.getString(R.string.onboarding_step_progress, step + 1, totalSteps),
-                                    style = MaterialTheme.typography.labelMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        letterSpacing = 1.sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-
-                        // Next/Finish button with spring animation
-                        val nextButtonScale = remember { Animatable(1f) }
-                        
-                        Button(
+                        OutlinedButton(
                             onClick = {
                                 scope.launch {
-                                    nextButtonScale.animateTo(0.92f, animationSpec = tween(100))
-                                    nextButtonScale.animateTo(1f, animationSpec = spring(
+                                    buttonScale.animateTo(0.92f, animationSpec = tween(100))
+                                    buttonScale.animateTo(1f, animationSpec = spring(
                                         dampingRatio = Spring.DampingRatioMediumBouncy,
                                         stiffness = Spring.StiffnessHigh
                                     ))
                                 }
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
-                                when (currentStep) {
-                                    OnboardingStep.PERMISSIONS -> {
-                                        // For permission step, handle based on state
-                                        when (permissionScreenState) {
-                                            PermissionScreenState.RedirectToSettings -> {
-                                                val intent = android.content.Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                                                intent.data = android.net.Uri.fromParts("package", context.packageName, null)
-                                                context.startActivity(intent)
-                                                onRequestAgain()
-                                            }
-                                            PermissionScreenState.PermissionsGranted -> onNextStep()
-                                            PermissionScreenState.Loading -> { /* Do nothing while loading */ }
-                                            else -> onNextStep() // Trigger permission request
-                                        }
-                                    }
-                                    else -> onNextStep() // All other steps just go next
-                                }
-                            },
-                            enabled = when (currentStep) {
-                                OnboardingStep.PERMISSIONS -> !isParentLoading && permissionScreenState != PermissionScreenState.Loading
-                                else -> true
+                                onPrevStep()
                             },
                             modifier = Modifier
-                                .height(48.dp)
+                                .height(if (isTablet) 56.dp else 48.dp)
                                 .graphicsLayer {
-                                    scaleX = nextButtonScale.value
-                                    scaleY = nextButtonScale.value
+                                    scaleX = buttonScale.value
+                                    scaleY = buttonScale.value
                                 },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = when (currentStep) {
-                                    OnboardingStep.PERMISSIONS -> when (permissionScreenState) {
-                                        PermissionScreenState.PermissionsGranted -> MaterialTheme.colorScheme.primary
-                                        PermissionScreenState.RedirectToSettings -> MaterialTheme.colorScheme.error
-                                        else -> MaterialTheme.colorScheme.primary
-                                    }
-                                    else -> MaterialTheme.colorScheme.primary
-                                },
-                                contentColor = when (currentStep) {
-                                    OnboardingStep.PERMISSIONS -> when (permissionScreenState) {
-                                        PermissionScreenState.PermissionsGranted -> MaterialTheme.colorScheme.onPrimary
-                                        PermissionScreenState.RedirectToSettings -> MaterialTheme.colorScheme.onError
-                                        else -> MaterialTheme.colorScheme.onPrimary
-                                    }
-                                    else -> MaterialTheme.colorScheme.onPrimary
-                                }
-                            ),
                             shape = RoundedCornerShape(32.dp)
                         ) {
-                            Crossfade(
-                                targetState = currentStep == OnboardingStep.PERMISSIONS && isParentLoading,
-                                animationSpec = tween(300),
-                                label = "buttonContent"
-                            ) { loading ->
-                                if (loading) {
-                                    Row(
-                                        horizontalArrangement = Arrangement.Center,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        M3LinearLoader(
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            context.getString(R.string.onboarding_checking),
-                                            style = MaterialTheme.typography.labelLarge
-                                        )
-                                    }
-                                } else {
-                                    Row(
-                                        horizontalArrangement = Arrangement.Center,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        val buttonText = when {
-                                            currentStep == OnboardingStep.SETUP_FINISHED -> context.getString(R.string.onboarding_lets_go)
-                                            currentStep == OnboardingStep.UPDATER -> context.getString(R.string.onboarding_finish_setup)
-                                            currentStep == OnboardingStep.PERMISSIONS -> when (permissionScreenState) {
-                                                PermissionScreenState.PermissionsGranted -> context.getString(R.string.onboarding_continue)
-                                                PermissionScreenState.RedirectToSettings -> context.getString(R.string.onboarding_open_settings)
-                                                else -> context.getString(R.string.onboarding_grant_access)
-                                            }
-                                            else -> context.getString(R.string.onboarding_next)
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(context.getString(R.string.onboarding_back), style = MaterialTheme.typography.labelLarge)
+                        }
+                    }
+
+                    // App logo and step count - centered between back and next buttons
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.rhythm_splash_logo),
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp)
+                        )
+                        androidx.compose.animation.AnimatedContent(
+                            targetState = stepIndex,
+                            transitionSpec = {
+                                (slideInVertically { height -> height / 2 } + fadeIn()).togetherWith(
+                                    slideOutVertically { height -> -height / 2 } + fadeOut()
+                                )
+                            },
+                            modifier = Modifier.padding(top = 4.dp),
+                            label = "progressText"
+                        ) { step ->
+                            Text(
+                                text = context.getString(R.string.onboarding_step_progress, step + 1, totalSteps),
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    // Next/Finish button with spring animation
+                    val nextButtonScale = remember { Animatable(1f) }
+
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                nextButtonScale.animateTo(0.92f, animationSpec = tween(100))
+                                nextButtonScale.animateTo(1f, animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessHigh
+                                ))
+                            }
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                            when (currentStep) {
+                                OnboardingStep.PERMISSIONS -> {
+                                    // For permission step, handle based on state
+                                    when (permissionScreenState) {
+                                        PermissionScreenState.RedirectToSettings -> {
+                                            val intent = android.content.Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                            intent.data = android.net.Uri.fromParts("package", context.packageName, null)
+                                            context.startActivity(intent)
+                                            onRequestAgain()
                                         }
-                                        val buttonIcon = when {
-                                            currentStep == OnboardingStep.SETUP_FINISHED -> Icons.Filled.Check
-                                            currentStep == OnboardingStep.UPDATER -> Icons.AutoMirrored.Filled.ArrowForward
-                                            currentStep == OnboardingStep.PERMISSIONS -> when (permissionScreenState) {
-                                                PermissionScreenState.PermissionsGranted -> Icons.AutoMirrored.Filled.ArrowForward
-                                                PermissionScreenState.RedirectToSettings -> Icons.Filled.Security
-                                                else -> Icons.Filled.Security
-                                            }
-                                            else -> Icons.AutoMirrored.Filled.ArrowForward
-                                        }
-                                        
-                                        Text(
-                                            buttonText,
-                                            style = MaterialTheme.typography.labelLarge.copy(
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Icon(
-                                            imageVector = buttonIcon,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(20.dp)
-                                        )
+                                        PermissionScreenState.PermissionsGranted -> onNextStep()
+                                        PermissionScreenState.Loading -> { /* Do nothing while loading */ }
+                                        else -> onNextStep() // Trigger permission request
                                     }
+                                }
+                                else -> onNextStep() // All other steps just go next
+                            }
+                        },
+                        enabled = when (currentStep) {
+                            OnboardingStep.PERMISSIONS -> !isParentLoading && permissionScreenState != PermissionScreenState.Loading
+                            else -> true
+                        },
+                        modifier = Modifier
+                            .height(if (isTablet) 56.dp else 48.dp)
+                            .graphicsLayer {
+                                scaleX = nextButtonScale.value
+                                scaleY = nextButtonScale.value
+                            },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = when (currentStep) {
+                                OnboardingStep.PERMISSIONS -> when (permissionScreenState) {
+                                    PermissionScreenState.PermissionsGranted -> MaterialTheme.colorScheme.primary
+                                    PermissionScreenState.RedirectToSettings -> MaterialTheme.colorScheme.error
+                                    else -> MaterialTheme.colorScheme.primary
+                                }
+                                else -> MaterialTheme.colorScheme.primary
+                            },
+                            contentColor = when (currentStep) {
+                                OnboardingStep.PERMISSIONS -> when (permissionScreenState) {
+                                    PermissionScreenState.PermissionsGranted -> MaterialTheme.colorScheme.onPrimary
+                                    PermissionScreenState.RedirectToSettings -> MaterialTheme.colorScheme.onError
+                                    else -> MaterialTheme.colorScheme.onPrimary
+                                }
+                                else -> MaterialTheme.colorScheme.onPrimary
+                            }
+                        ),
+                        shape = RoundedCornerShape(32.dp)
+                    ) {
+                        Crossfade(
+                            targetState = currentStep == OnboardingStep.PERMISSIONS && isParentLoading,
+                            animationSpec = tween(300),
+                            label = "buttonContent"
+                        ) { loading ->
+                            if (loading) {
+                                Row(
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    M3LinearLoader(
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        context.getString(R.string.onboarding_checking),
+                                        style = MaterialTheme.typography.labelLarge
+                                    )
+                                }
+                            } else {
+                                Row(
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    val buttonText = when {
+                                        currentStep == OnboardingStep.SETUP_FINISHED -> context.getString(R.string.onboarding_lets_go)
+                                        currentStep == OnboardingStep.PERMISSIONS -> when (permissionScreenState) {
+                                            PermissionScreenState.PermissionsGranted -> context.getString(R.string.onboarding_continue)
+                                            PermissionScreenState.RedirectToSettings -> context.getString(R.string.onboarding_open_settings)
+                                            else -> context.getString(R.string.onboarding_grant_access)
+                                        }
+                                        else -> context.getString(R.string.onboarding_next)
+                                    }
+                                    val buttonIcon = when {
+                                        currentStep == OnboardingStep.SETUP_FINISHED -> Icons.Filled.Check
+                                        currentStep == OnboardingStep.PERMISSIONS -> when (permissionScreenState) {
+                                            PermissionScreenState.PermissionsGranted -> Icons.AutoMirrored.Filled.ArrowForward
+                                            PermissionScreenState.RedirectToSettings -> Icons.Filled.Security
+                                            else -> Icons.Filled.Security
+                                        }
+                                        else -> Icons.AutoMirrored.Filled.ArrowForward
+                                    }
+
+                                    Text(
+                                        buttonText,
+                                        style = MaterialTheme.typography.labelLarge.copy(
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Icon(
+                                        imageVector = buttonIcon,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
                                 }
                             }
                         }
@@ -566,7 +1213,8 @@ fun OnboardingScreen(
                 }
             }
         }
-    
+    }
+
     // Bottom sheets for advanced configuration
     if (showLibraryTabOrderBottomSheet) {
         LibraryTabOrderBottomSheet(
@@ -575,7 +1223,7 @@ fun OnboardingScreen(
             haptics = haptic
         )
     }
-    
+
     if (showBackupRestoreBottomSheet) {
         BackupRestoreBottomSheet(
             onDismiss = { showBackupRestoreBottomSheet = false },
@@ -596,7 +1244,7 @@ private fun OnboardingCard(
 ) {
     val contentMaxWidth = 600.dp
     val cardPadding = if (isTablet) 20.dp else 18.dp
-    
+
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         shape = MaterialTheme.shapes.extraLarge,
@@ -622,11 +1270,11 @@ private fun OnboardingCard(
 }
 
 @Composable
-fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
+fun EnhancedWelcomeContent(onNextStep: () -> Unit, isTablet: Boolean = false, contentMaxWidth: androidx.compose.ui.unit.Dp = androidx.compose.ui.unit.Dp.Infinity) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     var showLanguageSwitcher by remember { mutableStateOf(false) }
-    
+
     // Animated scale for logo
     val infiniteTransition = rememberInfiniteTransition(label = "welcome_animations")
     val logoGlow by infiniteTransition.animateFloat(
@@ -641,7 +1289,8 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
 
     Box(
         modifier = Modifier
-            .fillMaxSize(),
+            .fillMaxSize()
+            .let { if (isTablet) it.width(contentMaxWidth) else it },
         contentAlignment = Alignment.Center
     ) {
         // Language switcher button at top-right
@@ -667,7 +1316,7 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
                 style = MaterialTheme.typography.labelLarge
             )
         }
-        
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -705,13 +1354,13 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
                     Image(
                         painter = painterResource(id = R.drawable.rhythm_splash_logo),
                         contentDescription = "Rhythm Logo",
-                        modifier = Modifier.size(130.dp)
+                        modifier = Modifier.size(if (isTablet) 160.dp else 130.dp)
                     )
                 }
             }
-            
+
 //            Spacer(modifier = Modifier.height(20.dp))
-            
+
             // App name with staggered animation
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -730,7 +1379,7 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
                     Text(
                         text = context.getString(R.string.onboarding_welcome_title),
                         style = MaterialTheme.typography.displayLarge.copy(
-                            fontSize = 48.sp,
+                            fontSize = if (isTablet) 56.sp else 48.sp,
                             letterSpacing = 0.8.sp
                         ),
                         fontWeight = FontWeight.ExtraBold,
@@ -740,7 +1389,7 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
-                
+
                 // Subtitle with modern styling and delayed animation
                 AnimatedVisibility(
                     visible = true,
@@ -763,9 +1412,9 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(34.dp))
-            
+
             // Minimal description with better typography and animation
             AnimatedVisibility(
                 visible = true,
@@ -786,9 +1435,9 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(44.dp))
-            
+
             // Enhanced Get Started button with modern design and animation
             AnimatedVisibility(
                 visible = true,
@@ -806,7 +1455,7 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(68.dp),
+                        .height(if (isTablet) 80.dp else 68.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary
@@ -834,7 +1483,7 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
                     }
                 }
             }
-            
+
 //            Spacer(modifier = Modifier.height(32.dp))
 //
 //            // Feature highlights with animated appearance
@@ -863,9 +1512,9 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
 //                    )
 //                }
 //            }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
+
             // Version info or subtle additional info with animation
             AnimatedVisibility(
                 visible = true,
@@ -881,7 +1530,7 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit) {
                 )
             }
         }
-        
+
         // Language switcher dialog
         if (showLanguageSwitcher) {
             LanguageSwitcherDialog(
@@ -933,23 +1582,26 @@ fun EnhancedPermissionContent(
     permissionScreenState: PermissionScreenState,
     onGrantAccess: () -> Unit,
     onOpenSettings: () -> Unit,
-    isButtonLoading: Boolean
+    isButtonLoading: Boolean,
+    isTablet: Boolean = false,
+    backButton: @Composable (() -> Unit)? = null,
+    nextButton: @Composable () -> Unit
 ) {
     val context = LocalContext.current
-    
+
     // Define permissions based on Android version within the composable
     val storagePermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         listOf(Manifest.permission.READ_MEDIA_AUDIO)
     } else {
         listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
     }
-    
+
     val notificationPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         listOf(Manifest.permission.POST_NOTIFICATIONS)
     } else {
         emptyList()
     }
-    
+
     val bluetoothPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         listOf(
             Manifest.permission.BLUETOOTH_CONNECT,
@@ -961,152 +1613,363 @@ fun EnhancedPermissionContent(
             Manifest.permission.BLUETOOTH_ADMIN
         )
     }
-    
+
     val essentialPermissions = storagePermissions + bluetoothPermissions + notificationPermissions
     val permissionsState = rememberMultiplePermissionsState(essentialPermissions)
     val scrollState = rememberScrollState()
-    
-    Column(
-        horizontalAlignment = Alignment.Start,
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(scrollState)
-    ) {
-        // Enhanced icon with dynamic state
-        AnimatedVisibility(
-            visible = true,
-            enter = scaleIn() + fadeIn()
+
+    if (isTablet) {
+        // Tablet layout: Left side - icon, description, permission tips; Right side - permission cards and Android 13 notice
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+                .padding(vertical = 32.dp),
+            horizontalArrangement = Arrangement.spacedBy(32.dp),
+            verticalAlignment = Alignment.Top
         ) {
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                contentAlignment = Alignment.Center
+            // Left side: Icon, description, and permission tips
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Icon(
-                    imageVector = when (permissionScreenState) {
-                        PermissionScreenState.PermissionsGranted -> Icons.Filled.Check
-                        PermissionScreenState.RedirectToSettings -> Icons.Filled.Security
-                        else -> Icons.Filled.Security
-                    },
-                    contentDescription = "Permissions",
-                    tint = when (permissionScreenState) {
-                        PermissionScreenState.PermissionsGranted -> MaterialTheme.colorScheme.primary
-                        PermissionScreenState.RedirectToSettings -> MaterialTheme.colorScheme.error
-                        else -> MaterialTheme.colorScheme.primary
-                    },
-                    modifier = Modifier.size(40.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = when (permissionScreenState) {
-                PermissionScreenState.PermissionsGranted -> context.getString(R.string.onboarding_permissions_granted_title)
-                PermissionScreenState.RedirectToSettings -> context.getString(R.string.onboarding_action_required_settings)
-                PermissionScreenState.ShowRationale -> context.getString(R.string.onboarding_permissions_needed)
-                else -> context.getString(R.string.onboarding_grant_permissions)
-            },
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-
-        Text(
-            text = when (permissionScreenState) {
-                PermissionScreenState.PermissionsGranted -> context.getString(R.string.onboarding_permissions_granted_desc)
-                PermissionScreenState.RedirectToSettings -> context.getString(R.string.onboarding_redirect_settings_desc)
-                PermissionScreenState.ShowRationale -> context.getString(R.string.onboarding_rationale_desc)
-                else -> context.getString(R.string.onboarding_permissions_required_desc)
-            },
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) 16.dp else 32.dp)
-        )
-        
-        // Android 13+ permission notice
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && permissionScreenState == PermissionScreenState.PermissionsRequired) {
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
+                // Enhanced icon with dynamic state
+                AnimatedVisibility(
+                    visible = true,
+                    enter = scaleIn() + fadeIn()
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                    Box(
+                        modifier = Modifier
+                            .size(96.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.BugReport,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = context.getString(R.string.onboarding_android13_notice),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            imageVector = when (permissionScreenState) {
+                                PermissionScreenState.PermissionsGranted -> Icons.Filled.Check
+                                PermissionScreenState.RedirectToSettings -> Icons.Filled.Security
+                                else -> Icons.Filled.Security
+                            },
+                            contentDescription = "Permissions",
+                            tint = when (permissionScreenState) {
+                                PermissionScreenState.PermissionsGranted -> MaterialTheme.colorScheme.primary
+                                PermissionScreenState.RedirectToSettings -> MaterialTheme.colorScheme.error
+                                else -> MaterialTheme.colorScheme.primary
+                            },
+                            modifier = Modifier.size(48.dp)
                         )
                     }
-                    Text(
-                        text = context.getString(R.string.onboarding_android13_desc),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        lineHeight = 18.sp
+                }
+
+                Text(
+                    text = when (permissionScreenState) {
+                        PermissionScreenState.PermissionsGranted -> context.getString(R.string.onboarding_permissions_granted_title)
+                        PermissionScreenState.RedirectToSettings -> context.getString(R.string.onboarding_action_required_settings)
+                        PermissionScreenState.ShowRationale -> context.getString(R.string.onboarding_permissions_needed)
+                        else -> context.getString(R.string.onboarding_grant_permissions)
+                    },
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Start,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                Text(
+                    text = when (permissionScreenState) {
+                        PermissionScreenState.PermissionsGranted -> context.getString(R.string.onboarding_permissions_granted_desc)
+                        PermissionScreenState.RedirectToSettings -> context.getString(R.string.onboarding_redirect_settings_desc)
+                        PermissionScreenState.ShowRationale -> context.getString(R.string.onboarding_rationale_desc)
+                        else -> context.getString(R.string.onboarding_permissions_required_desc)
+                    },
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Start,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 32.dp)
+                )
+
+                // Permission tips card
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Info,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = context.getString(R.string.onboarding_permission_tips),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+
+                        PermissionTipItem(
+                            icon = Icons.Filled.CheckCircle,
+                            text = context.getString(R.string.onboarding_permission_tip_1)
+                        )
+                        PermissionTipItem(
+                            icon = Icons.Filled.Settings,
+                            text = context.getString(R.string.onboarding_permission_tip_2)
+                        )
+                        PermissionTipItem(
+                            icon = Icons.Filled.Security,
+                            text = context.getString(R.string.onboarding_permission_tip_3)
+                        )
+                    }
+                }
+
+                // Action buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    backButton?.invoke()
+                    nextButton()
+                }
+            }
+
+            // Right side: Permission cards and Android 13 notice
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Enhanced permission explanation cards
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    EnhancedPermissionCard(
+                        icon = Icons.Filled.MusicNote,
+                        title = context.getString(R.string.onboarding_permission_music_title),
+                        description = context.getString(R.string.onboarding_permission_music_desc),
+                        isGranted = storagePermissions.all { permission ->
+                            permissionsState.permissions.find { it.permission == permission }?.status?.isGranted == true
+                        }
+                    )
+
+                    EnhancedPermissionCard(
+                        icon = RhythmIcons.Devices.Bluetooth,
+                        title = context.getString(R.string.onboarding_permission_bluetooth_title),
+                        description = context.getString(R.string.onboarding_permission_bluetooth_desc),
+                        isGranted = bluetoothPermissions.all { permission ->
+                            permissionsState.permissions.find { it.permission == permission }?.status?.isGranted == true
+                        }
+                    )
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        EnhancedPermissionCard(
+                            icon = RhythmIcons.Notifications,
+                            title = context.getString(R.string.onboarding_permission_notifications_title),
+                            description = context.getString(R.string.onboarding_permission_notifications_desc),
+                            isGranted = notificationPermissions.all { permission ->
+                                permissionsState.permissions.find { it.permission == permission }?.status?.isGranted == true
+                            }
+                        )
+                    }
+                }
+
+                // Android 13 permission notice
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && permissionScreenState == PermissionScreenState.PermissionsRequired) {
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(20.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.BugReport,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = context.getString(R.string.onboarding_android13_notice),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                            Text(
+                                text = context.getString(R.string.onboarding_android13_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                lineHeight = 18.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        // Mobile layout: Single column
+        Column(
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+        ) {
+            // Enhanced icon with dynamic state
+            AnimatedVisibility(
+                visible = true,
+                enter = scaleIn() + fadeIn()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = when (permissionScreenState) {
+                            PermissionScreenState.PermissionsGranted -> Icons.Filled.Check
+                            PermissionScreenState.RedirectToSettings -> Icons.Filled.Security
+                            else -> Icons.Filled.Security
+                        },
+                        contentDescription = "Permissions",
+                        tint = when (permissionScreenState) {
+                            PermissionScreenState.PermissionsGranted -> MaterialTheme.colorScheme.primary
+                            PermissionScreenState.RedirectToSettings -> MaterialTheme.colorScheme.error
+                            else -> MaterialTheme.colorScheme.primary
+                        },
+                        modifier = Modifier.size(40.dp)
                     )
                 }
             }
-        }
 
-        // Enhanced permission explanation cards
-        Column(
-            modifier = Modifier.padding(bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            EnhancedPermissionCard(
-                icon = Icons.Filled.MusicNote,
-                title = context.getString(R.string.onboarding_permission_music_title),
-                description = context.getString(R.string.onboarding_permission_music_desc),
-                isGranted = storagePermissions.all { permission ->
-                    permissionsState.permissions.find { it.permission == permission }?.status?.isGranted == true
-                }
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = when (permissionScreenState) {
+                    PermissionScreenState.PermissionsGranted -> context.getString(R.string.onboarding_permissions_granted_title)
+                    PermissionScreenState.RedirectToSettings -> context.getString(R.string.onboarding_action_required_settings)
+                    PermissionScreenState.ShowRationale -> context.getString(R.string.onboarding_permissions_needed)
+                    else -> context.getString(R.string.onboarding_grant_permissions)
+                },
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 12.dp)
             )
-            
-            EnhancedPermissionCard(
-                icon = RhythmIcons.Devices.Bluetooth,
-                title = context.getString(R.string.onboarding_permission_bluetooth_title),
-                description = context.getString(R.string.onboarding_permission_bluetooth_desc),
-                isGranted = bluetoothPermissions.all { permission ->
-                    permissionsState.permissions.find { it.permission == permission }?.status?.isGranted == true
-                }
+
+            Text(
+                text = when (permissionScreenState) {
+                    PermissionScreenState.PermissionsGranted -> context.getString(R.string.onboarding_permissions_granted_desc)
+                    PermissionScreenState.RedirectToSettings -> context.getString(R.string.onboarding_redirect_settings_desc)
+                    PermissionScreenState.ShowRationale -> context.getString(R.string.onboarding_rationale_desc)
+                    else -> context.getString(R.string.onboarding_permissions_required_desc)
+                },
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) 16.dp else 32.dp)
             )
-            
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+
+            // Android 13+ permission notice
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && permissionScreenState == PermissionScreenState.PermissionsRequired) {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 24.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.BugReport,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = context.getString(R.string.onboarding_android13_notice),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        Text(
+                            text = context.getString(R.string.onboarding_android13_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            lineHeight = 18.sp
+                        )
+                    }
+                }
+            }
+
+            // Enhanced permission explanation cards
+            Column(
+                modifier = Modifier.padding(bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 EnhancedPermissionCard(
-                    icon = RhythmIcons.Notifications,
-                    title = context.getString(R.string.onboarding_permission_notifications_title),
-                    description = context.getString(R.string.onboarding_permission_notifications_desc),
-                    isGranted = notificationPermissions.all { permission ->
+                    icon = Icons.Filled.MusicNote,
+                    title = context.getString(R.string.onboarding_permission_music_title),
+                    description = context.getString(R.string.onboarding_permission_music_desc),
+                    isGranted = storagePermissions.all { permission ->
                         permissionsState.permissions.find { it.permission == permission }?.status?.isGranted == true
                     }
                 )
-            }
-        }
 
-        // Button removed - now handled by bottom navigation bar
+                EnhancedPermissionCard(
+                    icon = RhythmIcons.Devices.Bluetooth,
+                    title = context.getString(R.string.onboarding_permission_bluetooth_title),
+                    description = context.getString(R.string.onboarding_permission_bluetooth_desc),
+                    isGranted = bluetoothPermissions.all { permission ->
+                        permissionsState.permissions.find { it.permission == permission }?.status?.isGranted == true
+                    }
+                )
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    EnhancedPermissionCard(
+                        icon = RhythmIcons.Notifications,
+                        title = context.getString(R.string.onboarding_permission_notifications_title),
+                        description = context.getString(R.string.onboarding_permission_notifications_desc),
+                        isGranted = notificationPermissions.all { permission ->
+                            permissionsState.permissions.find { it.permission == permission }?.status?.isGranted == true
+                        }
+                    )
+                }
+            }
+
+            // Button removed - now handled by bottom navigation bar
+        }
     }
 }
 
@@ -1120,9 +1983,9 @@ fun EnhancedPermissionCard(
     val context = LocalContext.current
     // Animated state changes
     val containerColor by animateColorAsState(
-        targetValue = if (isGranted) 
+        targetValue = if (isGranted)
             MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-        else 
+        else
             MaterialTheme.colorScheme.surfaceContainer,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
@@ -1130,25 +1993,25 @@ fun EnhancedPermissionCard(
         ),
         label = "containerColor"
     )
-    
+
     val iconBackgroundColor by animateColorAsState(
-        targetValue = if (isGranted) 
+        targetValue = if (isGranted)
             MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-        else 
+        else
             MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
         animationSpec = tween(300),
         label = "iconBackgroundColor"
     )
-    
+
     val iconTint by animateColorAsState(
-        targetValue = if (isGranted) 
-            MaterialTheme.colorScheme.primary 
-        else 
+        targetValue = if (isGranted)
+            MaterialTheme.colorScheme.primary
+        else
             MaterialTheme.colorScheme.onSurfaceVariant,
         animationSpec = tween(300),
         label = "iconTint"
     )
-    
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -1161,7 +2024,7 @@ fun EnhancedPermissionCard(
         colors = CardDefaults.cardColors(
             containerColor = containerColor
         ),
-        border = if (isGranted) 
+        border = if (isGranted)
             BorderStroke(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
         else null
     ) {
@@ -1190,9 +2053,9 @@ fun EnhancedPermissionCard(
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.width(16.dp))
-            
+
             Column(modifier = Modifier.weight(1f)) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically
@@ -1204,7 +2067,7 @@ fun EnhancedPermissionCard(
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f)
                     )
-                    
+
                     // Success badge with animation
                     AnimatedVisibility(
                         visible = isGranted,
@@ -1230,9 +2093,9 @@ fun EnhancedPermissionCard(
                         }
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(4.dp))
-                
+
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodySmall,
@@ -1245,289 +2108,533 @@ fun EnhancedPermissionCard(
 }
 
 @Composable
+private fun PermissionTipItem(
+    icon: ImageVector,
+    text: String
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 6.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+    }
+}
+
+@Composable
 fun EnhancedBackupRestoreContent(
     onNextStep: () -> Unit,
     appSettings: AppSettings,
     onSkip: () -> Unit = {},
-    onOpenBottomSheet: () -> Unit = {}
+    onOpenBottomSheet: () -> Unit = {},
+    isTablet: Boolean = false,
+    backButton: @Composable (() -> Unit)? = null,
+    nextButton: @Composable () -> Unit
 ) {
     val context = LocalContext.current
     val hapticFeedback = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
-    
+
     // State for backup settings
     val autoBackupEnabled by appSettings.autoBackupEnabled.collectAsState()
     val lastBackupTimestamp by appSettings.lastBackupTimestamp.collectAsState()
-    
+
     // Local UI state
     var showBackupTip by remember { mutableStateOf(false) }
-    
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
-        // Header with icon and title
-        Column(
-            horizontalAlignment = Alignment.Start,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            // Enhanced icon with animation
-            AnimatedVisibility(
-                visible = true,
-                enter = scaleIn() + fadeIn()
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Backup,
-                        contentDescription = "Backup & Restore",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(40.dp)
-                    )
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Text(
-                text = context.getString(R.string.onboarding_backup_title),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-            
-            Text(
-                text = context.getString(R.string.onboarding_backup_desc),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 32.dp)
-            )
-        }
-        
-        // Vertically centered content area
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)
-        ) {
-        // Auto-backup toggle card
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+
+    if (isTablet) {
+        // Tablet layout: Left side - icon, title, description, tips, action buttons; Right side - toggles and cards
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable {
-                    HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
-                    appSettings.setAutoBackupEnabled(!autoBackupEnabled)
-                }
+                .verticalScroll(scrollState)
+                .padding(vertical = 32.dp),
+            horizontalArrangement = Arrangement.spacedBy(32.dp),
+            verticalAlignment = Alignment.Top
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(20.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Autorenew,
-                    contentDescription = null,
-                    tint = if (autoBackupEnabled) 
-                        MaterialTheme.colorScheme.primary 
-                    else 
-                        MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp)
-                )
-                
-                Spacer(modifier = Modifier.width(16.dp))
-                
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = context.getString(R.string.onboarding_auto_backup),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = context.getString(R.string.onboarding_auto_backup_desc),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                
-                Switch(
-                    checked = autoBackupEnabled,
-                    onCheckedChange = {
-                        HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
-                        appSettings.setAutoBackupEnabled(it)
-                    },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = MaterialTheme.colorScheme.primary,
-                        checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
-                    )
-                )
-            }
-        }
-        
-        // Backup & Restore management card
-        Card(
-            onClick = onOpenBottomSheet,
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
-            ),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Backup,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = context.getString(R.string.onboarding_backup_center),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer
-                    )
-                    Text(
-                        text = context.getString(R.string.onboarding_backup_center_desc),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer
-                    )
-                }
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = "Open backup & restore",
-                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
-        
-        // Tip card
-        AnimatedVisibility(
-            visible = autoBackupEnabled,
-            enter = expandVertically() + fadeIn(),
-            exit = shrinkVertically() + fadeOut()
-        ) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-                )
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Lightbulb,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = context.getString(R.string.onboarding_manual_backup_info),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
-        }
-        
-        // Backup features info card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-            )
-        ) {
+            // Left side: Icon, title, description, tips, and action buttons
             Column(
-                modifier = Modifier.padding(20.dp)
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                // Enhanced icon with animation
+                AnimatedVisibility(
+                    visible = true,
+                    enter = scaleIn() + fadeIn()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(96.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Backup,
+                            contentDescription = "Backup & Restore",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                }
+
+                Text(
+                    text = context.getString(R.string.onboarding_backup_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                Text(
+                    text = context.getString(R.string.onboarding_backup_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 32.dp)
+                )
+
+                // Backup features info card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Info,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = context.getString(R.string.onboarding_what_backed_up),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        BackupFeatureTipItem(
+                            icon = Icons.Filled.Save,
+                            text = context.getString(R.string.onboarding_backed_up_1)
+                        )
+                        BackupFeatureTipItem(
+                            icon = Icons.Filled.RestoreFromTrash,
+                            text = context.getString(R.string.onboarding_backed_up_2)
+                        )
+                        BackupFeatureTipItem(
+                            icon = Icons.Filled.Security,
+                            text = context.getString(R.string.onboarding_backed_up_3)
+                        )
+                    }
+                }
+
+                // Action buttons
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Info,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = context.getString(R.string.onboarding_what_backed_up),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+                    backButton?.invoke()
+                    nextButton()
                 }
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                BackupFeatureTipItem(
-                    icon = Icons.Filled.Save,
-                    text = context.getString(R.string.onboarding_backed_up_1)
-                )
-                BackupFeatureTipItem(
-                    icon = Icons.Filled.RestoreFromTrash,
-                    text = context.getString(R.string.onboarding_backed_up_2)
-                )
-                BackupFeatureTipItem(
-                    icon = Icons.Filled.Security,
-                    text = context.getString(R.string.onboarding_backed_up_3)
-                )
+            }
+
+            // Right side: Toggles and cards
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Auto-backup toggle card
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
+                            appSettings.setAutoBackupEnabled(!autoBackupEnabled)
+                        }
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Autorenew,
+                            contentDescription = null,
+                            tint = if (autoBackupEnabled)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
+                        )
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = context.getString(R.string.onboarding_auto_backup),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = context.getString(R.string.onboarding_auto_backup_desc),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        Switch(
+                            checked = autoBackupEnabled,
+                            onCheckedChange = {
+                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
+                                appSettings.setAutoBackupEnabled(it)
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = MaterialTheme.colorScheme.primary,
+                                checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
+                            )
+                        )
+                    }
+                }
+
+                // Backup & Restore management card
+                Card(
+                    onClick = onOpenBottomSheet,
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Backup,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = context.getString(R.string.onboarding_backup_center),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                            Text(
+                                text = context.getString(R.string.onboarding_backup_center_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        }
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = "Open backup & restore",
+                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
+                // Tip card
+                AnimatedVisibility(
+                    visible = autoBackupEnabled,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Lightbulb,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = context.getString(R.string.onboarding_manual_backup_info),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
+                }
             }
         }
-        } // End vertically centered content
-        
-        Spacer(modifier = Modifier.height(0.dp))
-        
-        /*Spacer(modifier = Modifier.height(24.dp))
-        
-        // Skip option with divider
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+    } else {
+        // Mobile layout: Single column
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            HorizontalDivider(modifier = Modifier.weight(1f))
-            Text(
-                text = "or",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-            HorizontalDivider(modifier = Modifier.weight(1f))
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Skip button
-        OutlinedButton(
-            onClick = onSkip,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Text(
-                text = "Skip for now",
-                style = MaterialTheme.typography.labelLarge
-            )
-        }*/
+            // Header with icon and title
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Enhanced icon with animation
+                AnimatedVisibility(
+                    visible = true,
+                    enter = scaleIn() + fadeIn()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Backup,
+                            contentDescription = "Backup & Restore",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
+                }
 
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = context.getString(R.string.onboarding_backup_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                Text(
+                    text = context.getString(R.string.onboarding_backup_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 32.dp)
+                )
+            }
+
+            // Vertically centered content area
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)
+            ) {
+                // Auto-backup toggle card
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
+                            appSettings.setAutoBackupEnabled(!autoBackupEnabled)
+                        }
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Autorenew,
+                            contentDescription = null,
+                            tint = if (autoBackupEnabled)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
+                        )
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = context.getString(R.string.onboarding_auto_backup),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = context.getString(R.string.onboarding_auto_backup_desc),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        Switch(
+                            checked = autoBackupEnabled,
+                            onCheckedChange = {
+                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
+                                appSettings.setAutoBackupEnabled(it)
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = MaterialTheme.colorScheme.primary,
+                                checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
+                            )
+                        )
+                    }
+                }
+
+                // Backup & Restore management card
+                Card(
+                    onClick = onOpenBottomSheet,
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Backup,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = context.getString(R.string.onboarding_backup_center),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                            Text(
+                                text = context.getString(R.string.onboarding_backup_center_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        }
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = "Open backup & restore",
+                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
+                // Tip card
+                AnimatedVisibility(
+                    visible = autoBackupEnabled,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Lightbulb,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = context.getString(R.string.onboarding_manual_backup_info),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
+                }
+
+                // Backup features info card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Info,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = context.getString(R.string.onboarding_what_backed_up),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        BackupFeatureTipItem(
+                            icon = Icons.Filled.Save,
+                            text = context.getString(R.string.onboarding_backed_up_1)
+                        )
+                        BackupFeatureTipItem(
+                            icon = Icons.Filled.RestoreFromTrash,
+                            text = context.getString(R.string.onboarding_backed_up_2)
+                        )
+                        BackupFeatureTipItem(
+                            icon = Icons.Filled.Security,
+                            text = context.getString(R.string.onboarding_backed_up_3)
+                        )
+                    }
+                }
+            } // End vertically centered content
+
+            Spacer(modifier = Modifier.height(0.dp))
+        }
     }
 }
 
@@ -1583,7 +2690,10 @@ private fun LibraryTipItem(
 @Composable
 fun EnhancedAudioPlaybackContent(
     onNextStep: () -> Unit,
-    appSettings: AppSettings
+    appSettings: AppSettings,
+    isTablet: Boolean = false,
+    backButton: @Composable (() -> Unit)? = null,
+    nextButton: @Composable () -> Unit
 ) {
     val context = LocalContext.current
     val hapticFeedbackEnabled by appSettings.hapticFeedbackEnabled.collectAsState()
@@ -1592,239 +2702,482 @@ fun EnhancedAudioPlaybackContent(
     val lyricsSourcePreference by appSettings.lyricsSourcePreference.collectAsState()
     val scrollState = rememberScrollState()
 
-    Column(
-        horizontalAlignment = Alignment.Start,
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(scrollState)
-    ) {
-        // Enhanced audio icon
-        AnimatedVisibility(
-            visible = true,
-            enter = scaleIn() + fadeIn()
+    if (isTablet) {
+        // Tablet layout: Left side - icon, title, description, tips, action buttons; Right side - toggles and dropdowns
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+                .padding(vertical = 32.dp),
+            horizontalArrangement = Arrangement.spacedBy(32.dp),
+            verticalAlignment = Alignment.Top
         ) {
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                contentAlignment = Alignment.Center
+            // Left side: Icon, title, description, tips, and action buttons
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Icon(
-                    imageVector = RhythmIcons.Player.VolumeUp,
-                    contentDescription = "Audio & Playback Settings",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(40.dp)
-                )
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        Text(
-            text = context.getString(R.string.onboarding_audio_title),
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-        
-        Text(
-            text = context.getString(R.string.onboarding_audio_desc),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 32.dp)
-        )
-
-        // Vertically centered content area
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)
-        ) {
-        // Audio options
-            // Haptic feedback toggle
-            EnhancedThemeOption(
-                icon = Icons.Filled.TouchApp,
-                title = context.getString(R.string.onboarding_haptic_title),
-                description = context.getString(R.string.onboarding_haptic_desc),
-                isEnabled = hapticFeedbackEnabled,
-                onToggle = { appSettings.setHapticFeedbackEnabled(it) }
-            )
-            
-            // Default Landing Screen dropdown
-            SettingsDropdownItem(
-                title = context.getString(R.string.onboarding_default_screen_title),
-                description = context.getString(R.string.onboarding_default_screen_desc),
-                selectedOption = if (appSettings.defaultScreen.collectAsState().value == "library") context.getString(R.string.option_library) else context.getString(R.string.option_home),
-                icon = Icons.Filled.Home,
-                options = listOf(context.getString(R.string.option_home), context.getString(R.string.option_library)),
-                onOptionSelected = { selectedOption ->
-                    appSettings.setDefaultScreen(selectedOption.lowercase())
-                }
-            )
-
-            // System volume control toggle
-            EnhancedThemeOption(
-                icon = RhythmIcons.Player.VolumeUp,
-                title = context.getString(R.string.onboarding_system_volume_title),
-                description = context.getString(R.string.onboarding_system_volume_desc),
-                isEnabled = useSystemVolume,
-                onToggle = { appSettings.setUseSystemVolume(it) }
-            )
-            
-            
-            
-            // Auto Add to Queue toggle
-            EnhancedThemeOption(
-                icon = Icons.Filled.Queue,
-                title = context.getString(R.string.onboarding_auto_queue_title),
-                description = context.getString(R.string.onboarding_auto_queue_desc),
-                isEnabled = appSettings.autoAddToQueue.collectAsState().value,
-                onToggle = { appSettings.setAutoAddToQueue(it) }
-            )
-            
-            // Clear Queue on New Song toggle
-            EnhancedThemeOption(
-                icon = Icons.Filled.Delete,
-                title = context.getString(R.string.onboarding_clear_queue_title),
-                description = context.getString(R.string.onboarding_clear_queue_desc),
-                isEnabled = appSettings.clearQueueOnNewSong.collectAsState().value,
-                onToggle = { appSettings.setClearQueueOnNewSong(it) }
-            )
-            
-            // Repeat Mode Persistence toggle
-            EnhancedThemeOption(
-                icon = Icons.Filled.Repeat,
-                title = context.getString(R.string.onboarding_repeat_mode_title),
-                description = context.getString(R.string.onboarding_repeat_mode_desc),
-                isEnabled = appSettings.repeatModePersistence.collectAsState().value,
-                onToggle = { appSettings.setRepeatModePersistence(it) }
-            )
-            
-            // Shuffle Mode Persistence toggle
-            EnhancedThemeOption(
-                icon = Icons.Filled.Shuffle,
-                title = context.getString(R.string.onboarding_shuffle_mode_title),
-                description = context.getString(R.string.onboarding_shuffle_mode_desc),
-                isEnabled = appSettings.shuffleModePersistence.collectAsState().value,
-                onToggle = { appSettings.setShuffleModePersistence(it) }
-            )
-            
-            // ExoPlayer Shuffle toggle
-            EnhancedThemeOption(
-                icon = Icons.Filled.Shuffle,
-                title = context.getString(R.string.onboarding_exoplayer_shuffle_title),
-                description = context.getString(R.string.onboarding_exoplayer_shuffle_desc),
-                isEnabled = appSettings.shuffleUsesExoplayer.collectAsState().value,
-                onToggle = { appSettings.setShuffleUsesExoplayer(it) }
-            )
-
-            
-            // Show Lyrics toggle
-            EnhancedThemeOption(
-                icon = Icons.Filled.Lyrics,
-                title = context.getString(R.string.onboarding_show_lyrics_title),
-                description = context.getString(R.string.onboarding_show_lyrics_desc),
-                isEnabled = showLyrics,
-                onToggle = { appSettings.setShowLyrics(it) }
-            )
-            
-            // Lyrics Source Priority dropdown (shown when lyrics are enabled)
-            AnimatedVisibility(
-                visible = showLyrics,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    SettingsDropdownItem(
-                        title = context.getString(R.string.onboarding_lyrics_source_title),
-                        description = context.getString(R.string.onboarding_lyrics_source_desc),
-                        selectedOption = lyricsSourcePreference.displayName,
-                        icon = Icons.Filled.Cloud,
-                        options = chromahub.rhythm.app.data.LyricsSourcePreference.values().map { it.displayName },
-                        onOptionSelected = { displayName ->
-                            val preference = chromahub.rhythm.app.data.LyricsSourcePreference.values()
-                                .find { it.displayName == displayName }
-                            if (preference != null) {
-                                appSettings.setLyricsSourcePreference(preference)
-                            }
-                        }
-                    )
-                    
-                    // Lyrics sources info
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(18.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f)
+                // Enhanced audio icon
+                AnimatedVisibility(
+                    visible = true,
+                    enter = scaleIn() + fadeIn()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(96.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = RhythmIcons.Player.VolumeUp,
+                            contentDescription = "Audio & Playback Settings",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(48.dp)
                         )
+                    }
+                }
+
+                Text(
+                    text = context.getString(R.string.onboarding_audio_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                Text(
+                    text = context.getString(R.string.onboarding_audio_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 32.dp)
+                )
+
+                // Equalizer and Sleep Timer info card
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp)
                     ) {
                         Row(
-                            modifier = Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(bottom = 12.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.Lightbulb,
+                                imageVector = Icons.Filled.Info,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                                modifier = Modifier.size(18.dp)
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = context.getString(R.string.onboarding_lyrics_sources),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                                text = context.getString(R.string.onboarding_additional_features),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
+                        }
+
+                        LibraryTipItem(
+                            icon = Icons.Filled.GraphicEq,
+                            text = context.getString(R.string.onboarding_equalizer_desc)
+                        )
+                        LibraryTipItem(
+                            icon = Icons.Filled.AccessTime,
+                            text = context.getString(R.string.onboarding_sleep_timer_desc)
+                        )
+                    }
+                }
+
+                // Action buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    backButton?.invoke()
+                    nextButton()
+                }
+            }
+
+            // Right side: Toggles and dropdowns
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Haptic feedback toggle
+                EnhancedThemeOption(
+                    icon = Icons.Filled.TouchApp,
+                    title = context.getString(R.string.onboarding_haptic_title),
+                    description = context.getString(R.string.onboarding_haptic_desc),
+                    isEnabled = hapticFeedbackEnabled,
+                    onToggle = { appSettings.setHapticFeedbackEnabled(it) }
+                )
+
+                // Default Landing Screen dropdown
+                SettingsDropdownItem(
+                    title = context.getString(R.string.onboarding_default_screen_title),
+                    description = context.getString(R.string.onboarding_default_screen_desc),
+                    selectedOption = if (appSettings.defaultScreen.collectAsState().value == "library") context.getString(R.string.option_library) else context.getString(R.string.option_home),
+                    icon = Icons.Filled.Home,
+                    options = listOf(context.getString(R.string.option_home), context.getString(R.string.option_library)),
+                    onOptionSelected = { selectedOption ->
+                        appSettings.setDefaultScreen(selectedOption.lowercase())
+                    }
+                )
+
+                // System volume control toggle
+                EnhancedThemeOption(
+                    icon = RhythmIcons.Player.VolumeUp,
+                    title = context.getString(R.string.onboarding_system_volume_title),
+                    description = context.getString(R.string.onboarding_system_volume_desc),
+                    isEnabled = useSystemVolume,
+                    onToggle = { appSettings.setUseSystemVolume(it) }
+                )
+
+                // Auto Add to Queue toggle
+                EnhancedThemeOption(
+                    icon = Icons.Filled.Queue,
+                    title = context.getString(R.string.onboarding_auto_queue_title),
+                    description = context.getString(R.string.onboarding_auto_queue_desc),
+                    isEnabled = appSettings.autoAddToQueue.collectAsState().value,
+                    onToggle = { appSettings.setAutoAddToQueue(it) }
+                )
+
+                // Clear Queue on New Song toggle
+                EnhancedThemeOption(
+                    icon = Icons.Filled.Delete,
+                    title = context.getString(R.string.onboarding_clear_queue_title),
+                    description = context.getString(R.string.onboarding_clear_queue_desc),
+                    isEnabled = appSettings.clearQueueOnNewSong.collectAsState().value,
+                    onToggle = { appSettings.setClearQueueOnNewSong(it) }
+                )
+
+                // Repeat Mode Persistence toggle
+                EnhancedThemeOption(
+                    icon = Icons.Filled.Repeat,
+                    title = context.getString(R.string.onboarding_repeat_mode_title),
+                    description = context.getString(R.string.onboarding_repeat_mode_desc),
+                    isEnabled = appSettings.repeatModePersistence.collectAsState().value,
+                    onToggle = { appSettings.setRepeatModePersistence(it) }
+                )
+
+                // Shuffle Mode Persistence toggle
+                EnhancedThemeOption(
+                    icon = Icons.Filled.Shuffle,
+                    title = context.getString(R.string.onboarding_shuffle_mode_title),
+                    description = context.getString(R.string.onboarding_shuffle_mode_desc),
+                    isEnabled = appSettings.shuffleModePersistence.collectAsState().value,
+                    onToggle = { appSettings.setShuffleModePersistence(it) }
+                )
+
+                // ExoPlayer Shuffle toggle
+                EnhancedThemeOption(
+                    icon = Icons.Filled.Shuffle,
+                    title = context.getString(R.string.onboarding_exoplayer_shuffle_title),
+                    description = context.getString(R.string.onboarding_exoplayer_shuffle_desc),
+                    isEnabled = appSettings.shuffleUsesExoplayer.collectAsState().value,
+                    onToggle = { appSettings.setShuffleUsesExoplayer(it) }
+                )
+
+                // Show Lyrics toggle
+                EnhancedThemeOption(
+                    icon = Icons.Filled.Lyrics,
+                    title = context.getString(R.string.onboarding_show_lyrics_title),
+                    description = context.getString(R.string.onboarding_show_lyrics_desc),
+                    isEnabled = showLyrics,
+                    onToggle = { appSettings.setShowLyrics(it) }
+                )
+
+                // Lyrics Source Priority dropdown (shown when lyrics are enabled)
+                AnimatedVisibility(
+                    visible = showLyrics,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        SettingsDropdownItem(
+                            title = context.getString(R.string.onboarding_lyrics_source_title),
+                            description = context.getString(R.string.onboarding_lyrics_source_desc),
+                            selectedOption = lyricsSourcePreference.displayName,
+                            icon = Icons.Filled.Cloud,
+                            options = chromahub.rhythm.app.data.LyricsSourcePreference.values().map { it.displayName },
+                            onOptionSelected = { displayName ->
+                                val preference = chromahub.rhythm.app.data.LyricsSourcePreference.values()
+                                    .find { it.displayName == displayName }
+                                if (preference != null) {
+                                    appSettings.setLyricsSourcePreference(preference)
+                                }
+                            }
+                        )
+
+                        // Lyrics sources info
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(18.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f)
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Lightbulb,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = context.getString(R.string.onboarding_lyrics_sources),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                                )
+                            }
                         }
                     }
                 }
             }
-            
-        } // End vertically centered content
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Equalizer and Sleep Timer info card
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
-            ),
-            modifier = Modifier.fillMaxWidth()
+        }
+    } else {
+        // Mobile layout: Single column
+        Column(
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
         ) {
-            Column(
-                modifier = Modifier.padding(20.dp)
+            // Enhanced audio icon
+            AnimatedVisibility(
+                visible = true,
+                enter = scaleIn() + fadeIn()
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(bottom = 12.dp)
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.Info,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = context.getString(R.string.onboarding_additional_features),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        imageVector = RhythmIcons.Player.VolumeUp,
+                        contentDescription = "Audio & Playback Settings",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(40.dp)
                     )
                 }
-                
-                LibraryTipItem(
-                    icon = Icons.Filled.GraphicEq,
-                    text = context.getString(R.string.onboarding_equalizer_desc)
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = context.getString(R.string.onboarding_audio_title),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            Text(
+                text = context.getString(R.string.onboarding_audio_desc),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 32.dp)
+            )
+
+            // Vertically centered content area
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)
+            ) {
+                // Audio options
+                // Haptic feedback toggle
+                EnhancedThemeOption(
+                    icon = Icons.Filled.TouchApp,
+                    title = context.getString(R.string.onboarding_haptic_title),
+                    description = context.getString(R.string.onboarding_haptic_desc),
+                    isEnabled = hapticFeedbackEnabled,
+                    onToggle = { appSettings.setHapticFeedbackEnabled(it) }
                 )
-                LibraryTipItem(
-                    icon = Icons.Filled.AccessTime,
-                    text = context.getString(R.string.onboarding_sleep_timer_desc)
+
+                // Default Landing Screen dropdown
+                SettingsDropdownItem(
+                    title = context.getString(R.string.onboarding_default_screen_title),
+                    description = context.getString(R.string.onboarding_default_screen_desc),
+                    selectedOption = if (appSettings.defaultScreen.collectAsState().value == "library") context.getString(R.string.option_library) else context.getString(R.string.option_home),
+                    icon = Icons.Filled.Home,
+                    options = listOf(context.getString(R.string.option_home), context.getString(R.string.option_library)),
+                    onOptionSelected = { selectedOption ->
+                        appSettings.setDefaultScreen(selectedOption.lowercase())
+                    }
                 )
+
+                // System volume control toggle
+                EnhancedThemeOption(
+                    icon = RhythmIcons.Player.VolumeUp,
+                    title = context.getString(R.string.onboarding_system_volume_title),
+                    description = context.getString(R.string.onboarding_system_volume_desc),
+                    isEnabled = useSystemVolume,
+                    onToggle = { appSettings.setUseSystemVolume(it) }
+                )
+
+                // Auto Add to Queue toggle
+                EnhancedThemeOption(
+                    icon = Icons.Filled.Queue,
+                    title = context.getString(R.string.onboarding_auto_queue_title),
+                    description = context.getString(R.string.onboarding_auto_queue_desc),
+                    isEnabled = appSettings.autoAddToQueue.collectAsState().value,
+                    onToggle = { appSettings.setAutoAddToQueue(it) }
+                )
+
+                // Clear Queue on New Song toggle
+                EnhancedThemeOption(
+                    icon = Icons.Filled.Delete,
+                    title = context.getString(R.string.onboarding_clear_queue_title),
+                    description = context.getString(R.string.onboarding_clear_queue_desc),
+                    isEnabled = appSettings.clearQueueOnNewSong.collectAsState().value,
+                    onToggle = { appSettings.setClearQueueOnNewSong(it) }
+                )
+
+                // Repeat Mode Persistence toggle
+                EnhancedThemeOption(
+                    icon = Icons.Filled.Repeat,
+                    title = context.getString(R.string.onboarding_repeat_mode_title),
+                    description = context.getString(R.string.onboarding_repeat_mode_desc),
+                    isEnabled = appSettings.repeatModePersistence.collectAsState().value,
+                    onToggle = { appSettings.setRepeatModePersistence(it) }
+                )
+
+                // Shuffle Mode Persistence toggle
+                EnhancedThemeOption(
+                    icon = Icons.Filled.Shuffle,
+                    title = context.getString(R.string.onboarding_shuffle_mode_title),
+                    description = context.getString(R.string.onboarding_shuffle_mode_desc),
+                    isEnabled = appSettings.shuffleModePersistence.collectAsState().value,
+                    onToggle = { appSettings.setShuffleModePersistence(it) }
+                )
+
+                // ExoPlayer Shuffle toggle
+                EnhancedThemeOption(
+                    icon = Icons.Filled.Shuffle,
+                    title = context.getString(R.string.onboarding_exoplayer_shuffle_title),
+                    description = context.getString(R.string.onboarding_exoplayer_shuffle_desc),
+                    isEnabled = appSettings.shuffleUsesExoplayer.collectAsState().value,
+                    onToggle = { appSettings.setShuffleUsesExoplayer(it) }
+                )
+
+                // Show Lyrics toggle
+                EnhancedThemeOption(
+                    icon = Icons.Filled.Lyrics,
+                    title = context.getString(R.string.onboarding_show_lyrics_title),
+                    description = context.getString(R.string.onboarding_show_lyrics_desc),
+                    isEnabled = showLyrics,
+                    onToggle = { appSettings.setShowLyrics(it) }
+                )
+
+                // Lyrics Source Priority dropdown (shown when lyrics are enabled)
+                AnimatedVisibility(
+                    visible = showLyrics,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        SettingsDropdownItem(
+                            title = context.getString(R.string.onboarding_lyrics_source_title),
+                            description = context.getString(R.string.onboarding_lyrics_source_desc),
+                            selectedOption = lyricsSourcePreference.displayName,
+                            icon = Icons.Filled.Cloud,
+                            options = chromahub.rhythm.app.data.LyricsSourcePreference.values().map { it.displayName },
+                            onOptionSelected = { displayName ->
+                                val preference = chromahub.rhythm.app.data.LyricsSourcePreference.values()
+                                    .find { it.displayName == displayName }
+                                if (preference != null) {
+                                    appSettings.setLyricsSourcePreference(preference)
+                                }
+                            }
+                        )
+
+                        // Lyrics sources info
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(18.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f)
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Lightbulb,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = context.getString(R.string.onboarding_lyrics_sources),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                                )
+                            }
+                        }
+                    }
+                }
+
+            } // End vertically centered content
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Equalizer and Sleep Timer info card
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Info,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = context.getString(R.string.onboarding_additional_features),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+
+                    LibraryTipItem(
+                        icon = Icons.Filled.GraphicEq,
+                        text = context.getString(R.string.onboarding_equalizer_desc)
+                    )
+                    LibraryTipItem(
+                        icon = Icons.Filled.AccessTime,
+                        text = context.getString(R.string.onboarding_sleep_timer_desc)
+                    )
+                }
             }
         }
-        
-
     }
 }
 
@@ -1832,7 +3185,10 @@ fun EnhancedAudioPlaybackContent(
 fun EnhancedLibrarySetupContent(
     onNextStep: () -> Unit,
     appSettings: AppSettings,
-    onOpenTabOrderBottomSheet: () -> Unit = {}
+    onOpenTabOrderBottomSheet: () -> Unit = {},
+    isTablet: Boolean = false,
+    backButton: @Composable (() -> Unit)? = null,
+    nextButton: @Composable () -> Unit
 ) {
     val context = LocalContext.current
     val albumViewType by appSettings.albumViewType.collectAsState()
@@ -1840,208 +3196,240 @@ fun EnhancedLibrarySetupContent(
     val albumSortOrder by appSettings.albumSortOrder.collectAsState()
     val scrollState = rememberScrollState()
 
-    Column(
-        horizontalAlignment = Alignment.Start,
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(scrollState)
-    ) {
-        // Enhanced library icon
-        AnimatedVisibility(
-            visible = true,
-            enter = scaleIn() + fadeIn()
+    if (isTablet) {
+        // Tablet layout: Left side - icon, title, description, tips, action buttons; Right side - toggles and cards
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+                .padding(vertical = 32.dp),
+            horizontalArrangement = Arrangement.spacedBy(32.dp),
+            verticalAlignment = Alignment.Top
         ) {
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.LibraryMusic,
-                    contentDescription = "Library Setup",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(40.dp)
-                )
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        Text(
-            text = context.getString(R.string.onboarding_library_title),
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-        
-        Text(
-            text = context.getString(R.string.onboarding_library_desc),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 32.dp)
-        )
-
-        // Vertically centered content area
-        // Temporarily hidden - these settings are available in Tuner settings
-        /*
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)
-        ) {
-        // Library options
-            // Album view type dropdown
-            SettingsDropdownItem(
-                title = "Album Display Style",
-                description = "List or grid layout for albums.",
-                selectedOption = albumViewType.name.lowercase().replaceFirstChar { it.uppercase() },
-                icon = Icons.Filled.Album,
-                options = listOf("List", "Grid"),
-                onOptionSelected = { selectedOption ->
-                    val newViewType = chromahub.rhythm.app.data.AlbumViewType.valueOf(selectedOption.uppercase())
-                    appSettings.setAlbumViewType(newViewType)
-                }
-            )
-
-            // Artist view type dropdown
-            SettingsDropdownItem(
-                title = "Artist Display Style",
-                description = "List or grid layout for artists.",
-                selectedOption = artistViewType.name.lowercase().replaceFirstChar { it.uppercase() },
-                icon = Icons.Filled.Person,
-                options = listOf("List", "Grid"),
-                onOptionSelected = { selectedOption ->
-                    val newViewType = chromahub.rhythm.app.data.ArtistViewType.valueOf(selectedOption.uppercase())
-                    appSettings.setArtistViewType(newViewType)
-                }
-            )
-
-            // Album sort order dropdown
-            SettingsDropdownItem(
-                title = "Album Song Order",
-                description = "Default sorting order for songs within albums.",
-                selectedOption = when (chromahub.rhythm.app.ui.screens.AlbumSortOrder.valueOf(albumSortOrder)) {
-                    chromahub.rhythm.app.ui.screens.AlbumSortOrder.TRACK_NUMBER -> "Track"
-                    chromahub.rhythm.app.ui.screens.AlbumSortOrder.TITLE_ASC -> "Title A-Z"
-                    chromahub.rhythm.app.ui.screens.AlbumSortOrder.TITLE_DESC -> "Title Z-A"
-                    chromahub.rhythm.app.ui.screens.AlbumSortOrder.DURATION_ASC -> "Duration ↑"
-                    chromahub.rhythm.app.ui.screens.AlbumSortOrder.DURATION_DESC -> "Duration ↓"
-                },
-                icon = RhythmIcons.Actions.Sort,
-                options = listOf("Track Number", "Title A-Z", "Title Z-A", "Duration ↑", "Duration ↓"),
-                onOptionSelected = { selectedOption ->
-                    val newSortOrder = when (selectedOption) {
-                        "Track Number" -> chromahub.rhythm.app.ui.screens.AlbumSortOrder.TRACK_NUMBER
-                        "Title A-Z" -> chromahub.rhythm.app.ui.screens.AlbumSortOrder.TITLE_ASC
-                        "Title Z-A" -> chromahub.rhythm.app.ui.screens.AlbumSortOrder.TITLE_DESC
-                        "Duration ↑" -> chromahub.rhythm.app.ui.screens.AlbumSortOrder.DURATION_ASC
-                        "Duration ↓" -> chromahub.rhythm.app.ui.screens.AlbumSortOrder.DURATION_DESC
-                        else -> chromahub.rhythm.app.ui.screens.AlbumSortOrder.TRACK_NUMBER
-                    }
-                    appSettings.setAlbumSortOrder(newSortOrder.name)
-                }
-            )
-        } // End vertically centered content
-        */
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Library organization settings
-        // Column(
-        //     modifier = Modifier.fillMaxWidth(),
-        //     verticalArrangement = Arrangement.spacedBy(12.dp)
-        // ) {
-        //     // Album view type dropdown
-        //     SettingsDropdownItem(
-        //         title = "Album Display Style",
-        //         description = "Choose list or grid layout for albums",
-        //         selectedOption = albumViewType.name.lowercase().replaceFirstChar { it.uppercase() },
-        //         icon = Icons.Filled.Album,
-        //         options = listOf("List", "Grid"),
-        //         onOptionSelected = { selectedOption ->
-        //             val newViewType = chromahub.rhythm.app.data.AlbumViewType.valueOf(selectedOption.uppercase())
-        //             appSettings.setAlbumViewType(newViewType)
-        //         }
-        //     )
-
-        //     // Artist view type dropdown
-        //     SettingsDropdownItem(
-        //         title = "Artist Display Style",
-        //         description = "Choose list or grid layout for artists",
-        //         selectedOption = artistViewType.name.lowercase().replaceFirstChar { it.uppercase() },
-        //         icon = Icons.Filled.Person,
-        //         options = listOf("List", "Grid"),
-        //         onOptionSelected = { selectedOption ->
-        //             val newViewType = chromahub.rhythm.app.data.ArtistViewType.valueOf(selectedOption.uppercase())
-        //             appSettings.setArtistViewType(newViewType)
-        //         }
-        //     )
-        // }
-        
-        // Spacer(modifier = Modifier.height(16.dp))
-        
-        // Library tab order feature
-        LibraryFeatureCard(
-            icon = Icons.Filled.FormatListNumbered,
-            title = context.getString(R.string.onboarding_tab_order_title),
-            description = context.getString(R.string.onboarding_tab_order_desc),
-            onClick = onOpenTabOrderBottomSheet,
-            useTertiaryStyle = true
-        )
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // How it Works info card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-            )
-        ) {
+            // Left side: Icon, title, description, tips, and action buttons
             Column(
-                modifier = Modifier.padding(20.dp)
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                // Enhanced library icon
+                AnimatedVisibility(
+                    visible = true,
+                    enter = scaleIn() + fadeIn()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(96.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.LibraryMusic,
+                            contentDescription = "Library Setup",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                }
+
+                Text(
+                    text = context.getString(R.string.onboarding_library_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                Text(
+                    text = context.getString(R.string.onboarding_library_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 32.dp)
+                )
+
+                // How it Works info card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Info,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = context.getString(R.string.onboarding_library_how_works),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        LibraryTipItem(
+                            icon = Icons.Filled.Reorder,
+                            text = context.getString(R.string.onboarding_library_1)
+                        )
+                        LibraryTipItem(
+                            icon = Icons.Filled.Queue,
+                            text = context.getString(R.string.onboarding_library_2)
+                        )
+                        LibraryTipItem(
+                            icon = Icons.Filled.LibraryMusic,
+                            text = context.getString(R.string.onboarding_library_4)
+                        )
+                        LibraryTipItem(
+                            icon = Icons.Filled.Tune,
+                            text = context.getString(R.string.onboarding_library_3)
+                        )
+                    }
+                }
+
+                // Action buttons
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Info,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = context.getString(R.string.onboarding_library_how_works),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+                    backButton?.invoke()
+                    nextButton()
                 }
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                LibraryTipItem(
-                    icon = Icons.Filled.Reorder,
-                    text = context.getString(R.string.onboarding_library_1)
-                )
-                LibraryTipItem(
-                    icon = Icons.Filled.Queue,
-                    text = context.getString(R.string.onboarding_library_2)
-                )
-                LibraryTipItem(
-                    icon = Icons.Filled.LibraryMusic,
-                    text = context.getString(R.string.onboarding_library_4)
-                )
-                LibraryTipItem(
-                    icon = Icons.Filled.Tune,
-                    text = context.getString(R.string.onboarding_library_3)
+            }
+
+            // Right side: Toggles and cards
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Library tab order feature
+                LibraryFeatureCard(
+                    icon = Icons.Filled.FormatListNumbered,
+                    title = context.getString(R.string.onboarding_tab_order_title),
+                    description = context.getString(R.string.onboarding_tab_order_desc),
+                    onClick = onOpenTabOrderBottomSheet,
+                    useTertiaryStyle = true
                 )
             }
         }
+    } else {
+        // Mobile layout: Single column
+        Column(
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+        ) {
+            // Enhanced library icon
+            AnimatedVisibility(
+                visible = true,
+                enter = scaleIn() + fadeIn()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.LibraryMusic,
+                        contentDescription = "Library Setup",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(40.dp)
+                    )
+                }
+            }
 
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = context.getString(R.string.onboarding_library_title),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            Text(
+                text = context.getString(R.string.onboarding_library_desc),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 32.dp)
+            )
+
+            // Library tab order feature
+            LibraryFeatureCard(
+                icon = Icons.Filled.FormatListNumbered,
+                title = context.getString(R.string.onboarding_tab_order_title),
+                description = context.getString(R.string.onboarding_tab_order_desc),
+                onClick = onOpenTabOrderBottomSheet,
+                useTertiaryStyle = true
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // How it Works info card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Info,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = context.getString(R.string.onboarding_library_how_works),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    LibraryTipItem(
+                        icon = Icons.Filled.Reorder,
+                        text = context.getString(R.string.onboarding_library_1)
+                    )
+                    LibraryTipItem(
+                        icon = Icons.Filled.Queue,
+                        text = context.getString(R.string.onboarding_library_2)
+                    )
+                    LibraryTipItem(
+                        icon = Icons.Filled.LibraryMusic,
+                        text = context.getString(R.string.onboarding_library_4)
+                    )
+                    LibraryTipItem(
+                        icon = Icons.Filled.Tune,
+                        text = context.getString(R.string.onboarding_library_3)
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -2127,7 +3515,10 @@ fun EnhancedThemingContent(
     onNextStep: () -> Unit,
     themeViewModel: ThemeViewModel,
     appSettings: AppSettings,
-    onSkip: () -> Unit = {}
+    onSkip: () -> Unit = {},
+    isTablet: Boolean = false,
+    backButton: @Composable (() -> Unit)? = null,
+    nextButton: @Composable () -> Unit
 ) {
     val context = LocalContext.current
     val useSystemTheme by themeViewModel.useSystemTheme.collectAsState()
@@ -2135,340 +3526,549 @@ fun EnhancedThemingContent(
     val useDynamicColors by themeViewModel.useDynamicColors.collectAsState()
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
-    
-    Column(
-        horizontalAlignment = Alignment.Start,
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(scrollState)
-    ) {
-        // Enhanced icon with animation
-        AnimatedVisibility(
-            visible = true,
-            enter = scaleIn() + fadeIn()
+
+    if (isTablet) {
+        // Tablet layout: Left side - icon, title, description, tips, action buttons; Right side - toggles and cards
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+                .padding(vertical = 32.dp),
+            horizontalArrangement = Arrangement.spacedBy(32.dp),
+            verticalAlignment = Alignment.Top
         ) {
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Palette,
-                    contentDescription = "Theming",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(40.dp)
-                )
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        Text(
-            text = context.getString(R.string.onboarding_theme_title),
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-        
-        Text(
-            text = context.getString(R.string.onboarding_theme_desc),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 32.dp)
-        )
-        
-        // Live theme preview card
-        AnimatedVisibility(
-            visible = true,
-            enter = fadeIn(animationSpec = tween(600)) + expandVertically(animationSpec = tween(600))
-        ) {
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = context.getString(R.string.onboarding_live_preview),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-                    
-                    // Preview components
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        // Primary color preview
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(56.dp)
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(MaterialTheme.colorScheme.primary),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.MusicNote,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onPrimary,
-                                    modifier = Modifier.size(28.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = context.getString(R.string.onboarding_primary),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        
-                        // Secondary color preview
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(56.dp)
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(MaterialTheme.colorScheme.secondaryContainer),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Album,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    modifier = Modifier.size(28.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = context.getString(R.string.onboarding_container),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        
-                        // Tertiary color preview
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(56.dp)
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(MaterialTheme.colorScheme.tertiaryContainer),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Person,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                                    modifier = Modifier.size(28.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = context.getString(R.string.onboarding_accent),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-            }
-        }
-        
-        // Theme options - vertically centered
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)
-        ) {
-            // System theme toggle
-            EnhancedThemeOption(
-                icon = Icons.Filled.DarkMode,
-                title = context.getString(R.string.onboarding_follow_system_title),
-                description = context.getString(R.string.onboarding_follow_system_desc),
-                isEnabled = useSystemTheme,
-                onToggle = { enabled ->
-                    scope.launch {
-                        themeViewModel.setUseSystemTheme(enabled)
-                    }
-                }
-            )
-            
-            // Manual dark mode toggle (only shown when system theme is off)
-            AnimatedVisibility(
-                visible = !useSystemTheme,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                EnhancedThemeOption(
-                    icon = Icons.Filled.DarkMode,
-                    title = context.getString(R.string.onboarding_dark_mode_title),
-                    description = context.getString(R.string.onboarding_dark_mode_desc),
-                    isEnabled = darkMode,
-                    onToggle = { enabled ->
-                        scope.launch {
-                            themeViewModel.setDarkMode(enabled)
-                        }
-                    }
-                )
-            }
-            
-            // Dynamic colors (Material You) - only on Android 12+
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                EnhancedThemeOption(
-                    icon = Icons.Filled.Palette,
-                    title = context.getString(R.string.onboarding_dynamic_colors_title),
-                    description = context.getString(R.string.onboarding_dynamic_colors_desc),
-                    isEnabled = useDynamicColors,
-                    onToggle = { enabled ->
-                        scope.launch {
-                            themeViewModel.setUseDynamicColors(enabled)
-                        }
-                    }
-                )
-            }
-        } // End vertically centered content
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Advanced theming info card - Hidden, replaced with Tuner guide
-        /*
-        Card(
-            onClick = onOpenBottomSheet,
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-            ),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.AutoAwesome,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = context.getString(R.string.onboarding_advanced_customization),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Text(
-                        text = context.getString(R.string.onboarding_advanced_customization_desc),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = "Open theme customization",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
-        */
-        
-        // Guide to Tuner settings
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-            )
-        ) {
+            // Left side: Icon, title, description, tips, and action buttons
             Column(
-                modifier = Modifier.padding(20.dp)
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                // Enhanced icon with animation
+                AnimatedVisibility(
+                    visible = true,
+                    enter = scaleIn() + fadeIn()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(96.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Palette,
+                            contentDescription = "Theming",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                }
+
+                Text(
+                    text = context.getString(R.string.onboarding_theme_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                Text(
+                    text = context.getString(R.string.onboarding_theme_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 32.dp)
+                )
+
+                // Guide to Tuner settings
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Settings,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = context.getString(R.string.onboarding_more_tuner),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        LibraryTipItem(
+                            icon = Icons.Filled.Palette,
+                            text = context.getString(R.string.onboarding_tuner_1)
+                        )
+                        LibraryTipItem(
+                            icon = Icons.Filled.FontDownload,
+                            text = context.getString(R.string.onboarding_tuner_2)
+                        )
+                        LibraryTipItem(
+                            icon = Icons.Filled.AutoAwesome,
+                            text = context.getString(R.string.onboarding_tuner_3)
+                        )
+                    }
+                }
+
+                // Action buttons
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Settings,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = context.getString(R.string.onboarding_more_tuner),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+                    backButton?.invoke()
+                    nextButton()
                 }
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                LibraryTipItem(
-                    icon = Icons.Filled.Palette,
-                    text = context.getString(R.string.onboarding_tuner_1)
-                )
-                LibraryTipItem(
-                    icon = Icons.Filled.FontDownload,
-                    text = context.getString(R.string.onboarding_tuner_2)
-                )
-                LibraryTipItem(
-                    icon = Icons.Filled.AutoAwesome,
-                    text = context.getString(R.string.onboarding_tuner_3)
-                )
+            }
+
+            // Right side: Preview card and toggles
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                // Live theme preview card
+                AnimatedVisibility(
+                    visible = true,
+                    enter = fadeIn(animationSpec = tween(600)) + expandVertically(animationSpec = tween(600))
+                ) {
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(20.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = context.getString(R.string.onboarding_live_preview),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.padding(bottom = 16.dp)
+                            )
+
+                            // Preview components
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                // Primary color preview
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(72.dp)
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .background(MaterialTheme.colorScheme.primary),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.MusicNote,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onPrimary,
+                                            modifier = Modifier.size(32.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = context.getString(R.string.onboarding_primary),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+
+                                // Secondary color preview
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(72.dp)
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .background(MaterialTheme.colorScheme.secondaryContainer),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Album,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            modifier = Modifier.size(32.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = context.getString(R.string.onboarding_container),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+
+                                // Tertiary color preview
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(72.dp)
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .background(MaterialTheme.colorScheme.tertiaryContainer),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Person,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                            modifier = Modifier.size(32.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = context.getString(R.string.onboarding_accent),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Theme options
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // System theme toggle
+                    EnhancedThemeOption(
+                        icon = Icons.Filled.DarkMode,
+                        title = context.getString(R.string.onboarding_follow_system_title),
+                        description = context.getString(R.string.onboarding_follow_system_desc),
+                        isEnabled = useSystemTheme,
+                        onToggle = { enabled ->
+                            scope.launch {
+                                themeViewModel.setUseSystemTheme(enabled)
+                            }
+                        }
+                    )
+
+                    // Manual dark mode toggle (only shown when system theme is off)
+                    AnimatedVisibility(
+                        visible = !useSystemTheme,
+                        enter = expandVertically() + fadeIn(),
+                        exit = shrinkVertically() + fadeOut()
+                    ) {
+                        EnhancedThemeOption(
+                            icon = Icons.Filled.DarkMode,
+                            title = context.getString(R.string.onboarding_dark_mode_title),
+                            description = context.getString(R.string.onboarding_dark_mode_desc),
+                            isEnabled = darkMode,
+                            onToggle = { enabled ->
+                                scope.launch {
+                                    themeViewModel.setDarkMode(enabled)
+                                }
+                            }
+                        )
+                    }
+
+                    // Dynamic colors (Material You) - only on Android 12+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        EnhancedThemeOption(
+                            icon = Icons.Filled.Palette,
+                            title = context.getString(R.string.onboarding_dynamic_colors_title),
+                            description = context.getString(R.string.onboarding_dynamic_colors_desc),
+                            isEnabled = useDynamicColors,
+                            onToggle = { enabled ->
+                                scope.launch {
+                                    themeViewModel.setUseDynamicColors(enabled)
+                                }
+                            }
+                        )
+                    }
+                }
             }
         }
-        
-        /*Spacer(modifier = Modifier.height(24.dp))
-        
-        // Skip option with divider
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+    } else {
+        // Mobile layout: Single column
+        Column(
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
         ) {
-            HorizontalDivider(modifier = Modifier.weight(1f))
-            Text(
-                text = "or",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-            HorizontalDivider(modifier = Modifier.weight(1f))
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Skip button
-        OutlinedButton(
-            onClick = onSkip,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Text(
-                text = "Skip for now",
-                style = MaterialTheme.typography.labelLarge
-            )
-        }*/
+            // Enhanced icon with animation
+            AnimatedVisibility(
+                visible = true,
+                enter = scaleIn() + fadeIn()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Palette,
+                        contentDescription = "Theming",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(40.dp)
+                    )
+                }
+            }
 
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = context.getString(R.string.onboarding_theme_title),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            Text(
+                text = context.getString(R.string.onboarding_theme_desc),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 32.dp)
+            )
+
+            // Live theme preview card
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn(animationSpec = tween(600)) + expandVertically(animationSpec = tween(600))
+            ) {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 24.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = context.getString(R.string.onboarding_live_preview),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+
+                        // Preview components
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            // Primary color preview
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(56.dp)
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(MaterialTheme.colorScheme.primary),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.MusicNote,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = context.getString(R.string.onboarding_primary),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            // Secondary color preview
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(56.dp)
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(MaterialTheme.colorScheme.secondaryContainer),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Album,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = context.getString(R.string.onboarding_container),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            // Tertiary color preview
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(56.dp)
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(MaterialTheme.colorScheme.tertiaryContainer),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Person,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = context.getString(R.string.onboarding_accent),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Theme options - vertically centered
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)
+            ) {
+                // System theme toggle
+                EnhancedThemeOption(
+                    icon = Icons.Filled.DarkMode,
+                    title = context.getString(R.string.onboarding_follow_system_title),
+                    description = context.getString(R.string.onboarding_follow_system_desc),
+                    isEnabled = useSystemTheme,
+                    onToggle = { enabled ->
+                        scope.launch {
+                            themeViewModel.setUseSystemTheme(enabled)
+                        }
+                    }
+                )
+
+                // Manual dark mode toggle (only shown when system theme is off)
+                AnimatedVisibility(
+                    visible = !useSystemTheme,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    EnhancedThemeOption(
+                        icon = Icons.Filled.DarkMode,
+                        title = context.getString(R.string.onboarding_dark_mode_title),
+                        description = context.getString(R.string.onboarding_dark_mode_desc),
+                        isEnabled = darkMode,
+                        onToggle = { enabled ->
+                            scope.launch {
+                                themeViewModel.setDarkMode(enabled)
+                            }
+                        }
+                    )
+                }
+
+                // Dynamic colors (Material You) - only on Android 12+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    EnhancedThemeOption(
+                        icon = Icons.Filled.Palette,
+                        title = context.getString(R.string.onboarding_dynamic_colors_title),
+                        description = context.getString(R.string.onboarding_dynamic_colors_desc),
+                        isEnabled = useDynamicColors,
+                        onToggle = { enabled ->
+                            scope.launch {
+                                themeViewModel.setUseDynamicColors(enabled)
+                            }
+                        }
+                    )
+                }
+            } // End vertically centered content
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Guide to Tuner settings
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Settings,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = context.getString(R.string.onboarding_more_tuner),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    LibraryTipItem(
+                        icon = Icons.Filled.Palette,
+                        text = context.getString(R.string.onboarding_tuner_1)
+                    )
+                    LibraryTipItem(
+                        icon = Icons.Filled.FontDownload,
+                        text = context.getString(R.string.onboarding_tuner_2)
+                    )
+                    LibraryTipItem(
+                        icon = Icons.Filled.AutoAwesome,
+                        text = context.getString(R.string.onboarding_tuner_3)
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -2482,19 +4082,19 @@ fun EnhancedThemeOption(
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
-    
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .clickable { 
+            .clickable {
                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
-                onToggle(!isEnabled) 
+                onToggle(!isEnabled)
             },
         colors = CardDefaults.cardColors(
-            containerColor = if (isEnabled) 
+            containerColor = if (isEnabled)
                 MaterialTheme.colorScheme.surfaceContainerLow
-            else 
+            else
                 MaterialTheme.colorScheme.surfaceContainer
         )
     ) {
@@ -2516,9 +4116,9 @@ fun EnhancedThemeOption(
                     modifier = Modifier.size(20.dp)
                 )
             }
-            
+
             Spacer(modifier = Modifier.width(16.dp))
-            
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
@@ -2533,9 +4133,9 @@ fun EnhancedThemeOption(
                     lineHeight = 16.sp
                 )
             }
-            
+
             Spacer(modifier = Modifier.width(16.dp))
-            
+
             Switch(
                 checked = isEnabled,
                 onCheckedChange = { enabled ->
@@ -2565,14 +4165,14 @@ fun OnboardingDropdownOption(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     var showDropdown by remember { mutableStateOf(false) }
-    
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .clickable { 
+            .clickable {
                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
-                showDropdown = true 
+                showDropdown = true
             },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
@@ -2596,9 +4196,9 @@ fun OnboardingDropdownOption(
                     modifier = Modifier.size(20.dp)
                 )
             }
-            
+
             Spacer(modifier = Modifier.width(16.dp))
-            
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
@@ -2613,9 +4213,9 @@ fun OnboardingDropdownOption(
                     lineHeight = 16.sp
                 )
             }
-            
+
             Spacer(modifier = Modifier.width(8.dp))
-            
+
             // Current selection badge
             Surface(
                 color = MaterialTheme.colorScheme.primaryContainer,
@@ -2641,7 +4241,7 @@ fun OnboardingDropdownOption(
                 }
             }
         }
-        
+
         // Dropdown Menu
         Box {
             DropdownMenu(
@@ -2707,7 +4307,10 @@ fun OnboardingDropdownOption(
 fun EnhancedUpdaterContent(
     onNextStep: () -> Unit,
     appSettings: AppSettings,
-    updaterViewModel: AppUpdaterViewModel = viewModel()
+    updaterViewModel: AppUpdaterViewModel = viewModel(),
+    isTablet: Boolean = false,
+    backButton: @Composable (() -> Unit)? = null,
+    nextButton: @Composable () -> Unit
 ) {
     val context = LocalContext.current
     val autoCheckForUpdates by appSettings.autoCheckForUpdates.collectAsState()
@@ -2717,7 +4320,7 @@ fun EnhancedUpdaterContent(
     val updateCheckIntervalHours by appSettings.updateCheckIntervalHours.collectAsState()
     val updatesEnabled by appSettings.updatesEnabled.collectAsState() // NEW
     val scope = rememberCoroutineScope()
-    
+
     // Collect updater states
     val isCheckingForUpdates by updaterViewModel.isCheckingForUpdates.collectAsState()
     val updateAvailable by updaterViewModel.updateAvailable.collectAsState()
@@ -2727,7 +4330,7 @@ fun EnhancedUpdaterContent(
     val downloadProgress by updaterViewModel.downloadProgress.collectAsState()
     val downloadedFile by updaterViewModel.downloadedFile.collectAsState()
     val error by updaterViewModel.error.collectAsState()
-    
+
     // Auto-check for updates once when this step is opened and updates are enabled
     var hasCheckedOnce by remember { mutableStateOf(false) }
     LaunchedEffect(updatesEnabled) {
@@ -2737,10 +4340,10 @@ fun EnhancedUpdaterContent(
         }
     }
     val scrollState = rememberScrollState()
-    
+
     // Infinite transition for continuous animations
     val infiniteTransition = rememberInfiniteTransition(label = "update_animations")
-    
+
     // Rotating icon for checking state
     val rotationAngle by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -2751,7 +4354,7 @@ fun EnhancedUpdaterContent(
         ),
         label = "rotation"
     )
-    
+
     // Breathing glow animation
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.4f,
@@ -2762,7 +4365,7 @@ fun EnhancedUpdaterContent(
         ),
         label = "glow"
     )
-    
+
     // Success scale animation
     val successScale = remember { Animatable(0.7f) }
     LaunchedEffect(downloadedFile) {
@@ -2776,285 +4379,587 @@ fun EnhancedUpdaterContent(
             )
         }
     }
-    
-    Column(
-        horizontalAlignment = Alignment.Start,
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(scrollState)
-    ) {
-        // Enhanced icon with animation - shows status
-        AnimatedVisibility(
-            visible = true,
-            enter = scaleIn() + fadeIn()
+
+    if (isTablet) {
+        // Tablet layout: Left side - icon, title, description, update actions, action buttons; Right side - toggles and dropdowns
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+                .padding(vertical = 32.dp),
+            horizontalArrangement = Arrangement.spacedBy(32.dp),
+            verticalAlignment = Alignment.Top
         ) {
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .background(
-                        when {
-                            error != null -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-                            downloadedFile != null -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
-                            updateAvailable -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                            else -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                        }
-                    ),
-                contentAlignment = Alignment.Center
+            // Left side: Icon, title, description, update actions, and action buttons
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                if (isCheckingForUpdates) {
-                    M3FourColorCircularLoader(
+                // Enhanced icon with animation - shows status
+                AnimatedVisibility(
+                    visible = true,
+                    enter = scaleIn() + fadeIn()
+                ) {
+                    Box(
                         modifier = Modifier
-                            .size(40.dp)
-                            .alpha(glowAlpha)
-                    )
-                } else {
-                    Icon(
-                        imageVector = when {
-                            error != null -> Icons.Filled.BugReport
-                            downloadedFile != null -> Icons.Filled.CheckCircle
-                            updateAvailable -> RhythmIcons.Download
-                            isDownloading -> Icons.Filled.Autorenew
-                            else -> Icons.Filled.SystemUpdate
-                        },
-                        contentDescription = "App Updates",
-                        tint = when {
-                            error != null -> MaterialTheme.colorScheme.error
-                            downloadedFile != null -> MaterialTheme.colorScheme.tertiary
-                            updateAvailable -> MaterialTheme.colorScheme.primary
-                            isDownloading -> MaterialTheme.colorScheme.secondary
-                            else -> MaterialTheme.colorScheme.primary
-                        },
-                        modifier = Modifier
-                            .size(40.dp)
-                            .rotate(if (isDownloading) rotationAngle else 0f)
-                            .scale(
+                            .size(96.dp)
+                            .clip(CircleShape)
+                            .background(
                                 when {
-                                    downloadedFile != null -> successScale.value
-                                    else -> 1f
+                                    error != null -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                                    downloadedFile != null -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
+                                    updateAvailable -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                                    else -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
                                 }
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (isCheckingForUpdates) {
+                            M3FourColorCircularLoader(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .alpha(glowAlpha)
                             )
-                    )
-                }
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        // Title shows status
-        Text(
-            text = when {
-                error != null -> context.getString(R.string.onboarding_update_check_failed)
-                downloadedFile != null -> context.getString(R.string.onboarding_ready_to_install)
-                isDownloading -> context.getString(R.string.onboarding_downloading_update)
-                isCheckingForUpdates -> context.getString(R.string.onboarding_checking_updates)
-                updateAvailable -> context.getString(R.string.onboarding_update_available)
-                else -> context.getString(R.string.onboarding_stay_up_to_date)
-            },
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = when {
-                error != null -> MaterialTheme.colorScheme.error
-                downloadedFile != null -> MaterialTheme.colorScheme.tertiary
-                updateAvailable -> MaterialTheme.colorScheme.primary
-                isCheckingForUpdates || isDownloading -> MaterialTheme.colorScheme.secondary
-                else -> MaterialTheme.colorScheme.onSurface
-            },
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-        
-        // Description shows version info or default text
-        Text(
-            text = when {
-                error != null -> error ?: "An error occurred"
-                downloadedFile != null -> "Version ${latestVersion?.versionName ?: "?"} is ready to install"
-                isDownloading -> "${downloadProgress.toInt()}% • ${((latestVersion?.apkSize ?: 0) * downloadProgress / 100).toLong().let { updaterViewModel.getReadableFileSize(it) }} / ${latestVersion?.let { updaterViewModel.getReadableFileSize(it.apkSize) } ?: ""}"
-                isCheckingForUpdates -> context.getString(R.string.fetching_latest_version)
-                updateAvailable -> "Version ${latestVersion?.versionName ?: "?"} • ${latestVersion?.let { updaterViewModel.getReadableFileSize(it.apkSize) } ?: ""}"
-                else -> context.getString(R.string.onboarding_update_default_desc)
-            },
-            style = MaterialTheme.typography.bodyMedium,
-            color = when {
-                error != null -> MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
-                downloadedFile != null -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.8f)
-                updateAvailable -> MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-                isCheckingForUpdates || isDownloading -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f)
-                else -> MaterialTheme.colorScheme.onSurfaceVariant
-            },
-            modifier = Modifier.padding(bottom = 24.dp)
-        )
-        
-        // Update Actions UI - Only buttons and progress
-        val showUpdateActions = isDownloading || updateAvailable || downloadedFile != null || error != null
-        
-        AnimatedVisibility(
-            visible = showUpdateActions,
-            enter = expandVertically(
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessMedium
-                )
-            ) + fadeIn() + scaleIn(initialScale = 0.9f),
-            exit = shrinkVertically(
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessMedium
-                )
-            ) + fadeOut() + scaleOut(targetScale = 0.9f),
-            modifier = Modifier.padding(bottom = 20.dp)
-        ) {
-            OnboardingExpressiveUpdateStatus(
-                isDownloading = isDownloading,
-                downloadProgress = downloadProgress,
-                downloadedFile = downloadedFile,
-                error = error,
-                updateAvailable = updateAvailable,
-                latestVersion = latestVersion,
-                updaterViewModel = updaterViewModel,
-                successScale = successScale,
-                onDownload = { updaterViewModel.downloadUpdate() },
-                onInstall = { updaterViewModel.installDownloadedApk() },
-                onCancelDownload = { updaterViewModel.cancelDownload() },
-                onDismissError = { updaterViewModel.clearError() },
-                onRetry = { updaterViewModel.checkForUpdates(force = true) }
-            )
-        }
-        
-        // Update options - vertically centered
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)
-        ) {
-            // Enable Updates toggle (NEW)
-            EnhancedUpdateOption(
-                icon = Icons.Filled.SystemUpdate,
-                title = context.getString(R.string.onboarding_enable_updates_title),
-                description = context.getString(R.string.onboarding_enable_updates_desc),
-                isEnabled = updatesEnabled,
-                onToggle = { enabled ->
-                    scope.launch {
-                        appSettings.setUpdatesEnabled(enabled)
+                        } else {
+                            Icon(
+                                imageVector = when {
+                                    error != null -> Icons.Filled.BugReport
+                                    downloadedFile != null -> Icons.Filled.CheckCircle
+                                    updateAvailable -> RhythmIcons.Download
+                                    isDownloading -> Icons.Filled.Autorenew
+                                    else -> Icons.Filled.SystemUpdate
+                                },
+                                contentDescription = "App Updates",
+                                tint = when {
+                                    error != null -> MaterialTheme.colorScheme.error
+                                    downloadedFile != null -> MaterialTheme.colorScheme.tertiary
+                                    updateAvailable -> MaterialTheme.colorScheme.primary
+                                    isDownloading -> MaterialTheme.colorScheme.secondary
+                                    else -> MaterialTheme.colorScheme.primary
+                                },
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .rotate(if (isDownloading) rotationAngle else 0f)
+                                    .scale(
+                                        when {
+                                            downloadedFile != null -> successScale.value
+                                            else -> 1f
+                                        }
+                                    )
+                            )
+                        }
                     }
                 }
-            )
 
-            // Animated visibility for other update options based on updatesEnabled
-            AnimatedVisibility(
-                visible = updatesEnabled, // CHANGED from autoCheckForUpdates
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) { // Changed spacing to 16.dp for consistency
-                        // Auto check for updates toggle (now inside AnimatedVisibility)
-                    EnhancedUpdateOption(
-                        icon = Icons.Filled.Autorenew,
-                        title = context.getString(R.string.onboarding_periodic_check_title),
-                        description = context.getString(R.string.onboarding_periodic_check_desc),
-                        isEnabled = autoCheckForUpdates,
-                        onToggle = { enabled ->
-                            scope.launch {
-                                appSettings.setAutoCheckForUpdates(enabled)
-                            }
-                        }
-                    )
-                    
-                    // Update Notifications toggle
-                    EnhancedUpdateOption(
-                        icon = Icons.Filled.Notifications,
-                        title = context.getString(R.string.onboarding_update_notifications_title),
-                        description = context.getString(R.string.onboarding_update_notifications_desc),
-                        isEnabled = updateNotificationsEnabled,
-                        onToggle = { enabled ->
-                            scope.launch {
-                                appSettings.setUpdateNotificationsEnabled(enabled)
-                            }
-                        }
-                    )
-                    
-                    // Smart Polling toggle
-                    EnhancedUpdateOption(
-                        icon = Icons.Filled.CloudSync,
-                        title = context.getString(R.string.onboarding_smart_polling_title),
-                        description = context.getString(R.string.onboarding_smart_polling_desc),
-                        isEnabled = useSmartUpdatePolling,
-                        onToggle = { enabled ->
-                            scope.launch {
-                                appSettings.setUseSmartUpdatePolling(enabled)
-                            }
-                        }
-                    )
-                    
-                    // Check Interval dropdown
-                    SettingsDropdownItem(
-                        title = context.getString(R.string.onboarding_check_interval_title),
-                        description = context.getString(R.string.onboarding_check_interval_desc),
-                        selectedOption = when (updateCheckIntervalHours) {
-                            1 -> context.getString(R.string.option_every_hour)
-                            3 -> context.getString(R.string.option_every_3_hours)
-                            6 -> context.getString(R.string.option_every_6_hours)
-                            12 -> context.getString(R.string.option_every_12_hours)
-                            24 -> context.getString(R.string.option_daily)
-                            else -> context.getString(R.string.option_every_6_hours)
-                        },
-                        icon = Icons.Filled.Schedule,
-                        options = listOf(
-                            context.getString(R.string.option_every_hour),
-                            context.getString(R.string.option_every_3_hours), 
-                            context.getString(R.string.option_every_6_hours),
-                            context.getString(R.string.option_every_12_hours),
-                            context.getString(R.string.option_daily)
-                        ),
-                        onOptionSelected = { selectedOption ->
-                            val everyHour = context.getString(R.string.option_every_hour)
-                            val every3Hours = context.getString(R.string.option_every_3_hours)
-                            val every6Hours = context.getString(R.string.option_every_6_hours)
-                            val every12Hours = context.getString(R.string.option_every_12_hours)
-                            val daily = context.getString(R.string.option_daily)
-                            val hours = when (selectedOption) {
-                                everyHour -> 1
-                                every3Hours -> 3
-                                every6Hours -> 6
-                                every12Hours -> 12
-                                daily -> 24
-                                else -> 6
-                            }
-                            scope.launch {
-                                appSettings.setUpdateCheckIntervalHours(hours)
-                            }
-                        }
-                    )
+                // Title shows status
+                Text(
+                    text = when {
+                        error != null -> context.getString(R.string.onboarding_update_check_failed)
+                        downloadedFile != null -> context.getString(R.string.onboarding_ready_to_install)
+                        isDownloading -> context.getString(R.string.onboarding_downloading_update)
+                        isCheckingForUpdates -> context.getString(R.string.onboarding_checking_updates)
+                        updateAvailable -> context.getString(R.string.onboarding_update_available)
+                        else -> context.getString(R.string.onboarding_stay_up_to_date)
+                    },
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = when {
+                        error != null -> MaterialTheme.colorScheme.error
+                        downloadedFile != null -> MaterialTheme.colorScheme.tertiary
+                        updateAvailable -> MaterialTheme.colorScheme.primary
+                        isCheckingForUpdates || isDownloading -> MaterialTheme.colorScheme.secondary
+                        else -> MaterialTheme.colorScheme.onSurface
+                    },
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
 
-                            // Update channel selection dropdown
-                    SettingsDropdownItem(
-                        title = context.getString(R.string.onboarding_update_channel_title),
-                        description = context.getString(R.string.onboarding_update_channel_desc),
-                        selectedOption = when (updateChannel) {
-                            "stable" -> context.getString(R.string.option_stable)
-                            "beta" -> context.getString(R.string.option_beta)
-                            else -> context.getString(R.string.option_stable)
-                        },
-                        icon = when (updateChannel) {
-                            "stable" -> Icons.Filled.Public
-                            "beta" -> Icons.Filled.BugReport
-                            else -> Icons.Filled.Public
-                        },
-                        options = listOf(context.getString(R.string.option_stable), context.getString(R.string.option_beta)),
-                        onOptionSelected = { selectedOption ->
-                            val stableOption = context.getString(R.string.option_stable)
-                            val betaOption = context.getString(R.string.option_beta)
-                            val channel = when (selectedOption) {
-                                stableOption -> "stable"
-                                betaOption -> "beta"
-                                else -> "stable"
-                            }
-                            scope.launch {
-                                appSettings.setUpdateChannel(channel)
-                            }
-                        }
+                // Description shows version info or default text
+                Text(
+                    text = when {
+                        error != null -> error ?: "An error occurred"
+                        downloadedFile != null -> "Version ${latestVersion?.versionName ?: "?"} is ready to install"
+                        isDownloading -> "${downloadProgress.toInt()}% • ${((latestVersion?.apkSize ?: 0) * downloadProgress / 100).toLong().let { updaterViewModel.getReadableFileSize(it) }} / ${latestVersion?.let { updaterViewModel.getReadableFileSize(it.apkSize) } ?: ""}"
+                        isCheckingForUpdates -> context.getString(R.string.fetching_latest_version)
+                        updateAvailable -> "Version ${latestVersion?.versionName ?: "?"} • ${latestVersion?.let { updaterViewModel.getReadableFileSize(it.apkSize) } ?: ""}"
+                        else -> context.getString(R.string.onboarding_update_default_desc)
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = when {
+                        error != null -> MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                        downloadedFile != null -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.8f)
+                        updateAvailable -> MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                        isCheckingForUpdates || isDownloading -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f)
+                        else -> MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    modifier = Modifier.padding(bottom = 24.dp)
+                )
+
+                // Update Actions UI - Only buttons and progress
+                val showUpdateActions = isDownloading || updateAvailable || downloadedFile != null || error != null
+
+                AnimatedVisibility(
+                    visible = showUpdateActions,
+                    enter = expandVertically(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium
+                        )
+                    ) + fadeIn() + scaleIn(initialScale = 0.9f),
+                    exit = shrinkVertically(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium
+                        )
+                    ) + fadeOut() + scaleOut(targetScale = 0.9f),
+                    modifier = Modifier.padding(bottom = 20.dp)
+                ) {
+                    OnboardingExpressiveUpdateStatus(
+                        isDownloading = isDownloading,
+                        downloadProgress = downloadProgress,
+                        downloadedFile = downloadedFile,
+                        error = error,
+                        updateAvailable = updateAvailable,
+                        latestVersion = latestVersion,
+                        updaterViewModel = updaterViewModel,
+                        successScale = successScale,
+                        onDownload = { updaterViewModel.downloadUpdate() },
+                        onInstall = { updaterViewModel.installDownloadedApk() },
+                        onCancelDownload = { updaterViewModel.cancelDownload() },
+                        onDismissError = { updaterViewModel.clearError() },
+                        onRetry = { updaterViewModel.checkForUpdates(force = true) }
                     )
                 }
+
+                // Action buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    backButton?.invoke()
+                    nextButton()
+                }
             }
-        } // End vertically centered content
+
+            // Right side: Update options (toggles and dropdowns)
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Enable Updates toggle (NEW)
+                EnhancedUpdateOption(
+                    icon = Icons.Filled.SystemUpdate,
+                    title = context.getString(R.string.onboarding_enable_updates_title),
+                    description = context.getString(R.string.onboarding_enable_updates_desc),
+                    isEnabled = updatesEnabled,
+                    onToggle = { enabled ->
+                        scope.launch {
+                            appSettings.setUpdatesEnabled(enabled)
+                        }
+                    }
+                )
+
+                // Animated visibility for other update options based on updatesEnabled
+                AnimatedVisibility(
+                    visible = updatesEnabled, // CHANGED from autoCheckForUpdates
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) { // Changed spacing to 16.dp for consistency
+                        // Auto check for updates toggle (now inside AnimatedVisibility)
+                        EnhancedUpdateOption(
+                            icon = Icons.Filled.Autorenew,
+                            title = context.getString(R.string.onboarding_periodic_check_title),
+                            description = context.getString(R.string.onboarding_periodic_check_desc),
+                            isEnabled = autoCheckForUpdates,
+                            onToggle = { enabled ->
+                                scope.launch {
+                                    appSettings.setAutoCheckForUpdates(enabled)
+                                }
+                            }
+                        )
+
+                        // Update Notifications toggle
+                        EnhancedUpdateOption(
+                            icon = Icons.Filled.Notifications,
+                            title = context.getString(R.string.onboarding_update_notifications_title),
+                            description = context.getString(R.string.onboarding_update_notifications_desc),
+                            isEnabled = updateNotificationsEnabled,
+                            onToggle = { enabled ->
+                                scope.launch {
+                                    appSettings.setUpdateNotificationsEnabled(enabled)
+                                }
+                            }
+                        )
+
+                        // Smart Polling toggle
+                        EnhancedUpdateOption(
+                            icon = Icons.Filled.CloudSync,
+                            title = context.getString(R.string.onboarding_smart_polling_title),
+                            description = context.getString(R.string.onboarding_smart_polling_desc),
+                            isEnabled = useSmartUpdatePolling,
+                            onToggle = { enabled ->
+                                scope.launch {
+                                    appSettings.setUseSmartUpdatePolling(enabled)
+                                }
+                            }
+                        )
+
+                        // Check Interval dropdown
+                        SettingsDropdownItem(
+                            title = context.getString(R.string.onboarding_check_interval_title),
+                            description = context.getString(R.string.onboarding_check_interval_desc),
+                            selectedOption = when (updateCheckIntervalHours) {
+                                1 -> context.getString(R.string.option_every_hour)
+                                3 -> context.getString(R.string.option_every_3_hours)
+                                6 -> context.getString(R.string.option_every_6_hours)
+                                12 -> context.getString(R.string.option_every_12_hours)
+                                24 -> context.getString(R.string.option_daily)
+                                else -> context.getString(R.string.option_every_6_hours)
+                            },
+                            icon = Icons.Filled.Schedule,
+                            options = listOf(
+                                context.getString(R.string.option_every_hour),
+                                context.getString(R.string.option_every_3_hours),
+                                context.getString(R.string.option_every_6_hours),
+                                context.getString(R.string.option_every_12_hours),
+                                context.getString(R.string.option_daily)
+                            ),
+                            onOptionSelected = { selectedOption ->
+                                val everyHour = context.getString(R.string.option_every_hour)
+                                val every3Hours = context.getString(R.string.option_every_3_hours)
+                                val every6Hours = context.getString(R.string.option_every_6_hours)
+                                val every12Hours = context.getString(R.string.option_every_12_hours)
+                                val daily = context.getString(R.string.option_daily)
+                                val hours = when (selectedOption) {
+                                    everyHour -> 1
+                                    every3Hours -> 3
+                                    every6Hours -> 6
+                                    every12Hours -> 12
+                                    daily -> 24
+                                    else -> 6
+                                }
+                                scope.launch {
+                                    appSettings.setUpdateCheckIntervalHours(hours)
+                                }
+                            }
+                        )
+
+                        // Update channel selection dropdown
+                        SettingsDropdownItem(
+                            title = context.getString(R.string.onboarding_update_channel_title),
+                            description = context.getString(R.string.onboarding_update_channel_desc),
+                            selectedOption = when (updateChannel) {
+                                "stable" -> context.getString(R.string.option_stable)
+                                "beta" -> context.getString(R.string.option_beta)
+                                else -> context.getString(R.string.option_stable)
+                            },
+                            icon = when (updateChannel) {
+                                "stable" -> Icons.Filled.Public
+                                "beta" -> Icons.Filled.BugReport
+                                else -> Icons.Filled.Public
+                            },
+                            options = listOf(context.getString(R.string.option_stable), context.getString(R.string.option_beta)),
+                            onOptionSelected = { selectedOption ->
+                                val stableOption = context.getString(R.string.option_stable)
+                                val betaOption = context.getString(R.string.option_beta)
+                                val channel = when (selectedOption) {
+                                    stableOption -> "stable"
+                                    betaOption -> "beta"
+                                    else -> "stable"
+                                }
+                                scope.launch {
+                                    appSettings.setUpdateChannel(channel)
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    } else {
+        // Mobile layout: Single column
+        Column(
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+        ) {
+            // Enhanced icon with animation - shows status
+            AnimatedVisibility(
+                visible = true,
+                enter = scaleIn() + fadeIn()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                        .background(
+                            when {
+                                error != null -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                                downloadedFile != null -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
+                                updateAvailable -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                                else -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                            }
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isCheckingForUpdates) {
+                        M3FourColorCircularLoader(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .alpha(glowAlpha)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = when {
+                                error != null -> Icons.Filled.BugReport
+                                downloadedFile != null -> Icons.Filled.CheckCircle
+                                updateAvailable -> RhythmIcons.Download
+                                isDownloading -> Icons.Filled.Autorenew
+                                else -> Icons.Filled.SystemUpdate
+                            },
+                            contentDescription = "App Updates",
+                            tint = when {
+                                error != null -> MaterialTheme.colorScheme.error
+                                downloadedFile != null -> MaterialTheme.colorScheme.tertiary
+                                updateAvailable -> MaterialTheme.colorScheme.primary
+                                isDownloading -> MaterialTheme.colorScheme.secondary
+                                else -> MaterialTheme.colorScheme.primary
+                            },
+                            modifier = Modifier
+                                .size(40.dp)
+                                .rotate(if (isDownloading) rotationAngle else 0f)
+                                .scale(
+                                    when {
+                                        downloadedFile != null -> successScale.value
+                                        else -> 1f
+                                    }
+                                )
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Title shows status
+            Text(
+                text = when {
+                    error != null -> context.getString(R.string.onboarding_update_check_failed)
+                    downloadedFile != null -> context.getString(R.string.onboarding_ready_to_install)
+                    isDownloading -> context.getString(R.string.onboarding_downloading_update)
+                    isCheckingForUpdates -> context.getString(R.string.onboarding_checking_updates)
+                    updateAvailable -> context.getString(R.string.onboarding_update_available)
+                    else -> context.getString(R.string.onboarding_stay_up_to_date)
+                },
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = when {
+                    error != null -> MaterialTheme.colorScheme.error
+                    downloadedFile != null -> MaterialTheme.colorScheme.tertiary
+                    updateAvailable -> MaterialTheme.colorScheme.primary
+                    isCheckingForUpdates || isDownloading -> MaterialTheme.colorScheme.secondary
+                    else -> MaterialTheme.colorScheme.onSurface
+                },
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            // Description shows version info or default text
+            Text(
+                text = when {
+                    error != null -> error ?: "An error occurred"
+                    downloadedFile != null -> "Version ${latestVersion?.versionName ?: "?"} is ready to install"
+                    isDownloading -> "${downloadProgress.toInt()}% • ${((latestVersion?.apkSize ?: 0) * downloadProgress / 100).toLong().let { updaterViewModel.getReadableFileSize(it) }} / ${latestVersion?.let { updaterViewModel.getReadableFileSize(it.apkSize) } ?: ""}"
+                    isCheckingForUpdates -> context.getString(R.string.fetching_latest_version)
+                    updateAvailable -> "Version ${latestVersion?.versionName ?: "?"} • ${latestVersion?.let { updaterViewModel.getReadableFileSize(it.apkSize) } ?: ""}"
+                    else -> context.getString(R.string.onboarding_update_default_desc)
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = when {
+                    error != null -> MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                    downloadedFile != null -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.8f)
+                    updateAvailable -> MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                    isCheckingForUpdates || isDownloading -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f)
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                modifier = Modifier.padding(bottom = 24.dp)
+            )
+
+            // Update Actions UI - Only buttons and progress
+            val showUpdateActions = isDownloading || updateAvailable || downloadedFile != null || error != null
+
+            AnimatedVisibility(
+                visible = showUpdateActions,
+                enter = expandVertically(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                ) + fadeIn() + scaleIn(initialScale = 0.9f),
+                exit = shrinkVertically(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                ) + fadeOut() + scaleOut(targetScale = 0.9f),
+                modifier = Modifier.padding(bottom = 20.dp)
+            ) {
+                OnboardingExpressiveUpdateStatus(
+                    isDownloading = isDownloading,
+                    downloadProgress = downloadProgress,
+                    downloadedFile = downloadedFile,
+                    error = error,
+                    updateAvailable = updateAvailable,
+                    latestVersion = latestVersion,
+                    updaterViewModel = updaterViewModel,
+                    successScale = successScale,
+                    onDownload = { updaterViewModel.downloadUpdate() },
+                    onInstall = { updaterViewModel.installDownloadedApk() },
+                    onCancelDownload = { updaterViewModel.cancelDownload() },
+                    onDismissError = { updaterViewModel.clearError() },
+                    onRetry = { updaterViewModel.checkForUpdates(force = true) }
+                )
+            }
+
+            // Update options - vertically centered
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)
+            ) {
+                // Enable Updates toggle (NEW)
+                EnhancedUpdateOption(
+                    icon = Icons.Filled.SystemUpdate,
+                    title = context.getString(R.string.onboarding_enable_updates_title),
+                    description = context.getString(R.string.onboarding_enable_updates_desc),
+                    isEnabled = updatesEnabled,
+                    onToggle = { enabled ->
+                        scope.launch {
+                            appSettings.setUpdatesEnabled(enabled)
+                        }
+                    }
+                )
+
+                // Animated visibility for other update options based on updatesEnabled
+                AnimatedVisibility(
+                    visible = updatesEnabled, // CHANGED from autoCheckForUpdates
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) { // Changed spacing to 16.dp for consistency
+                        // Auto check for updates toggle (now inside AnimatedVisibility)
+                        EnhancedUpdateOption(
+                            icon = Icons.Filled.Autorenew,
+                            title = context.getString(R.string.onboarding_periodic_check_title),
+                            description = context.getString(R.string.onboarding_periodic_check_desc),
+                            isEnabled = autoCheckForUpdates,
+                            onToggle = { enabled ->
+                                scope.launch {
+                                    appSettings.setAutoCheckForUpdates(enabled)
+                                }
+                            }
+                        )
+
+                        // Update Notifications toggle
+                        EnhancedUpdateOption(
+                            icon = Icons.Filled.Notifications,
+                            title = context.getString(R.string.onboarding_update_notifications_title),
+                            description = context.getString(R.string.onboarding_update_notifications_desc),
+                            isEnabled = updateNotificationsEnabled,
+                            onToggle = { enabled ->
+                                scope.launch {
+                                    appSettings.setUpdateNotificationsEnabled(enabled)
+                                }
+                            }
+                        )
+
+                        // Smart Polling toggle
+                        EnhancedUpdateOption(
+                            icon = Icons.Filled.CloudSync,
+                            title = context.getString(R.string.onboarding_smart_polling_title),
+                            description = context.getString(R.string.onboarding_smart_polling_desc),
+                            isEnabled = useSmartUpdatePolling,
+                            onToggle = { enabled ->
+                                scope.launch {
+                                    appSettings.setUseSmartUpdatePolling(enabled)
+                                }
+                            }
+                        )
+
+                        // Check Interval dropdown
+                        SettingsDropdownItem(
+                            title = context.getString(R.string.onboarding_check_interval_title),
+                            description = context.getString(R.string.onboarding_check_interval_desc),
+                            selectedOption = when (updateCheckIntervalHours) {
+                                1 -> context.getString(R.string.option_every_hour)
+                                3 -> context.getString(R.string.option_every_3_hours)
+                                6 -> context.getString(R.string.option_every_6_hours)
+                                12 -> context.getString(R.string.option_every_12_hours)
+                                24 -> context.getString(R.string.option_daily)
+                                else -> context.getString(R.string.option_every_6_hours)
+                            },
+                            icon = Icons.Filled.Schedule,
+                            options = listOf(
+                                context.getString(R.string.option_every_hour),
+                                context.getString(R.string.option_every_3_hours),
+                                context.getString(R.string.option_every_6_hours),
+                                context.getString(R.string.option_every_12_hours),
+                                context.getString(R.string.option_daily)
+                            ),
+                            onOptionSelected = { selectedOption ->
+                                val everyHour = context.getString(R.string.option_every_hour)
+                                val every3Hours = context.getString(R.string.option_every_3_hours)
+                                val every6Hours = context.getString(R.string.option_every_6_hours)
+                                val every12Hours = context.getString(R.string.option_every_12_hours)
+                                val daily = context.getString(R.string.option_daily)
+                                val hours = when (selectedOption) {
+                                    everyHour -> 1
+                                    every3Hours -> 3
+                                    every6Hours -> 6
+                                    every12Hours -> 12
+                                    daily -> 24
+                                    else -> 6
+                                }
+                                scope.launch {
+                                    appSettings.setUpdateCheckIntervalHours(hours)
+                                }
+                            }
+                        )
+
+                        // Update channel selection dropdown
+                        SettingsDropdownItem(
+                            title = context.getString(R.string.onboarding_update_channel_title),
+                            description = context.getString(R.string.onboarding_update_channel_desc),
+                            selectedOption = when (updateChannel) {
+                                "stable" -> context.getString(R.string.option_stable)
+                                "beta" -> context.getString(R.string.option_beta)
+                                else -> context.getString(R.string.option_stable)
+                            },
+                            icon = when (updateChannel) {
+                                "stable" -> Icons.Filled.Public
+                                "beta" -> Icons.Filled.BugReport
+                                else -> Icons.Filled.Public
+                            },
+                            options = listOf(context.getString(R.string.option_stable), context.getString(R.string.option_beta)),
+                            onOptionSelected = { selectedOption ->
+                                val stableOption = context.getString(R.string.option_stable)
+                                val betaOption = context.getString(R.string.option_beta)
+                                val channel = when (selectedOption) {
+                                    stableOption -> "stable"
+                                    betaOption -> "beta"
+                                    else -> "stable"
+                                }
+                                scope.launch {
+                                    appSettings.setUpdateChannel(channel)
+                                }
+                            }
+                        )
+                    }
+                }
+            } // End vertically centered content
+        }
     }
 }
 
@@ -3068,19 +4973,19 @@ fun EnhancedUpdateOption(
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
-    
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .clickable { 
+            .clickable {
                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
-                onToggle(!isEnabled) 
+                onToggle(!isEnabled)
             },
         colors = CardDefaults.cardColors(
-            containerColor = if (isEnabled) 
+            containerColor = if (isEnabled)
                 MaterialTheme.colorScheme.surfaceContainerLow
-            else 
+            else
                 MaterialTheme.colorScheme.surfaceContainer
         )
     ) {
@@ -3102,9 +5007,9 @@ fun EnhancedUpdateOption(
                     modifier = Modifier.size(20.dp)
                 )
             }
-            
+
             Spacer(modifier = Modifier.width(16.dp))
-            
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
@@ -3119,9 +5024,9 @@ fun EnhancedUpdateOption(
                     lineHeight = 16.sp
                 )
             }
-            
+
             Spacer(modifier = Modifier.width(16.dp))
-            
+
             Switch(
                 checked = isEnabled,
                 onCheckedChange = { enabled ->
@@ -3200,14 +5105,14 @@ fun SettingsDropdownItem(
     val context = LocalContext.current
     var showDropdown by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
-    
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .clickable { 
+            .clickable {
                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
-                showDropdown = true 
+                showDropdown = true
             },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -3231,9 +5136,9 @@ fun SettingsDropdownItem(
                     modifier = Modifier.size(20.dp)
                 )
             }
-            
+
             Spacer(modifier = Modifier.width(16.dp))
-            
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
@@ -3248,9 +5153,9 @@ fun SettingsDropdownItem(
                     lineHeight = 16.sp
                 )
             }
-            
+
             Spacer(modifier = Modifier.width(12.dp))
-            
+
             // Selected option badge
             Surface(
                 color = MaterialTheme.colorScheme.primaryContainer,
@@ -3264,9 +5169,9 @@ fun SettingsDropdownItem(
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                 )
             }
-            
+
             Spacer(modifier = Modifier.width(8.dp))
-            
+
             Icon(
                 imageVector = Icons.Filled.KeyboardArrowDown,
                 contentDescription = "Show options",
@@ -3274,7 +5179,7 @@ fun SettingsDropdownItem(
                 modifier = Modifier.size(20.dp)
             )
         }
-        
+
         // Enhanced Dropdown Menu
         DropdownMenu(
             expanded = showDropdown,
@@ -3284,9 +5189,9 @@ fun SettingsDropdownItem(
         ) {
             options.forEach { option ->
                 Surface(
-                    color = if (selectedOption == option) 
+                    color = if (selectedOption == option)
                         MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
-                    else 
+                    else
                         androidx.compose.ui.graphics.Color.Transparent,
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
@@ -3294,16 +5199,16 @@ fun SettingsDropdownItem(
                         .padding(horizontal = 8.dp, vertical = 2.dp)
                 ) {
                     DropdownMenuItem(
-                        text = { 
+                        text = {
                             Text(
                                 text = option,
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = if (selectedOption == option) FontWeight.Bold else FontWeight.Normal,
-                                color = if (selectedOption == option) 
-                                    MaterialTheme.colorScheme.onPrimaryContainer 
-                                else 
+                                color = if (selectedOption == option)
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                else
                                     MaterialTheme.colorScheme.onSurface
-                            ) 
+                            )
                         },
                         leadingIcon = {
                             Icon(
@@ -3324,9 +5229,9 @@ fun SettingsDropdownItem(
                                     else -> Icons.Filled.Check // Fallback
                                 },
                                 contentDescription = null,
-                                tint = if (selectedOption == option) 
-                                    MaterialTheme.colorScheme.onPrimaryContainer 
-                                else 
+                                tint = if (selectedOption == option)
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                else
                                     MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -3337,9 +5242,9 @@ fun SettingsDropdownItem(
                             showDropdown = false
                         },
                         colors = androidx.compose.material3.MenuDefaults.itemColors(
-                            textColor = if (selectedOption == option) 
-                                MaterialTheme.colorScheme.onPrimaryContainer 
-                            else 
+                            textColor = if (selectedOption == option)
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            else
                                 MaterialTheme.colorScheme.onSurface
                         )
                     )
@@ -3367,7 +5272,7 @@ fun OnboardingProgressIndicator(
             repeat(totalSteps) { index ->
                 val isCompleted = index < currentStep
                 val isCurrent = index == currentStep
-                
+
                 // Animated dot size and color
                 val dotSize by animateDpAsState(
                     targetValue = when {
@@ -3381,7 +5286,7 @@ fun OnboardingProgressIndicator(
                     ),
                     label = "dotSize_$index"
                 )
-                
+
                 val dotColor by animateColorAsState(
                     targetValue = when {
                         isCompleted -> MaterialTheme.colorScheme.primary
@@ -3391,7 +5296,7 @@ fun OnboardingProgressIndicator(
                     animationSpec = tween(300),
                     label = "dotColor_$index"
                 )
-                
+
                 Box(
                     modifier = Modifier
                         .size(dotSize)
@@ -3423,7 +5328,7 @@ fun OnboardingProgressIndicator(
                             modifier = Modifier.size(6.dp)
                         )
                     }
-                    
+
                     // Pulsing ring for current step
                     if (isCurrent) {
                         val infiniteTransition = rememberInfiniteTransition(label = "pulse_$index")
@@ -3436,7 +5341,7 @@ fun OnboardingProgressIndicator(
                             ),
                             label = "pulseScale_$index"
                         )
-                        
+
                         Box(
                             modifier = Modifier
                                 .size(dotSize * pulseScale)
@@ -3449,9 +5354,9 @@ fun OnboardingProgressIndicator(
                 }
             }
         }
-        
+
         Spacer(modifier = Modifier.height(12.dp))
-        
+
         // Animated progress text with smooth transitions
         androidx.compose.animation.AnimatedContent(
             targetState = currentStep,
@@ -3478,216 +5383,337 @@ fun OnboardingProgressIndicator(
 fun EnhancedMediaScanContent(
     onNextStep: () -> Unit,
     appSettings: AppSettings,
-    onSkip: () -> Unit = {}
+    onSkip: () -> Unit = {},
+    isTablet: Boolean = false,
+    backButton: @Composable (() -> Unit)? = null,
+    nextButton: @Composable () -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
-    
+
     // Get current media scan mode preference
     val mediaScanMode by appSettings.mediaScanMode.collectAsState()
-    
-    Column(
-        horizontalAlignment = Alignment.Start,
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(scrollState)
-    ) {
-        // Enhanced icon with animation
-        AnimatedVisibility(
-            visible = true,
-            enter = scaleIn() + fadeIn()
+
+    if (isTablet) {
+        // Tablet layout: Left side - icon, description, media scan tips, action buttons; Right side - storage info and configuration
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+                .padding(vertical = 32.dp),
+            horizontalArrangement = Arrangement.spacedBy(32.dp),
+            verticalAlignment = Alignment.Top
         ) {
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.FilterList,
-                    contentDescription = "Media Scan Filtering",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(40.dp)
-                )
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        Text(
-            text = context.getString(R.string.onboarding_media_scan_title),
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-        
-        Text(
-            text = context.getString(R.string.onboarding_media_scan_desc),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 32.dp)
-        )
-        
-        // Media scan configuration card - Temporarily hidden
-        /*
-        Card(
-            onClick = onOpenBottomSheet,
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-            ),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Tune,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = context.getString(R.string.onboarding_media_scan_configure),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Text(
-                        text = context.getString(R.string.onboarding_media_scan_current_mode, mediaScanMode.replaceFirstChar { it.uppercase() }),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = "Open media scan settings",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        */
-        
-        // Cache management info card
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f)
-            ),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Storage,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = context.getString(R.string.onboarding_storage_title),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer
-                    )
-                    Text(
-                        text = context.getString(R.string.onboarding_storage_desc),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer
-                    )
-                }
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Media scan tips card
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
-            ),
-            shape = RoundedCornerShape(18.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
+            // Left side: Icon, description, media scan tips, and action buttons
             Column(
-                modifier = Modifier.padding(20.dp)
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                // Enhanced icon with animation
+                AnimatedVisibility(
+                    visible = true,
+                    enter = scaleIn() + fadeIn()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(96.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.FilterList,
+                            contentDescription = "Media Scan Filtering",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                }
+
+                Text(
+                    text = context.getString(R.string.onboarding_media_scan_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                Text(
+                    text = context.getString(R.string.onboarding_media_scan_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 32.dp)
+                )
+
+                // Media scan tips card
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                    ),
+                    shape = RoundedCornerShape(18.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Info,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = context.getString(R.string.onboarding_how_it_works),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+
+                        MediaScanTipItem(
+                            icon = Icons.Filled.Block,
+                            text = context.getString(R.string.onboarding_media_scan_blacklist)
+                        )
+                        MediaScanTipItem(
+                            icon = Icons.Filled.CheckCircle,
+                            text = context.getString(R.string.onboarding_media_scan_whitelist)
+                        )
+                        MediaScanTipItem(
+                            icon = Icons.Filled.Settings,
+                            text = context.getString(R.string.onboarding_media_scan_configure_in_tuner)
+                        )
+                    }
+                }
+
+                // Action buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    backButton?.invoke()
+                    nextButton()
+                }
+            }
+
+            // Right side: Storage info and configuration
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Cache management info card
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(20.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Storage,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = context.getString(R.string.onboarding_storage_title),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                            Text(
+                                text = context.getString(R.string.onboarding_storage_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        }
+                    }
+                }
+
+                // Media scan configuration card
+                Card(
+                    onClick = { /* onOpenBottomSheet */ },
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Tune,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = context.getString(R.string.onboarding_media_scan_configure),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = context.getString(
+                                    R.string.onboarding_media_scan_current_mode,
+                                    mediaScanMode.replaceFirstChar { it.uppercase() }),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = "Open media scan settings",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+        }
+    } else {
+        // Mobile layout: Single column
+        Column(
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+        ) {
+            // Enhanced icon with animation
+            AnimatedVisibility(
+                visible = true,
+                enter = scaleIn() + fadeIn()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.Info,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = context.getString(R.string.onboarding_how_it_works),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        imageVector = Icons.Filled.FilterList,
+                        contentDescription = "Media Scan Filtering",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(40.dp)
                     )
                 }
+            }
 
-                MediaScanTipItem(
-                    icon = Icons.Filled.Block,
-                    text = context.getString(R.string.onboarding_media_scan_blacklist)
-                )
-                MediaScanTipItem(
-                    icon = Icons.Filled.CheckCircle,
-                    text = context.getString(R.string.onboarding_media_scan_whitelist)
-                )
-                MediaScanTipItem(
-                    icon = Icons.Filled.Settings,
-                    text = context.getString(R.string.onboarding_media_scan_configure_in_tuner)
-                )
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = context.getString(R.string.onboarding_media_scan_title),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            Text(
+                text = context.getString(R.string.onboarding_media_scan_desc),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 32.dp)
+            )
+
+            // Cache management info card
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f)
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Storage,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = context.getString(R.string.onboarding_storage_title),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                        Text(
+                            text = context.getString(R.string.onboarding_storage_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Media scan tips card
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                ),
+                shape = RoundedCornerShape(18.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Info,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = context.getString(R.string.onboarding_how_it_works),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+
+                    MediaScanTipItem(
+                        icon = Icons.Filled.Block,
+                        text = context.getString(R.string.onboarding_media_scan_blacklist)
+                    )
+                    MediaScanTipItem(
+                        icon = Icons.Filled.CheckCircle,
+                        text = context.getString(R.string.onboarding_media_scan_whitelist)
+                    )
+                    MediaScanTipItem(
+                        icon = Icons.Filled.Settings,
+                        text = context.getString(R.string.onboarding_media_scan_configure_in_tuner)
+                    )
+                }
             }
         }
-        
-        /*Spacer(modifier = Modifier.height(24.dp))
-        
-        // Skip option with divider
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            HorizontalDivider(modifier = Modifier.weight(1f))
-            Text(
-                text = "or",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-            HorizontalDivider(modifier = Modifier.weight(1f))
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Skip button
-        OutlinedButton(
-            onClick = onSkip,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Text(
-                text = "Skip for now",
-                style = MaterialTheme.typography.labelLarge
-            )
-        }*/
-
     }
 }
 
@@ -3727,15 +5753,15 @@ fun MediaScanModeOption(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
-    
+
     // Animated scale for press effect
     val cardScale = remember { Animatable(1f) }
-    
+
     // Animated colors
     val containerColor by animateColorAsState(
-        targetValue = if (isSelected) 
+        targetValue = if (isSelected)
             MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
-        else 
+        else
             MaterialTheme.colorScheme.surfaceContainer,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
@@ -3743,16 +5769,16 @@ fun MediaScanModeOption(
         ),
         label = "containerColor"
     )
-    
+
     val borderColor by animateColorAsState(
-        targetValue = if (isSelected) 
+        targetValue = if (isSelected)
             MaterialTheme.colorScheme.primary
-        else 
+        else
             androidx.compose.ui.graphics.Color.Transparent,
         animationSpec = tween(300),
         label = "borderColor"
     )
-    
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -3767,7 +5793,7 @@ fun MediaScanModeOption(
                     cardScale.animateTo(1f, spring(dampingRatio = Spring.DampingRatioMediumBouncy))
                 }
                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
-                onSelect() 
+                onSelect()
             },
         colors = CardDefaults.cardColors(
             containerColor = containerColor
@@ -3796,49 +5822,49 @@ fun MediaScanModeOption(
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = if (isSelected) 
-                        MaterialTheme.colorScheme.primary 
-                    else 
+                    tint = if (isSelected)
+                        MaterialTheme.colorScheme.primary
+                    else
                         MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(24.dp)
                 )
             }
-            
+
             Spacer(modifier = Modifier.width(16.dp))
-            
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (isSelected) 
-                        MaterialTheme.colorScheme.onPrimaryContainer 
-                    else 
+                    color = if (isSelected)
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    else
                         MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (isSelected) 
+                    color = if (isSelected)
                         MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                    else 
+                    else
                         MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp)
                 )
                 Text(
                     text = example,
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (isSelected) 
+                    color = if (isSelected)
                         MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
-                    else 
+                    else
                         MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                     fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
-            
+
             Spacer(modifier = Modifier.width(16.dp))
-            
+
             if (isSelected) {
                 Icon(
                     imageVector = Icons.Filled.CheckCircle,
@@ -3852,157 +5878,324 @@ fun MediaScanModeOption(
 }
 
 @Composable
-fun EnhancedSetupFinishedContent(onFinish: () -> Unit) {
+fun EnhancedSetupFinishedContent(
+    onFinish: () -> Unit,
+    isTablet: Boolean = false,
+    backButton: @Composable (() -> Unit)? = null,
+    nextButton: @Composable () -> Unit
+) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val scrollState = rememberScrollState()
 
-    Column(
-        horizontalAlignment = Alignment.Start,
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(scrollState)
-    ) {
-        // Success icon with animation
-        AnimatedVisibility(
-            visible = true,
-            enter = scaleIn(
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessMediumLow
-                )
-            ) + fadeIn(
-                animationSpec = tween(1000)
-            )
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.CheckCircle,
-                    contentDescription = "Setup Complete",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(40.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = context.getString(R.string.onboarding_complete_title),
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-
-        Text(
-            text = context.getString(R.string.onboarding_complete_desc),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 32.dp)
-        )
-
-        // Feature highlights - vertically centered
-        Column(
+    if (isTablet) {
+        // Tablet layout: Left side - icon, description, next steps, action buttons; Right side - feature highlights and reminder
+        Row(
             modifier = Modifier
-                .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+                .padding(vertical = 32.dp),
+            horizontalArrangement = Arrangement.spacedBy(32.dp),
+            verticalAlignment = Alignment.Top
         ) {
-            SetupCompleteFeature(
-                icon = Icons.Filled.LibraryMusic,
-                title = context.getString(R.string.onboarding_library_configured),
-                description = context.getString(R.string.onboarding_library_configured_desc)
-            )
-
-            SetupCompleteFeature(
-                icon = Icons.Filled.Palette,
-                title = context.getString(R.string.onboarding_theme_applied),
-                description = context.getString(R.string.onboarding_theme_applied_desc)
-            )
-
-            SetupCompleteFeature(
-                icon = Icons.Filled.Backup,
-                title = context.getString(R.string.onboarding_backup_options),
-                description = context.getString(R.string.onboarding_backup_options_desc)
-            )
-
-            // SetupCompleteFeature(
-            //     icon = Icons.Filled.TouchApp,
-            //     title = "Touch & Audio",
-            //     description = "Haptic feedback and audio preferences configured"
-            // )
-
-        }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        // Next steps card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-            )
-        ) {
+            // Left side: Icon, description, next steps, and action buttons
             Column(
-                modifier = Modifier.padding(20.dp)
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                // Success icon with animation
+                AnimatedVisibility(
+                    visible = true,
+                    enter = scaleIn(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        )
+                    ) + fadeIn(
+                        animationSpec = tween(1000)
+                    )
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(96.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.CheckCircle,
+                            contentDescription = "Setup Complete",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                }
+
+                Text(
+                    text = context.getString(R.string.onboarding_complete_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                Text(
+                    text = context.getString(R.string.onboarding_complete_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 32.dp)
+                )
+
+                // Next steps card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Lightbulb,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = context.getString(R.string.onboarding_whats_next),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        NextStepItem(
+                            icon = Icons.Filled.LibraryMusic,
+                            text = context.getString(R.string.onboarding_next_browse)
+                        )
+                        NextStepItem(
+                            icon = Icons.Filled.Queue,
+                            text = context.getString(R.string.onboarding_next_create)
+                        )
+                        NextStepItem(
+                            icon = Icons.Filled.GraphicEq,
+                            text = context.getString(R.string.onboarding_next_finetune)
+                        )
+                        NextStepItem(
+                            icon = Icons.Filled.Settings,
+                            text = context.getString(R.string.onboarding_next_explore)
+                        )
+                    }
+                }
+
+                // Action buttons
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Lightbulb,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(24.dp)
+                    backButton?.invoke()
+                    nextButton()
+                }
+            }
+
+            // Right side: Feature highlights and reminder
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Feature highlights
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    SetupCompleteFeature(
+                        icon = Icons.Filled.LibraryMusic,
+                        title = context.getString(R.string.onboarding_library_configured),
+                        description = context.getString(R.string.onboarding_library_configured_desc)
                     )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = context.getString(R.string.onboarding_whats_next),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+
+                    SetupCompleteFeature(
+                        icon = Icons.Filled.Palette,
+                        title = context.getString(R.string.onboarding_theme_applied),
+                        description = context.getString(R.string.onboarding_theme_applied_desc)
+                    )
+
+                    SetupCompleteFeature(
+                        icon = Icons.Filled.Backup,
+                        title = context.getString(R.string.onboarding_backup_options),
+                        description = context.getString(R.string.onboarding_backup_options_desc)
                     )
                 }
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                NextStepItem(
-                    icon = Icons.Filled.LibraryMusic,
-                    text = context.getString(R.string.onboarding_next_browse)
-                )
-                NextStepItem(
-                    icon = Icons.Filled.Queue,
-                    text = context.getString(R.string.onboarding_next_create)
-                )
-                NextStepItem(
-                    icon = Icons.Filled.GraphicEq,
-                    text = context.getString(R.string.onboarding_next_finetune)
-                )
-                NextStepItem(
-                    icon = Icons.Filled.Settings,
-                    text = context.getString(R.string.onboarding_next_explore)
-                )
+
+                // Reminder text
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    )
+                ) {
+                    Text(
+                        text = context.getString(R.string.onboarding_settings_change),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                        textAlign = TextAlign.Start,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
             }
         }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Reminder text
-        Text(
-            text = context.getString(R.string.onboarding_settings_change),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
-        )
+    } else {
+        // Mobile layout: Single column
+        Column(
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+        ) {
+            // Success icon with animation
+            AnimatedVisibility(
+                visible = true,
+                enter = scaleIn(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMediumLow
+                    )
+                ) + fadeIn(
+                    animationSpec = tween(1000)
+                )
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.CheckCircle,
+                        contentDescription = "Setup Complete",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(40.dp)
+                    )
+                }
+            }
 
-        // Let's Go button removed - now handled by bottom navigation bar
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = context.getString(R.string.onboarding_complete_title),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            Text(
+                text = context.getString(R.string.onboarding_complete_desc),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 32.dp)
+            )
+
+            // Feature highlights - vertically centered
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)
+            ) {
+                SetupCompleteFeature(
+                    icon = Icons.Filled.LibraryMusic,
+                    title = context.getString(R.string.onboarding_library_configured),
+                    description = context.getString(R.string.onboarding_library_configured_desc)
+                )
+
+                SetupCompleteFeature(
+                    icon = Icons.Filled.Palette,
+                    title = context.getString(R.string.onboarding_theme_applied),
+                    description = context.getString(R.string.onboarding_theme_applied_desc)
+                )
+
+                SetupCompleteFeature(
+                    icon = Icons.Filled.Backup,
+                    title = context.getString(R.string.onboarding_backup_options),
+                    description = context.getString(R.string.onboarding_backup_options_desc)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Next steps card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Lightbulb,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = context.getString(R.string.onboarding_whats_next),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    NextStepItem(
+                        icon = Icons.Filled.LibraryMusic,
+                        text = context.getString(R.string.onboarding_next_browse)
+                    )
+                    NextStepItem(
+                        icon = Icons.Filled.Queue,
+                        text = context.getString(R.string.onboarding_next_create)
+                    )
+                    NextStepItem(
+                        icon = Icons.Filled.GraphicEq,
+                        text = context.getString(R.string.onboarding_next_finetune)
+                    )
+                    NextStepItem(
+                        icon = Icons.Filled.Settings,
+                        text = context.getString(R.string.onboarding_next_explore)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Reminder text
+                Text(
+                    text = context.getString(R.string.onboarding_settings_change),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // Let's Go button removed - now handled by bottom navigation bar
+            }
+        }
     }
 }
 
@@ -4063,7 +6256,7 @@ private fun OnboardingExpressiveUpdateStatus(
             ),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        
+
         // Download progress section - expressive, no containers
         AnimatedVisibility(
             visible = isDownloading,
@@ -4098,7 +6291,7 @@ private fun OnboardingExpressiveUpdateStatus(
                             color = MaterialTheme.colorScheme.secondary
                         )
                     }
-                    
+
                     Text(
                         text = "${downloadProgress.toInt()}%",
                         style = MaterialTheme.typography.headlineMedium,
@@ -4107,7 +6300,7 @@ private fun OnboardingExpressiveUpdateStatus(
                         letterSpacing = 1.sp
                     )
                 }
-                
+
                 // Plain accent color progress bar using Canvas - no Box container
                 val accentColor = MaterialTheme.colorScheme.primary
                 androidx.compose.foundation.Canvas(
@@ -4117,13 +6310,13 @@ private fun OnboardingExpressiveUpdateStatus(
                 ) {
                     val cornerRadius = 8.dp.toPx()
                     val progressWidth = size.width * (downloadProgress / 100f)
-                    
+
                     // Background track
                     drawRoundRect(
                         color = androidx.compose.ui.graphics.Color.Gray.copy(alpha = 0.2f),
                         cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius)
                     )
-                    
+
                     // Plain accent progress
                     if (progressWidth > 0) {
                         drawRoundRect(
@@ -4135,7 +6328,7 @@ private fun OnboardingExpressiveUpdateStatus(
                 }
             }
         }
-        
+
         // Action buttons - expressive, no containers
         AnimatedVisibility(
             visible = error != null || downloadedFile != null || updateAvailable || isDownloading,
@@ -4168,7 +6361,7 @@ private fun OnboardingExpressiveUpdateStatus(
                                 modifier = Modifier.padding(vertical = 6.dp)
                             )
                         }
-                        
+
                         Button(
                             onClick = onRetry,
                             modifier = Modifier.weight(1f),
@@ -4195,7 +6388,7 @@ private fun OnboardingExpressiveUpdateStatus(
                             )
                         }
                     }
-                    
+
                     downloadedFile != null -> {
                         Button(
                             onClick = onInstall,
@@ -4226,7 +6419,7 @@ private fun OnboardingExpressiveUpdateStatus(
                             )
                         }
                     }
-                    
+
                     isDownloading -> {
                         OutlinedButton(
                             onClick = onCancelDownload,
@@ -4251,7 +6444,7 @@ private fun OnboardingExpressiveUpdateStatus(
                             )
                         }
                     }
-                    
+
                     updateAvailable && latestVersion?.apkAssetName?.isNotEmpty() == true -> {
                         Button(
                             onClick = onDownload,
@@ -4293,7 +6486,7 @@ private fun OnboardingExpressiveUpdateStatus(
                 }
             }
         }
-        
+
         // Subtle gradient divider - no Spacer container
         AnimatedVisibility(
             visible = isDownloading || updateAvailable || downloadedFile != null || error != null,

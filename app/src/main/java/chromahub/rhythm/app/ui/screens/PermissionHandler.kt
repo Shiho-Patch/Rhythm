@@ -370,7 +370,18 @@ fun PermissionHandler(
                 permissionScreenState = permissionScreenState, // Pass the state
                 isParentLoading = isLoading,
                 themeViewModel = themeViewModel,
-                appSettings = appSettings // Pass appSettings to OnboardingScreen
+                appSettings = appSettings, // Pass appSettings to OnboardingScreen
+                onFinish = {
+                    // Handle the finish setup button - same logic as SETUP_FINISHED in onNextStep
+                    appSettings.setOnboardingCompleted(true) // Mark onboarding as complete
+                    currentOnboardingStep = OnboardingStep.COMPLETE // Move to complete
+                    // Show media scan loader only after onboarding completion for the first time
+                    if (!initialMediaScanCompleted) {
+                        showMediaScanLoader = true
+                    }
+                    // The evaluatePermissionsAndSetStep will handle setting isInitializingApp = true
+                    // and then false after service init.
+                }
             )
         }
     }
