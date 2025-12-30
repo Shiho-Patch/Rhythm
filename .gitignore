@@ -15,11 +15,7 @@
 local.properties
 .idea/deviceManager.xml
 *.log
-keystore.properties
-private.properties
-*.b64
-*.jks
-SIGNING_KEYSTORE.txt
-SIGNING_PROPERTIES.txt
-
+config/signing/
 private.properties.base64
+
+/app/release

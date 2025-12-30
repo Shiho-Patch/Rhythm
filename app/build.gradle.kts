@@ -16,13 +16,13 @@ android {
         applicationId = "chromahub.rhythm.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 39295822
-        versionName = "3.9.295.822"
+        versionCode = 40300826
+        versionName = "4.0.300.826"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    val signingProperties = getProperties("keystore.properties")
+    val signingProperties = getProperties("config/signing/keystore.properties")
     val releaseSigning = if (signingProperties != null) {
         signingConfigs.create("release") {
             keyAlias = signingProperties.property("key_alias")
