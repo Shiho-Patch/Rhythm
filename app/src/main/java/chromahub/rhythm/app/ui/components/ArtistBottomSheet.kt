@@ -29,10 +29,14 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
@@ -84,6 +88,11 @@ fun ArtistBottomSheet(
     val appSettings = remember { AppSettings.getInstance(context) }
     val groupByAlbumArtist by appSettings.groupByAlbumArtist.collectAsState()
     val useHoursFormat by appSettings.useHoursInTimeFormat.collectAsState()
+    val configuration = LocalConfiguration.current
+    val density = LocalDensity.current
+
+    // Detect tablet mode
+    val isTablet = configuration.screenWidthDp >= 600
     
     // Get songs and albums from viewModel
     val allSongs by viewModel.songs.collectAsState()
@@ -166,22 +175,424 @@ fun ArtistBottomSheet(
         ),
         label = "contentTranslation"
     )
-    
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        dragHandle = null,
-        containerColor = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        modifier = Modifier
-            .fillMaxHeight()
-            .imePadding()
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .navigationBarsPadding()
+
+    if (isTablet) {
+        // Tablet layout: Dialog with side-by-side layout
+        Dialog(
+            onDismissRequest = onDismiss,
+            properties = DialogProperties(
+                dismissOnBackPress = true,
+                dismissOnClickOutside = true,
+                usePlatformDefaultWidth = false
+            )
         ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                shape = RoundedCornerShape(32.dp),
+                color = Color.Transparent
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.surfaceContainerLow,
+                                    MaterialTheme.colorScheme.surface,
+                                    MaterialTheme.colorScheme.surface
+                                )
+                            )
+                        )
+                        .navigationBarsPadding()
+                ) {
+                    Row(modifier = Modifier.fillMaxSize()) {
+                        // Left side: Artist info and artwork
+                        Surface(
+                            modifier = Modifier
+                                .weight(0.4f)
+                                .fillMaxHeight(),
+                            color = Color.Transparent
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(top = 24.dp, start = 32.dp, end = 32.dp, bottom = 32.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                // Artist artwork
+                                Surface(
+                                    modifier = Modifier
+                                        .size(200.dp)
+                                        .graphicsLayer {
+                                            alpha = headerAlpha
+                                            scaleX = if (showContent) 1f else 0.9f
+                                            scaleY = if (showContent) 1f else 0.9f
+                                        },
+                                    shape = CircleShape,
+                                    shadowElevation = 16.dp,
+                                    tonalElevation = 8.dp
+                                ) {
+                                    Box {
+                                        AsyncImage(
+                                            model = ImageRequest.Builder(context)
+                                                .apply(
+                                                    ImageUtils.buildImageRequest(
+                                                        artist.artworkUri,
+                                                        artist.name,
+                                                        context.cacheDir,
+                                                        M3PlaceholderType.ARTIST
+                                                    )
+                                                )
+                                                .build(),
+                                            contentDescription = "Artist image for ${artist.name}",
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(24.dp))
+
+                                // Artist info
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text(
+                                        text = artist.name,
+                                        style = MaterialTheme.typography.headlineMedium.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        ),
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    // Metadata
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Surface(
+                                            shape = RoundedCornerShape(16.dp),
+                                            color = MaterialTheme.colorScheme.primaryContainer
+                                        ) {
+                                            Text(
+                                                text = "${artistSongs.size} songs",
+                                                style = MaterialTheme.typography.labelMedium,
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                            )
+                                        }
+
+                                        Surface(
+                                            shape = RoundedCornerShape(16.dp),
+                                            color = MaterialTheme.colorScheme.secondaryContainer
+                                        ) {
+                                            Text(
+                                                text = "${artistAlbums.size} albums",
+                                                style = MaterialTheme.typography.labelMedium,
+                                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                            )
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(32.dp))
+
+                                // Action buttons
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Button(
+                                        onClick = {
+                                            HapticUtils.performHapticFeedback(
+                                                context,
+                                                haptics,
+                                                HapticFeedbackType.LongPress
+                                            )
+                                            if (artistSongs.isNotEmpty()) {
+                                                onPlayAll(artistSongs)
+                                            }
+                                            onDismiss()
+                                            onPlayerClick()
+                                        },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.primary
+                                        ),
+                                        shape = RoundedCornerShape(24.dp),
+                                        contentPadding = PaddingValues(
+                                            horizontal = 32.dp,
+                                            vertical = 16.dp
+                                        ),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.PlayArrow,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = "Play All",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+
+                                    FilledTonalButton(
+                                        onClick = {
+                                            HapticUtils.performHapticFeedback(
+                                                context,
+                                                haptics,
+                                                HapticFeedbackType.LongPress
+                                            )
+                                            if (artistSongs.isNotEmpty()) {
+                                                onShufflePlay(artistSongs)
+                                            }
+                                            onDismiss()
+                                            onPlayerClick()
+                                        },
+                                        shape = RoundedCornerShape(24.dp),
+                                        contentPadding = PaddingValues(
+                                            horizontal = 32.dp,
+                                            vertical = 16.dp
+                                        ),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Shuffle,
+                                            contentDescription = "Shuffle play",
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = "Shuffle Play",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // Right side: Albums and Songs list
+                        Surface(
+                            modifier = Modifier
+                                .weight(0.6f)
+                                .fillMaxHeight(),
+                            color = Color.Transparent
+                        ) {
+                            Column(modifier = Modifier.fillMaxSize()) {
+                                // Header with close button
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    color = Color.Transparent
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 24.dp, vertical = 24.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "Content",
+                                            style = MaterialTheme.typography.titleLarge,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            modifier = Modifier.weight(1f)
+                                        )
+
+                                        // Close button on tablet
+                                        IconButton(
+                                            onClick = onDismiss,
+                                            modifier = Modifier.size(44.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.Close,
+                                                contentDescription = "Close",
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+
+                                // Content list
+                                Surface(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .weight(1f)
+                                        .padding(horizontal = 12.dp)
+                                        .graphicsLayer { translationY = contentTranslation },
+                                    shape = RoundedCornerShape(
+                                        topStart = 28.dp,
+                                        topEnd = 28.dp
+                                    ),
+                                    color = MaterialTheme.colorScheme.surfaceContainer,
+                                    tonalElevation = 1.dp
+                                ) {
+                                    LazyColumn(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentPadding = PaddingValues(
+                                            top = 8.dp,
+                                            bottom = 24.dp
+                                        ),
+                                        userScrollEnabled = true
+                                    ) {
+                                        // Albums Section
+                                        if (artistAlbums.isNotEmpty()) {
+                                            item {
+                                                Column(modifier = Modifier.padding(16.dp)) {
+                                                    Text(
+                                                        text = context.getString(R.string.bottomsheet_albums),
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        fontWeight = FontWeight.Bold,
+                                                        modifier = Modifier.padding(bottom = 12.dp)
+                                                    )
+                                                    
+                                                    LazyRow(
+                                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                                    ) {
+                                                        items(
+                                                            items = artistAlbums,
+                                                            key = { "artistalbum_${it.id}" }
+                                                        ) { album ->
+                                                            ArtistAlbumCard(
+                                                                album = album,
+                                                                onClick = {
+                                                                    HapticUtils.performHapticFeedback(
+                                                                        context,
+                                                                        haptics,
+                                                                        HapticFeedbackType.TextHandleMove
+                                                                    )
+                                                                    onAlbumClick(album)
+                                                                },
+                                                                haptics = haptics
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        // Songs Section
+                                        if (artistSongs.isNotEmpty()) {
+                                            item {
+                                                Text(
+                                                    text = context.getString(R.string.bottomsheet_songs),
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    fontWeight = FontWeight.Bold,
+                                                    modifier = Modifier.padding(16.dp)
+                                                )
+                                            }
+
+                                            items(
+                                                items = artistSongs,
+                                                key = { "artistsong_${it.id}" }
+                                            ) { song ->
+                                                EnhancedArtistSongItem(
+                                                    song = song,
+                                                    onClick = {
+                                                        HapticUtils.performHapticFeedback(
+                                                            context,
+                                                            haptics,
+                                                            HapticFeedbackType.TextHandleMove
+                                                        )
+                                                        onSongClick(song)
+                                                        onDismiss()
+                                                        onPlayerClick()
+                                                    },
+                                                    onAddToQueue = {
+                                                        HapticUtils.performHapticFeedback(
+                                                            context,
+                                                            haptics,
+                                                            HapticFeedbackType.TextHandleMove
+                                                        )
+                                                        onAddToQueue(song)
+                                                    },
+                                                    onAddToPlaylist = {
+                                                        HapticUtils.performHapticFeedback(
+                                                            context,
+                                                            haptics,
+                                                            HapticFeedbackType.TextHandleMove
+                                                        )
+                                                        onAddSongToPlaylist(song)
+                                                    },
+                                                    onPlayNext = {
+                                                        HapticUtils.performHapticFeedback(
+                                                            context,
+                                                            haptics,
+                                                            HapticFeedbackType.TextHandleMove
+                                                        )
+                                                        onPlayNext(song)
+                                                    },
+                                                    onToggleFavorite = {
+                                                        HapticUtils.performHapticFeedback(
+                                                            context,
+                                                            haptics,
+                                                            HapticFeedbackType.TextHandleMove
+                                                        )
+                                                        onToggleFavorite(song)
+                                                    },
+                                                    isFavorite = favoriteSongs.contains(song.id),
+                                                    onShowSongInfo = {
+                                                        HapticUtils.performHapticFeedback(
+                                                            context,
+                                                            haptics,
+                                                            HapticFeedbackType.TextHandleMove
+                                                        )
+                                                        onShowSongInfo(song)
+                                                    },
+                                                    onAddToBlacklist = {
+                                                        HapticUtils.performHapticFeedback(
+                                                            context,
+                                                            haptics,
+                                                            HapticFeedbackType.TextHandleMove
+                                                        )
+                                                        onAddToBlacklist(song)
+                                                    },
+                                                    currentSong = currentSong,
+                                                    isPlaying = isPlaying,
+                                                    useHoursFormat = useHoursFormat,
+                                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                                                    haptics = haptics
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        // Phone layout: Bottom sheet
+        ModalBottomSheet(
+            onDismissRequest = onDismiss,
+            sheetState = sheetState,
+            dragHandle = null,
+            containerColor = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            modifier = Modifier
+                .fillMaxHeight()
+                .imePadding()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .navigationBarsPadding()
+            ) {
             // Artist Header (Sticky)
             Box(
                 modifier = Modifier
@@ -551,8 +962,9 @@ fun ArtistBottomSheet(
                 }
             }
         }
+            }
+        }
     }
-}
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

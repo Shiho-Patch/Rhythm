@@ -391,7 +391,8 @@ fun AlbumBottomSheet(
                                         ),
                                         gradientEdgeColor = MaterialTheme.colorScheme.surfaceContainer,
                                         modifier = Modifier.fillMaxWidth(),
-                                        enabled = true
+                                        enabled = true,
+                                        textAlign = TextAlign.Center
                                     )
 
                                     Text(
@@ -1117,7 +1118,8 @@ fun AlbumBottomSheet(
                                             color = MaterialTheme.colorScheme.onSurface,
                                             maxLines = 2,
                                             overflow = TextOverflow.Ellipsis,
-                                            lineHeight = 28.sp
+                                            lineHeight = 28.sp,
+                                            textAlign = TextAlign.Center
                                         )
                                     }
 

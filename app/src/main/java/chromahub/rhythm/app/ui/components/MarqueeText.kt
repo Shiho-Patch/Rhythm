@@ -35,7 +35,8 @@ fun AutoScrollingTextOnDemand(
     style: TextStyle = LocalTextStyle.current,
     gradientEdgeColor: Color,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    textAlign: TextAlign = TextAlign.Start
 ) {
     var overflow by remember { mutableStateOf(false) }
 
@@ -46,6 +47,7 @@ fun AutoScrollingTextOnDemand(
             style = style,
             maxLines = 1,
             softWrap = false,
+            textAlign = textAlign,
             onTextLayout = { res: TextLayoutResult -> 
                 overflow = res.hasVisualOverflow 
             },
@@ -55,7 +57,7 @@ fun AutoScrollingTextOnDemand(
         AutoScrollingText(
             text = text,
             style = style,
-            textAlign = TextAlign.Start,
+            textAlign = textAlign,
             gradientEdgeColor = gradientEdgeColor,
             modifier = modifier
         )
