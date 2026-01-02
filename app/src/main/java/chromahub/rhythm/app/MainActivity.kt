@@ -65,7 +65,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.WavingHand // New import for Welcome screen icon
 import androidx.compose.material.icons.filled.DarkMode // New import for Dark Mode icon
-import chromahub.rhythm.app.ui.navigation.RhythmNavigation
+import chromahub.rhythm.app.shared.presentation.navigation.RhythmNavigation
 import chromahub.rhythm.app.ui.theme.RhythmTheme
 import chromahub.rhythm.app.ui.theme.festive.FestiveOverlayFromSettings
 import chromahub.rhythm.app.viewmodel.ThemeViewModel
@@ -257,10 +257,10 @@ class MainActivity : ComponentActivity() {
                         ) {
                             PermissionHandler(
                                 onPermissionsGranted = {
+                                    // RhythmNavigation handles mode switching between Local and Streaming
                                     RhythmNavigation(
-                                        viewModel = musicViewModel,
-                                        themeViewModel = themeViewModel,
-                                        appSettings = appSettings
+                                        musicViewModel = musicViewModel,
+                                        themeViewModel = themeViewModel
                                     )
                                 },
                                 themeViewModel = themeViewModel,

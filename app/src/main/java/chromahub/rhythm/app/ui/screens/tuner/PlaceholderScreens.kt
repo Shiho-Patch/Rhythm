@@ -5305,6 +5305,8 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
     val festiveSnowflakeSize by appSettings.festiveSnowflakeSize.collectAsState()
     val festiveSnowflakeArea by appSettings.festiveSnowflakeArea.collectAsState()
     val festiveThemeType by appSettings.festiveThemeType.collectAsState()
+    val appMode by appSettings.appMode.collectAsState()
+    val allowCellularStreaming by appSettings.allowCellularStreaming.collectAsState()
 
     // Decoration position settings
     val festiveShowTopLights by appSettings.festiveShowTopLights.collectAsState()
@@ -5314,6 +5316,7 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
     val haptic = LocalHapticFeedback.current
 
     var showFestivalSelectionSheet by remember { mutableStateOf(false) }
+    var showAppModeDialog by remember { mutableStateOf(false) }
 
     CollapsibleHeaderScreen(
         title = "Experimental Features",
@@ -5360,6 +5363,32 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
         }
 
         val settingGroups = buildList {
+            // Music Source settings group
+            add(
+                SettingGroup(
+                    title = "Music Source",
+                    items = listOf(
+                        SettingItem(
+                            Icons.Default.Storage,
+                            "Music Mode",
+                            if (appMode == "LOCAL") "Local files from device" else "Streaming services",
+                            onClick = { showAppModeDialog = true }
+                        ),
+                        SettingItem(
+                            Icons.Default.Public,
+                            "Allow Cellular Streaming",
+                            "Stream music over mobile data",
+                            toggleState = allowCellularStreaming,
+                            onToggleChange = { appSettings.setAllowCellularStreaming(it) }
+                        ).takeIf { appMode == "STREAMING" } ?: SettingItem(
+                            Icons.Default.Info,
+                            "Note",
+                            "Streaming features coming soon"
+                        )
+                    )
+                )
+            )
+            
             if (festiveItems.isNotEmpty()) {
                 add(
                     SettingGroup(
@@ -5695,6 +5724,200 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                 showFestivalSelectionSheet = false
             }
         )
+    }
+    
+    if (showAppModeDialog) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        
+        ModalBottomSheet(
+            onDismissRequest = { showAppModeDialog = false },
+            sheetState = sheetState,
+            dragHandle = { 
+                BottomSheetDefaults.DragHandle(
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 0.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Music Mode",
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 6.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    shape = CircleShape
+                                )
+                        ) {
+                            Text(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.labelLarge,
+                                text = "Choose your music source",
+                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 1,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+                
+                // Local mode option
+                Card(
+                    onClick = {
+                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        appSettings.setAppMode("LOCAL")
+                        showAppModeDialog = false
+                    },
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (appMode == "LOCAL") 
+                            MaterialTheme.colorScheme.primaryContainer 
+                        else 
+                            MaterialTheme.colorScheme.surfaceContainerHigh
+                    ),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Storage,
+                            contentDescription = null,
+                            tint = if (appMode == "LOCAL")
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            else
+                                MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(32.dp)
+                        )
+                        
+                        Spacer(modifier = Modifier.width(16.dp))
+                        
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Local Files",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = if (appMode == "LOCAL") 
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                else 
+                                    MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Play music from your device storage",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (appMode == "LOCAL") 
+                                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                else 
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        
+                        if (appMode == "LOCAL") {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = "Selected",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                }
+                
+                // Streaming mode option
+                Card(
+                    onClick = {
+                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        appSettings.setAppMode("STREAMING")
+                        showAppModeDialog = false
+                    },
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (appMode == "STREAMING") 
+                            MaterialTheme.colorScheme.primaryContainer 
+                        else 
+                            MaterialTheme.colorScheme.surfaceContainerHigh
+                    ),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Public,
+                            contentDescription = null,
+                            tint = if (appMode == "STREAMING")
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            else
+                                MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(32.dp)
+                        )
+                        
+                        Spacer(modifier = Modifier.width(16.dp))
+                        
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Streaming Services",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = if (appMode == "STREAMING") 
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                else 
+                                    MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Stream from Spotify, Apple Music, etc. (Coming soon)",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (appMode == "STREAMING") 
+                                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                else 
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        
+                        if (appMode == "STREAMING") {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = "Selected",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
     }
 }
 

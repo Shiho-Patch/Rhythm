@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.ui.navigation
+package chromahub.rhythm.app.features.local.presentation.navigation
 
 import android.util.Log
 import androidx.compose.foundation.clickable
@@ -229,7 +229,7 @@ private fun AnimateIn(
 }
 
 @Composable
-fun RhythmNavigation(
+fun LocalNavigation(
     navController: NavHostController = rememberNavController(),
     viewModel: MusicViewModel = viewModel(),
     themeViewModel: ThemeViewModel = viewModel(),
@@ -519,7 +519,7 @@ fun RhythmNavigation(
                                             ),
                                             Triple(
                                                 libraryRoute, "Library",
-                                                Pair(RhythmIcons.Library, RhythmIcons.Library)
+                                                Pair(Icons.Filled.LibraryMusic, RhythmIcons.Library)
                                             )
                                         )
 

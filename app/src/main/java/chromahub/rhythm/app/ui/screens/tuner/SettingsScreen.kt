@@ -125,7 +125,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalConfiguration
 import chromahub.rhythm.app.ui.theme.RhythmTheme
 import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.ui.navigation.Screen
+import chromahub.rhythm.app.features.local.presentation.navigation.Screen
 
 // Define routes for navigation
 object SettingsRoutes {
@@ -191,6 +191,7 @@ fun SettingsScreen(
     val showAlphabetBar by appSettings.showAlphabetBar.collectAsState()
     val showScrollToTop by appSettings.showScrollToTop.collectAsState()
     val albumBottomSheetGradientBlur by appSettings.albumBottomSheetGradientBlur.collectAsState()
+    val appMode by appSettings.appMode.collectAsState()
     
     var showDefaultScreenDialog by remember { mutableStateOf(false) }
     var showLyricsSourceDialog by remember { mutableStateOf(false) }
@@ -207,15 +208,17 @@ fun SettingsScreen(
         val settingGroups = listOf(
             SettingGroup(
                 title = context.getString(R.string.settings_section_appearance),
-                items = listOf(
-                    SettingItem(Icons.Default.Palette, context.getString(R.string.settings_theme_customization), context.getString(R.string.settings_theme_customization_desc), onClick = { onNavigateTo(SettingsRoutes.THEME_CUSTOMIZATION) }),
-                    SettingItem(Icons.Default.Home, context.getString(R.string.settings_home_customization), context.getString(R.string.settings_home_customization_desc), onClick = { onNavigateTo(SettingsRoutes.HOME_SCREEN) }),
-                    SettingItem(Icons.Default.Widgets, context.getString(R.string.settings_widget), context.getString(R.string.settings_widget_desc), onClick = { onNavigateTo(SettingsRoutes.WIDGET) }),
-                    SettingItem(Icons.Default.MusicNote, context.getString(R.string.settings_player_customization), context.getString(R.string.settings_player_customization_desc), onClick = { onNavigateTo(SettingsRoutes.PLAYER_CUSTOMIZATION) }),
-                    SettingItem(Icons.Default.PlayCircleFilled, context.getString(R.string.settings_miniplayer_customization), context.getString(R.string.settings_miniplayer_customization_desc), onClick = { onNavigateTo(SettingsRoutes.MINIPLAYER_CUSTOMIZATION) }),
-                    SettingItem(Icons.Default.LensBlur, context.getString(R.string.settings_album_bottom_sheet_gradient_blur), context.getString(R.string.settings_album_bottom_sheet_gradient_blur_desc), toggleState = albumBottomSheetGradientBlur, onToggleChange = { appSettings.setAlbumBottomSheetGradientBlur(it) }),
-                    // SettingItem(Icons.Default.Reorder, "Library Tab Order", "Reorder tabs in the library", onClick = { onNavigateTo(SettingsRoutes.LIBRARY_TAB_ORDER) })
-                )
+                items = buildList {
+                    add(SettingItem(Icons.Default.Palette, context.getString(R.string.settings_theme_customization), context.getString(R.string.settings_theme_customization_desc), onClick = { onNavigateTo(SettingsRoutes.THEME_CUSTOMIZATION) }))
+                    // Local-only customizations
+                    if (appMode == "LOCAL") {
+                        add(SettingItem(Icons.Default.Home, context.getString(R.string.settings_home_customization), context.getString(R.string.settings_home_customization_desc), onClick = { onNavigateTo(SettingsRoutes.HOME_SCREEN) }))
+                        add(SettingItem(Icons.Default.Widgets, context.getString(R.string.settings_widget), context.getString(R.string.settings_widget_desc), onClick = { onNavigateTo(SettingsRoutes.WIDGET) }))
+                    }
+                    add(SettingItem(Icons.Default.MusicNote, context.getString(R.string.settings_player_customization), context.getString(R.string.settings_player_customization_desc), onClick = { onNavigateTo(SettingsRoutes.PLAYER_CUSTOMIZATION) }))
+                    add(SettingItem(Icons.Default.PlayCircleFilled, context.getString(R.string.settings_miniplayer_customization), context.getString(R.string.settings_miniplayer_customization_desc), onClick = { onNavigateTo(SettingsRoutes.MINIPLAYER_CUSTOMIZATION) }))
+                    add(SettingItem(Icons.Default.LensBlur, context.getString(R.string.settings_album_bottom_sheet_gradient_blur), context.getString(R.string.settings_album_bottom_sheet_gradient_blur_desc), toggleState = albumBottomSheetGradientBlur, onToggleChange = { appSettings.setAlbumBottomSheetGradientBlur(it) }))
+                }
             ),
             SettingGroup(
                 title = context.getString(R.string.settings_section_user_interface),
@@ -249,73 +252,50 @@ fun SettingsScreen(
             ),
             SettingGroup(
                 title = context.getString(R.string.settings_section_audio_playback),
-                items = listOf(
-                    SettingItem(
+                items = buildList {
+                    add(SettingItem(
                         RhythmIcons.Player.VolumeUp, 
                         context.getString(R.string.settings_system_volume), 
                         context.getString(R.string.settings_system_volume_desc), 
                         toggleState = useSystemVolume,
                         onToggleChange = { appSettings.setUseSystemVolume(it) }
-                    ),
-                    // SettingItem(
-                    //     Icons.Default.Lyrics, 
-                    //     "Show Lyrics", 
-                    //     "Display lyrics when available", 
-                    //     toggleState = showLyrics,
-                    //     onToggleChange = { appSettings.setShowLyrics(it) }
-                    // ),
-                    SettingItem(Icons.Default.Lyrics, context.getString(R.string.lyrics_source_priority), context.getString(R.string.playback_lyrics_priority_desc), onClick = { 
+                    ))
+                    add(SettingItem(Icons.Default.Lyrics, context.getString(R.string.lyrics_source_priority), context.getString(R.string.playback_lyrics_priority_desc), onClick = { 
                         HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
                         showLyricsSourceDialog = true 
-                    }),
-                    SettingItem(Icons.Default.QueueMusic, context.getString(R.string.settings_queue_playback_title), context.getString(R.string.settings_queue_playback_desc), onClick = { onNavigateTo(SettingsRoutes.QUEUE_PLAYBACK) }),
-                    SettingItem(Icons.Default.Equalizer, context.getString(R.string.settings_equalizer_title), context.getString(R.string.settings_equalizer_desc), onClick = { onNavigateTo(SettingsRoutes.EQUALIZER) }),
-                    // SettingItem(Icons.Default.AccessTime, "Sleep Timer", "Auto-stop playback after set time", onClick = { onNavigateTo(SettingsRoutes.SLEEP_TIMER) })
-                )
+                    }))
+                    add(SettingItem(Icons.Default.QueueMusic, context.getString(R.string.settings_queue_playback_title), context.getString(R.string.settings_queue_playback_desc), onClick = { onNavigateTo(SettingsRoutes.QUEUE_PLAYBACK) }))
+                    // Equalizer only in LOCAL mode for now
+                    if (appMode == "LOCAL") {
+                        add(SettingItem(Icons.Default.Equalizer, context.getString(R.string.settings_equalizer_title), context.getString(R.string.settings_equalizer_desc), onClick = { onNavigateTo(SettingsRoutes.EQUALIZER) }))
+                    }
+                }
             ),
-            SettingGroup(
+            // Library Content section - only show in LOCAL mode
+            if (appMode == "LOCAL") SettingGroup(
                 title = context.getString(R.string.settings_section_library_content),
                 items = listOf(
-                    // SettingItem(
-                    //     Icons.Default.Person, 
-                    //     "Group by Album Artist", 
-                    //     "Show collaboration albums under main artist", 
-                    //     toggleState = groupByAlbumArtist,
-                    //     onToggleChange = { appSettings.setGroupByAlbumArtist(it) }
-                    // ),
-//                    SettingItem(
-//                        Icons.Default.Person,
-//                        "Alphabet Navigation",
-//                        "Show alphabet bar for quick scrolling",
-//                        toggleState = showAlphabetBar,
-//                        onToggleChange = { appSettings.setShowAlphabetBar(it) }
-//                    ),
-//                    SettingItem(
-//                        Icons.Default.ArrowUpward,
-//                        "Scroll to Top Button",
-//                        "Show floating button to quickly scroll to top",
-//                        toggleState = showScrollToTop,
-//                        onToggleChange = { appSettings.setShowScrollToTop(it) }
-//                    ),
                     SettingItem(Icons.Default.Person, context.getString(R.string.settings_artist_parsing), context.getString(R.string.settings_artist_parsing_desc), onClick = { onNavigateTo(SettingsRoutes.ARTIST_SEPARATORS) }),
                     SettingItem(Icons.Default.Folder, context.getString(R.string.settings_media_scan_title), context.getString(R.string.settings_media_scan_desc), onClick = { onNavigateTo(SettingsRoutes.MEDIA_SCAN) }),
                     SettingItem(Icons.Default.PlaylistAddCheckCircle, context.getString(R.string.settings_playlists_title), context.getString(R.string.settings_playlists_desc), onClick = { onNavigateTo(SettingsRoutes.PLAYLISTS) })
                 )
-            ),
-            SettingGroup(
+            ) else null,
+            // Storage & Data section - only show in LOCAL mode
+            if (appMode == "LOCAL") SettingGroup(
                 title = context.getString(R.string.settings_section_storage_data),
                 items = listOf(
                     SettingItem(Icons.Default.Storage, context.getString(R.string.settings_cache_management_title), context.getString(R.string.settings_cache_management_desc), onClick = { onNavigateTo(SettingsRoutes.CACHE_MANAGEMENT) }),
                     SettingItem(Icons.Default.Backup, context.getString(R.string.settings_backup_restore_title), context.getString(R.string.settings_backup_restore_desc), onClick = { onNavigateTo(SettingsRoutes.BACKUP_RESTORE) }),
                     SettingItem(Icons.Default.AutoGraph, context.getString(R.string.settings_rhythm_stats), context.getString(R.string.settings_rhythm_stats_desc), onClick = { onNavigateTo(SettingsRoutes.LISTENING_STATS) })
                 )
-            ),
-            SettingGroup(
+            ) else null,
+            // API Management - only show in LOCAL mode (for lyrics/metadata APIs)
+            if (appMode == "LOCAL") SettingGroup(
                 title = context.getString(R.string.settings_section_services),
                 items = listOf(
                     SettingItem(Icons.Default.Api, context.getString(R.string.settings_api_management), context.getString(R.string.settings_api_management_desc), onClick = { onNavigateTo(SettingsRoutes.API_MANAGEMENT) })
                 )
-            ),
+            ) else null,
             SettingGroup(
                 title = context.getString(R.string.settings_section_updates_info),
                 items = listOf(
@@ -337,7 +317,7 @@ fun SettingsScreen(
                     SettingItem(Icons.Default.Science, context.getString(R.string.settings_experimental_features), context.getString(R.string.settings_experimental_features_desc), onClick = { onNavigateTo(SettingsRoutes.EXPERIMENTAL_FEATURES) })
                 )
             )
-        )
+        ).filterNotNull() // Filter out null groups (for streaming mode)
 
         val lazyListState = scrollState ?: rememberSaveable(
             key = "settings_scroll_state",
@@ -652,6 +632,8 @@ fun SettingsScreen(
                 onDismiss = { showLanguageSwitcher = false }
             )
         }
+        
+        // App Mode selection dialog
     }
 }
 

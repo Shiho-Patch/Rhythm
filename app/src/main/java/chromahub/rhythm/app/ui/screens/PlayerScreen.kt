@@ -201,7 +201,7 @@ import chromahub.rhythm.app.data.CanvasRepository
 import chromahub.rhythm.app.data.CanvasData
 import chromahub.rhythm.app.data.Album
 import chromahub.rhythm.app.data.Artist
-import chromahub.rhythm.app.ui.navigation.Screen
+import chromahub.rhythm.app.features.local.presentation.navigation.Screen
 import androidx.navigation.NavController
 
 // Experimental API opt-ins required for:
@@ -364,6 +364,8 @@ fun PlayerScreen(
     // Enhanced screen size detection for better responsiveness
     val isCompactHeight = configuration.screenHeightDp < 600
     val isLargeHeight = configuration.screenHeightDp > 800
+    val isTablet = configuration.screenWidthDp >= 600 // Tablet detection
+    val isLandscapeTablet = isTablet && configuration.screenWidthDp > configuration.screenHeightDp
     
     // Bottom sheet states
     var showSleepTimerBottomSheet by remember { mutableStateOf(false) }
@@ -1201,29 +1203,103 @@ fun PlayerScreen(
                 }
             }
 
-            // MAIN CHANGE: Use a Column that fills the available space but anchors content to the bottom
-            // This makes all content stick to the bottom of the screen
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            // Define Song Info Content for reuse
+            val songInfoContent: @Composable () -> Unit = {
+                if (song != null) {
+                    Column(
+                        horizontalAlignment = when(playerTextAlignment) {
+                            "START" -> Alignment.Start
+                            "END" -> Alignment.End
+                            else -> Alignment.CenterHorizontally
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp)
+                    ) {
+                        // Song title
+                        Text(
+                            text = song.title,
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.15.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = when(playerTextAlignment) {
+                                "START" -> TextAlign.Start
+                                "END" -> TextAlign.End
+                                else -> TextAlign.Center
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        // Artist name (clickable)
+                        Text(
+                            text = buildString {
+                                append(song.artist)
+                                if (!song.album.isNullOrBlank() && song.album != song.artist) {
+                                    append(" • ")
+                                    append(song.album)
+                                }
+                            },
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Medium,
+                                letterSpacing = 0.4.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = when(playerTextAlignment) {
+                                "START" -> TextAlign.Start
+                                "END" -> TextAlign.End
+                                else -> TextAlign.Center
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    HapticUtils.performHapticFeedback(
+                                        context,
+                                        haptic,
+                                        HapticFeedbackType.LongPress
+                                    )
+                                    onShowArtistBottomSheet()
+                                }
+                        )
+                        
+                        // Audio quality badges for tablets
+                        if (playerShowAudioQualityBadges) {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            AudioQualityBadges(
+                                song = song,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Define content blocks for adaptive layout
+            val artworkContent: @Composable () -> Unit = {
                 // Main content column - optimized spacing to reduce vertical padding
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
                         .padding(
                             horizontal = if (isCompactWidth) 8.dp else 12.dp, // Reduced horizontal padding
-                            vertical = if (isCompactHeight) 2.dp else 4.dp    // Further reduced vertical padding
+                            vertical = if (!isTablet && isCompactHeight) 8.dp else if (!isTablet) 12.dp else if (isCompactHeight) 2.dp else 4.dp
                         ),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = if (isCompactHeight) Arrangement.Center else Arrangement.SpaceEvenly
                 ) {
-                    // Optimized dynamic spacing - reduced overall spacing
+                    // Optimized dynamic spacing - increased for mobile to give better visual separation
                     val contentSpacing = when {
-                        isCompactHeight -> 1.dp   // Further reduced from 2.dp
-                        isLargeHeight -> 4.dp     // Further reduced from 8.dp  
-                        else -> 2.dp              // Further reduced from 4.dp
+                        isTablet -> if (isCompactHeight) 1.dp else 2.dp
+                        isCompactHeight -> 6.dp   // Better spacing on mobile compact height
+                        isLargeHeight -> 8.dp     // Better spacing on mobile large height  
+                        else -> 8.dp              // Better spacing on mobile regular
                     }
 
                     // Album artwork or lyrics view with smooth transitions
@@ -1250,7 +1326,7 @@ fun PlayerScreen(
                             modifier = Modifier
                                 .fillMaxWidth(1.0f) // Enlarged album art to touch screen edges
                                 .aspectRatio(1f)
-                                .clip(RoundedCornerShape(if (isCompactHeight) 20.dp else playerArtworkCornerRadius.dp))
+                                .clip(RoundedCornerShape(if (isTablet) 16.dp else if (isCompactHeight) 20.dp else playerArtworkCornerRadius.dp))
                                 .graphicsLayer {
                                     // Album art scales and shrinks during swipe (mini-player effect)
                                     val combinedScale = albumScale * (1f - swipeProgress * 0.2f)
@@ -1321,11 +1397,11 @@ fun PlayerScreen(
                                 CanvasPlayer(
                                     videoUrl = canvasData?.videoUrl,
                                     isPlaying = true, // Always keep canvas playing
-                                    cornerRadius = if (isCompactHeight) 20.dp else playerArtworkCornerRadius.dp,
+                                    cornerRadius = if (isTablet) 16.dp else if (isCompactHeight) 20.dp else playerArtworkCornerRadius.dp,
                                     modifier = Modifier.fillMaxSize(),
                                     albumArtUrl = song.artworkUri,
                                     albumName = song.title,
-                                    showGradientOverlay = playerShowGradientOverlay,
+                                    showGradientOverlay = playerShowGradientOverlay && !isTablet,
                                     onCanvasLoaded = {
                                         Log.d(
                                             "PlayerScreen",
@@ -1362,7 +1438,7 @@ fun PlayerScreen(
                                                         contentScale = ContentScale.Crop,
                                                         modifier = Modifier
                                                             .fillMaxSize()
-                                                            .clip(RoundedCornerShape(if (isCompactHeight) 20.dp else playerArtworkCornerRadius.dp))
+                                                            .clip(RoundedCornerShape(playerArtworkCornerRadius.dp))
                                                     )
                                                 }
                                             } else {
@@ -1393,8 +1469,8 @@ fun PlayerScreen(
                                                         modifier = Modifier.size(120.dp)
                                                     )
 
-                                                    // Add gradient overlays for consistency (controlled by setting)
-                                                    if (playerShowGradientOverlay) {
+                                                    // Add gradient overlays for consistency (controlled by setting, disabled on tablets)
+                                                    if (playerShowGradientOverlay && !isTablet) {
                                                         Box(
                                                             modifier = Modifier
                                                                 .fillMaxSize()
@@ -1471,9 +1547,9 @@ fun PlayerScreen(
                                 horizontalAlignment = Alignment.CenterHorizontally, // Center its children horizontally
                                 verticalArrangement = Arrangement.Bottom // Align content to the bottom
                             ) {
-                                // Song info overlay on album art with improved animations
+                // Song info overlay on album art with improved animations
                                 AnimatedVisibility(
-                                    visible = song != null && isSongInfoVisible && !showLyricsView && playerShowSongInfoOnArtwork,
+                                    visible = song != null && isSongInfoVisible && !showLyricsView && playerShowSongInfoOnArtwork && !isTablet,
                                     enter = fadeIn(
                                         animationSpec = tween(
                                             durationMillis = 300,
@@ -1944,12 +2020,79 @@ fun PlayerScreen(
                         }
                     }
 
+                    // Song info below artwork for tablets (only in portrait mode)
+                    if (isTablet && !isLandscapeTablet && song != null && isSongInfoVisible && !showLyricsView) {
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Column(
+                            horizontalAlignment = when(playerTextAlignment) {
+                                "START" -> Alignment.Start
+                                "END" -> Alignment.End
+                                else -> Alignment.CenterHorizontally
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp)
+                        ) {
+                            // Song title
+                            AutoScrollingTextOnDemand(
+                                text = song.title,
+                                style = MaterialTheme.typography.headlineMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.15.sp
+                                ),
+                                gradientEdgeColor = MaterialTheme.colorScheme.background,
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = true
+                            )
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            // Artist name (clickable)
+                            AutoScrollingTextOnDemand(
+                                text = buildString {
+                                    append(song.artist)
+                                    if (!song.album.isNullOrBlank() && song.album != song.artist) {
+                                        append(" • ")
+                                        append(song.album)
+                                    }
+                                },
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Medium,
+                                    letterSpacing = 0.4.sp
+                                ),
+                                gradientEdgeColor = MaterialTheme.colorScheme.background,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        HapticUtils.performHapticFeedback(
+                                            context,
+                                            haptic,
+                                            HapticFeedbackType.LongPress
+                                        )
+                                        onShowArtistBottomSheet()
+                                    },
+                                enabled = true
+                            )
+                            
+                            // Audio quality badges for tablets
+                            if (playerShowAudioQualityBadges) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                AudioQualityBadges(
+                                    song = song,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
+                    }
+
 
                     // Spacer to push content up and allow bottom controls to be anchored
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(if (isTablet) 18.dp else 12.dp))
 
                 } // End of main content area that gets pushed up
+            }
 
+            val controlsContent: @Composable () -> Unit = {
                 // Bottom controls container - anchored to the bottom
                 AnimatedVisibility(
                     visible = showPlayerControls,
@@ -1965,11 +2108,16 @@ fun PlayerScreen(
                                 translationY = swipeProgress * 50f
                             }
                     ) {
+                        // Add spacing above progress bar on tablet
+                        if (isTablet) {
+                            Spacer(modifier = Modifier.height(28.dp))
+                        }
+                        
                         // Progress bar and time indicators - combined into a single row with pill-shaped time indicators
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 20.dp),
+                                .padding(horizontal = if (isTablet) 20.dp else 16.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
@@ -2127,7 +2275,10 @@ fun PlayerScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(if (isTablet) 20.dp else 12.dp))
+                        
+                        // Add spacing below progress bar on both views
+                        Spacer(modifier = Modifier.height(if (isTablet) 12.dp else 8.dp))
 
                         // Main player controls matching the reference image exactly
                         // TODO: Option to use AnimatedPlaybackControls for enhanced weight-based animations
@@ -2142,7 +2293,7 @@ fun PlayerScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 32.dp),
+                                .padding(horizontal = if (isTablet) 32.dp else 20.dp),
                             horizontalArrangement = if (isPlaying) Arrangement.SpaceEvenly else Arrangement.spacedBy(
                                 8.dp,
                                 Alignment.CenterHorizontally
@@ -2426,13 +2577,13 @@ fun PlayerScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(32.dp))
+                        Spacer(modifier = Modifier.height(if (isTablet) 32.dp else 36.dp))
 
                         // Secondary action buttons row - compact design
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 32.dp),
+                                .padding(horizontal = if (isTablet) 32.dp else 20.dp),
                             horizontalArrangement = Arrangement.SpaceEvenly,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -3433,10 +3584,14 @@ fun PlayerScreen(
 
                                 }
                             }
+                            Spacer(modifier = Modifier.height(if (isTablet) 32.dp else 32.dp))
                         }
+                        Spacer(modifier = Modifier.height(if (isTablet) 12.dp else 22.dp))
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
                 }
+            }
+
+            val bottomButtonsContent: @Composable () -> Unit = {
                     // Bottom buttons - optimized responsive design with reduced padding
                     AnimatedVisibility(
                         visible = showBottomButtons,
@@ -3448,7 +3603,7 @@ fun PlayerScreen(
                                 .fillMaxWidth()
                                 .padding(
                                     horizontal = if (isCompactWidth) 8.dp else 12.dp,   // Reduced padding
-                                    vertical = if (isCompactHeight) 8.dp else 12.dp    // Reduced padding
+                                    vertical = if (isTablet) 8.dp else if (isCompactHeight) 2.dp else 0.dp    // Minimal padding on phone
                                 ),
                             horizontalArrangement = Arrangement.spacedBy(
                                 if (isCompactWidth) 6.dp else 8.dp // Reduced spacing
@@ -3595,6 +3750,59 @@ fun PlayerScreen(
                             }
                         }
                     }
+                }
+            }
+            
+            // Adaptive Layout Logic
+            if (isLandscapeTablet) {
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Left Side - Reduced size on tablet
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(horizontal = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Box(modifier = Modifier.fillMaxWidth(0.85f)) {
+                            artworkContent()
+                        }
+                    }
+                    // Right Side
+                    Column(
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Spacer(modifier = Modifier.height(32.dp))
+                        songInfoContent()
+                        controlsContent()
+                        bottomButtonsContent()
+                    }
+                }
+            } else {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // Top artwork and controls (expands to fill available space)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        artworkContent()
+                        controlsContent()
+                    }
+                    // Bottom buttons (always pinned to bottom)
+                    bottomButtonsContent()
                 }
             }
         }

@@ -249,6 +249,13 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_SHOW_ALPHABET_BAR = "show_alphabet_bar"
         private const val KEY_SHOW_SCROLL_TO_TOP = "show_scroll_to_top"
         
+        // App Mode Settings (Local vs Streaming)
+        private const val KEY_APP_MODE = "app_mode" // "LOCAL" or "STREAMING"
+        private const val KEY_STREAMING_SERVICE = "streaming_service" // "SPOTIFY", "APPLE_MUSIC", etc.
+        private const val KEY_STREAMING_QUALITY = "streaming_quality" // "LOW", "MEDIUM", "HIGH", "LOSSLESS"
+        private const val KEY_ALLOW_CELLULAR_STREAMING = "allow_cellular_streaming"
+        private const val KEY_OFFLINE_MODE = "offline_mode"
+        
         // Queue & Playback Behavior
         private const val KEY_SHUFFLE_USES_EXOPLAYER = "shuffle_uses_exoplayer"
         private const val KEY_AUTO_ADD_TO_QUEUE = "auto_add_to_queue"
@@ -534,6 +541,22 @@ class AppSettings private constructor(context: Context) {
     
     private val _showScrollToTop = MutableStateFlow(prefs.getBoolean(KEY_SHOW_SCROLL_TO_TOP, false))
     val showScrollToTop: StateFlow<Boolean> = _showScrollToTop.asStateFlow()
+    
+    // App Mode Settings (Local vs Streaming)
+    private val _appMode = MutableStateFlow(prefs.getString(KEY_APP_MODE, "LOCAL") ?: "LOCAL")
+    val appMode: StateFlow<String> = _appMode.asStateFlow()
+    
+    private val _streamingService = MutableStateFlow(prefs.getString(KEY_STREAMING_SERVICE, "SPOTIFY") ?: "SPOTIFY")
+    val streamingService: StateFlow<String> = _streamingService.asStateFlow()
+    
+    private val _streamingQuality = MutableStateFlow(prefs.getString(KEY_STREAMING_QUALITY, "HIGH") ?: "HIGH")
+    val streamingQuality: StateFlow<String> = _streamingQuality.asStateFlow()
+    
+    private val _allowCellularStreaming = MutableStateFlow(prefs.getBoolean(KEY_ALLOW_CELLULAR_STREAMING, true))
+    val allowCellularStreaming: StateFlow<Boolean> = _allowCellularStreaming.asStateFlow()
+    
+    private val _offlineMode = MutableStateFlow(prefs.getBoolean(KEY_OFFLINE_MODE, false))
+    val offlineMode: StateFlow<Boolean> = _offlineMode.asStateFlow()
     
     // Audio Device Settings
     private val _lastAudioDevice = MutableStateFlow(prefs.getString(KEY_LAST_AUDIO_DEVICE, null))
@@ -1250,6 +1273,32 @@ class AppSettings private constructor(context: Context) {
     fun setShowScrollToTop(show: Boolean) {
         prefs.edit().putBoolean(KEY_SHOW_SCROLL_TO_TOP, show).apply()
         _showScrollToTop.value = show
+    }
+    
+    // App Mode setter methods
+    fun setAppMode(mode: String) {
+        prefs.edit().putString(KEY_APP_MODE, mode).apply()
+        _appMode.value = mode
+    }
+    
+    fun setStreamingService(service: String) {
+        prefs.edit().putString(KEY_STREAMING_SERVICE, service).apply()
+        _streamingService.value = service
+    }
+    
+    fun setStreamingQuality(quality: String) {
+        prefs.edit().putString(KEY_STREAMING_QUALITY, quality).apply()
+        _streamingQuality.value = quality
+    }
+    
+    fun setAllowCellularStreaming(allow: Boolean) {
+        prefs.edit().putBoolean(KEY_ALLOW_CELLULAR_STREAMING, allow).apply()
+        _allowCellularStreaming.value = allow
+    }
+    
+    fun setOfflineMode(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_OFFLINE_MODE, enabled).apply()
+        _offlineMode.value = enabled
     }
     
     fun setSongsSortOrder(sortOrder: String) {
