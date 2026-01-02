@@ -636,6 +636,7 @@ private fun LocalNavigationContent(
                     .windowInsetsPadding(WindowInsets.navigationBars) // Handle system navigation bars once
             ) {
                 // Global MiniPlayer (hidden on full player screen) with bounce entrance animation
+                // Show at bottom on phones, or on right side if tablet miniplayer is enabled
                 AnimatedVisibility(
                     visible = currentSong != null && currentRoute != Screen.Player.route,
                     enter = slideInVertically(
@@ -663,19 +664,22 @@ private fun LocalNavigationContent(
                         )
                     )
                 ) {
-                    MiniPlayer(
-                        song = currentSong,
-                        isPlaying = isPlaying,
-                        progress = progress,
-                        onPlayPause = onPlayPause,
-                        onPlayerClick = onPlayerClick,
-                        onSkipNext = onSkipNext,
-                        onSkipPrevious = onSkipPrevious,
-                        onDismiss = {
-                            // Clear the current song to hide the mini player
-                            viewModel.clearCurrentSong()
-                        },
-                    )
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        MiniPlayer(
+                            song = currentSong,
+                            isPlaying = isPlaying,
+                            progress = progress,
+                            onPlayPause = onPlayPause,
+                            onPlayerClick = onPlayerClick,
+                            onSkipNext = onSkipNext,
+                            onSkipPrevious = onSkipPrevious,
+                            onDismiss = {
+                                // Clear the current song to hide the mini player
+                                viewModel.clearCurrentSong()
+                            },
+                            modifier = Modifier.align(Alignment.BottomEnd) // Align to bottom-end (right side)
+                        )
+                    }
                 }
 
                 // Navigation bar shown only on specific routes with spring animation

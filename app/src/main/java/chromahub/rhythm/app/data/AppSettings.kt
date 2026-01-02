@@ -347,6 +347,7 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_MINIPLAYER_TEXT_ALIGNMENT = "miniplayer_text_alignment" // "START", "CENTER"
         private const val KEY_MINIPLAYER_SWIPE_GESTURES = "miniplayer_swipe_gestures"
         private const val KEY_MINIPLAYER_SHOW_ARTIST = "miniplayer_show_artist"
+        private const val KEY_MINIPLAYER_ALWAYS_SHOW_TABLET = "miniplayer_always_show_tablet"
         
         // Gesture Settings
         private const val KEY_GESTURE_PLAYER_SWIPE_DISMISS = "gesture_player_swipe_dismiss" // Swipe down to dismiss full player
@@ -2988,6 +2989,13 @@ class AppSettings private constructor(context: Context) {
     fun setMiniPlayerShowArtist(value: Boolean) {
         _miniPlayerShowArtist.value = value
         prefs.edit().putBoolean(KEY_MINIPLAYER_SHOW_ARTIST, value).apply()
+    }
+    
+    private val _miniPlayerAlwaysShowTablet = MutableStateFlow(prefs.getBoolean(KEY_MINIPLAYER_ALWAYS_SHOW_TABLET, false))
+    val miniPlayerAlwaysShowTablet: StateFlow<Boolean> = _miniPlayerAlwaysShowTablet.asStateFlow()
+    fun setMiniPlayerAlwaysShowTablet(value: Boolean) {
+        _miniPlayerAlwaysShowTablet.value = value
+        prefs.edit().putBoolean(KEY_MINIPLAYER_ALWAYS_SHOW_TABLET, value).apply()
     }
     
     private val _homeDiscoverAutoScroll = MutableStateFlow(prefs.getBoolean(KEY_HOME_DISCOVER_AUTO_SCROLL, true))

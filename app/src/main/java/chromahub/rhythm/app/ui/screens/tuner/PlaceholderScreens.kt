@@ -8020,6 +8020,7 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
     val miniPlayerCornerRadius by appSettings.miniPlayerCornerRadius.collectAsState()
     val miniPlayerShowTime by appSettings.miniPlayerShowTime.collectAsState()
     val miniPlayerUseCircularProgress by appSettings.miniPlayerUseCircularProgress.collectAsState()
+    val miniPlayerAlwaysShowTablet by appSettings.miniPlayerAlwaysShowTablet.collectAsState()
 
     var showMiniPlayerProgressStyleSheet by remember { mutableStateOf(false) }
     var showMiniPlayerArtworkSizeSheet by remember { mutableStateOf(false) }
@@ -8200,13 +8201,26 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
-                    SettingRow(
-                        icon = Icons.Default.Timer,
-                        title = "Show Time",
-                        description = "Display playback time",
-                        toggleState = miniPlayerShowTime,
-                        onToggleChange = { appSettings.setMiniPlayerShowTime(it) }
-                    )
+                    Column {
+                        SettingRow(
+                            icon = Icons.Default.Timer,
+                            title = "Show Time",
+                            description = "Display playback time",
+                            toggleState = miniPlayerShowTime,
+                            onToggleChange = { appSettings.setMiniPlayerShowTime(it) }
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        SettingRow(
+                            icon = Icons.Default.Tablet,
+                            title = "Tablet Layout on Phone",
+                            description = "Use tablet-style miniplayer on phones",
+                            toggleState = miniPlayerAlwaysShowTablet,
+                            onToggleChange = { appSettings.setMiniPlayerAlwaysShowTablet(it) }
+                        )
+                    }
                 }
             }
 

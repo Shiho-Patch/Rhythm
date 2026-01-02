@@ -64,6 +64,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import chromahub.rhythm.app.data.Song
@@ -99,11 +100,13 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.data.AppSettings
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.platform.LocalConfiguration
 
 
 /**
  * Mini player that appears at the bottom of the screen
  * Updated to support customizable progress bar styles (NORMAL, WAVY, ROUNDED, etc.)
+ * Adapted for tablet UI with responsive layout
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -121,6 +124,12 @@ fun MiniPlayer(
     val context = LocalContext.current
     val appSettings = remember { AppSettings.getInstance(context) }
     val useHoursFormat by appSettings.useHoursInTimeFormat.collectAsState()
+    val configuration = LocalConfiguration.current
+    val isTablet = configuration.screenWidthDp >= 600
+    val alwaysShowTabletLayout by appSettings.miniPlayerAlwaysShowTablet.collectAsState()
+    
+    // Use tablet layout if device is tablet OR if always-tablet setting is enabled
+    val useTabletLayout = isTablet || (alwaysShowTabletLayout && !isTablet)
     
     // MiniPlayer customization settings
     val miniPlayerProgressStyle by appSettings.miniPlayerProgressStyle.collectAsState()
@@ -266,19 +275,32 @@ fun MiniPlayer(
             defaultElevation = 0.dp, // Remove elevation as requested
             pressedElevation = 0.dp  // Remove press elevation too
         ),
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(bottom = 8.dp) // Simple fixed spacing - system insets handled by parent
-            .scale(scale * songBounceScale * initialAppearanceBounceScale) // Combined scale for all bounce effects
-            .graphicsLayer { 
-                // Apply translation based on swipe gesture
-                translationY = if (isDismissingPlayer) 300f else translationOffsetY
-                translationX = translationOffsetX
-                alpha = alphaValue
-            }
+        modifier = if (useTabletLayout) {
+            // Tablet: Right-side fixed position
+            modifier
+                .width(320.dp)
+                .padding(end = 16.dp, bottom = 16.dp)
+                .scale(scale * songBounceScale * initialAppearanceBounceScale)
+                .graphicsLayer { 
+                    translationY = if (isDismissingPlayer) 300f else translationOffsetY
+                    translationX = translationOffsetX
+                    alpha = alphaValue
+                }
+        } else {
+            // Phone: Bottom full-width
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 8.dp)
+                .scale(scale * songBounceScale * initialAppearanceBounceScale)
+                .graphicsLayer { 
+                    translationY = if (isDismissingPlayer) 300f else translationOffsetY
+                    translationX = translationOffsetX
+                    alpha = alphaValue
+                }
+        }
             .pointerInput(miniPlayerSwipeGestures) {
-                if (miniPlayerSwipeGestures) {
+                if (miniPlayerSwipeGestures && !useTabletLayout) {
                     detectDragGestures(
                         onDragStart = { 
                             // Reset the last haptic offsets on new drag
@@ -479,8 +501,8 @@ fun MiniPlayer(
                 }
             }
 
-            // Customizable linear progress bar for the mini player (only when not using circular)
-            if (song != null && miniPlayerShowProgress && !miniPlayerUseCircularProgress) {
+            // Customizable linear progress bar for the mini player (only when not using circular, phone only)
+            if (song != null && miniPlayerShowProgress && !miniPlayerUseCircularProgress && !useTabletLayout) {
                 // Linear styled progress bar with more waves for MiniPlayer
                 StyledProgressBar(
                     progress = animatedProgress,
@@ -497,10 +519,249 @@ fun MiniPlayer(
                 )
             }
 
+            if (useTabletLayout) {
+                // Tablet: Vertical layout for right-side positioning
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Customizable album art - larger for right sidebar with optional circular progress
+                    if (miniPlayerShowArtwork) {
+                        Box(
+                            contentAlignment = Alignment.Center
+                        ) {
+                            // Circular progress ring around artwork
+                            if (song != null && miniPlayerShowProgress && miniPlayerUseCircularProgress) {
+                                CircularStyledProgressBar(
+                                    progress = animatedProgress,
+                                    style = try { ProgressStyle.valueOf(miniPlayerProgressStyle) } catch (e: Exception) { ProgressStyle.NORMAL },
+                                    modifier = Modifier.size(132.dp),
+                                    progressColor = MaterialTheme.colorScheme.primary,
+                                    trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                                    strokeWidth = 3.dp,
+                                    isPlaying = isPlaying,
+                                    cornerRadius = miniPlayerCornerRadius.dp
+                                ) {
+                                    // Artwork inside the progress ring
+                                    Surface(
+                                        modifier = Modifier.size(120.dp),
+                                        shape = RoundedCornerShape(miniPlayerCornerRadius.dp),
+                                        shadowElevation = 0.dp,
+                                        tonalElevation = 2.dp,
+                                        color = MaterialTheme.colorScheme.surfaceVariant
+                                    ) {
+                                        Box {
+                                            ShimmerBox(
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+                                            
+                                            M3ImageUtils.TrackImage(
+                                                imageUrl = song.artworkUri,
+                                                trackName = song.title,
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+                                        }
+                                    }
+                                }
+                            } else {
+                                // Regular artwork without circular progress
+                                Surface(
+                                    modifier = Modifier.size(120.dp),
+                                    shape = RoundedCornerShape(miniPlayerCornerRadius.dp),
+                                    shadowElevation = 0.dp,
+                                    tonalElevation = 2.dp,
+                                    color = MaterialTheme.colorScheme.surfaceVariant
+                                ) {
+                                    Box {
+                                        if (song != null) {
+                                            ShimmerBox(
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+                                            
+                                            M3ImageUtils.TrackImage(
+                                                imageUrl = song.artworkUri,
+                                                trackName = song.title,
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+                                        } else {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .background(
+                                                        brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                                                            colors = listOf(
+                                                                MaterialTheme.colorScheme.primaryContainer,
+                                                                MaterialTheme.colorScheme.secondaryContainer
+                                                            )
+                                                        )
+                                                    ),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = RhythmIcons.Album,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(40.dp),
+                                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Song title with marquee
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        if (song != null) {
+                            AutoScrollingTextOnDemand(
+                                text = song.title,
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    fontWeight = FontWeight.SemiBold
+                                ),
+                                gradientEdgeColor = MaterialTheme.colorScheme.surfaceContainer,
+                                enabled = true,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            
+                            Spacer(modifier = Modifier.height(4.dp))
+                            
+                            Text(
+                                text = song.artist,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+
+                    // Linear progress bar for tablet (only when not using circular)
+                    if (song != null && miniPlayerShowProgress && !miniPlayerUseCircularProgress) {
+                        StyledProgressBar(
+                            progress = animatedProgress,
+                            style = try { ProgressStyle.valueOf(miniPlayerProgressStyle) } catch (e: Exception) { ProgressStyle.NORMAL },
+                            modifier = Modifier.fillMaxWidth(),
+                            progressColor = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                            isPlaying = isPlaying,
+                            height = 3.dp,
+                            waveAmplitudeWhenPlaying = 2.dp,
+                            waveLength = 20.dp
+                        )
+                    }
+
+                    // Playback controls with gesture support
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .pointerInput(miniPlayerSwipeGestures) {
+                                if (miniPlayerSwipeGestures) {
+                                    detectDragGestures(
+                                        onDragStart = { 
+                                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        },
+                                        onDragEnd = {
+                                            val absX = abs(offsetX)
+                                            val absY = abs(offsetY)
+                                            val swipeHorizontalThreshold = 80f
+                                            val swipeUpThreshold = 80f
+                                            
+                                            if (absX > absY) {
+                                                // Horizontal swipe
+                                                if (offsetX < -swipeHorizontalThreshold) {
+                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                    onSkipNext()
+                                                } else if (offsetX > swipeHorizontalThreshold) {
+                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                    onSkipPrevious()
+                                                }
+                                            } else {
+                                                // Vertical swipe
+                                                if (offsetY < -swipeUpThreshold) {
+                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                    onPlayerClick()
+                                                }
+                                            }
+                                            
+                                            offsetX = 0f
+                                            offsetY = 0f
+                                        },
+                                        onDragCancel = {
+                                            offsetX = 0f
+                                            offsetY = 0f
+                                        },
+                                        onDrag = { change, dragAmount ->
+                                            change.consume()
+                                            offsetX += dragAmount.x
+                                            offsetY += dragAmount.y
+                                        }
+                                    )
+                                }
+                            },
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        FilledTonalIconButton(
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                onSkipPrevious()
+                            },
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = RhythmIcons.SkipPrevious,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        FilledIconButton(
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                onPlayPause()
+                            },
+                            modifier = Modifier.size(48.dp),
+                            colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Icon(
+                                imageVector = if (isPlaying) RhythmIcons.Pause else RhythmIcons.Play,
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        FilledTonalIconButton(
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                onSkipNext()
+                            },
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = RhythmIcons.SkipNext,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
+            } else {
+                // Phone: Original horizontal layout
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 16.dp), // Increased padding for better spacing
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = spacedBy(16.dp)
             ) {
@@ -508,7 +769,7 @@ fun MiniPlayer(
                 if (miniPlayerShowArtwork) {
                     Surface(
                         modifier = Modifier
-                            .size(miniPlayerArtworkSize.dp),
+                            .size((if (isTablet) miniPlayerArtworkSize + 8 else miniPlayerArtworkSize).dp),
                         shape = RoundedCornerShape(miniPlayerCornerRadius.dp),
                         shadowElevation = 0.dp, // Remove shadow as requested
                         tonalElevation = 2.dp, // Keep subtle tonal elevation for depth
@@ -724,6 +985,7 @@ fun MiniPlayer(
                     }
                 }
             }
+            }  // Close the else block for phone layout
         }
     }
 }
