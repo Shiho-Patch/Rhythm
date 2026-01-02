@@ -25,11 +25,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -50,6 +55,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -70,7 +77,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
@@ -87,6 +97,7 @@ import chromahub.rhythm.app.data.LyricsSourcePreference
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.viewmodel.MusicViewModel
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -108,6 +119,8 @@ fun PlaybackBottomSheet(
 ) {
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
+    val configuration = LocalConfiguration.current
+    val isTablet = configuration.screenWidthDp >= 600
     
     // Animation states
     var showContent by remember { mutableStateOf(false) }
@@ -196,118 +209,280 @@ fun PlaybackBottomSheet(
         }
     }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        dragHandle = { 
-            BottomSheetDefaults.DragHandle(
-                color = MaterialTheme.colorScheme.primary
+    if (isTablet) {
+        // Tablet layout: Dialog with optimized spacing and layout
+        Dialog(
+            onDismissRequest = onDismiss,
+            properties = DialogProperties(
+                dismissOnBackPress = true,
+                dismissOnClickOutside = false,
+                usePlatformDefaultWidth = false
             )
-        },
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        contentColor = MaterialTheme.colorScheme.onBackground,
-        tonalElevation = 0.dp
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 24.dp)
         ) {
-            // Header - Fixed at top, doesn't scroll
-            AnimatedVisibility(
-                visible = showContent,
-                enter = fadeIn() + slideInVertically { it },
-                exit = fadeOut() + slideOutVertically { it }
-            ) {
-                PlaybackHeader(
-                    haptics = haptics
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Scrollable content
-            LazyColumn(
+            Surface(
                 modifier = Modifier
-                    .fillMaxWidth(),
-                contentPadding = PaddingValues(vertical = 0.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                    .fillMaxSize()
+                    .padding(48.dp),
+                shape = RoundedCornerShape(32.dp),
+                color = MaterialTheme.colorScheme.surfaceContainer,
+                tonalElevation = 3.dp
             ) {
-                // Active Device Card
-                item {
-                    AnimateIn {
-                        ActiveDeviceCard(
-                            location = currentLocation,
-                            onSwitchDevice = {
-                                // Use native Android output switcher
-                                musicViewModel.showOutputSwitcherDialog()
-                            },
-                            onRefreshDevices = onRefreshDevices,
-                            haptics = haptics
-                        )
+                Column(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    // Header with close button
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 40.dp, end = 32.dp, top = 40.dp, bottom = 24.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = context.getString(R.string.bottomsheet_playback),
+                                style = MaterialTheme.typography.displayMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .padding(top = 8.dp)
+                                    .background(
+                                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                        shape = CircleShape
+                                    )
+                            ) {
+                                Text(
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    text = context.getString(R.string.audio_settings),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+
+                        IconButton(
+                            onClick = onDismiss,
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Close,
+                                contentDescription = "Close",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+
+                    // Scrollable content with two-column layout for better space utilization
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .padding(start = 40.dp, end = 40.dp, bottom = 40.dp)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(24.dp)
+                    ) {
+                        // Row 1: Active Device and Volume Control side by side
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(24.dp)
+                        ) {
+                            // Active Device Card
+                            Box(modifier = Modifier.weight(1f)) {
+                                AnimateIn {
+                                    ActiveDeviceCard(
+                                        location = currentLocation,
+                                        onSwitchDevice = {
+                                            musicViewModel.showOutputSwitcherDialog()
+                                        },
+                                        onRefreshDevices = onRefreshDevices,
+                                        haptics = haptics
+                                    )
+                                }
+                            }
+
+                            // Volume Control Section
+                            Box(modifier = Modifier.weight(1f)) {
+                                AnimateIn {
+                                    VolumeControlCard(
+                                        volume = volume,
+                                        isMuted = isMuted,
+                                        systemVolume = systemVolume,
+                                        systemMaxVolume = systemMaxVolume,
+                                        appSettings = appSettings,
+                                        context = context,
+                                        onVolumeChange = onVolumeChange,
+                                        onToggleMute = onToggleMute,
+                                        onMaxVolume = onMaxVolume,
+                                        onSystemVolumeChange = { newVolume ->
+                                            systemVolume = newVolume
+                                        },
+                                        haptics = haptics
+                                    )
+                                }
+                            }
+                        }
+
+                        // Row 2: Playback Speed (full width for better usability)
+                        AnimateIn {
+                            PlaybackSpeedCard(
+                                currentSpeed = playbackSpeed,
+                                onSpeedChange = { speed ->
+                                    musicViewModel.setPlaybackSpeed(speed)
+                                },
+                                haptics = haptics,
+                                context = context
+                            )
+                        }
+
+                        // Row 3: Playback Settings (full width as it has many options)
+                        AnimateIn {
+                            PlaybackSettingsCard(
+                                gaplessPlayback = gaplessPlayback,
+                                shuffleUsesExoplayer = shuffleUsesExoplayer,
+                                autoAddToQueue = autoAddToQueue,
+                                clearQueueOnNewSong = clearQueueOnNewSong,
+                                shuffleModePersistence = shuffleModePersistence,
+                                repeatModePersistence = repeatModePersistence,
+                                lyricsSourcePreference = lyricsSourcePreference,
+                                useSystemVolume = useSystemVolume,
+                                onGaplessPlaybackChange = {
+                                    musicViewModel.setGaplessPlayback(it)
+                                },
+                                onShuffleUsesExoplayerChange = { appSettings.setShuffleUsesExoplayer(it) },
+                                onAutoAddToQueueChange = { appSettings.setAutoAddToQueue(it) },
+                                onClearQueueOnNewSongChange = { appSettings.setClearQueueOnNewSong(it) },
+                                onShuffleModePersistenceChange = { appSettings.setShuffleModePersistence(it) },
+                                onRepeatModePersistenceChange = { appSettings.setRepeatModePersistence(it) },
+                                onLyricsSourcePreferenceChange = { appSettings.setLyricsSourcePreference(it) },
+                                onUseSystemVolumeChange = { appSettings.setUseSystemVolume(it) },
+                                haptics = haptics,
+                                context = context
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
-                
-                // Volume Control Section
-                item {
-                    AnimateIn {
-                        VolumeControlCard(
-                            volume = volume,
-                            isMuted = isMuted,
-                            systemVolume = systemVolume,
-                            systemMaxVolume = systemMaxVolume,
-                            appSettings = appSettings,
-                            context = context,
-                            onVolumeChange = onVolumeChange,
-                            onToggleMute = onToggleMute,
-                            onMaxVolume = onMaxVolume,
-                            onSystemVolumeChange = { newVolume ->
-                                systemVolume = newVolume
-                            },
-                            haptics = haptics
-                        )
-                    }
+            }
+        }
+    } else {
+        // Phone layout: ModalBottomSheet
+        ModalBottomSheet(
+            onDismissRequest = onDismiss,
+            sheetState = sheetState,
+            dragHandle = { 
+                BottomSheetDefaults.DragHandle(
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            contentColor = MaterialTheme.colorScheme.onBackground,
+            tonalElevation = 0.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp)
+            ) {
+                // Header - Fixed at top, doesn't scroll
+                AnimatedVisibility(
+                    visible = showContent,
+                    enter = fadeIn() + slideInVertically { it },
+                    exit = fadeOut() + slideOutVertically { it }
+                ) {
+                    PlaybackHeader(
+                        haptics = haptics
+                    )
                 }
                 
-                // Playback Speed Section
-                item {
-                    AnimateIn {
-                        PlaybackSpeedCard(
-                            currentSpeed = playbackSpeed,
-                            onSpeedChange = { speed ->
-                                musicViewModel.setPlaybackSpeed(speed)
-                            },
-                            haptics = haptics,
-                            context = context
-                        )
-                    }
-                }
+                Spacer(modifier = Modifier.height(16.dp))
                 
-                // Playback Settings Section
-                item {
-                    AnimateIn {
-                        PlaybackSettingsCard(
-                            gaplessPlayback = gaplessPlayback,
-                            shuffleUsesExoplayer = shuffleUsesExoplayer,
-                            autoAddToQueue = autoAddToQueue,
-                            clearQueueOnNewSong = clearQueueOnNewSong,
-                            shuffleModePersistence = shuffleModePersistence,
-                            repeatModePersistence = repeatModePersistence,
-                            lyricsSourcePreference = lyricsSourcePreference,
-                            useSystemVolume = useSystemVolume,
-                            onGaplessPlaybackChange = {
-                                musicViewModel.setGaplessPlayback(it)
-                            },
-                            onShuffleUsesExoplayerChange = { appSettings.setShuffleUsesExoplayer(it) },
-                            onAutoAddToQueueChange = { appSettings.setAutoAddToQueue(it) },
-                            onClearQueueOnNewSongChange = { appSettings.setClearQueueOnNewSong(it) },
-                            onShuffleModePersistenceChange = { appSettings.setShuffleModePersistence(it) },
-                            onRepeatModePersistenceChange = { appSettings.setRepeatModePersistence(it) },
-                            onLyricsSourcePreferenceChange = { appSettings.setLyricsSourcePreference(it) },
-                            onUseSystemVolumeChange = { appSettings.setUseSystemVolume(it) },
-                            haptics = haptics,
-                            context = context
-                        )
+                // Scrollable content
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    contentPadding = PaddingValues(vertical = 0.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    // Active Device Card
+                    item {
+                        AnimateIn {
+                            ActiveDeviceCard(
+                                location = currentLocation,
+                                onSwitchDevice = {
+                                    // Use native Android output switcher
+                                    musicViewModel.showOutputSwitcherDialog()
+                                },
+                                onRefreshDevices = onRefreshDevices,
+                                haptics = haptics
+                            )
+                        }
+                    }
+                    
+                    // Volume Control Section
+                    item {
+                        AnimateIn {
+                            VolumeControlCard(
+                                volume = volume,
+                                isMuted = isMuted,
+                                systemVolume = systemVolume,
+                                systemMaxVolume = systemMaxVolume,
+                                appSettings = appSettings,
+                                context = context,
+                                onVolumeChange = onVolumeChange,
+                                onToggleMute = onToggleMute,
+                                onMaxVolume = onMaxVolume,
+                                onSystemVolumeChange = { newVolume ->
+                                    systemVolume = newVolume
+                                },
+                                haptics = haptics
+                            )
+                        }
+                    }
+                    
+                    // Playback Speed Section
+                    item {
+                        AnimateIn {
+                            PlaybackSpeedCard(
+                                currentSpeed = playbackSpeed,
+                                onSpeedChange = { speed ->
+                                    musicViewModel.setPlaybackSpeed(speed)
+                                },
+                                haptics = haptics,
+                                context = context
+                            )
+                        }
+                    }
+                    
+                    // Playback Settings Section
+                    item {
+                        AnimateIn {
+                            PlaybackSettingsCard(
+                                gaplessPlayback = gaplessPlayback,
+                                shuffleUsesExoplayer = shuffleUsesExoplayer,
+                                autoAddToQueue = autoAddToQueue,
+                                clearQueueOnNewSong = clearQueueOnNewSong,
+                                shuffleModePersistence = shuffleModePersistence,
+                                repeatModePersistence = repeatModePersistence,
+                                lyricsSourcePreference = lyricsSourcePreference,
+                                useSystemVolume = useSystemVolume,
+                                onGaplessPlaybackChange = {
+                                    musicViewModel.setGaplessPlayback(it)
+                                },
+                                onShuffleUsesExoplayerChange = { appSettings.setShuffleUsesExoplayer(it) },
+                                onAutoAddToQueueChange = { appSettings.setAutoAddToQueue(it) },
+                                onClearQueueOnNewSongChange = { appSettings.setClearQueueOnNewSong(it) },
+                                onShuffleModePersistenceChange = { appSettings.setShuffleModePersistence(it) },
+                                onRepeatModePersistenceChange = { appSettings.setRepeatModePersistence(it) },
+                                onLyricsSourcePreferenceChange = { appSettings.setLyricsSourcePreference(it) },
+                                onUseSystemVolumeChange = { appSettings.setUseSystemVolume(it) },
+                                haptics = haptics,
+                                context = context
+                            )
+                        }
                     }
                 }
             }
@@ -426,14 +601,7 @@ private fun ActiveDeviceCard(
     Card(
         onClick = onSwitchDevice,
         modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp),
-            // .graphicsLayer {
-            //     if (location != null) {
-            //         scaleX = pulseScale
-            //         scaleY = pulseScale
-            //     }
-            // },
+            .fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         ),
@@ -446,7 +614,7 @@ private fun ActiveDeviceCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp)
+                .padding(24.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -497,7 +665,7 @@ private fun ActiveDeviceCard(
                 }
             }
             
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             
             // Device info
             if (location != null) {
@@ -671,8 +839,7 @@ private fun VolumeControlCard(
     }
     Card(
         modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp),
+            .fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
@@ -937,8 +1104,7 @@ private fun PlaybackSpeedCard(
     
     Card(
         modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp),
+            .fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
@@ -1089,8 +1255,7 @@ private fun PlaybackSettingsCard(
 ) {
     Card(
         modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp),
+            .fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
