@@ -342,7 +342,7 @@ object MediaUtils {
      * @param song The song to get extended info for
      * @return ExtendedSongInfo with additional metadata
      */
-    fun getExtendedSongInfo(context: Context, song: Song): chromahub.rhythm.app.ui.screens.ExtendedSongInfo {
+    fun getExtendedSongInfo(context: Context, song: Song): chromahub.rhythm.app.ui.components.ExtendedSongInfo {
         val contentResolver = context.contentResolver
         val retriever = MediaMetadataRetriever()
 
@@ -638,7 +638,7 @@ object MediaUtils {
             channelCount = channelCountValue
         )
         
-        return chromahub.rhythm.app.ui.screens.ExtendedSongInfo(
+        return chromahub.rhythm.app.ui.components.ExtendedSongInfo(
             fileSize = fileSize,
             bitrate = bitrate,
             sampleRate = sampleRate,

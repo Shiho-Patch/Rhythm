@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.ui.screens
+package chromahub.rhythm.app.shared.presentation.components
 
 import android.util.Log
 import androidx.compose.animation.*

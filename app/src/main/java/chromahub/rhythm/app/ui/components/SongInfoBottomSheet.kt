@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.ui.screens
+package chromahub.rhythm.app.ui.components
 
 import android.Manifest
 import android.content.Intent

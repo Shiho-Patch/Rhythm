@@ -136,7 +136,7 @@ fun RhythmNavigation(
         
         // Settings screen (shared between both modes)
         composable("settings") {
-            chromahub.rhythm.app.ui.screens.tuner.SettingsScreenWrapper(
+            chromahub.rhythm.app.features.local.presentation.screens.settings.SettingsScreenWrapper(
                 onBack = {
                     rootNavController.popBackStack()
                 },

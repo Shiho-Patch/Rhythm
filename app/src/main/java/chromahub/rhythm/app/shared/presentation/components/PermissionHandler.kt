@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.ui.screens
+package chromahub.rhythm.app.shared.presentation.components
 
 import android.Manifest
 import android.content.Intent
@@ -31,8 +31,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import chromahub.rhythm.app.data.AppSettings
 import chromahub.rhythm.app.ui.components.M3FourColorCircularLoader
-import chromahub.rhythm.app.ui.screens.onboarding.OnboardingStep
-import chromahub.rhythm.app.ui.screens.onboarding.PermissionScreenState
+import chromahub.rhythm.app.features.local.presentation.screens.onboarding.OnboardingStep
+import chromahub.rhythm.app.features.local.presentation.screens.onboarding.PermissionScreenState
+import chromahub.rhythm.app.features.local.presentation.screens.OnboardingScreen
 import chromahub.rhythm.app.viewmodel.ThemeViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted

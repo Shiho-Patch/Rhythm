@@ -1,5 +1,5 @@
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
-package chromahub.rhythm.app.ui.screens
+package chromahub.rhythm.app.ui.components
 
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi

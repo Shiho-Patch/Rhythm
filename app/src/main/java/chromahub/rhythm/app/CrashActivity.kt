@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.ui.screens
+package chromahub.rhythm.app
 
 import android.content.ClipData
 import android.content.ClipboardManager

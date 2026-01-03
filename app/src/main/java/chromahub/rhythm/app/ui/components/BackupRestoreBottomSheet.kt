@@ -1,5 +1,5 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
-package chromahub.rhythm.app.ui.screens
+package chromahub.rhythm.app.ui.components
 
 import android.app.Activity
 import android.content.ClipData

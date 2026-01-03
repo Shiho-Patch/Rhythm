@@ -5,7 +5,7 @@
 // These will become stable in future Material3 releases
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3WindowSizeClassApi::class)
 
-package chromahub.rhythm.app.ui.screens
+package chromahub.rhythm.app.features.local.presentation.screens
 
 import android.widget.Toast
 import kotlinx.coroutines.CoroutineScope
@@ -167,10 +167,10 @@ import chromahub.rhythm.app.ui.components.MiniPlayer
 import chromahub.rhythm.app.ui.components.RhythmIcons
 import chromahub.rhythm.app.ui.components.HomeSectionOrderBottomSheet
 import chromahub.rhythm.app.ui.components.M3PlaceholderType
-import chromahub.rhythm.app.ui.screens.ArtistBottomSheet
-import chromahub.rhythm.app.ui.screens.AlbumBottomSheet
-import chromahub.rhythm.app.ui.screens.AddToPlaylistBottomSheet
-import chromahub.rhythm.app.ui.screens.SongInfoBottomSheet
+import chromahub.rhythm.app.ui.components.ArtistBottomSheet
+import chromahub.rhythm.app.ui.components.AlbumBottomSheet
+import chromahub.rhythm.app.ui.components.AddToPlaylistBottomSheet
+import chromahub.rhythm.app.ui.components.SongInfoBottomSheet
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.viewmodel.AppUpdaterViewModel
 import chromahub.rhythm.app.viewmodel.AppVersion
@@ -462,7 +462,7 @@ fun HomeScreen(
         val musicViewModel = viewModel<chromahub.rhythm.app.viewmodel.MusicViewModel>()
         val playlists by musicViewModel.playlists.collectAsState()
 
-        chromahub.rhythm.app.ui.screens.AddToPlaylistBottomSheet(
+        chromahub.rhythm.app.ui.components.AddToPlaylistBottomSheet(
             song = selectedSongForPlaylist!!,
             playlists = playlists,
             onDismissRequest = { showAddToPlaylistSheet = false },

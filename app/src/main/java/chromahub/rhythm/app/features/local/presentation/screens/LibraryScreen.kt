@@ -3,7 +3,7 @@
 // - Foundation APIs (HorizontalPager, stickyHeader in LazyColumn)
 // These will become stable in future Compose releases
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
-package chromahub.rhythm.app.ui.screens
+package chromahub.rhythm.app.features.local.presentation.screens
 
 import android.widget.Toast
 import android.os.Environment
@@ -172,7 +172,7 @@ import chromahub.rhythm.app.data.AlbumViewType
 import chromahub.rhythm.app.data.ArtistViewType
 import chromahub.rhythm.app.data.PlaylistViewType
 import chromahub.rhythm.app.data.AppSettings
-import chromahub.rhythm.app.ui.screens.AddToPlaylistBottomSheet
+import chromahub.rhythm.app.ui.components.AddToPlaylistBottomSheet
 import chromahub.rhythm.app.ui.components.CreatePlaylistDialog
 import chromahub.rhythm.app.ui.components.MiniPlayer
 import chromahub.rhythm.app.ui.components.M3PlaceholderType
@@ -180,7 +180,10 @@ import chromahub.rhythm.app.ui.components.BulkPlaylistExportDialog
 import chromahub.rhythm.app.ui.components.PlaylistImportDialog
 import chromahub.rhythm.app.ui.components.PlaylistOperationProgressDialog
 import chromahub.rhythm.app.ui.components.PlaylistOperationResultDialog
-import chromahub.rhythm.app.ui.screens.SongInfoBottomSheet
+import chromahub.rhythm.app.ui.components.SongInfoBottomSheet
+import chromahub.rhythm.app.ui.components.AlbumBottomSheet
+import chromahub.rhythm.app.ui.components.ArtistBottomSheet
+import chromahub.rhythm.app.ui.components.LibraryTabOrderBottomSheet
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.util.M3ImageUtils
 import chromahub.rhythm.app.util.HapticUtils

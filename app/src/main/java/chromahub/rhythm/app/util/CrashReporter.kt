@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import chromahub.rhythm.app.data.AppSettings // Import AppSettings
-import chromahub.rhythm.app.ui.screens.CrashActivity // Import CrashActivity
+import chromahub.rhythm.app.CrashActivity // Import CrashActivity
 import kotlin.system.exitProcess
 
 object CrashReporter {

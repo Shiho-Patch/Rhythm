@@ -1,6 +1,6 @@
 
 
-package chromahub.rhythm.app.ui.screens
+package chromahub.rhythm.app.ui.components
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -54,6 +54,7 @@ import chromahub.rhythm.app.ui.components.PlayingEqIcon
 import chromahub.rhythm.app.ui.components.M3PlaceholderType
 import chromahub.rhythm.app.ui.components.formatDuration
 import chromahub.rhythm.app.ui.components.AutoScrollingTextOnDemand
+import chromahub.rhythm.app.shared.presentation.components.AudioQualityBadges
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.util.HapticUtils
 import kotlinx.coroutines.delay

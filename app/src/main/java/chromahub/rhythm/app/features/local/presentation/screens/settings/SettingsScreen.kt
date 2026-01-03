@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.ui.screens.tuner
+package chromahub.rhythm.app.features.local.presentation.screens.settings
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -932,7 +932,7 @@ fun SettingsScreenWrapper(
                         SettingsRoutes.PLAYLISTS -> PlaylistsSettingsScreen(onBackClick = { currentRoute = null })
                         SettingsRoutes.MEDIA_SCAN -> MediaScanSettingsScreen(onBackClick = { currentRoute = null })
                         SettingsRoutes.ARTIST_SEPARATORS -> ArtistSeparatorsSettingsScreen(onBackClick = { currentRoute = null })
-                        SettingsRoutes.ABOUT -> chromahub.rhythm.app.ui.screens.tuner.AboutScreen(
+                        SettingsRoutes.ABOUT -> chromahub.rhythm.app.features.local.presentation.screens.settings.AboutScreen(
                             onBackClick = { currentRoute = null },
                             onNavigateToUpdates = { currentRoute = SettingsRoutes.UPDATES }
                         )
@@ -1042,7 +1042,7 @@ fun SettingsScreenWrapper(
                 SettingsRoutes.PLAYLISTS -> PlaylistsSettingsScreen(onBackClick = { currentRoute = null })
                 SettingsRoutes.MEDIA_SCAN -> MediaScanSettingsScreen(onBackClick = { currentRoute = null })
                 SettingsRoutes.ARTIST_SEPARATORS -> ArtistSeparatorsSettingsScreen(onBackClick = { currentRoute = null })
-                SettingsRoutes.ABOUT -> chromahub.rhythm.app.ui.screens.tuner.AboutScreen(
+                SettingsRoutes.ABOUT -> chromahub.rhythm.app.features.local.presentation.screens.settings.AboutScreen(
                     onBackClick = { currentRoute = null },
                     onNavigateToUpdates = { currentRoute = SettingsRoutes.UPDATES }
                 )

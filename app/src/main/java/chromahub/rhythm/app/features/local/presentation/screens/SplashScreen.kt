@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.ui.screens
+package chromahub.rhythm.app.features.local.presentation.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable

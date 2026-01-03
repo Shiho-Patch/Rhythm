@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.ui.screens.tuner
+package chromahub.rhythm.app.features.local.presentation.screens.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*

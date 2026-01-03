@@ -86,25 +86,25 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import chromahub.rhythm.app.ui.screens.AddToPlaylistBottomSheet
-import chromahub.rhythm.app.ui.screens.AddToPlaylistScreen
+import chromahub.rhythm.app.ui.components.AddToPlaylistBottomSheet
+import chromahub.rhythm.app.features.local.presentation.screens.AddToPlaylistScreen
 import chromahub.rhythm.app.ui.components.CreatePlaylistDialog
 import chromahub.rhythm.app.ui.components.QueueActionDialog
 import chromahub.rhythm.app.ui.components.MiniPlayer
 import chromahub.rhythm.app.ui.components.RhythmIcons
-import chromahub.rhythm.app.ui.screens.LibraryScreen
+import chromahub.rhythm.app.features.local.presentation.screens.LibraryScreen
 import chromahub.rhythm.app.ui.components.RhythmIcons.Delete
-import chromahub.rhythm.app.ui.screens.HomeScreen
-import chromahub.rhythm.app.ui.screens.ListeningStatsScreen
-import chromahub.rhythm.app.ui.screens.EqualizerScreen
-import chromahub.rhythm.app.ui.screens.PlayerScreen
+import chromahub.rhythm.app.features.local.presentation.screens.HomeScreen
+import chromahub.rhythm.app.features.local.presentation.screens.ListeningStatsScreen
+import chromahub.rhythm.app.features.local.presentation.screens.EqualizerScreen
+import chromahub.rhythm.app.features.local.presentation.screens.PlayerScreen
 
-import chromahub.rhythm.app.ui.screens.PlaylistDetailScreen
-import chromahub.rhythm.app.ui.screens.SearchScreen
-import chromahub.rhythm.app.ui.screens.tuner.SettingsScreenWrapper
-import chromahub.rhythm.app.ui.screens.tuner.*
+import chromahub.rhythm.app.features.local.presentation.screens.PlaylistDetailScreen
+import chromahub.rhythm.app.features.local.presentation.screens.SearchScreen
+import chromahub.rhythm.app.features.local.presentation.screens.settings.SettingsScreenWrapper
+import chromahub.rhythm.app.features.local.presentation.screens.settings.*
 import chromahub.rhythm.app.data.PlaybackLocation
-import chromahub.rhythm.app.ui.screens.MediaScanLoader // Add MediaScanLoader import
+import chromahub.rhythm.app.shared.presentation.components.MediaScanLoader // Add MediaScanLoader import
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.viewmodel.MusicViewModel
 import chromahub.rhythm.app.viewmodel.MusicViewModel.SortOrder
@@ -146,7 +146,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
-import chromahub.rhythm.app.ui.screens.LibraryTab
+import chromahub.rhythm.app.features.local.presentation.screens.LibraryTab
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.runtime.remember
@@ -1210,7 +1210,7 @@ private fun LocalNavigationContent(
                 }
 
                 composable(Screen.TunerAbout.route) {
-                    chromahub.rhythm.app.ui.screens.tuner.AboutScreen(
+                    chromahub.rhythm.app.features.local.presentation.screens.settings.AboutScreen(
                         onBackClick = { navController.popBackStack() },
                         onNavigateToUpdates = { navController.navigate(Screen.TunerUpdates.route) }
                     )

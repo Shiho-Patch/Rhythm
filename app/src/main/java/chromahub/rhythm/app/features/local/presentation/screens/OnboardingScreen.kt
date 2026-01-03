@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.ui.screens
+package chromahub.rhythm.app.features.local.presentation.screens
 
 import android.Manifest
 import android.os.Build
@@ -132,8 +132,10 @@ import chromahub.rhythm.app.ui.components.M3LinearLoader
 import chromahub.rhythm.app.ui.components.M3FourColorCircularLoader
 import chromahub.rhythm.app.ui.components.RhythmIcons
 import chromahub.rhythm.app.ui.components.LanguageSwitcherDialog
-import chromahub.rhythm.app.ui.screens.onboarding.OnboardingStep
-import chromahub.rhythm.app.ui.screens.onboarding.PermissionScreenState
+import chromahub.rhythm.app.ui.components.LibraryTabOrderBottomSheet
+import chromahub.rhythm.app.ui.components.BackupRestoreBottomSheet
+import chromahub.rhythm.app.features.local.presentation.screens.onboarding.OnboardingStep
+import chromahub.rhythm.app.features.local.presentation.screens.onboarding.PermissionScreenState
 import chromahub.rhythm.app.viewmodel.AppUpdaterViewModel
 import chromahub.rhythm.app.viewmodel.MusicViewModel
 import chromahub.rhythm.app.viewmodel.ThemeViewModel

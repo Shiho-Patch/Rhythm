@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package chromahub.rhythm.app.ui.screens
+package chromahub.rhythm.app.ui.components
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*

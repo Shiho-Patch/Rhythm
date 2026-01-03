@@ -133,12 +133,12 @@ import chromahub.rhythm.app.ui.components.M3FourColorCircularLoader // Import M3
 import androidx.compose.ui.platform.LocalHapticFeedback // Import LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType // Import HapticFeedbackType
 import androidx.compose.material3.ButtonDefaults // Import ButtonDefaults
-import chromahub.rhythm.app.ui.screens.SplashScreen
-import chromahub.rhythm.app.ui.screens.PermissionHandler
-import chromahub.rhythm.app.ui.screens.BetaProgramPopup
-import chromahub.rhythm.app.ui.screens.OnboardingScreen
-import chromahub.rhythm.app.ui.screens.onboarding.OnboardingStep
-import chromahub.rhythm.app.ui.screens.onboarding.PermissionScreenState
+import chromahub.rhythm.app.features.local.presentation.screens.SplashScreen
+import chromahub.rhythm.app.shared.presentation.components.PermissionHandler
+import chromahub.rhythm.app.ui.components.BetaProgramPopup
+import chromahub.rhythm.app.features.local.presentation.screens.OnboardingScreen
+import chromahub.rhythm.app.features.local.presentation.screens.onboarding.OnboardingStep
+import chromahub.rhythm.app.features.local.presentation.screens.onboarding.PermissionScreenState
 
 class MainActivity : ComponentActivity() {
     private val TAG = "MainActivity"

@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.ui.screens
+package chromahub.rhythm.app.features.local.presentation.screens
 
 import android.content.Context
 import android.net.Uri
@@ -179,7 +179,7 @@ import java.util.Locale
 import kotlin.math.abs
 import chromahub.rhythm.app.ui.components.M3CircularLoader
 import android.view.animation.OvershootInterpolator
-import chromahub.rhythm.app.ui.screens.SleepTimerBottomSheetNew
+import chromahub.rhythm.app.ui.components.SleepTimerBottomSheetNew
 import chromahub.rhythm.app.ui.components.SyncedLyricsView
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
@@ -188,13 +188,16 @@ import androidx.compose.material.icons.rounded.AccessTime
 import chromahub.rhythm.app.ui.components.formatDuration
 import java.util.concurrent.TimeUnit // Import TimeUnit for duration formatting
 import chromahub.rhythm.app.ui.components.M3CircularLoader // Added for play/pause button loader
-import chromahub.rhythm.app.ui.screens.QueueBottomSheet
-import chromahub.rhythm.app.ui.screens.LibraryTab
-import chromahub.rhythm.app.ui.screens.AddToPlaylistBottomSheet
+import chromahub.rhythm.app.ui.components.QueueBottomSheet
+import chromahub.rhythm.app.features.local.presentation.screens.LibraryTab
+import chromahub.rhythm.app.ui.components.AddToPlaylistBottomSheet
 import chromahub.rhythm.app.ui.components.PlaybackBottomSheet
-import chromahub.rhythm.app.ui.screens.SongInfoBottomSheet
-import chromahub.rhythm.app.ui.screens.ArtistBottomSheet
-import chromahub.rhythm.app.ui.screens.LyricsEditorBottomSheet
+import chromahub.rhythm.app.ui.components.SongInfoBottomSheet
+import chromahub.rhythm.app.ui.components.ArtistBottomSheet
+import chromahub.rhythm.app.ui.components.AlbumBottomSheet
+import chromahub.rhythm.app.ui.components.PlayerChipOrderBottomSheet
+import chromahub.rhythm.app.ui.components.LyricsEditorBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.AudioQualityBadges
 import chromahub.rhythm.app.util.MediaUtils
 import chromahub.rhythm.app.ui.components.CanvasPlayer
 import chromahub.rhythm.app.data.CanvasRepository

@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.ui.screens
+package chromahub.rhythm.app.ui.components
 
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
