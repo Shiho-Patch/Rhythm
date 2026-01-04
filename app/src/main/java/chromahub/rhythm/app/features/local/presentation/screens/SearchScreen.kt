@@ -103,9 +103,9 @@ import chromahub.rhythm.app.data.Album
 import chromahub.rhythm.app.data.Artist
 import chromahub.rhythm.app.data.Playlist
 import chromahub.rhythm.app.data.Song
-import chromahub.rhythm.app.ui.components.MiniPlayer
-import chromahub.rhythm.app.ui.components.RhythmIcons
-import chromahub.rhythm.app.viewmodel.MusicViewModel
+import chromahub.rhythm.app.features.local.presentation.components.player.MiniPlayer
+import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
+import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import kotlinx.coroutines.launch
@@ -113,14 +113,14 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import chromahub.rhythm.app.data.AppSettings
 import androidx.compose.material3.rememberModalBottomSheetState
-import chromahub.rhythm.app.ui.components.AddToPlaylistBottomSheet
-import chromahub.rhythm.app.ui.components.CreatePlaylistDialog
-import chromahub.rhythm.app.ui.components.ArtistBottomSheet
-import chromahub.rhythm.app.ui.components.AlbumBottomSheet
-import chromahub.rhythm.app.ui.components.SongInfoBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AddToPlaylistBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.ArtistBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AlbumBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.SongInfoBottomSheet
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.ui.components.M3PlaceholderType
+import chromahub.rhythm.app.features.local.presentation.components.common.M3PlaceholderType
 
 // Experimental API opt-ins required for:
 // - Material3 SearchBar APIs (DockedSearchBar, SearchBarDefaults) - stable in Material3 1.4.0

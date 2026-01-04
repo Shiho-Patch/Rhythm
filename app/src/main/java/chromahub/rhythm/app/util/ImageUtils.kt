@@ -15,7 +15,7 @@ import coil.request.ErrorResult
 import coil.request.ImageRequest
 import coil.request.SuccessResult
 import chromahub.rhythm.app.R
-import chromahub.rhythm.app.ui.components.M3PlaceholderType
+import chromahub.rhythm.app.features.local.presentation.components.common.M3PlaceholderType
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.random.Random

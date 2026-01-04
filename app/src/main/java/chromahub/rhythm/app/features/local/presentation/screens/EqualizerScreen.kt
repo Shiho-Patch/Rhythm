@@ -77,16 +77,16 @@ import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import kotlin.system.exitProcess
-import chromahub.rhythm.app.ui.components.CollapsibleHeaderScreen
-import chromahub.rhythm.app.ui.components.RhythmIcons
-import chromahub.rhythm.app.ui.components.StandardBottomSheetHeader
-import chromahub.rhythm.app.ui.components.StyledProgressBar
-import chromahub.rhythm.app.ui.components.CircularStyledProgressBar
-import chromahub.rhythm.app.ui.components.ProgressStyle
-import chromahub.rhythm.app.ui.components.ThumbStyle
-import chromahub.rhythm.app.ui.components.LicensesBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.common.CollapsibleHeaderScreen
+import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.StandardBottomSheetHeader
+import chromahub.rhythm.app.features.local.presentation.components.common.StyledProgressBar
+import chromahub.rhythm.app.features.local.presentation.components.common.CircularStyledProgressBar
+import chromahub.rhythm.app.features.local.presentation.components.common.ProgressStyle
+import chromahub.rhythm.app.features.local.presentation.components.common.ThumbStyle
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.LicensesBottomSheet
 import chromahub.rhythm.app.ui.utils.LazyListStateSaver
-import chromahub.rhythm.app.viewmodel.MusicViewModel
+import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import chromahub.rhythm.app.viewmodel.AppUpdaterViewModel
 import chromahub.rhythm.app.ui.theme.getFontPreviewStyle
 import kotlinx.coroutines.delay
@@ -267,14 +267,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import chromahub.rhythm.app.ui.components.AddToPlaylistBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AddToPlaylistBottomSheet
 import chromahub.rhythm.app.features.local.presentation.screens.AddToPlaylistScreen
-import chromahub.rhythm.app.ui.components.CreatePlaylistDialog
-import chromahub.rhythm.app.ui.components.QueueActionDialog
-import chromahub.rhythm.app.ui.components.MiniPlayer
-import chromahub.rhythm.app.ui.components.RhythmIcons.Delete
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.QueueActionDialog
+import chromahub.rhythm.app.features.local.presentation.components.player.MiniPlayer
+import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons.Delete
 import chromahub.rhythm.app.features.local.presentation.screens.LibraryScreen
-import chromahub.rhythm.app.ui.components.RhythmIcons.Delete
+import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons.Delete
 import chromahub.rhythm.app.features.local.presentation.screens.HomeScreen
 import chromahub.rhythm.app.features.local.presentation.screens.ListeningStatsScreen
 import chromahub.rhythm.app.features.local.presentation.screens.PlayerScreen
@@ -328,6 +328,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.AutoEQProfileSelector
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.DeviceConfigurationBottomSheet
+import chromahub.rhythm.app.data.AutoEQProfile
 
 // Equalizer Preset Data Class
 data class EqualizerPreset(
@@ -1624,10 +1627,10 @@ fun EqualizerScreen(
         
         // AutoEQ Profile Selector
         if (showAutoEQSelector) {
-            chromahub.rhythm.app.ui.components.AutoEQProfileSelector(
+            AutoEQProfileSelector(
                 musicViewModel = viewModel,
                 onDismiss = { showAutoEQSelector = false },
-                onProfileSelected = { profile ->
+                onProfileSelected = { profile: AutoEQProfile ->
                     viewModel.applyAutoEQProfile(profile)
                     showAutoEQSelector = false
                 }
@@ -1636,7 +1639,7 @@ fun EqualizerScreen(
         
         // Device Configuration Bottom Sheet
         if (showDeviceConfiguration) {
-            chromahub.rhythm.app.ui.components.DeviceConfigurationBottomSheet(
+            DeviceConfigurationBottomSheet(
                 musicViewModel = viewModel,
                 onDismiss = { showDeviceConfiguration = false }
             )

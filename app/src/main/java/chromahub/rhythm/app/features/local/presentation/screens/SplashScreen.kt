@@ -51,7 +51,7 @@ import chromahub.rhythm.app.data.AppSettings
 import chromahub.rhythm.app.ui.theme.festive.FestiveConfig
 import chromahub.rhythm.app.ui.theme.festive.FestiveThemeEngine
 import chromahub.rhythm.app.ui.theme.festive.FestiveThemeType
-import chromahub.rhythm.app.viewmodel.MusicViewModel
+import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

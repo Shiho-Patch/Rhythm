@@ -120,7 +120,7 @@ import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.WindowHeightSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
-import chromahub.rhythm.app.ui.components.CollapsibleHeaderScreen
+import chromahub.rhythm.app.features.local.presentation.components.common.CollapsibleHeaderScreen
 import chromahub.rhythm.app.ui.theme.festive.FestiveConfig
 import chromahub.rhythm.app.ui.theme.festive.FestiveThemeEngine
 import chromahub.rhythm.app.ui.theme.festive.FestiveThemeType
@@ -163,17 +163,20 @@ import chromahub.rhythm.app.R
 import chromahub.rhythm.app.data.Album
 import chromahub.rhythm.app.data.Artist
 import chromahub.rhythm.app.data.Song
-import chromahub.rhythm.app.ui.components.MiniPlayer
-import chromahub.rhythm.app.ui.components.RhythmIcons
-import chromahub.rhythm.app.ui.components.HomeSectionOrderBottomSheet
-import chromahub.rhythm.app.ui.components.M3PlaceholderType
-import chromahub.rhythm.app.ui.components.ArtistBottomSheet
-import chromahub.rhythm.app.ui.components.AlbumBottomSheet
-import chromahub.rhythm.app.ui.components.AddToPlaylistBottomSheet
-import chromahub.rhythm.app.ui.components.SongInfoBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.player.MiniPlayer
+import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
+import chromahub.rhythm.app.features.local.presentation.components.settings.HomeSectionOrderBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.common.M3PlaceholderType
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.ArtistBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AlbumBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AddToPlaylistBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.SongInfoBottomSheet
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.viewmodel.AppUpdaterViewModel
 import chromahub.rhythm.app.viewmodel.AppVersion
+import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AddToPlaylistBottomSheet
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -462,7 +465,7 @@ fun HomeScreen(
         val musicViewModel = viewModel<chromahub.rhythm.app.viewmodel.MusicViewModel>()
         val playlists by musicViewModel.playlists.collectAsState()
 
-        chromahub.rhythm.app.ui.components.AddToPlaylistBottomSheet(
+        AddToPlaylistBottomSheet(
             song = selectedSongForPlaylist!!,
             playlists = playlists,
             onDismissRequest = { showAddToPlaylistSheet = false },
@@ -491,7 +494,7 @@ fun HomeScreen(
     }
 
     if (showCreatePlaylistDialog) {
-        chromahub.rhythm.app.ui.components.CreatePlaylistDialog(
+        CreatePlaylistDialog(
             onDismiss = { showCreatePlaylistDialog = false },
             onConfirm = { name ->
                 musicViewModel.createPlaylist(name)

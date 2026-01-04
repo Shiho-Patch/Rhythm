@@ -85,16 +85,16 @@ import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import kotlin.system.exitProcess
-import chromahub.rhythm.app.ui.components.CollapsibleHeaderScreen
-import chromahub.rhythm.app.ui.components.RhythmIcons
-import chromahub.rhythm.app.ui.components.StandardBottomSheetHeader
-import chromahub.rhythm.app.ui.components.StyledProgressBar
-import chromahub.rhythm.app.ui.components.CircularStyledProgressBar
-import chromahub.rhythm.app.ui.components.ProgressStyle
-import chromahub.rhythm.app.ui.components.ThumbStyle
-import chromahub.rhythm.app.ui.components.LicensesBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.common.CollapsibleHeaderScreen
+import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.StandardBottomSheetHeader
+import chromahub.rhythm.app.features.local.presentation.components.common.StyledProgressBar
+import chromahub.rhythm.app.features.local.presentation.components.common.CircularStyledProgressBar
+import chromahub.rhythm.app.features.local.presentation.components.common.ProgressStyle
+import chromahub.rhythm.app.features.local.presentation.components.common.ThumbStyle
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.LicensesBottomSheet
 import chromahub.rhythm.app.ui.utils.LazyListStateSaver
-import chromahub.rhythm.app.viewmodel.MusicViewModel
+import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import chromahub.rhythm.app.viewmodel.AppUpdaterViewModel
 import chromahub.rhythm.app.ui.theme.getFontPreviewStyle
 import kotlinx.coroutines.delay
@@ -112,9 +112,17 @@ import android.widget.TextView
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.core.text.HtmlCompat
-import chromahub.rhythm.app.ui.components.M3CircularWaveProgressIndicator
-import chromahub.rhythm.app.ui.components.M3FourColorCircularLoader
-import chromahub.rhythm.app.ui.components.PlayingEqIcon
+import chromahub.rhythm.app.features.local.presentation.components.common.M3CircularWaveProgressIndicator
+import chromahub.rhythm.app.features.local.presentation.components.common.M3FourColorCircularLoader
+import chromahub.rhythm.app.features.local.presentation.components.player.PlayingEqIcon
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.BulkPlaylistExportDialog
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistImportDialog
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistOperationProgressDialog
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistOperationResultDialog
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.AppRestartDialog
+import chromahub.rhythm.app.features.local.presentation.components.player.PlayerChipOrderBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.settings.HomeSectionOrderBottomSheet
 
 @Composable
 fun TunerSettingRow(item: SettingItem) {
@@ -1587,7 +1595,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
 
     // Dialogs
     if (showCreatePlaylistDialog) {
-        chromahub.rhythm.app.ui.components.CreatePlaylistDialog(
+        CreatePlaylistDialog(
             onDismiss = { showCreatePlaylistDialog = false },
             onConfirm = { name ->
                 musicViewModel.createPlaylist(name)
@@ -1597,7 +1605,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
     }
 
     if (showBulkExportDialog) {
-        chromahub.rhythm.app.ui.components.BulkPlaylistExportDialog(
+        BulkPlaylistExportDialog(
             playlistCount = playlists.size,
             onDismiss = { showBulkExportDialog = false },
             onExport = { format, includeDefault ->
@@ -1620,7 +1628,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
     }
 
     if (showImportDialog) {
-        chromahub.rhythm.app.ui.components.PlaylistImportDialog(
+        PlaylistImportDialog(
             onDismiss = { showImportDialog = false },
             onImport = { uri, onResult, _ ->
                 showImportDialog = false
@@ -1636,7 +1644,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
     }
 
     if (showOperationProgress) {
-        chromahub.rhythm.app.ui.components.PlaylistOperationProgressDialog(
+        PlaylistOperationProgressDialog(
             operation = operationProgressText,
             onDismiss = { /* Cannot dismiss during operation */ }
         )
@@ -1701,7 +1709,7 @@ fun PlaylistsSettingsScreen(onBackClick: () -> Unit) {
 
     // App Restart Dialog for default playlists toggle
     if (showRestartDialog) {
-        chromahub.rhythm.app.ui.components.AppRestartDialog(
+        AppRestartDialog(
             onDismiss = { showRestartDialog = false },
             onRestart = {
                 showRestartDialog = false
@@ -8794,7 +8802,7 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
 
     // Show chip order bottom sheet
     if (showChipOrderBottomSheet) {
-        chromahub.rhythm.app.ui.components.PlayerChipOrderBottomSheet(
+        PlayerChipOrderBottomSheet(
             onDismiss = { showChipOrderBottomSheet = false },
             appSettings = appSettings,
             haptics = haptics
@@ -12623,7 +12631,7 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
 
     // Show bottom sheet if requested
     if (showHomeSectionOrderSheet) {
-        chromahub.rhythm.app.ui.components.HomeSectionOrderBottomSheet(
+        HomeSectionOrderBottomSheet(
             onDismiss = { showHomeSectionOrderSheet = false },
             appSettings = appSettings
         )

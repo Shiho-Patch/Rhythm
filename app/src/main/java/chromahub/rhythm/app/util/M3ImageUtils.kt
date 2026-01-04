@@ -17,11 +17,11 @@ import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
-import chromahub.rhythm.app.ui.components.AlbumPlaceholder
-import chromahub.rhythm.app.ui.components.ArtistPlaceholder
-import chromahub.rhythm.app.ui.components.M3PlaceholderType
-import chromahub.rhythm.app.ui.components.PlaylistPlaceholder
-import chromahub.rhythm.app.ui.components.TrackPlaceholder
+import chromahub.rhythm.app.features.local.presentation.components.common.AlbumPlaceholder
+import chromahub.rhythm.app.features.local.presentation.components.common.ArtistPlaceholder
+import chromahub.rhythm.app.features.local.presentation.components.common.M3PlaceholderType
+import chromahub.rhythm.app.features.local.presentation.components.common.PlaylistPlaceholder
+import chromahub.rhythm.app.features.local.presentation.components.common.TrackPlaceholder
 
 /**
  * Modern Material 3 style utilities for image handling using Compose and Coil

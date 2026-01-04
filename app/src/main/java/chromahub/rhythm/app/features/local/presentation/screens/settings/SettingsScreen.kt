@@ -103,11 +103,11 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import chromahub.rhythm.app.R
-import chromahub.rhythm.app.ui.components.CollapsibleHeaderScreen
-import chromahub.rhythm.app.ui.components.RhythmIcons
+import chromahub.rhythm.app.features.local.presentation.components.common.CollapsibleHeaderScreen
+import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
 import chromahub.rhythm.app.ui.utils.LazyListStateSaver
 import chromahub.rhythm.app.data.AppSettings
-import chromahub.rhythm.app.ui.components.LanguageSwitcherDialog
+import chromahub.rhythm.app.features.local.presentation.components.settings.LanguageSwitcherDialog
 import android.content.Context
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.spring
@@ -569,7 +569,7 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                imageVector = chromahub.rhythm.app.ui.components.RhythmIcons.Library,
+                                imageVector = RhythmIcons.Library,
                                 contentDescription = null,
                                 tint = if (defaultScreen == "library")
                                     MaterialTheme.colorScheme.onPrimaryContainer

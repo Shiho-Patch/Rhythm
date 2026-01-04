@@ -30,7 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import chromahub.rhythm.app.data.AppSettings
-import chromahub.rhythm.app.ui.components.M3FourColorCircularLoader
+import chromahub.rhythm.app.features.local.presentation.components.common.M3FourColorCircularLoader
 import chromahub.rhythm.app.features.local.presentation.screens.onboarding.OnboardingStep
 import chromahub.rhythm.app.features.local.presentation.screens.onboarding.PermissionScreenState
 import chromahub.rhythm.app.features.local.presentation.screens.OnboardingScreen
@@ -41,7 +41,7 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.shouldShowRationale
 import kotlinx.coroutines.delay
 import androidx.lifecycle.viewmodel.compose.viewModel
-import chromahub.rhythm.app.viewmodel.MusicViewModel
+import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import chromahub.rhythm.app.viewmodel.AppUpdaterViewModel
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope

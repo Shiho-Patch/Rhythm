@@ -19,6 +19,7 @@ import org.jaudiotagger.tag.FieldKey
 import org.jaudiotagger.tag.Tag
 import androidx.core.net.toUri
 import chromahub.rhythm.app.data.Song
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.ExtendedSongInfo
 import java.io.File
 import java.io.FileOutputStream
 
@@ -342,7 +343,7 @@ object MediaUtils {
      * @param song The song to get extended info for
      * @return ExtendedSongInfo with additional metadata
      */
-    fun getExtendedSongInfo(context: Context, song: Song): chromahub.rhythm.app.ui.components.ExtendedSongInfo {
+    fun getExtendedSongInfo(context: Context, song: Song): ExtendedSongInfo {
         val contentResolver = context.contentResolver
         val retriever = MediaMetadataRetriever()
 
@@ -638,7 +639,7 @@ object MediaUtils {
             channelCount = channelCountValue
         )
         
-        return chromahub.rhythm.app.ui.components.ExtendedSongInfo(
+        return ExtendedSongInfo(
             fileSize = fileSize,
             bitrate = bitrate,
             sampleRate = sampleRate,

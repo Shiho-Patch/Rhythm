@@ -128,16 +128,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import chromahub.rhythm.app.R
 import chromahub.rhythm.app.data.AppSettings
-import chromahub.rhythm.app.ui.components.M3LinearLoader
-import chromahub.rhythm.app.ui.components.M3FourColorCircularLoader
-import chromahub.rhythm.app.ui.components.RhythmIcons
-import chromahub.rhythm.app.ui.components.LanguageSwitcherDialog
-import chromahub.rhythm.app.ui.components.LibraryTabOrderBottomSheet
-import chromahub.rhythm.app.ui.components.BackupRestoreBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.common.M3LinearLoader
+import chromahub.rhythm.app.features.local.presentation.components.common.M3FourColorCircularLoader
+import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
+import chromahub.rhythm.app.features.local.presentation.components.settings.LanguageSwitcherDialog
+import chromahub.rhythm.app.features.local.presentation.components.settings.LibraryTabOrderBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.BackupRestoreBottomSheet
 import chromahub.rhythm.app.features.local.presentation.screens.onboarding.OnboardingStep
 import chromahub.rhythm.app.features.local.presentation.screens.onboarding.PermissionScreenState
 import chromahub.rhythm.app.viewmodel.AppUpdaterViewModel
-import chromahub.rhythm.app.viewmodel.MusicViewModel
+import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import chromahub.rhythm.app.viewmodel.ThemeViewModel
 import chromahub.rhythm.app.util.HapticUtils
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -6283,7 +6283,7 @@ private fun OnboardingExpressiveUpdateStatus(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        chromahub.rhythm.app.ui.components.M3FourColorCircularLoader(
+                        M3FourColorCircularLoader(
                             modifier = Modifier.size(20.dp)
                         )
                         Text(

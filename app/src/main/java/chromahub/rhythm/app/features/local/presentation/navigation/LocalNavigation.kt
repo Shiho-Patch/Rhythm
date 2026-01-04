@@ -58,7 +58,7 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import chromahub.rhythm.app.ui.components.CollapsibleHeaderScreen
+import chromahub.rhythm.app.features.local.presentation.components.common.CollapsibleHeaderScreen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -86,14 +86,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import chromahub.rhythm.app.ui.components.AddToPlaylistBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AddToPlaylistBottomSheet
 import chromahub.rhythm.app.features.local.presentation.screens.AddToPlaylistScreen
-import chromahub.rhythm.app.ui.components.CreatePlaylistDialog
-import chromahub.rhythm.app.ui.components.QueueActionDialog
-import chromahub.rhythm.app.ui.components.MiniPlayer
-import chromahub.rhythm.app.ui.components.RhythmIcons
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.QueueActionDialog
+import chromahub.rhythm.app.features.local.presentation.components.player.MiniPlayer
+import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
 import chromahub.rhythm.app.features.local.presentation.screens.LibraryScreen
-import chromahub.rhythm.app.ui.components.RhythmIcons.Delete
+import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons.Delete
 import chromahub.rhythm.app.features.local.presentation.screens.HomeScreen
 import chromahub.rhythm.app.features.local.presentation.screens.ListeningStatsScreen
 import chromahub.rhythm.app.features.local.presentation.screens.EqualizerScreen
@@ -106,8 +106,8 @@ import chromahub.rhythm.app.features.local.presentation.screens.settings.*
 import chromahub.rhythm.app.data.PlaybackLocation
 import chromahub.rhythm.app.shared.presentation.components.MediaScanLoader // Add MediaScanLoader import
 import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.viewmodel.MusicViewModel
-import chromahub.rhythm.app.viewmodel.MusicViewModel.SortOrder
+import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
+import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel.SortOrder
 import chromahub.rhythm.app.viewmodel.ThemeViewModel
 import coil.compose.AsyncImage
 import kotlinx.coroutines.flow.collect

@@ -159,16 +159,16 @@ import chromahub.rhythm.app.R
 import chromahub.rhythm.app.data.PlaybackLocation
 import chromahub.rhythm.app.data.Playlist
 import chromahub.rhythm.app.data.Song
-import chromahub.rhythm.app.ui.components.WaveSlider
-import chromahub.rhythm.app.ui.components.StyledProgressBar
-import chromahub.rhythm.app.ui.components.ProgressStyle
-import chromahub.rhythm.app.ui.components.ThumbStyle
-import chromahub.rhythm.app.ui.components.RhythmIcons
-import chromahub.rhythm.app.ui.components.AutoScrollingTextOnDemand
-import chromahub.rhythm.app.ui.components.PlayingEqIcon
-import chromahub.rhythm.app.ui.components.ShimmerBox
+import chromahub.rhythm.app.features.local.presentation.components.common.WaveSlider
+import chromahub.rhythm.app.features.local.presentation.components.common.StyledProgressBar
+import chromahub.rhythm.app.features.local.presentation.components.common.ProgressStyle
+import chromahub.rhythm.app.features.local.presentation.components.common.ThumbStyle
+import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
+import chromahub.rhythm.app.features.local.presentation.components.common.AutoScrollingTextOnDemand
+import chromahub.rhythm.app.features.local.presentation.components.player.PlayingEqIcon
+import chromahub.rhythm.app.features.local.presentation.components.common.ShimmerBox
 import chromahub.rhythm.app.ui.theme.PlayerButtonColor
-// import chromahub.rhythm.app.ui.components.M3PlaceholderType
+// import chromahub.rhythm.app.features.local.presentation.components.common.M3PlaceholderType
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.util.HapticUtils
 import coil.compose.AsyncImage
@@ -177,34 +177,38 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
 import kotlin.math.abs
-import chromahub.rhythm.app.ui.components.M3CircularLoader
+import chromahub.rhythm.app.features.local.presentation.components.common.M3CircularLoader
 import android.view.animation.OvershootInterpolator
-import chromahub.rhythm.app.ui.components.SleepTimerBottomSheetNew
-import chromahub.rhythm.app.ui.components.SyncedLyricsView
+import chromahub.rhythm.app.features.local.presentation.components.player.SleepTimerBottomSheetNew
+import chromahub.rhythm.app.features.local.presentation.components.lyrics.SyncedLyricsView
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.material.icons.rounded.AccessTime
-import chromahub.rhythm.app.ui.components.formatDuration
+import chromahub.rhythm.app.features.local.presentation.components.player.formatDuration
 import java.util.concurrent.TimeUnit // Import TimeUnit for duration formatting
-import chromahub.rhythm.app.ui.components.M3CircularLoader // Added for play/pause button loader
-import chromahub.rhythm.app.ui.components.QueueBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.common.M3CircularLoader // Added for play/pause button loader
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.QueueBottomSheet
 import chromahub.rhythm.app.features.local.presentation.screens.LibraryTab
-import chromahub.rhythm.app.ui.components.AddToPlaylistBottomSheet
-import chromahub.rhythm.app.ui.components.PlaybackBottomSheet
-import chromahub.rhythm.app.ui.components.SongInfoBottomSheet
-import chromahub.rhythm.app.ui.components.ArtistBottomSheet
-import chromahub.rhythm.app.ui.components.AlbumBottomSheet
-import chromahub.rhythm.app.ui.components.PlayerChipOrderBottomSheet
-import chromahub.rhythm.app.ui.components.LyricsEditorBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AddToPlaylistBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.PlaybackBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.SongInfoBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.ArtistBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AlbumBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.player.PlayerChipOrderBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.lyrics.LyricsEditorBottomSheet
 import chromahub.rhythm.app.shared.presentation.components.AudioQualityBadges
 import chromahub.rhythm.app.util.MediaUtils
-import chromahub.rhythm.app.ui.components.CanvasPlayer
+import chromahub.rhythm.app.features.local.presentation.components.player.CanvasPlayer
 import chromahub.rhythm.app.data.CanvasRepository
 import chromahub.rhythm.app.data.CanvasData
 import chromahub.rhythm.app.data.Album
 import chromahub.rhythm.app.data.Artist
 import chromahub.rhythm.app.features.local.presentation.navigation.Screen
+import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
+import chromahub.rhythm.app.features.local.presentation.components.player.formatDuration
+import chromahub.rhythm.app.features.local.presentation.components.lyrics.WordByWordLyricsView
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.CastBottomSheet
 import androidx.navigation.NavController
 
 // Experimental API opt-ins required for:
@@ -1964,7 +1968,7 @@ fun PlayerScreen(
                                                     
                                                     if (wordByWordLyrics != null) {
                                                         // Use WordByWordLyricsView for Apple Music lyrics
-                                                        chromahub.rhythm.app.ui.components.WordByWordLyricsView(
+                                                        WordByWordLyricsView(
                                                             wordByWordLyrics = wordByWordLyrics,
                                                             currentPlaybackTime = currentTimeMs,
                                                             modifier = Modifier.fillMaxSize(),
@@ -3832,7 +3836,7 @@ fun PlayerScreen(
     
     // Cast Bottom Sheet
     if (showCastBottomSheet) {
-        chromahub.rhythm.app.ui.components.CastBottomSheet(
+        CastBottomSheet(
             musicViewModel = musicViewModel,
             onDismiss = { showCastBottomSheet = false }
         )

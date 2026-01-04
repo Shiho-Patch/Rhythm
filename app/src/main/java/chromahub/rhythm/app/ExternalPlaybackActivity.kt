@@ -38,11 +38,11 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
-import chromahub.rhythm.app.ui.components.AutoScrollingTextOnDemand
-import chromahub.rhythm.app.ui.components.WaveSlider
+import chromahub.rhythm.app.features.local.presentation.components.common.AutoScrollingTextOnDemand
+import chromahub.rhythm.app.features.local.presentation.components.common.WaveSlider
 import chromahub.rhythm.app.ui.theme.RhythmTheme
 import chromahub.rhythm.app.util.MediaUtils
-import chromahub.rhythm.app.viewmodel.MusicViewModel
+import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import chromahub.rhythm.app.viewmodel.ThemeViewModel
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter

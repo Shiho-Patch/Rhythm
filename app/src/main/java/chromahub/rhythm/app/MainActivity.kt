@@ -60,7 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
 import chromahub.rhythm.app.R
-import chromahub.rhythm.app.ui.components.RhythmIcons
+import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.WavingHand // New import for Welcome screen icon
@@ -94,7 +94,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.animation.Crossfade
 import androidx.compose.ui.text.font.FontWeight
-import chromahub.rhythm.app.viewmodel.MusicViewModel
+import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 //import chromahub.rhythm.app.ui.annotations.RhythmAnimation
 import android.provider.Settings
 import androidx.compose.material3.Card
@@ -128,14 +128,14 @@ import androidx.compose.material.icons.filled.GridView // Import GridView icon
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.rememberCoroutineScope
-import chromahub.rhythm.app.ui.components.M3LinearLoader // Import M3LinearLoader
-import chromahub.rhythm.app.ui.components.M3FourColorCircularLoader // Import M3FourColorCircularLoader
+import chromahub.rhythm.app.features.local.presentation.components.common.M3LinearLoader // Import M3LinearLoader
+import chromahub.rhythm.app.features.local.presentation.components.common.M3FourColorCircularLoader // Import M3FourColorCircularLoader
 import androidx.compose.ui.platform.LocalHapticFeedback // Import LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType // Import HapticFeedbackType
 import androidx.compose.material3.ButtonDefaults // Import ButtonDefaults
 import chromahub.rhythm.app.features.local.presentation.screens.SplashScreen
 import chromahub.rhythm.app.shared.presentation.components.PermissionHandler
-import chromahub.rhythm.app.ui.components.BetaProgramPopup
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.BetaProgramPopup
 import chromahub.rhythm.app.features.local.presentation.screens.OnboardingScreen
 import chromahub.rhythm.app.features.local.presentation.screens.onboarding.OnboardingStep
 import chromahub.rhythm.app.features.local.presentation.screens.onboarding.PermissionScreenState

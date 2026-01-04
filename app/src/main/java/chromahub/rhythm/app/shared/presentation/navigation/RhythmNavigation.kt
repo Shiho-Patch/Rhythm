@@ -58,7 +58,7 @@ import chromahub.rhythm.app.features.local.presentation.navigation.LocalNavigati
 import chromahub.rhythm.app.features.streaming.presentation.navigation.StreamingNavigation
 import chromahub.rhythm.app.shared.data.repository.UserPreferencesRepository
 import chromahub.rhythm.app.shared.presentation.viewmodel.AppModeViewModel
-import chromahub.rhythm.app.viewmodel.MusicViewModel
+import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import chromahub.rhythm.app.viewmodel.ThemeViewModel
 import chromahub.rhythm.app.data.AppSettings
 import androidx.compose.ui.platform.LocalContext

@@ -80,24 +80,24 @@ import androidx.compose.ui.unit.sp
 import chromahub.rhythm.app.R
 import chromahub.rhythm.app.data.Playlist
 import chromahub.rhythm.app.data.Song
-import chromahub.rhythm.app.ui.components.MiniPlayer
-import chromahub.rhythm.app.ui.components.RhythmIcons
-import chromahub.rhythm.app.ui.components.RhythmIcons.Search
+import chromahub.rhythm.app.features.local.presentation.components.player.MiniPlayer
+import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
+import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons.Search
 import chromahub.rhythm.app.ui.LocalMiniPlayerPadding
 import chromahub.rhythm.app.ui.UiConstants
-import chromahub.rhythm.app.ui.components.CollapsibleHeaderScreen
-import chromahub.rhythm.app.ui.components.PlaylistExportDialog
-import chromahub.rhythm.app.ui.components.PlaylistImportDialog
-import chromahub.rhythm.app.ui.components.PlaylistOperationProgressDialog
-import chromahub.rhythm.app.ui.components.PlaylistOperationResultDialog
+import chromahub.rhythm.app.features.local.presentation.components.common.CollapsibleHeaderScreen
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistExportDialog
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistImportDialog
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistOperationProgressDialog
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistOperationResultDialog
 import chromahub.rhythm.app.util.PlaylistImportExportUtils
 import android.net.Uri
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import chromahub.rhythm.app.ui.components.M3PlaceholderType
+import chromahub.rhythm.app.features.local.presentation.components.common.M3PlaceholderType
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.ui.components.formatDuration
+import chromahub.rhythm.app.features.local.presentation.components.player.formatDuration
 import kotlinx.coroutines.delay // Import delay
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -113,7 +113,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.runtime.collectAsState
-import chromahub.rhythm.app.ui.components.PlayingEqIcon
+import chromahub.rhythm.app.features.local.presentation.components.player.PlayingEqIcon
 import androidx.compose.ui.graphics.Color
 
 // Playlist sort order enum

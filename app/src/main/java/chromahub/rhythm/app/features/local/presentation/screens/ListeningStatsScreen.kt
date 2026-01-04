@@ -48,10 +48,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import chromahub.rhythm.app.data.stats.PlaybackStatsRepository
 import chromahub.rhythm.app.data.stats.StatsTimeRange
-import chromahub.rhythm.app.ui.components.CollapsibleHeaderScreen
-import chromahub.rhythm.app.ui.components.RhythmIcons
+import chromahub.rhythm.app.features.local.presentation.components.common.CollapsibleHeaderScreen
+import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
 import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.viewmodel.MusicViewModel
+import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import chromahub.rhythm.app.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

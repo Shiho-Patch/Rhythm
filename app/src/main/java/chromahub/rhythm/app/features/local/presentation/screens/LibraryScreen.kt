@@ -172,22 +172,23 @@ import chromahub.rhythm.app.data.AlbumViewType
 import chromahub.rhythm.app.data.ArtistViewType
 import chromahub.rhythm.app.data.PlaylistViewType
 import chromahub.rhythm.app.data.AppSettings
-import chromahub.rhythm.app.ui.components.AddToPlaylistBottomSheet
-import chromahub.rhythm.app.ui.components.CreatePlaylistDialog
-import chromahub.rhythm.app.ui.components.MiniPlayer
-import chromahub.rhythm.app.ui.components.M3PlaceholderType
-import chromahub.rhythm.app.ui.components.BulkPlaylistExportDialog
-import chromahub.rhythm.app.ui.components.PlaylistImportDialog
-import chromahub.rhythm.app.ui.components.PlaylistOperationProgressDialog
-import chromahub.rhythm.app.ui.components.PlaylistOperationResultDialog
-import chromahub.rhythm.app.ui.components.SongInfoBottomSheet
-import chromahub.rhythm.app.ui.components.AlbumBottomSheet
-import chromahub.rhythm.app.ui.components.ArtistBottomSheet
-import chromahub.rhythm.app.ui.components.LibraryTabOrderBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AddToPlaylistBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog
+import chromahub.rhythm.app.features.local.presentation.components.player.MiniPlayer
+import chromahub.rhythm.app.features.local.presentation.components.common.M3PlaceholderType
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.BulkPlaylistExportDialog
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistImportDialog
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistOperationProgressDialog
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistOperationResultDialog
+import chromahub.rhythm.app.features.local.presentation.components.dialogs.AppRestartDialog
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.SongInfoBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AlbumBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.ArtistBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.settings.LibraryTabOrderBottomSheet
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.util.M3ImageUtils
 import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.viewmodel.MusicViewModel
+import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -203,13 +204,14 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.material.icons.rounded.ArrowCircleDown
 import androidx.compose.material.icons.rounded.ArrowCircleUp
 import androidx.compose.ui.text.font.FontFamily
-import chromahub.rhythm.app.ui.components.RhythmIcons
-import chromahub.rhythm.app.ui.components.PlayingEqIcon
-import chromahub.rhythm.app.ui.components.M3FourColorCircularLoader
-import chromahub.rhythm.app.ui.components.AlphabetBar
-import chromahub.rhythm.app.ui.components.ScrollToTopButton
+import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
+import chromahub.rhythm.app.features.local.presentation.components.player.PlayingEqIcon
+import chromahub.rhythm.app.features.local.presentation.components.common.M3FourColorCircularLoader
+import chromahub.rhythm.app.features.local.presentation.components.common.AlphabetBar
+import chromahub.rhythm.app.features.local.presentation.components.common.ScrollToTopButton
 import chromahub.rhythm.app.util.AudioFormatDetector
 import chromahub.rhythm.app.util.AudioQualityDetector
+import chromahub.rhythm.app.features.local.presentation.components.common.SimpleCircularLoader
 
 
 enum class LibraryTab { SONGS, PLAYLISTS, ALBUMS, ARTISTS, EXPLORER }
@@ -1457,7 +1459,7 @@ fun LibraryScreen(
 
     // App Restart Dialog
     if (showRestartDialog && onRestartApp != null) {
-        chromahub.rhythm.app.ui.components.AppRestartDialog(
+        AppRestartDialog(
             onDismiss = { showRestartDialog = false },
             onRestart = {
                 showRestartDialog = false
@@ -8772,7 +8774,7 @@ fun BottomFloatingButtonGroup(
                 enabled = !isPlayAllLoading && !isShuffleLoading
             ) {
                 if (isPlayAllLoading) {
-                    chromahub.rhythm.app.ui.components.SimpleCircularLoader(
+                    SimpleCircularLoader(
                         size = 20.dp,
                         color = MaterialTheme.colorScheme.onPrimary
                     )
@@ -8816,7 +8818,7 @@ fun BottomFloatingButtonGroup(
                 enabled = !isPlayAllLoading && !isShuffleLoading
             ) {
                 if (isShuffleLoading) {
-                    chromahub.rhythm.app.ui.components.SimpleCircularLoader(
+                    SimpleCircularLoader(
                         size = 24.dp,
                         color = MaterialTheme.colorScheme.onTertiaryContainer
                     )
