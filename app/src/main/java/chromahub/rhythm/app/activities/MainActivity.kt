@@ -513,11 +513,9 @@ class MainActivity : ComponentActivity() {
             val serviceIntent = Intent(this, chromahub.rhythm.app.infrastructure.service.MediaPlaybackService::class.java)
             serviceIntent.action = chromahub.rhythm.app.infrastructure.service.MediaPlaybackService.ACTION_INIT_SERVICE
             
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(serviceIntent)
-            } else {
-                startService(serviceIntent)
-            }
+            // Media3's MediaLibraryService handles foreground state automatically in onCreate()
+            // so startService() is sufficient for all SDK versions
+            startService(serviceIntent)
             
             // Wait for service to be ready
             delay(1000)
@@ -562,11 +560,8 @@ class MainActivity : ComponentActivity() {
             playIntent.action = chromahub.rhythm.app.infrastructure.service.MediaPlaybackService.ACTION_PLAY_EXTERNAL_FILE
             playIntent.data = uri
             
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(playIntent)
-            } else {
-                startService(playIntent)
-            }
+            // Media3's MediaLibraryService handles foreground state automatically
+            startService(playIntent)
             
             // Give fallback some time to start
             delay(1000)

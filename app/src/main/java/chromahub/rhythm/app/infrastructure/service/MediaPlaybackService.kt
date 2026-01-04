@@ -83,6 +83,9 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     private var spatializer: android.media.Spatializer? = null
     private var virtualizerStrength: Short = 0 // Store strength for older devices
     
+    // Player listener reference for proper cleanup
+    private var playerListener: Player.Listener? = null
+    
     // BroadcastReceiver to listen for favorite changes from ViewModel
     private val favoriteChangeReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -315,13 +318,14 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     }
     
     private fun initializePlayer() {
-        // Configure load control for optimal performance with large audio files (FLAC, ALAC, WAV)
+        // Configure load control optimized for local audio files
+        // Note: Local files don't need massive buffers like streaming does
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
-                50_000,  // 50 seconds minimum buffer for smooth playback
-                120_000, // 2 minutes maximum buffer for large lossless files
-                2_500,   // 2.5 seconds buffer before starting playback
-                5_000    // 5 seconds buffer before resuming after rebuffer
+                15_000,  // 15 seconds minimum buffer (sufficient for local files)
+                30_000,  // 30 seconds maximum buffer (reasonable for gapless playback)
+                1_500,   // 1.5 seconds buffer before starting playback (quick start)
+                2_500    // 2.5 seconds buffer before resuming after rebuffer
             )
             .setPrioritizeTimeOverSizeThresholds(true) // Better for audio streaming
             .build()
@@ -351,7 +355,8 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             .build()
             
         // Add listener to initialize audio effects when session ID is ready and handle errors
-        player.addListener(object : Player.Listener {
+        // Store reference for proper cleanup in onDestroy
+        playerListener = object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
                 if (playbackState == Player.STATE_READY && player.audioSessionId != 0) {
                     // Reinitialize audio effects with valid session ID
@@ -372,7 +377,8 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                     initializeAudioEffects()
                 }
             }
-        })
+        }
+        playerListener?.let { player.addListener(it) }
         
         // Start crossfade position monitoring if crossfade is enabled
         startCrossfadeMonitoring()
@@ -1061,10 +1067,19 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         // Cancel all coroutines and pending jobs
         updateLayoutJob?.cancel()
         sleepTimerJob?.cancel()
+        crossfadeJob?.cancel()
+        crossfadeMonitorJob?.cancel()
         serviceScope.cancel()
         
         // Release audio effects
         releaseAudioEffects()
+        
+        // Remove player listener before releasing player
+        playerListener?.let { player.removeListener(it) }
+        playerListener = null
+        
+        // Remove service as listener from controller
+        controller?.removeListener(this)
         
         mediaSession?.run {
             player.release()

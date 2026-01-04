@@ -157,11 +157,8 @@ fun PermissionHandler(
                 onSetIsInitializingApp(true) // Start app initialization
                 val intent = Intent(context, chromahub.rhythm.app.infrastructure.service.MediaPlaybackService::class.java)
                 intent.action = chromahub.rhythm.app.infrastructure.service.MediaPlaybackService.ACTION_INIT_SERVICE
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    context.startForegroundService(intent)
-                } else {
-                    context.startService(intent)
-                }
+                // Media3's MediaLibraryService handles foreground state automatically in onCreate()
+                context.startService(intent)
                 delay(1000) // Give service time to initialize
                 onSetIsInitializingApp(false) // End app initialization
             }

@@ -1543,16 +1543,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         val context = getApplication<Application>()
         
         // Start the service first to ensure it's running
+        // Note: Media3's MediaLibraryService handles foreground state automatically in onCreate()
+        // so we use startService() for all SDK versions - the service will call startForeground() internally
         val serviceIntent = Intent(context, MediaPlaybackService::class.java)
         serviceIntent.action = MediaPlaybackService.ACTION_INIT_SERVICE
         
-        // Use startForegroundService for Android 8.0+ to avoid BackgroundServiceStartNotAllowedException
         try {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                context.startForegroundService(serviceIntent)
-            } else {
-                context.startService(serviceIntent)
-            }
+            context.startService(serviceIntent)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start media service: ${e.message}", e)
             // Try to connect without starting the service - the MediaController might still work
@@ -3822,18 +3819,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                     "ReplayGain=${enableReplayGain.value}")
             
             // Send intent to update service settings
+            // Note: Media3's MediaLibraryService is already in foreground, so startService() is sufficient
             val context = getApplication<Application>()
             val intent = Intent(context, MediaPlaybackService::class.java).apply {
                 action = MediaPlaybackService.ACTION_UPDATE_SETTINGS
             }
             try {
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                    context.startForegroundService(intent)
-                } else {
-                    context.startService(intent)
-                }
+                context.startService(intent)
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to start media service for settings update: ${e.message}", e)
+                Log.e(TAG, "Failed to update service settings: ${e.message}", e)
             }
         }
     }
@@ -5308,8 +5302,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         // Unregister ContentObserver
         repository.unregisterMediaStoreObserver()
         
-        // Cancel ongoing scan
+        // Cancel ongoing scan and lyrics fetch
         scanJob?.cancel()
+        lyricsFetchJob?.cancel()
+        
+        // Cancel progress updates
+        progressUpdateJob?.cancel()
+        
+        // Remove player listener before releasing MediaController
+        mediaController?.removeListener(playerListener)
         
         // Release MediaController
         mediaController?.release()
