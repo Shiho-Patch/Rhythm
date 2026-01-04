@@ -4067,7 +4067,7 @@ fun LibrarySongItem(
                 // }
 
                 // Rate song - only show if rating system is enabled
-                if (enableRatingSystem && currentRating > 0) {
+                if (enableRatingSystem) {
                     Surface(
                         color = MaterialTheme.colorScheme.surfaceContainer,
                         shape = RoundedCornerShape(16.dp),
