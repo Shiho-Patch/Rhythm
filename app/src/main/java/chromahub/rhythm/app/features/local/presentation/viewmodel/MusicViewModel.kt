@@ -404,9 +404,17 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _favoriteSongs = MutableStateFlow<Set<String>>(emptySet())
     val favoriteSongs: StateFlow<Set<String>> = _favoriteSongs.asStateFlow()
+    
+    // Song Ratings (0-5 stars)
+    private val _songRatings = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val songRatings: StateFlow<Map<String, Int>> = _songRatings.asStateFlow()
 
     private val _isFavorite = MutableStateFlow(false)
     val isFavorite: StateFlow<Boolean> = _isFavorite.asStateFlow()
+    
+    // Current song rating
+    private val _currentSongRating = MutableStateFlow(0)
+    val currentSongRating: StateFlow<Int> = _currentSongRating.asStateFlow()
 
     private var controllerFuture: ListenableFuture<MediaController>? = null
     private var mediaController: MediaController? = null
@@ -529,6 +537,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 _currentSong.value = song
                 _isPlaying.value = true
                 _isFavorite.value = _favoriteSongs.value.contains(song.id)
+                _currentSongRating.value = appSettings.getSongRating(song.id)
                 startProgressUpdates()
                 
                 Log.d(TAG, "Added song to queue at position $insertIndex and started playing")
@@ -1401,6 +1410,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 val type = object : TypeToken<Set<String>>() {}.type
                 _favoriteSongs.value = GsonUtils.gson.fromJson(favoriteSongsJson, type)
             }
+            
+            // Load song ratings
+            _songRatings.value = appSettings.getAllRatedSongs()
+            Log.d(TAG, "Loaded ${_songRatings.value.size} song ratings")
         } catch (e: Exception) {
             Log.e(TAG, "Error loading saved playlists", e)
             // Initialize with default playlists on error based on setting
@@ -2784,6 +2797,117 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         
         // Notify MediaPlaybackService about favorite state change
         notifyMediaServiceFavoriteChange()
+    }
+    
+    /**
+     * Set rating for a song (0-5 stars)
+     */
+    fun setSongRating(song: Song, rating: Int) {
+        if (rating !in 0..5) {
+            Log.w(TAG, "Invalid rating: $rating. Must be 0-5")
+            return
+        }
+        
+        val songId = song.id
+        appSettings.setSongRating(songId, rating)
+        
+        // Update local state
+        _songRatings.value = appSettings.getAllRatedSongs()
+        
+        // Update current song rating if this is the current song
+        if (_currentSong.value?.id == songId) {
+            _currentSongRating.value = rating
+        }
+        
+        // If rating is set to >0, automatically add to favorites
+        // If rating is 0, this could mean unrating or just setting no favorite level
+        if (rating > 0 && !_favoriteSongs.value.contains(songId)) {
+            toggleFavorite(song)
+        }
+        
+        Log.d(TAG, "Set rating for ${song.title}: $rating stars")
+    }
+    
+    /**
+     * Get rating for a specific song
+     */
+    fun getSongRating(songId: String): Int {
+        return appSettings.getSongRating(songId)
+    }
+    
+    /**
+     * Set rating for current song
+     */
+    fun setCurrentSongRating(rating: Int) {
+        _currentSong.value?.let { song ->
+            setSongRating(song, rating)
+        }
+    }
+    
+    /**
+     * Get songs by minimum rating
+     */
+    fun getSongsByMinimumRating(minRating: Int): List<Song> {
+        if (minRating !in 1..5) return emptyList()
+        
+        val ratedSongIds = appSettings.getSongsByMinimumRating(minRating)
+        return _songs.value.filter { it.id in ratedSongIds }
+    }
+    
+    /**
+     * Get songs with exact rating
+     */
+    fun getSongsByRating(rating: Int): List<Song> {
+        if (rating !in 1..5) return emptyList()
+        
+        val ratedSongIds = appSettings.getSongsByRating(rating)
+        return _songs.value.filter { it.id in ratedSongIds }
+    }
+    
+    /**
+     * Create and play a playlist from songs with a specific rating
+     */
+    fun playRatingPlaylist(rating: Int, shuffled: Boolean = false) {
+        val songs = getSongsByRating(rating)
+        if (songs.isEmpty()) {
+            Log.d(TAG, "No songs found with rating $rating")
+            return
+        }
+        
+        val playlistSongs = if (shuffled) songs.shuffled() else songs
+        playQueue(playlistSongs)
+        
+        Log.d(TAG, "Playing ${songs.size} songs with rating $rating ${if (shuffled) "(shuffled)" else ""}")
+    }
+    
+    /**
+     * Create and play a playlist from songs with minimum rating
+     */
+    fun playMinimumRatingPlaylist(minRating: Int, shuffled: Boolean = false) {
+        val songs = getSongsByMinimumRating(minRating)
+        if (songs.isEmpty()) {
+            Log.d(TAG, "No songs found with rating >= $minRating")
+            return
+        }
+        
+        val playlistSongs = if (shuffled) songs.shuffled() else songs
+        playQueue(playlistSongs)
+        
+        Log.d(TAG, "Playing ${songs.size} songs with rating >= $minRating ${if (shuffled) "(shuffled)" else ""}")
+    }
+    
+    /**
+     * Get all rated songs grouped by rating
+     */
+    fun getRatedSongsGrouped(): Map<Int, List<Song>> {
+        val grouped = mutableMapOf<Int, MutableList<Song>>()
+        _songs.value.forEach { song ->
+            val rating = appSettings.getSongRating(song.id)
+            if (rating > 0) {
+                grouped.getOrPut(rating) { mutableListOf() }.add(song)
+            }
+        }
+        return grouped
     }
     
     private fun notifyMediaServiceFavoriteChange() {

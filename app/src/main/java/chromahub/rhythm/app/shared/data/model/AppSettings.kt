@@ -120,6 +120,8 @@ class AppSettings private constructor(context: Context) {
         // Playlists
         private const val KEY_PLAYLISTS = "playlists"
         private const val KEY_FAVORITE_SONGS = "favorite_songs"
+        private const val KEY_SONG_RATINGS = "song_ratings" // Map of songId to rating (0-5)
+        private const val KEY_ENABLE_RATING_SYSTEM = "enable_rating_system" // Enable/disable rating system
         private const val KEY_DEFAULT_PLAYLISTS_ENABLED = "default_playlists_enabled"
         
         // User Statistics
@@ -671,6 +673,25 @@ class AppSettings private constructor(context: Context) {
 
     private val _favoriteSongs = MutableStateFlow<String?>(prefs.getString(KEY_FAVORITE_SONGS, null))
     val favoriteSongs: StateFlow<String?> = _favoriteSongs.asStateFlow()
+    
+    // Song Ratings - Map of songId to rating (0-5)
+    private val _songRatings = MutableStateFlow<Map<String, Int>>(
+        try {
+            val json = prefs.getString(KEY_SONG_RATINGS, null)
+            if (json != null) {
+                Gson().fromJson(json, object : TypeToken<Map<String, Int>>() {}.type)
+            } else {
+                emptyMap()
+            }
+        } catch (e: Exception) {
+            emptyMap()
+        }
+    )
+    val songRatings: StateFlow<Map<String, Int>> = _songRatings.asStateFlow()
+    
+    // Enable/Disable Rating System
+    private val _enableRatingSystem = MutableStateFlow(prefs.getBoolean(KEY_ENABLE_RATING_SYSTEM, true))
+    val enableRatingSystem: StateFlow<Boolean> = _enableRatingSystem.asStateFlow()
     
     private val _defaultPlaylistsEnabled = MutableStateFlow(prefs.getBoolean(KEY_DEFAULT_PLAYLISTS_ENABLED, true))
     val defaultPlaylistsEnabled: StateFlow<Boolean> = _defaultPlaylistsEnabled.asStateFlow()
@@ -1515,6 +1536,11 @@ class AppSettings private constructor(context: Context) {
         prefs.edit().putBoolean(KEY_DEFAULT_PLAYLISTS_ENABLED, enabled).apply()
         _defaultPlaylistsEnabled.value = enabled
     }
+    
+    fun setEnableRatingSystem(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_ENABLE_RATING_SYSTEM, enabled).apply()
+        _enableRatingSystem.value = enabled
+    }
 
     // User Statistics Methods
     fun setListeningTime(time: Long) {
@@ -1996,6 +2022,91 @@ class AppSettings private constructor(context: Context) {
     fun clearWhitelist() {
         prefs.edit().remove(KEY_WHITELISTED_SONGS).apply()
         _whitelistedSongs.value = emptyList()
+    }
+    
+    // Song Rating Methods
+    /**
+     * Set rating for a song (0-5 stars)
+     * 0 = No rating/removed from favorites
+     * 1-5 = Rating levels, with 5 being "Absolute Favorite"
+     */
+    fun setSongRating(songId: String, rating: Int) {
+        if (rating !in 0..5) {
+            Log.w("AppSettings", "Invalid rating value: $rating. Must be 0-5")
+            return
+        }
+        
+        val currentRatings = _songRatings.value.toMutableMap()
+        if (rating == 0) {
+            // Rating 0 means remove rating
+            currentRatings.remove(songId)
+        } else {
+            currentRatings[songId] = rating
+        }
+        
+        val json = Gson().toJson(currentRatings)
+        prefs.edit().putString(KEY_SONG_RATINGS, json).apply()
+        _songRatings.value = currentRatings
+        
+        Log.d("AppSettings", "Set rating for song $songId: $rating")
+    }
+    
+    /**
+     * Get rating for a specific song (0-5)
+     * Returns 0 if song has no rating
+     */
+    fun getSongRating(songId: String): Int {
+        return _songRatings.value[songId] ?: 0
+    }
+    
+    /**
+     * Get all rated songs as a map of songId to rating
+     */
+    fun getAllRatedSongs(): Map<String, Int> {
+        return _songRatings.value.toMap()
+    }
+    
+    /**
+     * Get songs filtered by minimum rating
+     */
+    fun getSongsByMinimumRating(minRating: Int): List<String> {
+        if (minRating !in 1..5) return emptyList()
+        return _songRatings.value.filter { it.value >= minRating }.keys.toList()
+    }
+    
+    /**
+     * Get songs with a specific rating
+     */
+    fun getSongsByRating(rating: Int): List<String> {
+        if (rating !in 1..5) return emptyList()
+        return _songRatings.value.filter { it.value == rating }.keys.toList()
+    }
+    
+    /**
+     * Clear all song ratings
+     */
+    fun clearAllRatings() {
+        prefs.edit().remove(KEY_SONG_RATINGS).apply()
+        _songRatings.value = emptyMap()
+        Log.d("AppSettings", "Cleared all song ratings")
+    }
+    
+    /**
+     * Check if a song has any rating (1-5)
+     */
+    fun isSongRated(songId: String): Boolean {
+        return _songRatings.value.containsKey(songId)
+    }
+    
+    /**
+     * Get count of songs by rating level
+     */
+    fun getRatingDistribution(): Map<Int, Int> {
+        val distribution = mutableMapOf<Int, Int>()
+        for (rating in 1..5) {
+            distribution[rating] = _songRatings.value.count { it.value == rating }
+        }
+        return distribution
     }
     
     // Whitelisted Folders Methods

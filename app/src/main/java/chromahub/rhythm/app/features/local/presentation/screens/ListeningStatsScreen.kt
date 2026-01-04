@@ -194,30 +194,35 @@ fun ListeningStatsScreen(
                             MusicalJourneyCard(stats)
                         }
                         
+                        // Rating Statistics
+                        AnimatedCardEntrance(delay = 300) {
+                            RatingStatsCard(viewModel)
+                        }
+                        
                         // Top Vibes (Songs)
                         if (stats.topSongs.isNotEmpty()) {
-                            AnimatedCardEntrance(delay = 300) {
+                            AnimatedCardEntrance(delay = 400) {
                                 TopVibesCard(stats.topSongs)
                             }
                         }
                         
                         // Star Artists
                         if (stats.topArtists.isNotEmpty()) {
-                            AnimatedCardEntrance(delay = 400) {
+                            AnimatedCardEntrance(delay = 500) {
                                 StarArtistsCard(stats.topArtists)
                             }
                         }
                         
                         // Genre Mix
                         if (stats.topGenres.isNotEmpty()) {
-                            AnimatedCardEntrance(delay = 500) {
+                            AnimatedCardEntrance(delay = 600) {
                                 GenreMixCard(stats.topGenres)
                             }
                         }
                         
                         // Beat Timeline
                         if (stats.timeline.isNotEmpty()) {
-                            AnimatedCardEntrance(delay = 600) {
+                            AnimatedCardEntrance(delay = 700) {
                                 BeatTimelineCard(stats.timeline)
                             }
                         }
@@ -1220,5 +1225,191 @@ private fun formatDuration(ms: Long): String {
         hours > 0 -> "${hours}h ${minutes}m"
         minutes > 0 -> "${minutes}m"
         else -> "< 1m"
+    }
+}
+
+/**
+ * Rating Statistics Card
+ */
+@Composable
+private fun RatingStatsCard(viewModel: MusicViewModel) {
+    val context = LocalContext.current
+    val appSettings = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context)
+    val ratingDistribution = appSettings.getRatingDistribution()
+    val totalRated = ratingDistribution.values.sum()
+    
+    if (totalRated == 0) {
+        // Don't show card if no rated songs
+        return
+    }
+    
+    RhythmSectionCard(
+        title = "Song Ratings",
+        icon = Icons.Outlined.Star
+    ) {
+        // Rating distribution bar chart
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Total rated songs
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Total Rated Songs",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = "$totalRated",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+            
+            // Rating distribution
+            Text(
+                text = "Rating Distribution",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+            
+            // 5 star ratings (from 5 down to 1)
+            (5 downTo 1).forEach { rating ->
+                val count = ratingDistribution[rating] ?: 0
+                val percentage = if (totalRated > 0) (count.toFloat() / totalRated * 100).toInt() else 0
+                
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            chromahub.rhythm.app.shared.presentation.components.RatingStarsDisplay(
+                                rating = rating,
+                                size = 14.dp
+                            )
+                            Text(
+                                text = chromahub.rhythm.app.shared.presentation.components.getRatingLabel(rating),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Text(
+                            text = "$count ($percentage%)",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    
+                    // Progress bar
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(percentage / 100f)
+                                .fillMaxHeight()
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(
+                                    when (rating) {
+                                        5 -> Color(0xFFFFD700) // Gold
+                                        4 -> MaterialTheme.colorScheme.primary
+                                        3 -> MaterialTheme.colorScheme.secondary
+                                        2 -> MaterialTheme.colorScheme.tertiary
+                                        else -> MaterialTheme.colorScheme.outline
+                                    }
+                                )
+                        )
+                    }
+                }
+            }
+            
+            // Quick actions
+            if (totalRated > 0) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Quick Playlists",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Top Rated playlist (5 stars)
+                    if ((ratingDistribution[5] ?: 0) > 0) {
+                        AssistChip(
+                            onClick = {
+                                viewModel.playRatingPlaylist(5, shuffled = false)
+                            },
+                            label = {
+                                Text(
+                                    "Absolute Favorites",
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.Star,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            },
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
+                        )
+                    }
+                    
+                    // 4+ stars playlist
+                    if (totalRated > 0) {
+                        AssistChip(
+                            onClick = {
+                                viewModel.playMinimumRatingPlaylist(4, shuffled = false)
+                            },
+                            label = {
+                                Text(
+                                    "Loved Songs",
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.FavoriteBorder,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            },
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer
+                            )
+                        )
+                    }
+                }
+            }
+        }
     }
 }

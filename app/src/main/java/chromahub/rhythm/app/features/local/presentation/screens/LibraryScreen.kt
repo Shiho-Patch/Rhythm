@@ -263,6 +263,7 @@ fun LibraryScreen(
     val appSettings = remember { AppSettings.getInstance(context) }
     val tabOrder by appSettings.libraryTabOrder.collectAsState()
     val hiddenTabs by appSettings.hiddenLibraryTabs.collectAsState()
+    val enableRatingSystem by appSettings.enableRatingSystem.collectAsState()
     
     // Map tab IDs to display names, filtering out hidden tabs
     val tabs = remember(tabOrder, hiddenTabs) {
@@ -1322,7 +1323,8 @@ fun LibraryScreen(
                             onShuffleQueue = onShuffleQueue,
                             currentSong = currentSong,
                             isPlaying = isPlaying,
-                            haptics = haptics
+                            haptics = haptics,
+                            enableRatingSystem = enableRatingSystem
                         )
                         }
                         "PLAYLISTS" -> SingleCardPlaylistsContent(
@@ -1377,7 +1379,8 @@ fun LibraryScreen(
                             onCreatePlaylist = onCreatePlaylist,
                             musicViewModel = musicViewModel,
                             currentSong = currentSong,
-                            isPlaying = isPlaying
+                            isPlaying = isPlaying,
+                            enableRatingSystem = enableRatingSystem
                         )
                     }
                 }
@@ -1582,7 +1585,8 @@ fun SingleCardSongsContent(
     onShuffleQueue: (List<Song>) -> Unit = { _ -> },
     currentSong: Song? = null, // Add current song parameter
     isPlaying: Boolean = false, // Add playing state
-    haptics: androidx.compose.ui.hapticfeedback.HapticFeedback
+    haptics: androidx.compose.ui.hapticfeedback.HapticFeedback,
+    enableRatingSystem: Boolean = true
 ) {
     val context = LocalContext.current
     val appSettings = remember { AppSettings.getInstance(context) }
@@ -1794,12 +1798,41 @@ fun SingleCardSongsContent(
     }
 
     // Async category computation to avoid blocking UI on tab switch
-    LaunchedEffect(songs) {
+    LaunchedEffect(songs, enableRatingSystem) {
         isLoading = true
         val result = withContext(Dispatchers.Default) {
             val allCategories = mutableListOf("All")
 
             android.util.Log.d("SongsTab", "Recomputing categories for ${songs.size} songs")
+
+            // Favorites filter - show if there are any favorite songs
+            val favoriteSongsList = songs.filter { it.id in favoriteSongs }
+            if (favoriteSongsList.isNotEmpty()) {
+                allCategories.add("❤️ Favorites")
+            }
+
+            // Rating-based categories (5★ = Absolute Favorite, 4★ = Loved, 3★ = Great, 2★ = Good, 1★ = Liked)
+            // Only show if rating system is enabled
+            if (enableRatingSystem) {
+                val appSettings = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context)
+                val ratingDistribution = appSettings.getRatingDistribution()
+                
+                if ((ratingDistribution[5] ?: 0) > 0) {
+                    allCategories.add("⭐⭐⭐⭐⭐ Absolute Favorites")
+                }
+                if ((ratingDistribution[4] ?: 0) > 0) {
+                    allCategories.add("⭐⭐⭐⭐ Loved")
+                }
+                if ((ratingDistribution[3] ?: 0) > 0) {
+                    allCategories.add("⭐⭐⭐ Great")
+                }
+                if ((ratingDistribution[2] ?: 0) > 0) {
+                    allCategories.add("⭐⭐ Good")
+                }
+                if ((ratingDistribution[1] ?: 0) > 0) {
+                    allCategories.add("⭐ Liked")
+                }
+            }
 
             // Audio Quality Filters (Mutually Exclusive) - Most specific first
 
@@ -1870,10 +1903,34 @@ fun SingleCardSongsContent(
     // Filter songs based on selected category - computed asynchronously
     var filteredSongs by remember { mutableStateOf<List<Song>>(emptyList()) }
     
-    LaunchedEffect(preparedSongs, selectedCategory) {
+    LaunchedEffect(preparedSongs, selectedCategory, favoriteSongs) {
         filteredSongs = withContext(Dispatchers.Default) {
             when (selectedCategory) {
                 "All" -> preparedSongs
+                "❤️ Favorites" -> preparedSongs.filter { it.id in favoriteSongs }
+                
+                // Rating-based filters
+                "⭐⭐⭐⭐⭐ Absolute Favorites" -> {
+                    val ratedSongIds = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context).getSongsByRating(5)
+                    preparedSongs.filter { it.id in ratedSongIds }
+                }
+                "⭐⭐⭐⭐ Loved" -> {
+                    val ratedSongIds = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context).getSongsByRating(4)
+                    preparedSongs.filter { it.id in ratedSongIds }
+                }
+                "⭐⭐⭐ Great" -> {
+                    val ratedSongIds = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context).getSongsByRating(3)
+                    preparedSongs.filter { it.id in ratedSongIds }
+                }
+                "⭐⭐ Good" -> {
+                    val ratedSongIds = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context).getSongsByRating(2)
+                    preparedSongs.filter { it.id in ratedSongIds }
+                }
+                "⭐ Liked" -> {
+                    val ratedSongIds = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context).getSongsByRating(1)
+                    preparedSongs.filter { it.id in ratedSongIds }
+                }
+                
                 "Short (< 3 min)" -> preparedSongs.filter { it.duration < 3 * 60 * 1000 }
                 "Medium (3-5 min)" -> preparedSongs.filter { it.duration in (3 * 60 * 1000)..(5 * 60 * 1000) }
                 "Long (> 5 min)" -> preparedSongs.filter { it.duration > 5 * 60 * 1000 }
@@ -2174,7 +2231,8 @@ fun SingleCardSongsContent(
                         onAddToBlacklist = { onAddToBlacklist(song) },
                         currentSong = currentSong,
                         isPlaying = isPlaying,
-                        haptics = haptics
+                        haptics = haptics,
+                        enableRatingSystem = enableRatingSystem
                     )
                 }
             }
@@ -2754,7 +2812,8 @@ fun SongsTab(
     onPlayQueue: (List<Song>) -> Unit = { _ -> },
     onShuffleQueue: (List<Song>) -> Unit = { _ -> },
     currentSong: Song? = null, // Add current song parameter
-    isPlaying: Boolean = false // Add playing state
+    isPlaying: Boolean = false, // Add playing state
+    enableRatingSystem: Boolean = true // Add rating system enabled flag
 ) {
     val context = LocalContext.current
     val appSettings = remember { AppSettings.getInstance(context) }
@@ -2873,14 +2932,54 @@ fun SongsTab(
     }
     
     // Define categories based on song properties with audio quality filters
-    val categories = remember(songs) {
+    var ratingsTrigger by remember { mutableStateOf(0) }  // Trigger for rating changes
+    
+    LaunchedEffect(Unit) {
+        // Monitor rating changes by checking periodically
+        while (true) {
+            kotlinx.coroutines.delay(500)
+            val newRatingCount = appSettings.getRatingDistribution().values.sum()
+            if (newRatingCount != ratingsTrigger) {
+                ratingsTrigger = newRatingCount
+            }
+        }
+    }
+    
+    val categories = remember(songs, favoriteSongs, ratingsTrigger) {
         val allCategories = mutableListOf("All")
         
         android.util.Log.d("SongsTab", "Recomputing categories for ${songs.size} songs")
         
-        // Audio Quality Filters (Mutually Exclusive) - Most specific first
+        // Favorites filter - show if there are any favorite songs
+        val favoriteSongsList = songs.filter { it.id in favoriteSongs }
+        if (favoriteSongsList.isNotEmpty()) {
+            allCategories.add("❤️ Favorites")
+        }
         
-        // Hi-Res Lossless (≥48 kHz + 24-bit lossless)
+        // Rating-based categories (5★ = Absolute Favorite, 4★ = Loved, 3★ = Great, 2★ = Good, 1★ = Liked)
+        // Only show if rating system is enabled
+        if (enableRatingSystem) {
+            val appSettings = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context)
+            val ratingDistribution = appSettings.getRatingDistribution()
+            
+            if ((ratingDistribution[5] ?: 0) > 0) {
+                allCategories.add("⭐⭐⭐⭐⭐ Absolute Favorites")
+            }
+            if ((ratingDistribution[4] ?: 0) > 0) {
+                allCategories.add("⭐⭐⭐⭐ Loved")
+            }
+            if ((ratingDistribution[3] ?: 0) > 0) {
+                allCategories.add("⭐⭐⭐ Great")
+            }
+            if ((ratingDistribution[2] ?: 0) > 0) {
+                allCategories.add("⭐⭐ Good")
+            }
+            if ((ratingDistribution[1] ?: 0) > 0) {
+                allCategories.add("⭐ Liked")
+            }
+        }
+        
+        // Audio Quality Filters (Mutually Exclusive) - Most specific first
         val hiResLosslessSongs = songs.filter { isHiResLossless(it) && !isDolbyOrSurround(it) }
         android.util.Log.d("SongsTab", "Found ${hiResLosslessSongs.size} Hi-Res Lossless songs")
         if (hiResLosslessSongs.isNotEmpty()) {
@@ -2950,9 +3049,33 @@ fun SongsTab(
     }
     
     // Filter songs based on selected category
-    val filteredSongs = remember(songs, selectedCategory) {
+    val filteredSongs = remember(songs, selectedCategory, favoriteSongs) {
         when (selectedCategory) {
             "All" -> songs
+            "❤️ Favorites" -> songs.filter { it.id in favoriteSongs }
+            
+            // Rating-based filters
+            "⭐⭐⭐⭐⭐ Absolute Favorites" -> {
+                val ratedSongIds = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context).getSongsByRating(5)
+                songs.filter { it.id in ratedSongIds }
+            }
+            "⭐⭐⭐⭐ Loved" -> {
+                val ratedSongIds = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context).getSongsByRating(4)
+                songs.filter { it.id in ratedSongIds }
+            }
+            "⭐⭐⭐ Great" -> {
+                val ratedSongIds = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context).getSongsByRating(3)
+                songs.filter { it.id in ratedSongIds }
+            }
+            "⭐⭐ Good" -> {
+                val ratedSongIds = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context).getSongsByRating(2)
+                songs.filter { it.id in ratedSongIds }
+            }
+            "⭐ Liked" -> {
+                val ratedSongIds = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context).getSongsByRating(1)
+                songs.filter { it.id in ratedSongIds }
+            }
+            
             "Short (< 3 min)" -> songs.filter { it.duration < 3 * 60 * 1000 }
             "Medium (3-5 min)" -> songs.filter { it.duration in (3 * 60 * 1000)..(5 * 60 * 1000) }
             "Long (> 5 min)" -> songs.filter { it.duration > 5 * 60 * 1000 }
@@ -3252,7 +3375,8 @@ fun SongsTab(
                         onAddToBlacklist = { onAddToBlacklist(song) },
                         currentSong = currentSong,
                         isPlaying = isPlaying,
-                        haptics = haptics
+                        haptics = haptics,
+                        enableRatingSystem = enableRatingSystem
                     )
                 }
             }
@@ -3579,10 +3703,14 @@ fun LibrarySongItem(
     onAddToBlacklist: () -> Unit, // Add blacklist callback
     currentSong: Song? = null, // Add current song parameter
     isPlaying: Boolean = false, // Add playing state
-    haptics: androidx.compose.ui.hapticfeedback.HapticFeedback
+    haptics: androidx.compose.ui.hapticfeedback.HapticFeedback,
+    enableRatingSystem: Boolean = true // Add rating system enabled flag
 ) {
     val context = LocalContext.current
     var showDropdown by remember { mutableStateOf(false) }
+    // Track rating state for immediate UI updates
+    val appSettings = remember { chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context) }
+    var currentRating by remember(song.id) { mutableStateOf(appSettings.getSongRating(song.id)) }
     val isCurrentSong = currentSong?.id == song.id
 
     // Animated colors for text
@@ -3938,6 +4066,69 @@ fun LibrarySongItem(
                 //     )
                 // }
 
+                // Rate song - only show if rating system is enabled
+                if (enableRatingSystem && currentRating > 0) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceContainer,
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f),
+                                        shape = CircleShape,
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Star,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(6.dp)
+                                        )
+                                    }
+                                    Text(
+                                        "Rate Song",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            chromahub.rhythm.app.shared.presentation.components.RatingStars(
+                                rating = currentRating,
+                                onRatingChanged = { newRating ->
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    currentRating = newRating  // Update UI immediately
+                                    appSettings.setSongRating(song.id, newRating)
+                                    if (newRating > 0 && !isFavorite) {
+                                        onToggleFavorite()
+                                    }
+                                },
+                                enabled = true,
+                                size = 24.dp
+                            )
+                        }
+                    }
+                }
+
                 // Song info
                 Surface(
                     color = MaterialTheme.colorScheme.surfaceContainer,
@@ -4047,7 +4238,8 @@ fun LibrarySongItemWrapper(
     onAddToBlacklist: () -> Unit,
     currentSong: Song? = null,
     isPlaying: Boolean = false,
-    haptics: androidx.compose.ui.hapticfeedback.HapticFeedback
+    haptics: androidx.compose.ui.hapticfeedback.HapticFeedback,
+    enableRatingSystem: Boolean = true
 ) {
     val context = LocalContext.current
     val isCurrentSong = currentSong?.id == song.id
@@ -4083,7 +4275,8 @@ fun LibrarySongItemWrapper(
             onAddToBlacklist = onAddToBlacklist,
             currentSong = currentSong,
             isPlaying = isPlaying,
-            haptics = haptics
+            haptics = haptics,
+            enableRatingSystem = enableRatingSystem
         )
     }
 }
@@ -4291,14 +4484,18 @@ fun PlaylistArtCollage(
         2 -> {
             // Two album arts side by side
             Row(modifier = Modifier.fillMaxSize()) {
-                Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                Box(modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()) {
                     M3ImageUtils.AlbumArt(
                         imageUrl = songs[0].artworkUri,
                         albumName = songs[0].album,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
-                Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                Box(modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()) {
                     M3ImageUtils.AlbumArt(
                         imageUrl = songs[1].artworkUri,
                         albumName = songs[1].album,
@@ -4310,22 +4507,30 @@ fun PlaylistArtCollage(
         3 -> {
             // Three album arts: one large on left, two stacked on right
             Row(modifier = Modifier.fillMaxSize()) {
-                Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                Box(modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()) {
                     M3ImageUtils.AlbumArt(
                         imageUrl = songs[0].artworkUri,
                         albumName = songs[0].album,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
-                Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                    Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                Column(modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()) {
+                    Box(modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()) {
                         M3ImageUtils.AlbumArt(
                             imageUrl = songs[1].artworkUri,
                             albumName = songs[1].album,
                             modifier = Modifier.fillMaxSize()
                         )
                     }
-                    Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                    Box(modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()) {
                         M3ImageUtils.AlbumArt(
                             imageUrl = songs[2].artworkUri,
                             albumName = songs[2].album,
@@ -4338,15 +4543,21 @@ fun PlaylistArtCollage(
         else -> {
             // Four album arts in a 2x2 grid
             Column(modifier = Modifier.fillMaxSize()) {
-                Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                Row(modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()) {
+                    Box(modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()) {
                         M3ImageUtils.AlbumArt(
                             imageUrl = songs[0].artworkUri,
                             albumName = songs[0].album,
                             modifier = Modifier.fillMaxSize()
                         )
                     }
-                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    Box(modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()) {
                         M3ImageUtils.AlbumArt(
                             imageUrl = songs[1].artworkUri,
                             albumName = songs[1].album,
@@ -4354,15 +4565,21 @@ fun PlaylistArtCollage(
                         )
                     }
                 }
-                Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                Row(modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()) {
+                    Box(modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()) {
                         M3ImageUtils.AlbumArt(
                             imageUrl = songs[2].artworkUri,
                             albumName = songs[2].album,
                             modifier = Modifier.fillMaxSize()
                         )
                     }
-                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    Box(modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()) {
                         M3ImageUtils.AlbumArt(
                             imageUrl = songs[3].artworkUri,
                             albumName = songs[3].album,
@@ -4415,7 +4632,7 @@ fun LibraryAlbumItem(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(
-                            if (album.artworkUri != null) Color.Transparent 
+                            if (album.artworkUri != null) Color.Transparent
                             else MaterialTheme.colorScheme.secondaryContainer
                         ),
                     contentAlignment = Alignment.Center
@@ -4869,7 +5086,7 @@ fun AlbumGridItem(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(
-                                if (album.artworkUri != null) Color.Transparent 
+                                if (album.artworkUri != null) Color.Transparent
                                 else MaterialTheme.colorScheme.secondaryContainer
                             ),
                         contentAlignment = Alignment.Center
@@ -5231,7 +5448,11 @@ fun SingleCardArtistsContent(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                HapticUtils.performHapticFeedback(
+                                    context,
+                                    haptics,
+                                    HapticFeedbackType.LongPress
+                                )
                                 currentSortOption = sortOption
                                 showSortOptions = false
                             }
@@ -5719,7 +5940,8 @@ fun SingleCardExplorerContent(
     onCreatePlaylist: (String) -> Unit = { _ -> },
     musicViewModel: MusicViewModel,
     currentSong: Song? = null, // Add current song parameter
-    isPlaying: Boolean = false // Add playing state
+    isPlaying: Boolean = false, // Add playing state
+    enableRatingSystem: Boolean = true
 ) {
     val context = LocalContext.current
     val activity = context as Activity
@@ -6367,7 +6589,8 @@ fun SingleCardExplorerContent(
                                 onPlayFolder = null, // Storages don't have play option
                                 onAddFolderToQueue = null, // Storages don't have queue option
                                 currentSong = currentSong,
-                                isPlaying = isPlaying
+                                isPlaying = isPlaying,
+                                enableRatingSystem = enableRatingSystem
                             )
                         }
                     }
@@ -6481,7 +6704,8 @@ fun SingleCardExplorerContent(
                                         }
                                     },
                                     currentSong = currentSong,
-                                    isPlaying = isPlaying
+                                    isPlaying = isPlaying,
+                                    enableRatingSystem = enableRatingSystem
                                 )
                             }
                         }
@@ -6572,7 +6796,8 @@ fun SingleCardExplorerContent(
                                     }
                                 } else null,
                                 currentSong = currentSong,
-                                isPlaying = isPlaying
+                                isPlaying = isPlaying,
+                                enableRatingSystem = enableRatingSystem
                             )
                         }
                     }
@@ -6813,7 +7038,9 @@ fun SingleCardExplorerContent(
                         // Show loading state
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 24.dp)
                         ) {
                             M3FourColorCircularLoader(
                                 modifier = Modifier.size(48.dp)
@@ -8246,7 +8473,8 @@ fun ExplorerItemCard(
     onPlayFolder: ((ExplorerItem) -> Unit)? = null,
     onAddFolderToQueue: ((ExplorerItem) -> Unit)? = null,
     currentSong: Song? = null, // Add current song parameter
-    isPlaying: Boolean = false // Add playing state
+    isPlaying: Boolean = false, // Add playing state
+    enableRatingSystem: Boolean = true
 ) {
     val context = LocalContext.current
 
@@ -8611,7 +8839,8 @@ fun ExplorerItemCard(
                     onAddToBlacklist = { /* Files in explorer don't have blacklist functionality */ },
                     currentSong = currentSong,
                     isPlaying = isPlaying,
-                    haptics = haptics
+                    haptics = haptics,
+                    enableRatingSystem = enableRatingSystem
                 )
             }
         }

@@ -302,6 +302,7 @@ fun PlayerScreen(
     val useSystemVolume by appSettingsInstance.useSystemVolume.collectAsState()
     val groupByAlbumArtist by appSettingsInstance.groupByAlbumArtist.collectAsState()
     val useHoursFormat by appSettingsInstance.useHoursInTimeFormat.collectAsState()
+    val enableRatingSystem by appSettingsInstance.enableRatingSystem.collectAsState()
     
     // Player customization settings
     val playerShowGradientOverlay by appSettingsInstance.playerShowGradientOverlay.collectAsState()
@@ -1586,6 +1587,26 @@ fun PlayerScreen(
                                                 )
                                             }
                                             
+                                            // Rating stars display
+                                            // Rating stars display - only show if rating system is enabled
+                                            val currentRating = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context).getSongRating(song.id)
+                                            if (enableRatingSystem && currentRating > 0) {
+                                                Spacer(modifier = Modifier.height(if (isCompactHeight) 4.dp else 6.dp))
+                                                Box(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    contentAlignment = when (playerTextAlignment) {
+                                                        "START" -> Alignment.CenterStart
+                                                        "END" -> Alignment.CenterEnd
+                                                        else -> Alignment.Center
+                                                    }
+                                                ) {
+                                                    chromahub.rhythm.app.shared.presentation.components.RatingStarsDisplay(
+                                                        rating = currentRating,
+                                                        size = if (isCompactHeight) 14.dp else 16.dp
+                                                    )
+                                                }
+                                            }
+                                            
                                             // Audio quality badges
                                             if (playerShowAudioQualityBadges) {
                                                 Spacer(modifier = Modifier.height(8.dp))
@@ -2019,6 +2040,26 @@ fun PlayerScreen(
                                     },
                                 enabled = true
                             )
+                            
+                            // Rating stars display
+                            // Rating stars display - only show if rating system is enabled
+                            val currentRating = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context).getSongRating(song.id)
+                            if (enableRatingSystem && currentRating > 0) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Box(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    contentAlignment = when (playerTextAlignment) {
+                                        "START" -> Alignment.CenterStart
+                                        "END" -> Alignment.CenterEnd
+                                        else -> Alignment.Center
+                                    }
+                                ) {
+                                    chromahub.rhythm.app.shared.presentation.components.RatingStarsDisplay(
+                                        rating = currentRating,
+                                        size = 16.dp
+                                    )
+                                }
+                            }
                             
                             // Audio quality badges for tablets
                             if (playerShowAudioQualityBadges) {

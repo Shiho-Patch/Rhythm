@@ -229,7 +229,7 @@
     <string name="settings_about_architecture">Architecture</string>
     <string name="settings_about_architecture_value">ARM64 &amp; ARM32</string>
     <string name="settings_about_built_with">Built with modern Android technologies and Material Design 3</string>
-    <string name="settings_about_credits">Credits</string>
+    <string name="settings_about_credits">Developer</string>
     <string name="settings_about_developer_name">Anjishnu Nandi</string>
     <string name="settings_about_developer_role">Lead Developer &amp; Project Architect</string>
     <string name="settings_about_team">Team ChromaHub</string>
@@ -1554,7 +1554,7 @@
     <string name="home_greeting_valentines">Happy Valentine\'s</string>
     
     <!-- Home Screen Section Titles -->
-    <string name="home_top_artists">Top Artists</string>
+    <string name="home_top_artists">Artists</string>
     <string name="home_top_artists_subtitle">Your favorite musicians</string>
     
     <!-- Content Descriptions (additional) -->
