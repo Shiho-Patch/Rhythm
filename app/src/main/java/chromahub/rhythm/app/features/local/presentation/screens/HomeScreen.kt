@@ -2442,10 +2442,10 @@ private fun ModernListeningStatsSection(
     val songs by viewModel.songs.collectAsState()
 
     // Load stats from PlaybackStatsRepository (matching ListeningStatsScreen)
-    var statsSummary by remember { mutableStateOf<chromahub.rhythm.app.shared.data.model.PlaybackStatsRepository.PlaybackStatsSummary?>(null) }
+    var statsSummary by remember { mutableStateOf<chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository.PlaybackStatsSummary?>(null) }
     
     LaunchedEffect(songs) {
-        statsSummary = viewModel.loadPlaybackStats(chromahub.rhythm.app.shared.data.model.StatsTimeRange.ALL_TIME)
+        statsSummary = viewModel.loadPlaybackStats(chromahub.rhythm.app.shared.data.repository.StatsTimeRange.ALL_TIME)
     }
 
     val listeningTimeHours = remember(statsSummary) {

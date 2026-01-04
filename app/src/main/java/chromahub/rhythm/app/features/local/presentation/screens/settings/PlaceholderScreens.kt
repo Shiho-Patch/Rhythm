@@ -3363,7 +3363,7 @@ fun SpotifyApiConfigDialog(
                                     appSettings.setSpotifyClientSecret(clientSecret)
 
                                     val canvasRepository =
-                                        chromahub.rhythm.app.shared.data.model.CanvasRepository(
+                                        chromahub.rhythm.app.shared.data.repository.CanvasRepository(
                                             context,
                                             appSettings
                                         )
@@ -6444,7 +6444,7 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
 
     // Canvas repository for cache management
     val canvasRepository = remember {
-        chromahub.rhythm.app.shared.data.model.CanvasRepository(context, appSettings)
+        chromahub.rhythm.app.shared.data.repository.CanvasRepository(context, appSettings)
     }
 
     // Calculate cache size when the screen opens
@@ -11899,7 +11899,7 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
                                 if (!enabled) {
                                     scope.launch {
                                         try {
-                                            val canvasRepository = chromahub.rhythm.app.shared.data.model.CanvasRepository(context, appSettings)
+                                            val canvasRepository = chromahub.rhythm.app.shared.data.repository.CanvasRepository(context, appSettings)
                                             canvasRepository.clearCache()
                                             Log.d("ApiManagement", "Canvas cache cleared due to API being disabled")
                                         } catch (e: Exception) {

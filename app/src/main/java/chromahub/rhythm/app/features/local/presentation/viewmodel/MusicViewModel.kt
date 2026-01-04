@@ -58,7 +58,7 @@ import java.util.Calendar
 import java.io.File
 import chromahub.rhythm.app.shared.data.model.LyricsData // Import LyricsData
 import chromahub.rhythm.app.util.PendingWriteRequest // Import for metadata write requests
-import chromahub.rhythm.app.shared.data.model.PlaybackStatsRepository // Import for enhanced stats tracking
+import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository // Import for enhanced stats tracking
 
 class MusicViewModel(application: Application) : AndroidViewModel(application) {
     private val TAG = "MusicViewModel"
@@ -4692,8 +4692,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
      * Load detailed playback stats for a given time range
      */
     suspend fun loadPlaybackStats(
-        range: chromahub.rhythm.app.shared.data.model.StatsTimeRange = chromahub.rhythm.app.shared.data.model.StatsTimeRange.ALL_TIME
-    ): chromahub.rhythm.app.shared.data.model.PlaybackStatsRepository.PlaybackStatsSummary {
+        range: chromahub.rhythm.app.shared.data.repository.StatsTimeRange = chromahub.rhythm.app.shared.data.repository.StatsTimeRange.ALL_TIME
+    ): chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository.PlaybackStatsSummary {
         return playbackStatsRepository.loadSummary(
             range = range,
             songs = _songs.value

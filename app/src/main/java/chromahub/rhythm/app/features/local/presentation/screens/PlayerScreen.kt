@@ -200,8 +200,8 @@ import chromahub.rhythm.app.features.local.presentation.components.lyrics.Lyrics
 import chromahub.rhythm.app.shared.presentation.components.AudioQualityBadges
 import chromahub.rhythm.app.util.MediaUtils
 import chromahub.rhythm.app.features.local.presentation.components.player.CanvasPlayer
-import chromahub.rhythm.app.shared.data.model.CanvasRepository
-import chromahub.rhythm.app.shared.data.model.CanvasData
+import chromahub.rhythm.app.shared.data.repository.CanvasRepository
+import chromahub.rhythm.app.shared.data.repository.CanvasData
 import chromahub.rhythm.app.shared.data.model.Album
 import chromahub.rhythm.app.shared.data.model.Artist
 import chromahub.rhythm.app.features.local.presentation.navigation.Screen

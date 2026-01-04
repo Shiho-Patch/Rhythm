@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.shared.data.model
+package chromahub.rhythm.app.shared.data.repository
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -6,6 +6,7 @@ import android.util.Log
 import chromahub.rhythm.app.network.NetworkClient
 import chromahub.rhythm.app.network.SpotifyCanvas
 import chromahub.rhythm.app.network.SpotifyService
+import chromahub.rhythm.app.shared.data.model.AppSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.google.gson.Gson
