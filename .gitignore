@@ -19,3 +19,4 @@ config/signing/
 private.properties.base64
 
 /app/release
+/.config

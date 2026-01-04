@@ -16,8 +16,8 @@ android {
         applicationId = "chromahub.rhythm.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 40301832
-        versionName = "4.0.301.832 Beta"
+        versionCode = 40304838
+        versionName = "4.0.304.838 Beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -169,6 +169,7 @@ dependencies {
     
     // WorkManager for background tasks
     implementation("androidx.work:work-runtime-ktx:2.11.0")
+    implementation(libs.androidx.room.ktx)
 
     // Testing
     testImplementation(libs.junit)
