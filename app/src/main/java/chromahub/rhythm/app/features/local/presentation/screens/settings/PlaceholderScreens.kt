@@ -3498,7 +3498,7 @@ fun AboutScreen(
                 // App Header Card
                 Card(
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                        containerColor = MaterialTheme.colorScheme.surface
                     ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                     shape = RoundedCornerShape(20.dp),
@@ -3517,12 +3517,12 @@ fun AboutScreen(
                             Image(
                                 painter = painterResource(id = chromahub.rhythm.app.R.drawable.rhythm_splash_logo),
                                 contentDescription = "Rhythm Logo",
-                                modifier = Modifier.size(52.dp)
+                                modifier = Modifier.size(92.dp)
                             )
                             Spacer(modifier = Modifier.width(2.dp))
                             Text(
                                 text = context.getString(R.string.app_name),
-                                style = MaterialTheme.typography.headlineMedium,
+                                style = MaterialTheme.typography.displaySmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -3551,7 +3551,7 @@ fun AboutScreen(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         Text(
-                            text = "A modern, feature-rich music player for Android",
+                            text = "Your Music Your Rhythm",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
@@ -3560,56 +3560,56 @@ fun AboutScreen(
                 }
             }
 
-            item {
+//            item {
                 // Project Details Card
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                    shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(bottom = 12.dp)
-                        ) {
-                            Icon(
-                                imageVector = RhythmIcons.Actions.Info,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                text = context.getString(R.string.settings_about_project_details),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-
-                        DetailRow("Version", BuildConfig.VERSION_NAME)
-                        DetailRow("Build", BuildConfig.VERSION_CODE.toString())
-                        DetailRow("Target SDK", Build.VERSION.SDK_INT.toString())
-                        DetailRow("Architecture", "ARM64 & ARM32")
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Text(
-                            text = context.getString(R.string.settings_about_built_with),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
+//                Card(
+//                    colors = CardDefaults.cardColors(
+//                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+//                    ),
+//                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+//                    shape = RoundedCornerShape(20.dp),
+//                    modifier = Modifier.fillMaxWidth()
+//                ) {
+//                    Column(
+//                        modifier = Modifier.padding(16.dp)
+//                    ) {
+//                        Row(
+//                            verticalAlignment = Alignment.CenterVertically,
+//                            modifier = Modifier.padding(bottom = 12.dp)
+//                        ) {
+//                            Icon(
+//                                imageVector = RhythmIcons.Actions.Info,
+//                                contentDescription = null,
+//                                tint = MaterialTheme.colorScheme.primary,
+//                                modifier = Modifier.size(20.dp)
+//                            )
+//                            Spacer(modifier = Modifier.width(12.dp))
+//                            Text(
+//                                text = context.getString(R.string.settings_about_project_details),
+//                                style = MaterialTheme.typography.titleMedium,
+//                                fontWeight = FontWeight.Bold,
+//                                color = MaterialTheme.colorScheme.onSurface
+//                            )
+//                        }
+//
+//                        DetailRow("Version", BuildConfig.VERSION_NAME)
+//                        DetailRow("Build", BuildConfig.VERSION_CODE.toString())
+//                        DetailRow("Target SDK", Build.VERSION.SDK_INT.toString())
+//                        DetailRow("Architecture", "ARM64 & ARM32")
+//
+//                        Spacer(modifier = Modifier.height(12.dp))
+//
+//                        Text(
+//                            text = context.getString(R.string.settings_about_built_with),
+//                            style = MaterialTheme.typography.bodySmall,
+//                            color = MaterialTheme.colorScheme.onSurfaceVariant
+//                        )
+//                    }
+//                }
+//            }
 
             item {
-                // Credits Card
+                // Developer Card
                 Card(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -3851,13 +3851,26 @@ fun AboutScreen(
                             modifier = Modifier.padding(bottom = 12.dp)
                         )
 
-                        CommunityMember(
-                            name = "Xiaomiraphealin",
-                            role = "Sponsor",
-                            githubUsername = "Xiaomiraphealin",
-                            avatarUrl = "https://github.com/Xiaomiraphealin.png",
-                            context = context
-                        )
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            CommunityMember(
+                                name = "Xiaomiraphealin",
+                                role = "Sponsor",
+                                githubUsername = "Xiaomiraphealin",
+                                avatarUrl = "https://github.com/Xiaomiraphealin.png",
+                                context = context
+                            )
+
+                            CommunityMember(
+                                name = "HyXeny",
+                                role = "Sponsor",
+                                githubUsername = "HyXeny",
+                                avatarUrl = "https://github.com/HyXeny.png",
+                                context = context
+                            )
+                        }
+
                     }
                 }
             }

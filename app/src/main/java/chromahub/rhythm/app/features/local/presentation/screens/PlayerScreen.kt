@@ -163,6 +163,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.WaveSlider
 import chromahub.rhythm.app.shared.presentation.components.common.StyledProgressBar
 import chromahub.rhythm.app.shared.presentation.components.common.ProgressStyle
 import chromahub.rhythm.app.shared.presentation.components.common.ThumbStyle
+import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.shared.presentation.components.common.AutoScrollingTextOnDemand
 import chromahub.rhythm.app.features.local.presentation.components.player.PlayingEqIcon
@@ -291,6 +292,9 @@ fun PlayerScreen(
     val haptic = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
     val isDarkTheme = isSystemInDarkTheme()
+    
+    // Use surfaceContainer as background color for player screen
+    val playerBackgroundColor = BottomSheetDefaults.ContainerColor
 
     // Get AppSettings for volume control setting
     val appSettingsInstance =
@@ -947,155 +951,94 @@ fun PlayerScreen(
         )
     }
 
-    Scaffold(
-        topBar = {
-            AnimatedVisibility(
-                visible = showHeader,
-                enter = fadeIn() + slideInVertically { it },
-                exit = fadeOut() + slideOutVertically { it }
-            ) {
-                CenterAlignedTopAppBar(
-                title = {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        // Add swipe indicator pill - similar to mini player
-                        Box(
-                            modifier = Modifier
-                                .width(48.dp)
-                                .height(4.dp)
-                                .clip(RoundedCornerShape(2.dp))
-                                .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
-                        )
-
-                        // Small spacing after the pill
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        AnimatedVisibility(
-                            visible = song != null,
-                            enter = fadeIn() + slideInVertically { it / 2 },
-                            exit = fadeOut() + slideOutVertically { it / 2 }
-                        ) {
-                            // Enhanced NOW PLAYING with better styling
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
-                                modifier = Modifier.padding(horizontal = 2.dp, vertical = 1.dp)
-                            ) {
-                                Text(
-                                    text = "NOW PLAYING",
-                                    style = MaterialTheme.typography.labelMedium.copy(
-                                        fontWeight = FontWeight.ExtraBold,
-                                        letterSpacing = 1.4.sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
-                                )
-                            }
-                        }
-
-                        // Song and playlist info, always visible if song is not null
-                        AnimatedVisibility(
-                            visible = song != null,
-                            enter = fadeIn() + slideInVertically { it / 2 },
-                            exit = fadeOut() + slideOutVertically { it / 2 }
-                        ) {
-                            if (song != null && songPlaylist != null) {
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                // Enhanced playlist name with better styling
-                                Text(
-                                    text = songPlaylist.name,
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.SemiBold,
-                                        letterSpacing = 0.25.sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.padding(horizontal = 16.dp)
-                                )
-                            }
-                        }
-                    }
-                },
-                navigationIcon = {
-                    // Increased horizontal padding for better edge spacing
-                    Box(modifier = Modifier.padding(start = 16.dp)) {
-                        FilledTonalIconButton(
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
-                                onBack()
-                            },
-                            modifier = Modifier.size(48.dp),
-                            colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.KeyboardArrowDown,
-                                contentDescription = "Minimize",
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-                    }
-                },
-                actions = { 
-                    // Song info button
-                    Box(modifier = Modifier.padding(end = 16.dp)) {
-                        FilledTonalIconButton(
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
-                                showSongInfoSheet = true
-                            },
-                            modifier = Modifier.size(48.dp),
-                            colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Info,
-                                contentDescription = "Song info",
-                                tint = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = BottomSheetDefaults.ContainerColor,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
-                )
-            )
-            }
+    CollapsibleHeaderScreen(
+        title = "Player",
+        showBackButton = true,
+        onBackClick = {
+            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+            onBack()
         },
-        containerColor = BottomSheetDefaults.ContainerColor, // Set the background color here
-        modifier = Modifier
-            .graphicsLayer {
-                // Apply swipe transitions only (entry animations handled by AnimatedVisibility)
-                alpha = swipeAlpha
-                translationY = animatedSwipeOffset
-                scaleX = swipeScale
-                scaleY = swipeScale
-
-                // Add subtle corner radius animation (simulating mini player collapse)
-                clip = true
-                shape = RoundedCornerShape(
-                    topStart = swipeCornerRadius,
-                    topEnd = swipeCornerRadius,
-                    bottomStart = 0.dp,
-                    bottomEnd = 0.dp
+        alwaysCollapsed = true, // Keep header collapsed on player screen
+        containerColor = playerBackgroundColor, // Use surfaceContainer for player screen header
+        actions = {
+            // Song info display in actions
+            if (song != null) {
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .width(200.dp) // Fixed width for consistent marquee behavior
+                ) {
+                    // Playlist name on top
+                    if (songPlaylist != null) {
+                        AutoScrollingTextOnDemand(
+                            text = songPlaylist.name,
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            ),
+                            gradientEdgeColor = MaterialTheme.colorScheme.surfaceContainer,
+                            textAlign = TextAlign.End,
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = true
+                        )
+                    }
+                    // Album name below
+                    if (!song.album.isNullOrBlank()) {
+                        AutoScrollingTextOnDemand(
+                            text = song.album,
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            ),
+                            gradientEdgeColor = MaterialTheme.colorScheme.surfaceContainer,
+                            textAlign = TextAlign.End,
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = true
+                        )
+                    }
+                }
+            }
+            // Song info button
+            FilledTonalIconButton(
+                onClick = {
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                    showSongInfoSheet = true
+                },
+                modifier = Modifier.size(40.dp),
+                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Info,
+                    contentDescription = "Song info",
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.size(20.dp)
                 )
             }
-    ) { paddingValues ->
+        }
+    ) { modifier ->
         // Use Box as the root container to allow absolute positioning
         Box(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .graphicsLayer {
+                    // Apply swipe transitions only (entry animations handled by AnimatedVisibility)
+                    alpha = swipeAlpha
+                    translationY = animatedSwipeOffset
+                    scaleX = swipeScale
+                    scaleY = swipeScale
+
+                    // Add subtle corner radius animation (simulating mini player collapse)
+                    clip = true
+                    shape = RoundedCornerShape(
+                        topStart = swipeCornerRadius,
+                        topEnd = swipeCornerRadius,
+                        bottomStart = 0.dp,
+                        bottomEnd = 0.dp
+                    )
+                }
                 .pointerInput(gesturePlayerSwipeDismiss) {
                     if (gesturePlayerSwipeDismiss) {
                         var initialDragY = 0f
@@ -1243,15 +1186,9 @@ fun PlayerScreen(
                         
                         Spacer(modifier = Modifier.height(8.dp))
                         
-                        // Artist name (clickable)
+                        // Artist name only (clickable)
                         Text(
-                            text = buildString {
-                                append(song.artist)
-                                if (!song.album.isNullOrBlank() && song.album != song.artist) {
-                                    append(" • ")
-                                    append(song.album)
-                                }
-                            },
+                            text = song.artist,
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Medium,
                                 letterSpacing = 0.4.sp
@@ -1633,8 +1570,8 @@ fun PlayerScreen(
                                                     text = buildString {
                                                         append(song.artist)
                                                         if (!song.album.isNullOrBlank() && song.album != song.artist) {
-                                                            append(" • ")
-                                                            append(song.album)
+//                                                            append(" • ")
+//                                                            append(song.album)
                                                         }
                                                     },
                                                     style = MaterialTheme.typography.titleMedium.copy(
@@ -2045,7 +1982,8 @@ fun PlayerScreen(
                                 text = song.title,
                                 style = MaterialTheme.typography.headlineMedium.copy(
                                     fontWeight = FontWeight.Bold,
-                                    letterSpacing = 0.15.sp
+                                    letterSpacing = 0.15.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
                                 ),
                                 gradientEdgeColor = MaterialTheme.colorScheme.background,
                                 modifier = Modifier.fillMaxWidth(),
@@ -2059,13 +1997,14 @@ fun PlayerScreen(
                                 text = buildString {
                                     append(song.artist)
                                     if (!song.album.isNullOrBlank() && song.album != song.artist) {
-                                        append(" • ")
-                                        append(song.album)
+//                                        append(" • ")
+//                                        append(song.album)
                                     }
                                 },
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Medium,
-                                    letterSpacing = 0.4.sp
+                                    letterSpacing = 0.4.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 ),
                                 gradientEdgeColor = MaterialTheme.colorScheme.background,
                                 modifier = Modifier

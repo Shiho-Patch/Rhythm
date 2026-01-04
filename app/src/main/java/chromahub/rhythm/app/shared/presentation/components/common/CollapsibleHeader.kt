@@ -67,6 +67,7 @@ fun CollapsibleHeaderScreen(
     iconVisibilityMode: Int = 0, // 0=Both, 1=Expanded Only, 2=Collapsed Only
     headerDisplayMode: Int = 1, // 0=Icon Only, 1=Name Only, 2=Both
     alwaysCollapsed: Boolean = false, // Whether to start with header collapsed (override for specific screens)
+    containerColor: Color = Color.Transparent, // Custom container color for header
     content: @Composable (Modifier) -> Unit
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -113,10 +114,10 @@ fun CollapsibleHeaderScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = containerColor,
         topBar = {
             val collapsedFraction = scrollBehavior.state.collapsedFraction
             val fontSize = (24 + (32 - 24) * (1 - collapsedFraction)).sp // Interpolate between 24sp and 32sp
-            val containerColor = Color.Transparent // Always transparent
 
             Column {
                 Spacer(modifier = Modifier.height(10.dp)) // Add more padding before the header starts
