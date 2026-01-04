@@ -711,13 +711,20 @@ private fun ModernScrollableContent(
     
     // Featured albums with auto-refresh
     var currentFeaturedAlbums by remember(featuredContent, discoverItemCount) { 
-        mutableStateOf(featuredContent.take(discoverItemCount)) 
+        mutableStateOf(featuredContent.take(discoverItemCount).ifEmpty { listOf() }) 
     }
-    val featuredCarouselState = rememberCarouselState(discoverItemCount) { currentFeaturedAlbums.size }
     
+    // Safe carousel state initialization - ensure at least 1 item to prevent crashes
+    val safeItemCount = maxOf(1, currentFeaturedAlbums.size)
+    val featuredCarouselState = rememberCarouselState(
+        initialItem = 0,
+        itemCount = { safeItemCount }
+    )
+    
+    // Auto-refresh featured content periodically
     LaunchedEffect(albums, discoverItemCount) {
         while (true) {
-            delay(35000) // 35 seconds for smoother transitions
+            delay(45000) // 45 seconds for better user experience
             if (albums.size > discoverItemCount) {
                 currentFeaturedAlbums = albums.shuffled().take(discoverItemCount)
             }
@@ -805,13 +812,24 @@ private fun ModernScrollableContent(
     val error by updaterViewModel.error.collectAsState()
     val updatesEnabled by updaterViewModel.appSettings.updatesEnabled.collectAsState(initial = true)
     
-    // Auto-scroll featured carousel with improved timing (respects settings)
+    // Enhanced auto-scroll for featured carousel with smooth animations
     LaunchedEffect(currentFeaturedAlbums.size, discoverAutoScroll, discoverAutoScrollInterval) {
         if (discoverAutoScroll && currentFeaturedAlbums.size > 1) {
             while (true) {
                 delay(discoverAutoScrollInterval * 1000L) // Use settings interval
-                val nextItem = (featuredCarouselState.currentItem + 1) % currentFeaturedAlbums.size
-                featuredCarouselState.animateScrollToItem(nextItem)
+                try {
+                    // Calculate next item safely
+                    val currentItem = featuredCarouselState.currentItem
+                    val nextItem = (currentItem + 1) % currentFeaturedAlbums.size
+                    
+                    // Only scroll if we have valid items
+                    if (nextItem < currentFeaturedAlbums.size) {
+                        featuredCarouselState.animateScrollToItem(nextItem)
+                    }
+                } catch (e: Exception) {
+                    // Handle any scroll exceptions gracefully
+                    android.util.Log.w("HomeScreen", "Carousel autoscroll error: ${e.message}")
+                }
             }
         }
     }

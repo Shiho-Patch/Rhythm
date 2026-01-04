@@ -259,12 +259,12 @@ fun MediaScanLoader(
                     Image(
                         painter = painterResource(id = R.drawable.rhythm_splash_logo),
                         contentDescription = null,
-                        modifier = Modifier.size(66.dp)
+                        modifier = Modifier.size(76.dp)
                     )
                     Spacer(modifier = Modifier.width(3.dp))
                     Text(
                         text = context.getString(R.string.common_rhythm),
-                        style = MaterialTheme.typography.displayMedium.copy(
+                        style = MaterialTheme.typography.displaySmall.copy(
                             color = MaterialTheme.colorScheme.onBackground,
                             fontWeight = FontWeight.Bold
                         )

@@ -55,12 +55,12 @@ data class PendingWriteRequest(
  */
 object MediaUtils {
     private const val TAG = "MediaUtils"
-    
+
     /**
      * Finds a song in MediaStore that matches the given external file URI.
      * This helps identify if an external file is actually in the user's library,
      * preventing duplicate song entries and ensuring consistent playback.
-     * 
+     *
      * @param context The application context
      * @param uri The URI of the external file
      * @return A Song object from MediaStore if found, null otherwise
@@ -71,26 +71,29 @@ object MediaUtils {
             val filePath = when (uri.scheme) {
                 "content" -> {
                     val projection = arrayOf(MediaStore.Audio.Media.DATA)
-                    context.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
-                        if (cursor.moveToFirst()) {
-                            val dataIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
-                            cursor.getString(dataIndex)
-                        } else null
-                    }
+                    context.contentResolver.query(uri, projection, null, null, null)
+                        ?.use { cursor ->
+                            if (cursor.moveToFirst()) {
+                                val dataIndex =
+                                    cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
+                                cursor.getString(dataIndex)
+                            } else null
+                        }
                 }
+
                 "file" -> uri.path
                 else -> null
             } ?: return null
-            
+
             Log.d(TAG, "Searching MediaStore for file: $filePath")
-            
+
             // Search MediaStore for this file path
             val collection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
             } else {
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
             }
-            
+
             val projection = arrayOf(
                 MediaStore.Audio.Media._ID,
                 MediaStore.Audio.Media.TITLE,
@@ -101,62 +104,71 @@ object MediaUtils {
                 MediaStore.Audio.Media.TRACK,
                 MediaStore.Audio.Media.YEAR
             )
-            
+
             val selection = "${MediaStore.Audio.Media.DATA} = ?"
             val selectionArgs = arrayOf(filePath)
-            
-            context.contentResolver.query(collection, projection, selection, selectionArgs, null)?.use { cursor ->
-                if (cursor.moveToFirst()) {
-                    val idIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
-                    val titleIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
-                    val artistIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
-                    val albumIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
-                    val albumIdIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
-                    val durationIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
-                    val trackIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)
-                    val yearIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)
-                    
-                    val id = cursor.getLong(idIndex)
-                    val contentUri = ContentUris.withAppendedId(
-                        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                        id
-                    )
-                    val albumArtUri = ContentUris.withAppendedId(
-                        android.net.Uri.parse("content://media/external/audio/albumart"),
-                        cursor.getLong(albumIdIndex)
-                    )
-                    
-                    // Parse multiple artists from the artist string
-                    val rawArtist = cursor.getString(artistIndex)
-                    val appSettings = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context)
-                    val artistSeparatorEnabled = appSettings.artistSeparatorEnabled.value
-                    val delimiters = appSettings.artistSeparatorDelimiters.value
-                    val artist = ArtistSeparator.getPrimaryArtist(rawArtist, delimiters, artistSeparatorEnabled)
-                    
-                    Log.d(TAG, "Found matching song in MediaStore with ID: $id")
-                    
-                    return Song(
-                        id = id.toString(),
-                        title = cursor.getString(titleIndex),
-                        artist = artist,
-                        album = cursor.getString(albumIndex),
-                        albumId = cursor.getLong(albumIdIndex).toString(),
-                        duration = cursor.getLong(durationIndex),
-                        uri = contentUri,
-                        artworkUri = albumArtUri,
-                        trackNumber = cursor.getInt(trackIndex),
-                        year = cursor.getInt(yearIndex)
-                    )
+
+            context.contentResolver.query(collection, projection, selection, selectionArgs, null)
+                ?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val idIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
+                        val titleIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
+                        val artistIndex =
+                            cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
+                        val albumIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
+                        val albumIdIndex =
+                            cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
+                        val durationIndex =
+                            cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
+                        val trackIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)
+                        val yearIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)
+
+                        val id = cursor.getLong(idIndex)
+                        val contentUri = ContentUris.withAppendedId(
+                            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                            id
+                        )
+                        val albumArtUri = ContentUris.withAppendedId(
+                            android.net.Uri.parse("content://media/external/audio/albumart"),
+                            cursor.getLong(albumIdIndex)
+                        )
+
+                        // Parse multiple artists from the artist string
+                        val rawArtist = cursor.getString(artistIndex)
+                        val appSettings =
+                            chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context)
+                        val artistSeparatorEnabled = appSettings.artistSeparatorEnabled.value
+                        val delimiters = appSettings.artistSeparatorDelimiters.value
+                        val artist = ArtistSeparator.getPrimaryArtist(
+                            rawArtist,
+                            delimiters,
+                            artistSeparatorEnabled
+                        )
+
+                        Log.d(TAG, "Found matching song in MediaStore with ID: $id")
+
+                        return Song(
+                            id = id.toString(),
+                            title = cursor.getString(titleIndex),
+                            artist = artist,
+                            album = cursor.getString(albumIndex),
+                            albumId = cursor.getLong(albumIdIndex).toString(),
+                            duration = cursor.getLong(durationIndex),
+                            uri = contentUri,
+                            artworkUri = albumArtUri,
+                            trackNumber = cursor.getInt(trackIndex),
+                            year = cursor.getInt(yearIndex)
+                        )
+                    }
                 }
-            }
-            
+
             null
         } catch (e: Exception) {
             Log.e(TAG, "Error searching MediaStore", e)
             null
         }
     }
-    
+
     /**
      * Extracts metadata from an external audio file
      * @param context The application context
@@ -200,7 +212,8 @@ object MediaUtils {
                 )?.use { cursor ->
                     if (cursor.moveToFirst()) {
                         // Try to get file metadata from content resolver
-                        val displayNameIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME)
+                        val displayNameIndex =
+                            cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME)
                         val titleIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.TITLE)
 
                         if (displayNameIndex != -1) {
@@ -231,31 +244,43 @@ object MediaUtils {
                 retriever.setDataSource(context, uri)
 
                 // Extract metadata
-                val extractedTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
-                val extractedArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
-                val extractedAlbum = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM)
-                val extractedDuration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-                val extractedYear = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_YEAR)
-                val extractedGenre = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_GENRE)
+                val extractedTitle =
+                    retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
+                val extractedArtist =
+                    retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
+                val extractedAlbum =
+                    retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM)
+                val extractedDuration =
+                    retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+                val extractedYear =
+                    retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_YEAR)
+                val extractedGenre =
+                    retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_GENRE)
 
                 // Use extracted metadata if available, otherwise use fallbacks
-                title = extractedTitle ?: title ?: uri.lastPathSegment?.substringBeforeLast(".") ?: "Unknown"
-                
+                title = extractedTitle ?: title ?: uri.lastPathSegment?.substringBeforeLast(".")
+                        ?: "Unknown"
+
                 // Parse multiple artists from the artist string using configured delimiters
                 val rawArtist = extractedArtist ?: "Unknown Artist"
-                val appSettings = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context)
+                val appSettings =
+                    chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context)
                 val artistSeparatorEnabled = appSettings.artistSeparatorEnabled.value
                 val delimiters = appSettings.artistSeparatorDelimiters.value
-                
+
                 // Get primary artist for display (first artist in the list)
-                artist = ArtistSeparator.getPrimaryArtist(rawArtist, delimiters, artistSeparatorEnabled)
-                
+                artist =
+                    ArtistSeparator.getPrimaryArtist(rawArtist, delimiters, artistSeparatorEnabled)
+
                 album = extractedAlbum ?: "Unknown Album"
                 duration = extractedDuration?.toLongOrNull() ?: 0L
                 year = extractedYear?.toIntOrNull() ?: 0
                 genre = extractedGenre
 
-                Log.d(TAG, "Metadata extraction successful: Title=$title, Artist=$artist, Duration=$duration, Genre=$genre")
+                Log.d(
+                    TAG,
+                    "Metadata extraction successful: Title=$title, Artist=$artist, Duration=$duration, Genre=$genre"
+                )
             } catch (e: Exception) {
                 Log.w(TAG, "MediaMetadataRetriever failed, using fallback values", e)
                 // Use basic fallbacks
@@ -294,7 +319,10 @@ object MediaUtils {
                 )
             }
 
-            Log.d(TAG, "Extracted metadata - Title: $title, Artist: $artist, Album: $album, Duration: $duration")
+            Log.d(
+                TAG,
+                "Extracted metadata - Title: $title, Artist: $artist, Album: $album, Duration: $duration"
+            )
         } catch (e: Exception) {
             Log.e(TAG, "Error extracting metadata", e)
         } finally {
@@ -319,7 +347,7 @@ object MediaUtils {
             genre = genre
         )
     }
-    
+
     /**
      * Gets the mime type of a file from its URI
      * @param context The application context
@@ -333,6 +361,7 @@ object MediaUtils {
                 val fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString())
                 MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension.lowercase())
             }
+
             else -> null
         }
     }
@@ -411,19 +440,25 @@ object MediaUtils {
                 if (cursor.moveToFirst()) {
                     val dataIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
                     val sizeIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)
-                    val dateAddedIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED)
-                    val dateModifiedIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED)
-                    val composerIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.COMPOSER)
+                    val dateAddedIndex =
+                        cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED)
+                    val dateModifiedIndex =
+                        cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED)
+                    val composerIndex =
+                        cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.COMPOSER)
                     val trackIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)
-                    val albumArtistIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ARTIST)
+                    val albumArtistIndex =
+                        cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ARTIST)
                     val yearIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)
-                    val mimeTypeIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)
+                    val mimeTypeIndex =
+                        cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)
                     val songIdIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
 
                     filePath = cursor.getString(dataIndex) ?: ""
                     fileSize = cursor.getLong(sizeIndex)
                     dateAdded = cursor.getLong(dateAddedIndex) * 1000 // Convert to milliseconds
-                    dateModified = cursor.getLong(dateModifiedIndex) * 1000 // Convert to milliseconds
+                    dateModified =
+                        cursor.getLong(dateModifiedIndex) * 1000 // Convert to milliseconds
                     composer = cursor.getString(composerIndex) ?: ""
                     albumArtist = cursor.getString(albumArtistIndex) ?: ""
                     year = cursor.getInt(yearIndex)
@@ -434,9 +469,9 @@ object MediaUtils {
                     if (genre.isNullOrEmpty()) {
                         genre = getGenreForSong(context, song.uri, songId.toInt())
                     }
-                    
+
                     // isBookmark is not available in all Android versions, so we'll skip it
-                    
+
                     // Extract track and disc numbers from TRACK field
                     val trackInfo = cursor.getInt(trackIndex)
                     if (trackInfo > 0) {
@@ -445,20 +480,21 @@ object MediaUtils {
                     }
                 }
             }
-            
+
             // Use MediaMetadataRetriever for additional audio metadata
             if (filePath.isNotEmpty()) {
                 retriever.setDataSource(filePath)
-                
+
                 // Get bitrate
-                val bitrateStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)
+                val bitrateStr =
+                    retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)
                 if (bitrateStr != null) {
                     val bitrateValue = bitrateStr.toIntOrNull()
                     if (bitrateValue != null) {
                         bitrate = "${bitrateValue / 1000} kbps"
                     }
                 }
-                
+
                 // Get sample rate (try multiple methods for better compatibility)
                 val sampleRateStr = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     // Android 11+ has better metadata support
@@ -467,14 +503,14 @@ object MediaUtils {
                     // Fallback for older versions
                     retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CAPTURE_FRAMERATE)
                 }
-                
+
                 if (sampleRateStr != null) {
                     val sampleRateValue = sampleRateStr.toIntOrNull()
                     if (sampleRateValue != null) {
                         sampleRate = "${sampleRateValue} Hz"
                     }
                 }
-                
+
                 // Get number of audio channels using MediaExtractor (correct method)
                 // Only extract if song doesn't already have this info
                 if (channels == "Unknown") {
@@ -482,16 +518,17 @@ object MediaUtils {
                     try {
                         extractor = android.media.MediaExtractor()
                         extractor.setDataSource(filePath)
-                        
+
                         // Find the audio track
                         for (i in 0 until extractor.trackCount) {
                             val format = extractor.getTrackFormat(i)
                             val mime = format.getString(android.media.MediaFormat.KEY_MIME)
-                            
+
                             if (mime?.startsWith("audio/") == true) {
                                 // Get channel count from MediaFormat
                                 if (format.containsKey(android.media.MediaFormat.KEY_CHANNEL_COUNT)) {
-                                    val channelCount = format.getInteger(android.media.MediaFormat.KEY_CHANNEL_COUNT)
+                                    val channelCount =
+                                        format.getInteger(android.media.MediaFormat.KEY_CHANNEL_COUNT)
                                     channels = when (channelCount) {
                                         1 -> "Mono"
                                         2 -> "Stereo"
@@ -504,7 +541,10 @@ object MediaUtils {
                             }
                         }
                     } catch (e: Exception) {
-                        Log.w(TAG, "Error extracting channel count with MediaExtractor: ${e.message}")
+                        Log.w(
+                            TAG,
+                            "Error extracting channel count with MediaExtractor: ${e.message}"
+                        )
                         channels = "Stereo" // Default fallback
                     } finally {
                         try {
@@ -514,47 +554,51 @@ object MediaUtils {
                         }
                     }
                 }
-                
+
                 // Check for lyrics availability (METADATA_KEY_LYRICS not available in all versions)
                 // We'll skip lyrics detection for now to maintain compatibility
                 hasLyrics = false
-                
+
                 // Fill in missing composer if available from MediaMetadataRetriever
                 if (composer.isEmpty()) {
-                    val composerStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_COMPOSER)
+                    val composerStr =
+                        retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_COMPOSER)
                     if (!composerStr.isNullOrEmpty()) {
                         composer = composerStr
                     }
                 }
-                
+
                 // Fill in missing album artist if available
                 if (albumArtist.isEmpty()) {
-                    val albumArtistStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST)
+                    val albumArtistStr =
+                        retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST)
                     if (!albumArtistStr.isNullOrEmpty()) {
                         albumArtist = albumArtistStr
                     }
                 }
-                
+
                 // Fill in missing year if available
                 if (year == 0) {
-                    val yearStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_YEAR)
+                    val yearStr =
+                        retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_YEAR)
                     if (!yearStr.isNullOrEmpty()) {
                         year = yearStr.toIntOrNull() ?: 0
                     }
                 }
-                
+
                 // Fill in missing genre if available from MediaMetadataRetriever
                 if (genre.isNullOrEmpty()) {
-                    val genreStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_GENRE)
+                    val genreStr =
+                        retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_GENRE)
                     if (!genreStr.isNullOrEmpty()) {
                         genre = genreStr
                     }
                 }
-                
+
                 // Determine format from file extension and MIME type
                 val file = File(filePath)
                 val extension = file.extension.lowercase()
-                
+
                 // Try to detect advanced audio format using AudioFormatDetector
                 val audioFormatInfo = try {
                     AudioFormatDetector.detectFormat(context, song.uri)
@@ -562,7 +606,7 @@ object MediaUtils {
                     Log.w(TAG, "AudioFormatDetector failed, using fallback detection", e)
                     null
                 }
-                
+
                 // Use detected codec or fall back to extension-based detection
                 format = when {
                     audioFormatInfo != null && audioFormatInfo.codec != "Unknown" -> audioFormatInfo.codec
@@ -574,6 +618,7 @@ object MediaUtils {
                         // M4A can be AAC or ALAC - check with AudioFormatDetector
                         if (AudioFormatDetector.isALAC(context, song.uri)) "ALAC" else "AAC"
                     }
+
                     mimeType.contains("aac", ignoreCase = true) || extension == "aac" -> "AAC"
                     mimeType.contains("wav", ignoreCase = true) || extension == "wav" -> "WAV"
                     mimeType.contains("wma", ignoreCase = true) || extension == "wma" -> "WMA"
@@ -582,7 +627,7 @@ object MediaUtils {
                     else -> "Unknown"
                 }
             }
-            
+
         } catch (e: Exception) {
             Log.e(TAG, "Error getting extended song info", e)
         } finally {
@@ -592,7 +637,7 @@ object MediaUtils {
                 Log.e(TAG, "Error releasing MediaMetadataRetriever", e)
             }
         }
-        
+
         // Detect audio format information for lossless, Dolby, etc.
         // Pass the song object to help with bit depth calculation
         val audioFormatInfo = try {
@@ -601,7 +646,7 @@ object MediaUtils {
             Log.w(TAG, "AudioFormatDetector failed in getExtendedSongInfo", e)
             null
         }
-        
+
         // Calculate detailed audio quality using AudioQualityDetector
         // Prefer Song's metadata when available as it's more reliable
         val bitrateKbps = if (song.bitrate != null && song.bitrate!! > 0) {
@@ -611,7 +656,7 @@ object MediaUtils {
         } else {
             0
         }
-        
+
         val sampleRateValue = if (song.sampleRate != null && song.sampleRate!! > 0) {
             song.sampleRate!!
         } else if (audioFormatInfo?.sampleRateHz != null && audioFormatInfo.sampleRateHz > 0) {
@@ -619,7 +664,7 @@ object MediaUtils {
         } else {
             0
         }
-        
+
         val channelCountValue = if (song.channels != null && song.channels!! > 0) {
             song.channels!!
         } else if (audioFormatInfo?.channelCount != null && audioFormatInfo.channelCount > 0) {
@@ -627,10 +672,10 @@ object MediaUtils {
         } else {
             2
         }
-        
+
         val codecValue = audioFormatInfo?.codec ?: song.codec ?: format
         val bitDepthValue = audioFormatInfo?.bitDepth ?: 0
-        
+
         val audioQuality = AudioQualityDetector.detectQuality(
             codec = codecValue,
             sampleRateHz = sampleRateValue,
@@ -638,7 +683,7 @@ object MediaUtils {
             bitDepth = bitDepthValue,
             channelCount = channelCountValue
         )
-        
+
         return ExtendedSongInfo(
             fileSize = fileSize,
             bitrate = bitrate,
@@ -670,7 +715,7 @@ object MediaUtils {
             qualityCategory = audioQuality.category
         )
     }
-    
+
     /**
      * Updates song metadata using ContentResolver
      * @param context The application context
@@ -694,19 +739,22 @@ object MediaUtils {
     ): Boolean {
         return try {
             val contentResolver = context.contentResolver
-            
+
             // Log initial state for debugging
             Log.d(TAG, "Attempting to update metadata for song: ${song.title}")
             Log.d(TAG, "Song URI: ${song.uri}")
             Log.d(TAG, "Song ID: ${song.id}")
-            Log.d(TAG, "New values - Title: $newTitle, Artist: $newArtist, Album: $newAlbum, Genre: $newGenre, Year: $newYear, Track: $newTrackNumber")
-            
+            Log.d(
+                TAG,
+                "New values - Title: $newTitle, Artist: $newArtist, Album: $newAlbum, Genre: $newGenre, Year: $newYear, Track: $newTrackNumber"
+            )
+
             // Check if URI is valid and accessible
             if (!song.uri.toString().startsWith("content://media/")) {
                 Log.e(TAG, "Invalid URI scheme for metadata update: ${song.uri}")
                 return false
             }
-            
+
             // Get file path from URI for metadata writing
             val filePath = when (song.uri.scheme) {
                 "content" -> {
@@ -714,32 +762,34 @@ object MediaUtils {
                     contentResolver.query(song.uri, projection, null, null, null)
                         ?.use { cursor ->
                             if (cursor.moveToFirst()) {
-                                val dataIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
+                                val dataIndex =
+                                    cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
                                 cursor.getString(dataIndex)
                             } else null
                         }
                 }
+
                 "file" -> song.uri.path
                 else -> null
             }
-            
+
             // IMPORTANT: Update MediaStore FIRST before writing to file
             // This ensures that when media scanner runs, it reads the updated metadata
             // instead of overwriting our changes with cached old data
-            
+
             // Check permissions first
             if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.Q) {
                 val hasWritePermission = androidx.core.content.ContextCompat.checkSelfPermission(
                     context,
                     android.Manifest.permission.WRITE_EXTERNAL_STORAGE
                 ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-                
+
                 if (!hasWritePermission) {
                     Log.e(TAG, "Missing WRITE_EXTERNAL_STORAGE permission")
                     return false
                 }
             }
-            
+
             // Prepare MediaStore values
             val values = android.content.ContentValues().apply {
                 put(MediaStore.Audio.Media.TITLE, newTitle)
@@ -755,55 +805,69 @@ object MediaUtils {
                     put(MediaStore.Audio.Media.TRACK, newTrackNumber)
                 }
             }
-            
+
             // Update MediaStore first
-            val mediaStoreRowsUpdated = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-                try {
-                    val directUpdate = contentResolver.update(
+            val mediaStoreRowsUpdated =
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                    try {
+                        val directUpdate = contentResolver.update(
+                            song.uri,
+                            values,
+                            null,
+                            null
+                        )
+
+                        if (directUpdate > 0) {
+                            Log.d(
+                                TAG,
+                                "MediaStore direct update successful for song: ${song.title}"
+                            )
+                            directUpdate
+                        } else {
+                            Log.w(
+                                TAG,
+                                "MediaStore direct update failed, trying alternative approach"
+                            )
+                            updateViaMediaStore(contentResolver, song, values)
+                        }
+                    } catch (e: SecurityException) {
+                        Log.w(
+                            TAG,
+                            "Security exception during MediaStore update, trying alternative",
+                            e
+                        )
+                        updateViaMediaStore(contentResolver, song, values)
+                    }
+                } else {
+                    contentResolver.update(
                         song.uri,
                         values,
                         null,
                         null
                     )
-                    
-                    if (directUpdate > 0) {
-                        Log.d(TAG, "MediaStore direct update successful for song: ${song.title}")
-                        directUpdate
-                    } else {
-                        Log.w(TAG, "MediaStore direct update failed, trying alternative approach")
-                        updateViaMediaStore(contentResolver, song, values)
-                    }
-                } catch (e: SecurityException) {
-                    Log.w(TAG, "Security exception during MediaStore update, trying alternative", e)
-                    updateViaMediaStore(contentResolver, song, values)
                 }
-            } else {
-                contentResolver.update(
-                    song.uri,
-                    values,
-                    null,
-                    null
-                )
-            }
-            
+
             val mediaStoreSuccess = mediaStoreRowsUpdated > 0
             Log.d(TAG, "MediaStore updated $mediaStoreRowsUpdated rows for song: ${song.title}")
-            
+
             // Now write metadata to the actual file
             var fileWriteSucceeded = false
-            
+
             // For Android 10+ (API 29+), we need to use a temporary file approach
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
                 try {
                     Log.d(TAG, "Using temporary file approach for Android 10+ file write")
                     Log.d(TAG, "Song URI: ${song.uri}")
                     Log.d(TAG, "Song path: $filePath")
-                    
+
                     // Get the file extension to preserve format
                     val fileName = song.title.replace("[^a-zA-Z0-9.-]".toRegex(), "_")
                     val extension = filePath?.substringAfterLast('.', "mp3") ?: "mp3"
-                    val tempFile = File(context.cacheDir, "temp_audio_${System.currentTimeMillis()}.$extension")
-                    
+                    val tempFile = File(
+                        context.cacheDir,
+                        "temp_audio_${System.currentTimeMillis()}.$extension"
+                    )
+
                     try {
                         // Step 1: Copy original file to temp location
                         Log.d(TAG, "Step 1: Copying original file to temp...")
@@ -813,17 +877,20 @@ object MediaUtils {
                                 bytesRead = inputStream.copyTo(outputStream)
                             }
                         }
-                        Log.d(TAG, "Copied $bytesRead bytes to temp location: ${tempFile.absolutePath}")
-                        
+                        Log.d(
+                            TAG,
+                            "Copied $bytesRead bytes to temp location: ${tempFile.absolutePath}"
+                        )
+
                         if (!tempFile.exists() || tempFile.length() == 0L) {
                             throw Exception("Failed to copy file to temp location")
                         }
-                        
+
                         // Step 2: Modify metadata using jaudiotagger on temp file
                         Log.d(TAG, "Step 2: Modifying metadata in temp file...")
                         val audioFileObj = AudioFileIO.read(tempFile)
                         val tag: Tag = audioFileObj.tag ?: audioFileObj.createDefaultTag()
-                        
+
                         tag.setField(FieldKey.TITLE, newTitle)
                         tag.setField(FieldKey.ARTIST, newArtist)
                         tag.setField(FieldKey.ALBUM, newAlbum)
@@ -836,23 +903,32 @@ object MediaUtils {
                         if (newTrackNumber > 0) {
                             tag.setField(FieldKey.TRACK, newTrackNumber.toString())
                         }
-                        
+
                         audioFileObj.tag = tag
                         AudioFileIO.write(audioFileObj)
                         Log.d(TAG, "Metadata written to temp file successfully")
-                        
+
                         // Step 3: Copy modified temp file back to original location
                         Log.d(TAG, "Step 3: Copying modified file back to original location...")
-                        
+
                         // Try to open output stream - this is where it might fail on Android 10+
                         val outputStream = try {
                             contentResolver.openOutputStream(song.uri, "w")
                         } catch (e: android.app.RecoverableSecurityException) {
                             // Android 11+ requires user permission via createWriteRequest
-                            Log.e(TAG, "RecoverableSecurityException - Need to request user permission for this file")
-                            Log.e(TAG, "This file was not created by this app. User permission is required to modify it.")
-                            Log.e(TAG, "Solution: App needs to use MediaStore.createWriteRequest() and show permission dialog")
-                            
+                            Log.e(
+                                TAG,
+                                "RecoverableSecurityException - Need to request user permission for this file"
+                            )
+                            Log.e(
+                                TAG,
+                                "This file was not created by this app. User permission is required to modify it."
+                            )
+                            Log.e(
+                                TAG,
+                                "Solution: App needs to use MediaStore.createWriteRequest() and show permission dialog"
+                            )
+
                             // Store the temp file path so it can be used after permission is granted
                             // For now, we'll throw with the pending intent info
                             throw RecoverableSecurityExceptionWrapper(
@@ -862,31 +938,51 @@ object MediaUtils {
                                 tempFile.absolutePath
                             )
                         } catch (e: SecurityException) {
-                            Log.e(TAG, "SecurityException opening output stream - app may not have write permission for this file", e)
+                            Log.e(
+                                TAG,
+                                "SecurityException opening output stream - app may not have write permission for this file",
+                                e
+                            )
                             null
                         } catch (e: Exception) {
-                            Log.e(TAG, "Exception opening output stream: ${e.javaClass.simpleName} - ${e.message}", e)
+                            Log.e(
+                                TAG,
+                                "Exception opening output stream: ${e.javaClass.simpleName} - ${e.message}",
+                                e
+                            )
                             null
                         }
-                        
+
                         if (outputStream == null) {
-                            Log.e(TAG, "Failed to open output stream for writing. This typically means:")
-                            Log.e(TAG, "1. File is on external SD card (requires special permissions)")
+                            Log.e(
+                                TAG,
+                                "Failed to open output stream for writing. This typically means:"
+                            )
+                            Log.e(
+                                TAG,
+                                "1. File is on external SD card (requires special permissions)"
+                            )
                             Log.e(TAG, "2. File is in a protected directory")
-                            Log.e(TAG, "3. App doesn't own this file (Android 11+ scoped storage restriction)")
+                            Log.e(
+                                TAG,
+                                "3. App doesn't own this file (Android 11+ scoped storage restriction)"
+                            )
                             throw Exception("Cannot open output stream for URI: ${song.uri}")
                         }
-                        
+
                         outputStream.use { outStream ->
                             tempFile.inputStream().use { inputStream ->
                                 val bytesCopied = inputStream.copyTo(outStream)
                                 Log.d(TAG, "Copied $bytesCopied bytes back to original location")
                             }
                         }
-                        
+
                         fileWriteSucceeded = true
-                        Log.d(TAG, "Successfully wrote metadata using temp file approach for Android 10+")
-                        
+                        Log.d(
+                            TAG,
+                            "Successfully wrote metadata using temp file approach for Android 10+"
+                        )
+
                     } catch (inner: RecoverableSecurityExceptionWrapper) {
                         // This is a special case where we need user permission
                         Log.e(TAG, "RecoverableSecurityException caught - user permission required")
@@ -907,7 +1003,11 @@ object MediaUtils {
                     Log.w(TAG, "User permission required for file modification: ${e.message}")
                     throw e
                 } catch (e: Exception) {
-                    Log.e(TAG, "Failed to write metadata using temp file approach on Android 10+", e)
+                    Log.e(
+                        TAG,
+                        "Failed to write metadata using temp file approach on Android 10+",
+                        e
+                    )
                     Log.e(TAG, "Error details: ${e.message}")
                     e.printStackTrace()
                     // Continue with MediaStore update even if file writing fails
@@ -926,7 +1026,7 @@ object MediaUtils {
                         try {
                             val audioFileObj = AudioFileIO.read(audioFile)
                             val tag: Tag = audioFileObj.tag ?: audioFileObj.createDefaultTag()
-                            
+
                             tag.setField(FieldKey.TITLE, newTitle)
                             tag.setField(FieldKey.ARTIST, newArtist)
                             tag.setField(FieldKey.ALBUM, newAlbum)
@@ -939,22 +1039,28 @@ object MediaUtils {
                             if (newTrackNumber > 0) {
                                 tag.setField(FieldKey.TRACK, newTrackNumber.toString())
                             }
-                            
+
                             audioFileObj.tag = tag
                             AudioFileIO.write(audioFileObj)
-                            
+
                             fileWriteSucceeded = true
-                            Log.d(TAG, "Successfully wrote metadata to file (Android 9-): $filePath")
+                            Log.d(
+                                TAG,
+                                "Successfully wrote metadata to file (Android 9-): $filePath"
+                            )
                         } catch (e: Exception) {
                             Log.e(TAG, "Failed to write metadata to file using jaudiotagger", e)
                         }
                     }
                 }
             }
-            
+
             // Log the results of both operations
-            Log.d(TAG, "Metadata update results - MediaStore: $mediaStoreSuccess, File write: $fileWriteSucceeded")
-            
+            Log.d(
+                TAG,
+                "Metadata update results - MediaStore: $mediaStoreSuccess, File write: $fileWriteSucceeded"
+            )
+
             // Only trigger media scanner if BOTH operations succeeded
             if (mediaStoreSuccess && fileWriteSucceeded) {
                 // Trigger media scanner to refresh the metadata
@@ -969,15 +1075,17 @@ object MediaUtils {
                             contentResolver.query(song.uri, projection, null, null, null)
                                 ?.use { cursor ->
                                     if (cursor.moveToFirst()) {
-                                        val dataIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
+                                        val dataIndex =
+                                            cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
                                         cursor.getString(dataIndex)
                                     } else null
                                 }
                         }
+
                         "file" -> song.uri.path
                         else -> null
                     }
-                    
+
                     if (scanFilePath != null) {
                         android.media.MediaScannerConnection.scanFile(
                             context,
@@ -993,23 +1101,26 @@ object MediaUtils {
                     Log.w(TAG, "Failed to trigger media scanner", e)
                 }
             } else if (mediaStoreSuccess && !fileWriteSucceeded) {
-                Log.i(TAG, "MediaStore updated but file write failed - skipping media scanner to preserve MediaStore changes")
+                Log.i(
+                    TAG,
+                    "MediaStore updated but file write failed - skipping media scanner to preserve MediaStore changes"
+                )
             }
-            
+
             // Return true ONLY if file write succeeded (the actual persistent change)
             // MediaStore updates are temporary and will be overwritten by media scanner
             fileWriteSucceeded
-            
+
         } catch (e: Exception) {
             Log.e(TAG, "Failed to update song metadata: ${song.title}", e)
             false
         }
     }
-    
+
     /**
      * Creates a write request for Android 11+ using MediaStore.createWriteRequest()
      * This shows a system permission dialog to the user to allow modifying the file
-     * 
+     *
      * @param context The application context
      * @param song The song to request write access for
      * @param newTitle The new title to be set after permission is granted
@@ -1033,13 +1144,13 @@ object MediaUtils {
     ): PendingWriteRequest? {
         return try {
             val contentResolver = context.contentResolver
-            
+
             Log.d(TAG, "Creating write request for song: ${song.title}")
-            
+
             // Create a PendingIntent for write permission using createWriteRequest
             val urisToModify = listOf(song.uri)
             val pendingIntent = MediaStore.createWriteRequest(contentResolver, urisToModify)
-            
+
             // Create a temp file with the modified metadata for later use
             val tempFilePath = prepareTempFileWithMetadata(
                 context = context,
@@ -1051,12 +1162,12 @@ object MediaUtils {
                 newYear = newYear,
                 newTrackNumber = newTrackNumber
             )
-            
+
             if (tempFilePath == null) {
                 Log.e(TAG, "Failed to create temp file with metadata")
                 return null
             }
-            
+
             PendingWriteRequest(
                 intentSender = pendingIntent.intentSender,
                 song = song,
@@ -1073,7 +1184,7 @@ object MediaUtils {
             null
         }
     }
-    
+
     /**
      * Prepares a temp file with modified metadata for use after permission is granted
      */
@@ -1089,7 +1200,7 @@ object MediaUtils {
     ): String? {
         return try {
             val contentResolver = context.contentResolver
-            
+
             // Get file extension
             val filePath = when (song.uri.scheme) {
                 "content" -> {
@@ -1097,34 +1208,39 @@ object MediaUtils {
                     contentResolver.query(song.uri, projection, null, null, null)
                         ?.use { cursor ->
                             if (cursor.moveToFirst()) {
-                                val dataIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
+                                val dataIndex =
+                                    cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
                                 cursor.getString(dataIndex)
                             } else null
                         }
                 }
+
                 "file" -> song.uri.path
                 else -> null
             }
-            
+
             val extension = filePath?.substringAfterLast('.', "mp3") ?: "mp3"
-            val tempFile = File(context.cacheDir, "pending_metadata_${song.id}_${System.currentTimeMillis()}.$extension")
-            
+            val tempFile = File(
+                context.cacheDir,
+                "pending_metadata_${song.id}_${System.currentTimeMillis()}.$extension"
+            )
+
             // Copy original file to temp location
             contentResolver.openInputStream(song.uri)?.use { inputStream ->
                 tempFile.outputStream().use { outputStream ->
                     inputStream.copyTo(outputStream)
                 }
             }
-            
+
             if (!tempFile.exists() || tempFile.length() == 0L) {
                 Log.e(TAG, "Failed to copy file to temp location")
                 return null
             }
-            
+
             // Modify metadata in temp file
             val audioFileObj = AudioFileIO.read(tempFile)
             val tag: Tag = audioFileObj.tag ?: audioFileObj.createDefaultTag()
-            
+
             tag.setField(FieldKey.TITLE, newTitle)
             tag.setField(FieldKey.ARTIST, newArtist)
             tag.setField(FieldKey.ALBUM, newAlbum)
@@ -1137,22 +1253,22 @@ object MediaUtils {
             if (newTrackNumber > 0) {
                 tag.setField(FieldKey.TRACK, newTrackNumber.toString())
             }
-            
+
             audioFileObj.tag = tag
             AudioFileIO.write(audioFileObj)
-            
+
             Log.d(TAG, "Temp file with modified metadata created: ${tempFile.absolutePath}")
             tempFile.absolutePath
-            
+
         } catch (e: Exception) {
             Log.e(TAG, "Failed to prepare temp file with metadata", e)
             null
         }
     }
-    
+
     /**
      * Completes the metadata write operation after user grants permission via createWriteRequest
-     * 
+     *
      * @param context The application context
      * @param pendingRequest The pending write request containing all necessary info
      * @return true if the write was successful, false otherwise
@@ -1164,28 +1280,31 @@ object MediaUtils {
         return try {
             val contentResolver = context.contentResolver
             val tempFile = File(pendingRequest.tempFilePath)
-            
+
             if (!tempFile.exists()) {
                 Log.e(TAG, "Temp file not found: ${pendingRequest.tempFilePath}")
                 return false
             }
-            
-            Log.d(TAG, "Completing write operation after permission granted for: ${pendingRequest.song.title}")
-            
+
+            Log.d(
+                TAG,
+                "Completing write operation after permission granted for: ${pendingRequest.song.title}"
+            )
+
             // Now we have permission, copy the temp file back to original location
             val outputStream = contentResolver.openOutputStream(pendingRequest.song.uri, "w")
             if (outputStream == null) {
                 Log.e(TAG, "Failed to open output stream even after permission granted")
                 return false
             }
-            
+
             outputStream.use { outStream ->
                 tempFile.inputStream().use { inputStream ->
                     val bytesCopied = inputStream.copyTo(outStream)
                     Log.d(TAG, "Copied $bytesCopied bytes back to original location")
                 }
             }
-            
+
             // Update MediaStore as well
             val values = android.content.ContentValues().apply {
                 put(MediaStore.Audio.Media.TITLE, pendingRequest.newTitle)
@@ -1201,15 +1320,15 @@ object MediaUtils {
                     put(MediaStore.Audio.Media.TRACK, pendingRequest.newTrackNumber)
                 }
             }
-            
+
             contentResolver.update(pendingRequest.song.uri, values, null, null)
-            
+
             // Clean up temp file
             if (tempFile.exists()) {
                 tempFile.delete()
                 Log.d(TAG, "Temp file cleaned up")
             }
-            
+
             // Trigger media scanner
             val filePath = when (pendingRequest.song.uri.scheme) {
                 "content" -> {
@@ -1217,33 +1336,41 @@ object MediaUtils {
                     contentResolver.query(pendingRequest.song.uri, projection, null, null, null)
                         ?.use { cursor ->
                             if (cursor.moveToFirst()) {
-                                val dataIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
+                                val dataIndex =
+                                    cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
                                 cursor.getString(dataIndex)
                             } else null
                         }
                 }
+
                 "file" -> pendingRequest.song.uri.path
                 else -> null
             }
-            
+
             if (filePath != null) {
-                android.media.MediaScannerConnection.scanFile(context, arrayOf(filePath), null, null)
+                android.media.MediaScannerConnection.scanFile(
+                    context,
+                    arrayOf(filePath),
+                    null,
+                    null
+                )
                 Log.d(TAG, "Media scanner triggered for: $filePath")
             }
-            
+
             Log.d(TAG, "Successfully completed metadata write for: ${pendingRequest.song.title}")
             true
-            
+
         } catch (e: Exception) {
             Log.e(TAG, "Failed to complete write after permission granted", e)
             // Clean up temp file on error
             try {
                 File(pendingRequest.tempFilePath).delete()
-            } catch (ignored: Exception) {}
+            } catch (ignored: Exception) {
+            }
             false
         }
     }
-    
+
     /**
      * Cleans up a pending write request (delete temp file)
      */
@@ -1252,13 +1379,16 @@ object MediaUtils {
             val tempFile = File(pendingRequest.tempFilePath)
             if (tempFile.exists()) {
                 tempFile.delete()
-                Log.d(TAG, "Cleaned up pending write request temp file: ${pendingRequest.tempFilePath}")
+                Log.d(
+                    TAG,
+                    "Cleaned up pending write request temp file: ${pendingRequest.tempFilePath}"
+                )
             }
         } catch (e: Exception) {
             Log.w(TAG, "Failed to cleanup pending write request", e)
         }
     }
-    
+
     /**
      * Gets the genre name from MediaStore.Audio.Genres table using the song ID
      * @param contentResolver The ContentResolver to use for queries
@@ -1279,7 +1409,8 @@ object MediaUtils {
 
             genreIdCursor?.use { cursor ->
                 if (cursor.moveToFirst()) {
-                    val genreIdIndex = cursor.getColumnIndex(MediaStore.Audio.Genres.Members.GENRE_ID)
+                    val genreIdIndex =
+                        cursor.getColumnIndex(MediaStore.Audio.Genres.Members.GENRE_ID)
                     if (genreIdIndex != -1) {
                         val genreId = cursor.getLong(genreIdIndex)
 
@@ -1295,7 +1426,8 @@ object MediaUtils {
 
                         genreNameCursor?.use { nameCursor ->
                             if (nameCursor.moveToFirst()) {
-                                val nameIndex = nameCursor.getColumnIndex(MediaStore.Audio.Genres.NAME)
+                                val nameIndex =
+                                    nameCursor.getColumnIndex(MediaStore.Audio.Genres.NAME)
                                 if (nameIndex != -1) {
                                     val genreName = nameCursor.getString(nameIndex)
                                     Log.d(TAG, "Found genre name: $genreName for song ID: $songId")
@@ -1327,7 +1459,10 @@ object MediaUtils {
         try {
             val genreFromMediaStoreColumn = getGenreFromMediaStoreColumn(context, songId)
             if (!genreFromMediaStoreColumn.isNullOrBlank()) {
-                Log.d(TAG, "Found genre from MediaStore column: $genreFromMediaStoreColumn for song ID: $songId")
+                Log.d(
+                    TAG,
+                    "Found genre from MediaStore column: $genreFromMediaStoreColumn for song ID: $songId"
+                )
                 return genreFromMediaStoreColumn
             }
         } catch (e: Exception) {
@@ -1338,7 +1473,10 @@ object MediaUtils {
         try {
             val genreFromGenresTable = getGenreNameFromMediaStore(context.contentResolver, songId)
             if (!genreFromGenresTable.isNullOrBlank()) {
-                Log.d(TAG, "Found genre from Genres table: $genreFromGenresTable for song ID: $songId")
+                Log.d(
+                    TAG,
+                    "Found genre from Genres table: $genreFromGenresTable for song ID: $songId"
+                )
                 return genreFromGenresTable
             }
         } catch (e: Exception) {
@@ -1349,7 +1487,10 @@ object MediaUtils {
         try {
             val genreFromRetriever = getGenreFromMediaMetadataRetriever(context, songUri)
             if (!genreFromRetriever.isNullOrBlank()) {
-                Log.d(TAG, "Found genre from MediaMetadataRetriever: $genreFromRetriever for song URI: $songUri")
+                Log.d(
+                    TAG,
+                    "Found genre from MediaMetadataRetriever: $genreFromRetriever for song URI: $songUri"
+                )
                 return genreFromRetriever
             }
         } catch (e: Exception) {
@@ -1450,7 +1591,8 @@ object MediaUtils {
         val retriever = android.media.MediaMetadataRetriever()
         return try {
             retriever.setDataSource(context, songUri)
-            val genre = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_GENRE)
+            val genre =
+                retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_GENRE)
             genre?.trim()?.takeIf { it.isNotBlank() }
         } catch (e: Exception) {
             Log.e(TAG, "Error getting genre from MediaMetadataRetriever", e)
@@ -1554,5 +1696,52 @@ object MediaUtils {
             Log.e(TAG, "Failed to update via MediaStore table", e)
             0
         }
+    }
+
+    /**
+     * Extracts embedded album art directly from an audio file.
+     * This bypasses the Android MediaStore cache and reads from the file header directly.
+     *
+     * @param context The application context
+     * @param songUri The URI of the song file
+     * @param cacheDir The cache directory to save the extracted artwork
+     * @return Uri pointing to the cached artwork file, or null if no embedded art found
+     */
+    fun extractEmbeddedAlbumArt(context: Context, songUri: Uri, cacheDir: File): Uri? {
+        val retriever = MediaMetadataRetriever()
+        try {
+            retriever.setDataSource(context, songUri)
+
+            // Extract embedded picture
+            val embeddedArt = retriever.embeddedPicture
+            if (embeddedArt != null && embeddedArt.isNotEmpty()) {
+                // Save to cache with unique filename based on song URI
+                val artworkFile = File(cacheDir, "embedded_art_${songUri.hashCode()}.jpg")
+
+                FileOutputStream(artworkFile).use { out ->
+                    val bitmap = BitmapFactory.decodeByteArray(embeddedArt, 0, embeddedArt.size)
+                    if (bitmap != null) {
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+                        out.flush()
+                        Log.d(
+                            TAG,
+                            "Extracted embedded album art from file: ${artworkFile.absolutePath}"
+                        )
+                        return artworkFile.toUri()
+                    }
+                }
+            } else {
+                Log.d(TAG, "No embedded album art found in file")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to extract embedded album art", e)
+        } finally {
+            try {
+                retriever.release()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error releasing MediaMetadataRetriever", e)
+            }
+        }
+        return null
     }
 }

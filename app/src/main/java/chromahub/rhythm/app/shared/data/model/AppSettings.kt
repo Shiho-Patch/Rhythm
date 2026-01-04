@@ -90,6 +90,7 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_HIDDEN_LIBRARY_TABS = "hidden_library_tabs"
         private const val KEY_HIDDEN_PLAYER_CHIPS = "hidden_player_chips"
         private const val KEY_GROUP_BY_ALBUM_ARTIST = "group_by_album_artist" // New setting for album artist grouping
+        private const val KEY_IGNORE_MEDIASTORE_COVERS = "ignore_mediastore_covers" // Ignore Android MediaStore covers, read embedded art directly
         
         // Audio Device Settings
         private const val KEY_LAST_AUDIO_DEVICE = "last_audio_device"
@@ -535,6 +536,10 @@ class AppSettings private constructor(context: Context) {
     // Group By Album Artist
     private val _groupByAlbumArtist = MutableStateFlow(prefs.getBoolean(KEY_GROUP_BY_ALBUM_ARTIST, true)) // Default true for better organization
     val groupByAlbumArtist: StateFlow<Boolean> = _groupByAlbumArtist.asStateFlow()
+    
+    // Ignore MediaStore Covers - Read embedded album art directly
+    private val _ignoreMediaStoreCovers = MutableStateFlow(prefs.getBoolean(KEY_IGNORE_MEDIASTORE_COVERS, false))
+    val ignoreMediaStoreCovers: StateFlow<Boolean> = _ignoreMediaStoreCovers.asStateFlow()
     
     // Alphabet Bar Settings
     private val _showAlphabetBar = MutableStateFlow(prefs.getBoolean(KEY_SHOW_ALPHABET_BAR, false))
@@ -1266,6 +1271,11 @@ class AppSettings private constructor(context: Context) {
         _groupByAlbumArtist.value = enable
     }
     
+    fun setIgnoreMediaStoreCovers(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_IGNORE_MEDIASTORE_COVERS, enabled).apply()
+        _ignoreMediaStoreCovers.value = enabled
+    }
+    
     fun setShowAlphabetBar(show: Boolean) {
         prefs.edit().putBoolean(KEY_SHOW_ALPHABET_BAR, show).apply()
         _showAlphabetBar.value = show
@@ -1696,10 +1706,11 @@ class AppSettings private constructor(context: Context) {
 
     // Crash Reporting Methods
     fun setLastCrashLog(log: String?) {
+        // Use commit() instead of apply() to ensure immediate persistence for crash logs
         if (log == null) {
-            prefs.edit().remove(KEY_LAST_CRASH_LOG).apply()
+            prefs.edit().remove(KEY_LAST_CRASH_LOG).commit()
         } else {
-            prefs.edit().putString(KEY_LAST_CRASH_LOG, log).apply()
+            prefs.edit().putString(KEY_LAST_CRASH_LOG, log).commit()
         }
         _lastCrashLog.value = log
     }
@@ -1708,13 +1719,19 @@ class AppSettings private constructor(context: Context) {
         val currentHistory = _crashLogHistory.value.toMutableList()
         val newEntry = CrashLogEntry(System.currentTimeMillis(), log)
         currentHistory.add(0, newEntry) // Add to the beginning
-        // Keep only the last 8 crash logs to prevent excessive storage
+        // Keep only the last 6 crash logs to prevent excessive storage
         val limitedHistory = currentHistory.take(6)
         val json = Gson().toJson(limitedHistory)
         // Update in-memory state first for immediate UI feedback
         _crashLogHistory.value = limitedHistory
-        // Use apply() for async write to prevent ANR - crash logs don't need synchronous persistence
-        prefs.edit().putString(KEY_CRASH_LOG_HISTORY, json).apply()
+        // Use commit() instead of apply() for crash logs to ensure persistence before process exits
+        // This is critical - crash logs must be written synchronously or they'll be lost
+        try {
+            prefs.edit().putString(KEY_CRASH_LOG_HISTORY, json).commit()
+        } catch (e: Exception) {
+            // If commit fails (shouldn't happen), at least log it
+            Log.e("CrashLog", "Failed to persist crash log to SharedPreferences", e)
+        }
     }
 
     fun clearCrashLogHistory() {

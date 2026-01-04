@@ -115,6 +115,7 @@ import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.runtime.collectAsState
 import chromahub.rhythm.app.features.local.presentation.components.player.PlayingEqIcon
 import androidx.compose.ui.graphics.Color
+import androidx.room.util.copy
 
 // Playlist sort order enum
 enum class PlaylistSortOrder {
@@ -1052,10 +1053,13 @@ fun PlaylistDetailScreen(
             }
 
             LazyColumn(
-                state = listState, // Apply the list state
+                state = listState,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp) // Added horizontal padding to the content
+                    .padding(horizontal = 16.dp),
+                contentPadding = PaddingValues(
+                    bottom = (LocalMiniPlayerPadding.current.calculateBottomPadding() + 20.dp).coerceAtLeast(120.dp)
+                )
             ) {
             item { // Wrap playlist header in an item
                 // Enhanced Playlist header with better visual hierarchy
@@ -1553,7 +1557,7 @@ fun PlaylistDetailScreen(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(horizontal = 24.dp)
-                    .padding(bottom = if (LocalMiniPlayerPadding.current.calculateBottomPadding() >= UiConstants.MiniPlayerHeight) UiConstants.MiniPlayerHeight + 0.dp else 8.dp)
+                    .padding(bottom = if (LocalMiniPlayerPadding.current.calculateBottomPadding() > 0.dp) 40.dp else 44.dp)
                     .offset(y = barOffset)
                     .graphicsLayer { alpha = barAlpha },
                 shape = RoundedCornerShape(32.dp),

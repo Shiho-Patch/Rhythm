@@ -35,6 +35,8 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -97,6 +99,7 @@ import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -1395,17 +1398,18 @@ fun SearchBrowseContent(
                         color = MaterialTheme.colorScheme.onBackground,
                     )
                     
-                    FilledTonalButton(
+                    IconButton(
                         onClick = onClearSearchHistory,
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer
                         ),
-                        shape = RoundedCornerShape(16.dp),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                        modifier = Modifier.size(40.dp)
                     ) {
-                        Text(
-                            text = context.getString(R.string.search_clear),
-                            style = MaterialTheme.typography.labelMedium
+                        Icon(
+                            imageVector = Icons.Rounded.Delete,
+                            contentDescription = context.getString(R.string.search_clear),
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
@@ -2365,7 +2369,11 @@ private fun DefaultSearchContent(
                                 shape = RoundedCornerShape(12.dp),
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                             ) {
-                                Text("Clear", style = MaterialTheme.typography.labelMedium)
+                                Icon(
+                                    imageVector = Icons.Rounded.Delete,
+                                    contentDescription = "Clear",
+                                    modifier = Modifier.size(18.dp)
+                                )
                             }
                         }
                         
@@ -3259,9 +3267,11 @@ private fun SearchSongOptionsBottomSheet(
         tonalElevation = 0.dp
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
         ) {
-            // Header with song info
+            // Header with song info (fixed at top)
             AnimatedVisibility(
                 visible = showContent,
                 enter = fadeIn() + slideInVertically { it },
@@ -3270,125 +3280,143 @@ private fun SearchSongOptionsBottomSheet(
                 SongOptionsHeader(song = song)
             }
             
-            // Actions section with grid layout and scroll support
+            // Actions section with grid layout (wrapped in scrollable column)
             AnimatedVisibility(
                 visible = showContent,
                 enter = fadeIn() + slideInVertically { it },
                 exit = fadeOut() + slideOutVertically { it }
             ) {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .heightIn(max = 400.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(bottom = 16.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    item {
-                        SongOptionGridItem(
-                            icon = Icons.Rounded.SkipNext,
-                            text = "Play next",
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                onPlayNext()
-                            }
-                        )
+                    // Row 1: Play next, Add to queue
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            SongOptionGridItem(
+                                icon = Icons.Rounded.SkipNext,
+                                text = "Play next",
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    onPlayNext()
+                                }
+                            )
+                        }
+                        Box(modifier = Modifier.weight(1f)) {
+                            SongOptionGridItem(
+                                icon = RhythmIcons.Queue,
+                                text = "Add to queue",
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    onAddToQueue()
+                                }
+                            )
+                        }
                     }
                     
-                    item {
-                        SongOptionGridItem(
-                            icon = RhythmIcons.Queue,
-                            text = "Add to queue",
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                onAddToQueue()
-                            }
-                        )
+                    // Row 2: Add to playlist, Toggle favorite
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            SongOptionGridItem(
+                                icon = RhythmIcons.AddToPlaylist,
+                                text = "Add to playlist",
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    onAddToPlaylist()
+                                }
+                            )
+                        }
+                        Box(modifier = Modifier.weight(1f)) {
+                            SongOptionGridItem(
+                                icon = if (isFavorite) RhythmIcons.Favorite else Icons.Rounded.FavoriteBorder,
+                                text = if (isFavorite) "Remove from favorites" else "Add to favorites",
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                iconColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    onToggleFavorite()
+                                }
+                            )
+                        }
                     }
                     
-                    item {
-                        SongOptionGridItem(
-                            icon = RhythmIcons.AddToPlaylist,
-                            text = "Add to playlist",
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                onAddToPlaylist()
-                            }
-                        )
+                    // Row 3: Go to album, Go to artist
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            SongOptionGridItem(
+                                icon = RhythmIcons.Album,
+                                text = "Go to album",
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    onGoToAlbum()
+                                }
+                            )
+                        }
+                        Box(modifier = Modifier.weight(1f)) {
+                            SongOptionGridItem(
+                                icon = RhythmIcons.Artist,
+                                text = "Go to artist",
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    onGoToArtist()
+                                }
+                            )
+                        }
                     }
                     
-                    item {
-                        SongOptionGridItem(
-                            icon = if (isFavorite) RhythmIcons.Favorite else Icons.Rounded.FavoriteBorder,
-                            text = if (isFavorite) "Remove from favorites" else "Add to favorites",
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            iconColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                onToggleFavorite()
-                            }
-                        )
+                    // Row 4: Song info, Add to blacklist
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            SongOptionGridItem(
+                                icon = Icons.Rounded.Info,
+                                text = "Song info",
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    onShowSongInfo()
+                                }
+                            )
+                        }
+                        Box(modifier = Modifier.weight(1f)) {
+                            SongOptionGridItem(
+                                icon = Icons.Rounded.Block,
+                                text = "Add to blacklist",
+                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                iconColor = MaterialTheme.colorScheme.error,
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    onAddToBlacklist()
+                                }
+                            )
+                        }
                     }
                     
-                    item {
-                        SongOptionGridItem(
-                            icon = RhythmIcons.Album,
-                            text = "Go to album",
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                onGoToAlbum()
-                            }
-                        )
-                    }
-                    
-                    item {
-                        SongOptionGridItem(
-                            icon = RhythmIcons.Artist,
-                            text = "Go to artist",
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                onGoToArtist()
-                            }
-                        )
-                    }
-                    
-                    item {
-                        SongOptionGridItem(
-                            icon = Icons.Rounded.Info,
-                            text = "Song info",
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                onShowSongInfo()
-                            }
-                        )
-                    }
-                    
-                    item {
-                        SongOptionGridItem(
-                            icon = Icons.Rounded.Block,
-                            text = "Add to blacklist",
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                            iconColor = MaterialTheme.colorScheme.error,
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                onAddToBlacklist()
-                            }
-                        )
-                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         }

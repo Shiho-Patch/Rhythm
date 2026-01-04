@@ -654,10 +654,23 @@ class MusicRepository(context: Context) {
                 id
             )
 
-            val albumArtUri = ContentUris.withAppendedId(
-                Uri.parse("content://media/external/audio/albumart"),
-                albumId
-            )
+            // Determine album art URI based on user preference
+            val ignoreMediaStoreCovers = appSettings.ignoreMediaStoreCovers.value
+            
+            val albumArtUri = if (ignoreMediaStoreCovers) {
+                // Extract embedded album art directly from file
+                chromahub.rhythm.app.util.MediaUtils.extractEmbeddedAlbumArt(context, contentUri, context.cacheDir)
+                    ?: ContentUris.withAppendedId(
+                        Uri.parse("content://media/external/audio/albumart"),
+                        albumId
+                    ) // Fallback to MediaStore if no embedded art
+            } else {
+                // Use MediaStore album art (default behavior)
+                ContentUris.withAppendedId(
+                    Uri.parse("content://media/external/audio/albumart"),
+                    albumId
+                )
+            }
 
             // Load cached genre if available
             val cachedGenre = try {
@@ -1073,13 +1086,16 @@ class MusicRepository(context: Context) {
                 val songsCount = cursor.getInt(songsCountColumn)
                 val year = cursor.getInt(yearColumn)
 
-                val albumArtUri = ContentUris.withAppendedId(
-                    Uri.parse("content://media/external/audio/albumart"),
-                    id
-                )
-
                 // Get songs for this album from the pre-loaded map
                 val albumSongs = songsByAlbumTitle[title] ?: emptyList()
+                
+                // Use album art from the first song in the album if available
+                // This ensures consistency with the song's album art (whether embedded or from MediaStore)
+                val albumArtUri = albumSongs.firstOrNull()?.artworkUri 
+                    ?: ContentUris.withAppendedId(
+                        Uri.parse("content://media/external/audio/albumart"),
+                        id
+                    )
 
                 val album = Album(
                     id = id.toString(),

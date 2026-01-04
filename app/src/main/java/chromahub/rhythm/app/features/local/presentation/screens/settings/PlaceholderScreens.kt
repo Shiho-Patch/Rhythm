@@ -3517,7 +3517,7 @@ fun AboutScreen(
                             Image(
                                 painter = painterResource(id = chromahub.rhythm.app.R.drawable.rhythm_splash_logo),
                                 contentDescription = "Rhythm Logo",
-                                modifier = Modifier.size(92.dp)
+                                modifier = Modifier.size(82.dp)
                             )
                             Spacer(modifier = Modifier.width(2.dp))
                             Text(
@@ -5320,6 +5320,7 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
     val appSettings = AppSettings.getInstance(context)
     val hapticFeedbackEnabled by appSettings.hapticFeedbackEnabled.collectAsState()
     val showLyrics by appSettings.showLyrics.collectAsState()
+    val ignoreMediaStoreCovers by appSettings.ignoreMediaStoreCovers.collectAsState()
     val festiveThemeEnabled by appSettings.festiveThemeEnabled.collectAsState()
     val festiveThemeAutoDetect by appSettings.festiveThemeAutoDetect.collectAsState()
     val festiveThemeIntensity by appSettings.festiveThemeIntensity.collectAsState()
@@ -5409,6 +5410,24 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                     )
                 )
             )
+            
+            // Album Art Extraction (Local mode only)
+            if (appMode == "LOCAL") {
+                add(
+                    SettingGroup(
+                        title = "Album Art",
+                        items = listOf(
+                            SettingItem(
+                                chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons.Album,
+                                context.getString(chromahub.rhythm.app.R.string.settings_ignore_mediastore_covers),
+                                context.getString(chromahub.rhythm.app.R.string.settings_ignore_mediastore_covers_desc),
+                                toggleState = ignoreMediaStoreCovers,
+                                onToggleChange = { appSettings.setIgnoreMediaStoreCovers(it) }
+                            )
+                        )
+                    )
+                )
+            }
             
             if (festiveItems.isNotEmpty()) {
                 add(

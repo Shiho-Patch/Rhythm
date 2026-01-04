@@ -187,6 +187,7 @@ fun SettingsScreen(
     val useSystemVolume by appSettings.useSystemVolume.collectAsState()
     val showLyrics by appSettings.showLyrics.collectAsState()
     val groupByAlbumArtist by appSettings.groupByAlbumArtist.collectAsState()
+    val ignoreMediaStoreCovers by appSettings.ignoreMediaStoreCovers.collectAsState()
     val defaultScreen by appSettings.defaultScreen.collectAsState()
     val showAlphabetBar by appSettings.showAlphabetBar.collectAsState()
     val showScrollToTop by appSettings.showScrollToTop.collectAsState()
