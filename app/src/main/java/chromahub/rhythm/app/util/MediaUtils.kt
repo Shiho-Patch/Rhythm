@@ -18,7 +18,7 @@ import org.jaudiotagger.audio.AudioFileIO
 import org.jaudiotagger.tag.FieldKey
 import org.jaudiotagger.tag.Tag
 import androidx.core.net.toUri
-import chromahub.rhythm.app.data.Song
+import chromahub.rhythm.app.shared.data.model.Song
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.ExtendedSongInfo
 import java.io.File
 import java.io.FileOutputStream
@@ -128,7 +128,7 @@ object MediaUtils {
                     
                     // Parse multiple artists from the artist string
                     val rawArtist = cursor.getString(artistIndex)
-                    val appSettings = chromahub.rhythm.app.data.AppSettings.getInstance(context)
+                    val appSettings = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context)
                     val artistSeparatorEnabled = appSettings.artistSeparatorEnabled.value
                     val delimiters = appSettings.artistSeparatorDelimiters.value
                     val artist = ArtistSeparator.getPrimaryArtist(rawArtist, delimiters, artistSeparatorEnabled)
@@ -243,7 +243,7 @@ object MediaUtils {
                 
                 // Parse multiple artists from the artist string using configured delimiters
                 val rawArtist = extractedArtist ?: "Unknown Artist"
-                val appSettings = chromahub.rhythm.app.data.AppSettings.getInstance(context)
+                val appSettings = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context)
                 val artistSeparatorEnabled = appSettings.artistSeparatorEnabled.value
                 val delimiters = appSettings.artistSeparatorDelimiters.value
                 

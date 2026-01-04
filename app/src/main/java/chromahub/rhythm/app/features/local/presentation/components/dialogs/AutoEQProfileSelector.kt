@@ -63,7 +63,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import chromahub.rhythm.app.data.AutoEQProfile
+import chromahub.rhythm.app.shared.data.model.AutoEQProfile
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import kotlinx.coroutines.delay

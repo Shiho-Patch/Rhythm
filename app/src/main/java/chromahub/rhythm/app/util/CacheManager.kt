@@ -174,7 +174,7 @@ object CacheManager {
     suspend fun clearAllCache(
         context: Context, 
         imageLoader: ImageLoader? = null,
-        canvasRepository: chromahub.rhythm.app.data.CanvasRepository? = null
+        canvasRepository: chromahub.rhythm.app.shared.data.model.CanvasRepository? = null
     ) = withContext(Dispatchers.IO) {
         try {
             Log.d(TAG, "Starting cache cleanup...")
@@ -279,7 +279,7 @@ object CacheManager {
      */
     suspend fun getCacheSize(
         context: Context, 
-        canvasRepository: chromahub.rhythm.app.data.CanvasRepository? = null
+        canvasRepository: chromahub.rhythm.app.shared.data.model.CanvasRepository? = null
     ): Long = withContext(Dispatchers.IO) {
         var totalSize = 0L
         
@@ -313,7 +313,7 @@ object CacheManager {
      */
     suspend fun getDetailedCacheSize(
         context: Context,
-        canvasRepository: chromahub.rhythm.app.data.CanvasRepository? = null
+        canvasRepository: chromahub.rhythm.app.shared.data.model.CanvasRepository? = null
     ): Map<String, Long> = withContext(Dispatchers.IO) {
         val details = mutableMapOf<String, Long>()
         

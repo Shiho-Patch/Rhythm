@@ -76,26 +76,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import chromahub.rhythm.app.BuildConfig
-import chromahub.rhythm.app.data.AppSettings
-import chromahub.rhythm.app.data.Playlist
-import chromahub.rhythm.app.data.Song
+import chromahub.rhythm.app.shared.data.model.AppSettings
+import chromahub.rhythm.app.shared.data.model.Playlist
+import chromahub.rhythm.app.shared.data.model.Song
 import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import kotlin.system.exitProcess
-import chromahub.rhythm.app.features.local.presentation.components.common.CollapsibleHeaderScreen
-import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
+import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
+import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.StandardBottomSheetHeader
-import chromahub.rhythm.app.features.local.presentation.components.common.StyledProgressBar
-import chromahub.rhythm.app.features.local.presentation.components.common.CircularStyledProgressBar
-import chromahub.rhythm.app.features.local.presentation.components.common.ProgressStyle
-import chromahub.rhythm.app.features.local.presentation.components.common.ThumbStyle
+import chromahub.rhythm.app.shared.presentation.components.common.StyledProgressBar
+import chromahub.rhythm.app.shared.presentation.components.common.CircularStyledProgressBar
+import chromahub.rhythm.app.shared.presentation.components.common.ProgressStyle
+import chromahub.rhythm.app.shared.presentation.components.common.ThumbStyle
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.LicensesBottomSheet
 import chromahub.rhythm.app.ui.utils.LazyListStateSaver
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
-import chromahub.rhythm.app.viewmodel.AppUpdaterViewModel
+import chromahub.rhythm.app.shared.presentation.viewmodel.AppUpdaterViewModel
 import chromahub.rhythm.app.ui.theme.getFontPreviewStyle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -112,8 +112,8 @@ import android.widget.TextView
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.core.text.HtmlCompat
-import chromahub.rhythm.app.features.local.presentation.components.common.M3CircularWaveProgressIndicator
-import chromahub.rhythm.app.features.local.presentation.components.common.M3FourColorCircularLoader
+import chromahub.rhythm.app.shared.presentation.components.common.M3CircularWaveProgressIndicator
+import chromahub.rhythm.app.shared.presentation.components.common.M3FourColorCircularLoader
 import chromahub.rhythm.app.features.local.presentation.components.player.PlayingEqIcon
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.BulkPlaylistExportDialog
@@ -3363,7 +3363,7 @@ fun SpotifyApiConfigDialog(
                                     appSettings.setSpotifyClientSecret(clientSecret)
 
                                     val canvasRepository =
-                                        chromahub.rhythm.app.data.CanvasRepository(
+                                        chromahub.rhythm.app.shared.data.model.CanvasRepository(
                                             context,
                                             appSettings
                                         )
@@ -6300,17 +6300,17 @@ fun LyricsSourceDialog(
 
             // Options
             val sourceOptions = listOf(
-                chromahub.rhythm.app.data.LyricsSourcePreference.EMBEDDED_FIRST to Triple(
+                chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.EMBEDDED_FIRST to Triple(
                     "Embedded First",
                     "Try audio file metadata → Online APIs → .lrc files",
                     Icons.Default.MusicNote
                 ),
-                chromahub.rhythm.app.data.LyricsSourcePreference.API_FIRST to Triple(
+                chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.API_FIRST to Triple(
                     "API First",
                     "Try online services → Audio metadata → .lrc files",
                     Icons.Default.CloudDownload
                 ),
-                chromahub.rhythm.app.data.LyricsSourcePreference.LOCAL_FIRST to Triple(
+                chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.LOCAL_FIRST to Triple(
                     "Local .lrc First",
                     "Try .lrc files → Audio metadata → Online APIs",
                     Icons.Default.Folder
@@ -6444,7 +6444,7 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
 
     // Canvas repository for cache management
     val canvasRepository = remember {
-        chromahub.rhythm.app.data.CanvasRepository(context, appSettings)
+        chromahub.rhythm.app.shared.data.model.CanvasRepository(context, appSettings)
     }
 
     // Calculate cache size when the screen opens
@@ -11899,7 +11899,7 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
                                 if (!enabled) {
                                     scope.launch {
                                         try {
-                                            val canvasRepository = chromahub.rhythm.app.data.CanvasRepository(context, appSettings)
+                                            val canvasRepository = chromahub.rhythm.app.shared.data.model.CanvasRepository(context, appSettings)
                                             canvasRepository.clearCache()
                                             Log.d("ApiManagement", "Canvas cache cleared due to API being disabled")
                                         } catch (e: Exception) {
@@ -12295,7 +12295,7 @@ fun CrashLogHistorySettingsScreen(onBackClick: () -> Unit, appSettings: AppSetti
 }
 
 @Composable
-private fun CrashLogEntryCard(entry: chromahub.rhythm.app.data.CrashLogEntry, onClick: () -> Unit) {
+private fun CrashLogEntryCard(entry: chromahub.rhythm.app.shared.data.model.CrashLogEntry, onClick: () -> Unit) {
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()) }
 
     Row(
@@ -12432,18 +12432,18 @@ fun LyricsSourceSettingsScreen(onBackClick: () -> Unit) {
                 )
             }
 
-            val sourceOptions = listOf<Pair<chromahub.rhythm.app.data.LyricsSourcePreference, Triple<String, String, androidx.compose.ui.graphics.vector.ImageVector>>>(
-                chromahub.rhythm.app.data.LyricsSourcePreference.EMBEDDED_FIRST to Triple(
+            val sourceOptions = listOf<Pair<chromahub.rhythm.app.shared.data.model.LyricsSourcePreference, Triple<String, String, androidx.compose.ui.graphics.vector.ImageVector>>>(
+                chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.EMBEDDED_FIRST to Triple(
                     "Embedded First",
                     "Prefer lyrics embedded in audio files, fallback to online APIs",
                     Icons.Default.MusicNote
                 ),
-                chromahub.rhythm.app.data.LyricsSourcePreference.API_FIRST to Triple(
+                chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.API_FIRST to Triple(
                     "Online First",
                     "Prefer online APIs (Apple Music, LRCLib), fallback to embedded",
                     Icons.Default.CloudQueue
                 ),
-                chromahub.rhythm.app.data.LyricsSourcePreference.LOCAL_FIRST to Triple(
+                chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.LOCAL_FIRST to Triple(
                     "Local First",
                     "Prefer local .lrc files, then embedded lyrics, then online APIs",
                     Icons.Default.Storage

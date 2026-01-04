@@ -56,12 +56,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import chromahub.rhythm.app.R
-import chromahub.rhythm.app.data.Song
-import chromahub.rhythm.app.data.AppSettings
-import chromahub.rhythm.app.features.local.presentation.components.common.M3PlaceholderType
-import chromahub.rhythm.app.features.local.presentation.components.common.SimpleCircularLoader
+import chromahub.rhythm.app.shared.data.model.Song
+import chromahub.rhythm.app.shared.data.model.AppSettings
+import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
+import chromahub.rhythm.app.shared.presentation.components.common.SimpleCircularLoader
 import chromahub.rhythm.app.features.local.presentation.components.player.formatDuration
-import chromahub.rhythm.app.features.local.presentation.components.common.MarqueeText
+import chromahub.rhythm.app.shared.presentation.components.common.MarqueeText
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.util.MediaUtils
 import chromahub.rhythm.app.util.HapticUtils

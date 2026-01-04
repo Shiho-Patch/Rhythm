@@ -78,14 +78,14 @@ import androidx.compose.ui.util.lerp
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.sp
 import chromahub.rhythm.app.R
-import chromahub.rhythm.app.data.Playlist
-import chromahub.rhythm.app.data.Song
+import chromahub.rhythm.app.shared.data.model.Playlist
+import chromahub.rhythm.app.shared.data.model.Song
 import chromahub.rhythm.app.features.local.presentation.components.player.MiniPlayer
-import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
-import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons.Search
+import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
+import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons.Search
 import chromahub.rhythm.app.ui.LocalMiniPlayerPadding
 import chromahub.rhythm.app.ui.UiConstants
-import chromahub.rhythm.app.features.local.presentation.components.common.CollapsibleHeaderScreen
+import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistExportDialog
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistImportDialog
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistOperationProgressDialog
@@ -94,7 +94,7 @@ import chromahub.rhythm.app.util.PlaylistImportExportUtils
 import android.net.Uri
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import chromahub.rhythm.app.features.local.presentation.components.common.M3PlaceholderType
+import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.features.local.presentation.components.player.formatDuration
@@ -177,7 +177,7 @@ fun PlaylistDetailScreen(
 
     val haptics = LocalHapticFeedback.current
     val context = LocalContext.current
-    val appSettings = remember { chromahub.rhythm.app.data.AppSettings.getInstance(context) }
+    val appSettings = remember { chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context) }
     val playlistClickBehavior by appSettings.playlistClickBehavior.collectAsState(initial = "ask")
     val useHoursFormat by appSettings.useHoursInTimeFormat.collectAsState()
 

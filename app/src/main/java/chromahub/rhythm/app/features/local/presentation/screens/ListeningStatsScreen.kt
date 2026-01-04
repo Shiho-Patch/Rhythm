@@ -46,10 +46,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import chromahub.rhythm.app.data.stats.PlaybackStatsRepository
-import chromahub.rhythm.app.data.stats.StatsTimeRange
-import chromahub.rhythm.app.features.local.presentation.components.common.CollapsibleHeaderScreen
-import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
+import chromahub.rhythm.app.shared.data.model.PlaybackStatsRepository
+import chromahub.rhythm.app.shared.data.model.StatsTimeRange
+import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
+import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import chromahub.rhythm.app.R

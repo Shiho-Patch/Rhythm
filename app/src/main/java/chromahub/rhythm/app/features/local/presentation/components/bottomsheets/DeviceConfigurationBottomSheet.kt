@@ -102,8 +102,8 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import chromahub.rhythm.app.data.AutoEQProfile
-import chromahub.rhythm.app.data.UserAudioDevice
+import chromahub.rhythm.app.shared.data.model.AutoEQProfile
+import chromahub.rhythm.app.shared.data.model.UserAudioDevice
 import chromahub.rhythm.app.util.AutoEQImportExport
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel

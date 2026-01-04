@@ -137,4 +137,6 @@ class StreamingMusicRepositoryImpl : StreamingMusicRepository {
     override suspend fun getArtistById(id: String): ArtistItem? = null
     
     override suspend fun getPlaylistById(id: String): PlaylistItem? = null
+    
+    override suspend fun getSongsForAlbum(albumId: String): List<PlayableItem> = emptyList()
 }

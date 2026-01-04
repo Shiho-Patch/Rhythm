@@ -120,11 +120,11 @@ import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.WindowHeightSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
-import chromahub.rhythm.app.features.local.presentation.components.common.CollapsibleHeaderScreen
+import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
 import chromahub.rhythm.app.ui.theme.festive.FestiveConfig
 import chromahub.rhythm.app.ui.theme.festive.FestiveThemeEngine
 import chromahub.rhythm.app.ui.theme.festive.FestiveThemeType
-import chromahub.rhythm.app.data.AppSettings
+import chromahub.rhythm.app.shared.data.model.AppSettings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -160,20 +160,20 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import chromahub.rhythm.app.util.performIfEnabled
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.R
-import chromahub.rhythm.app.data.Album
-import chromahub.rhythm.app.data.Artist
-import chromahub.rhythm.app.data.Song
+import chromahub.rhythm.app.shared.data.model.Album
+import chromahub.rhythm.app.shared.data.model.Artist
+import chromahub.rhythm.app.shared.data.model.Song
 import chromahub.rhythm.app.features.local.presentation.components.player.MiniPlayer
-import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
+import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.features.local.presentation.components.settings.HomeSectionOrderBottomSheet
-import chromahub.rhythm.app.features.local.presentation.components.common.M3PlaceholderType
+import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.ArtistBottomSheet
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AlbumBottomSheet
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AddToPlaylistBottomSheet
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.SongInfoBottomSheet
 import chromahub.rhythm.app.util.ImageUtils
-import chromahub.rhythm.app.viewmodel.AppUpdaterViewModel
-import chromahub.rhythm.app.viewmodel.AppVersion
+import chromahub.rhythm.app.shared.presentation.viewmodel.AppUpdaterViewModel
+import chromahub.rhythm.app.shared.presentation.viewmodel.AppVersion
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AddToPlaylistBottomSheet
@@ -987,7 +987,7 @@ private fun ModernScrollableContent(
                                         onPlayAll = {
                                             coroutineScope.launch {
                                                 val allNewReleaseSongs = newReleases.flatMap { album ->
-                                                    musicViewModel.getMusicRepository().getSongsForAlbum(album.id)
+                                                    musicViewModel.getMusicRepository().getSongsForAlbumLocal(album.id)
                                                 }
                                                 if (allNewReleaseSongs.isNotEmpty()) {
                                                     musicViewModel.playQueue(allNewReleaseSongs)
@@ -997,7 +997,7 @@ private fun ModernScrollableContent(
                                         onShufflePlay = {
                                             coroutineScope.launch {
                                                 val allNewReleaseSongs = newReleases.flatMap { album ->
-                                                    musicViewModel.getMusicRepository().getSongsForAlbum(album.id)
+                                                    musicViewModel.getMusicRepository().getSongsForAlbumLocal(album.id)
                                                 }
                                                 if (allNewReleaseSongs.isNotEmpty()) {
                                                     musicViewModel.playShuffled(allNewReleaseSongs)
@@ -2442,10 +2442,10 @@ private fun ModernListeningStatsSection(
     val songs by viewModel.songs.collectAsState()
 
     // Load stats from PlaybackStatsRepository (matching ListeningStatsScreen)
-    var statsSummary by remember { mutableStateOf<chromahub.rhythm.app.data.stats.PlaybackStatsRepository.PlaybackStatsSummary?>(null) }
+    var statsSummary by remember { mutableStateOf<chromahub.rhythm.app.shared.data.model.PlaybackStatsRepository.PlaybackStatsSummary?>(null) }
     
     LaunchedEffect(songs) {
-        statsSummary = viewModel.loadPlaybackStats(chromahub.rhythm.app.data.stats.StatsTimeRange.ALL_TIME)
+        statsSummary = viewModel.loadPlaybackStats(chromahub.rhythm.app.shared.data.model.StatsTimeRange.ALL_TIME)
     }
 
     val listeningTimeHours = remember(statsSummary) {
@@ -2458,7 +2458,7 @@ private fun ModernListeningStatsSection(
         (statsSummary?.totalPlayCount ?: 0).toString()
     }
 
-    val uniqueArtists = remember(statsSummary) {
+    val uniqueArtistsCount = remember(statsSummary) {
         (statsSummary?.uniqueArtists ?: 0).toString()
     }
 
@@ -2547,7 +2547,7 @@ private fun ModernListeningStatsSection(
                 
                 EnhancedStatItem(
                     modifier = Modifier.weight(1f),
-                    value = uniqueArtists,
+                    value = uniqueArtistsCount,
                     label = context.getString(R.string.home_stat_artists),
                     icon = RhythmIcons.Artist,
                     accentColor = MaterialTheme.colorScheme.tertiary

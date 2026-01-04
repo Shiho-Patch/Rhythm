@@ -22,7 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.vector.ImageVector
-import chromahub.rhythm.app.data.Song
+import chromahub.rhythm.app.shared.data.model.Song
 import chromahub.rhythm.app.util.AudioQualityDetector
 import chromahub.rhythm.app.util.AudioFormatDetector
 import kotlinx.coroutines.Dispatchers

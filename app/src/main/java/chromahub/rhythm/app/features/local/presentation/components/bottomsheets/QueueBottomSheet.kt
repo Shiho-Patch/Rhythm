@@ -84,10 +84,10 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.rounded.Collections
 import androidx.compose.material.icons.rounded.VideoLibrary
 import chromahub.rhythm.app.R
-import chromahub.rhythm.app.data.Song
-import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
-import chromahub.rhythm.app.features.local.presentation.components.common.M3PlaceholderType
-import chromahub.rhythm.app.features.local.presentation.components.common.DragDropLazyColumn
+import chromahub.rhythm.app.shared.data.model.Song
+import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
+import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
+import chromahub.rhythm.app.shared.presentation.components.common.DragDropLazyColumn
 import chromahub.rhythm.app.util.ImageUtils
 import kotlin.collections.IndexedValue
 

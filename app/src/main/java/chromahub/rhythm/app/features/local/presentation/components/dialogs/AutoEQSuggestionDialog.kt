@@ -44,7 +44,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import chromahub.rhythm.app.data.UserAudioDevice
+import chromahub.rhythm.app.shared.data.model.UserAudioDevice
 import chromahub.rhythm.app.util.HapticUtils
 
 /**

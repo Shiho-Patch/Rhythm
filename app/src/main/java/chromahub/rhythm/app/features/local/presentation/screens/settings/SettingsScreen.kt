@@ -103,10 +103,10 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import chromahub.rhythm.app.R
-import chromahub.rhythm.app.features.local.presentation.components.common.CollapsibleHeaderScreen
-import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
+import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
+import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.ui.utils.LazyListStateSaver
-import chromahub.rhythm.app.data.AppSettings
+import chromahub.rhythm.app.shared.data.model.AppSettings
 import chromahub.rhythm.app.features.local.presentation.components.settings.LanguageSwitcherDialog
 import android.content.Context
 import androidx.compose.animation.animateColorAsState
@@ -806,7 +806,7 @@ fun SettingsScreenPreview() {
 @Composable
 fun SettingsScreenWrapper(
     onBack: () -> Unit,
-    appSettings: chromahub.rhythm.app.data.AppSettings,
+    appSettings: chromahub.rhythm.app.shared.data.model.AppSettings,
     navController: androidx.navigation.NavController
 ) {
     val configuration = LocalConfiguration.current

@@ -29,12 +29,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import chromahub.rhythm.app.data.AppSettings
-import chromahub.rhythm.app.features.local.presentation.components.common.M3FourColorCircularLoader
+import chromahub.rhythm.app.shared.data.model.AppSettings
+import chromahub.rhythm.app.shared.presentation.components.common.M3FourColorCircularLoader
 import chromahub.rhythm.app.features.local.presentation.screens.onboarding.OnboardingStep
 import chromahub.rhythm.app.features.local.presentation.screens.onboarding.PermissionScreenState
 import chromahub.rhythm.app.features.local.presentation.screens.OnboardingScreen
-import chromahub.rhythm.app.viewmodel.ThemeViewModel
+import chromahub.rhythm.app.shared.presentation.viewmodel.ThemeViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
@@ -42,7 +42,7 @@ import com.google.accompanist.permissions.shouldShowRationale
 import kotlinx.coroutines.delay
 import androidx.lifecycle.viewmodel.compose.viewModel
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
-import chromahub.rhythm.app.viewmodel.AppUpdaterViewModel
+import chromahub.rhythm.app.shared.presentation.viewmodel.AppUpdaterViewModel
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 
@@ -155,8 +155,8 @@ fun PermissionHandler(
                     showMediaScanLoader = true
                 }
                 onSetIsInitializingApp(true) // Start app initialization
-                val intent = Intent(context, chromahub.rhythm.app.service.MediaPlaybackService::class.java)
-                intent.action = chromahub.rhythm.app.service.MediaPlaybackService.ACTION_INIT_SERVICE
+                val intent = Intent(context, chromahub.rhythm.app.infrastructure.service.MediaPlaybackService::class.java)
+                intent.action = chromahub.rhythm.app.infrastructure.service.MediaPlaybackService.ACTION_INIT_SERVICE
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     context.startForegroundService(intent)
                 } else {

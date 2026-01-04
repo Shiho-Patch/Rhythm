@@ -127,18 +127,19 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import chromahub.rhythm.app.R
-import chromahub.rhythm.app.data.AppSettings
-import chromahub.rhythm.app.features.local.presentation.components.common.M3LinearLoader
-import chromahub.rhythm.app.features.local.presentation.components.common.M3FourColorCircularLoader
-import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
+import chromahub.rhythm.app.shared.data.model.AppSettings
+import chromahub.rhythm.app.shared.presentation.components.common.M3LinearLoader
+import chromahub.rhythm.app.shared.presentation.components.common.M3FourColorCircularLoader
+import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.features.local.presentation.components.settings.LanguageSwitcherDialog
 import chromahub.rhythm.app.features.local.presentation.components.settings.LibraryTabOrderBottomSheet
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.BackupRestoreBottomSheet
 import chromahub.rhythm.app.features.local.presentation.screens.onboarding.OnboardingStep
 import chromahub.rhythm.app.features.local.presentation.screens.onboarding.PermissionScreenState
-import chromahub.rhythm.app.viewmodel.AppUpdaterViewModel
+import chromahub.rhythm.app.shared.presentation.viewmodel.AppUpdaterViewModel
+import chromahub.rhythm.app.shared.presentation.viewmodel.AppVersion
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
-import chromahub.rhythm.app.viewmodel.ThemeViewModel
+import chromahub.rhythm.app.shared.presentation.viewmodel.ThemeViewModel
 import chromahub.rhythm.app.util.HapticUtils
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -2909,9 +2910,9 @@ fun EnhancedAudioPlaybackContent(
                             description = context.getString(R.string.onboarding_lyrics_source_desc),
                             selectedOption = lyricsSourcePreference.displayName,
                             icon = Icons.Filled.Cloud,
-                            options = chromahub.rhythm.app.data.LyricsSourcePreference.values().map { it.displayName },
+                            options = chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.values().map { it.displayName },
                             onOptionSelected = { displayName ->
-                                val preference = chromahub.rhythm.app.data.LyricsSourcePreference.values()
+                                val preference = chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.values()
                                     .find { it.displayName == displayName }
                                 if (preference != null) {
                                     appSettings.setLyricsSourcePreference(preference)
@@ -3097,9 +3098,9 @@ fun EnhancedAudioPlaybackContent(
                             description = context.getString(R.string.onboarding_lyrics_source_desc),
                             selectedOption = lyricsSourcePreference.displayName,
                             icon = Icons.Filled.Cloud,
-                            options = chromahub.rhythm.app.data.LyricsSourcePreference.values().map { it.displayName },
+                            options = chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.values().map { it.displayName },
                             onOptionSelected = { displayName ->
-                                val preference = chromahub.rhythm.app.data.LyricsSourcePreference.values()
+                                val preference = chromahub.rhythm.app.shared.data.model.LyricsSourcePreference.values()
                                     .find { it.displayName == displayName }
                                 if (preference != null) {
                                     appSettings.setLyricsSourcePreference(preference)
@@ -6236,7 +6237,7 @@ private fun OnboardingExpressiveUpdateStatus(
     downloadedFile: java.io.File?,
     error: String?,
     updateAvailable: Boolean,
-    latestVersion: chromahub.rhythm.app.viewmodel.AppVersion?,
+    latestVersion: AppVersion?,
     updaterViewModel: AppUpdaterViewModel,
     successScale: Animatable<Float, AnimationVector1D>,
     onDownload: () -> Unit,

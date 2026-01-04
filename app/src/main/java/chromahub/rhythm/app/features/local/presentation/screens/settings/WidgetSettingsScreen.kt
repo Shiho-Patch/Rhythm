@@ -23,8 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import chromahub.rhythm.app.data.AppSettings
-import chromahub.rhythm.app.features.local.presentation.components.common.CollapsibleHeaderScreen
+import chromahub.rhythm.app.shared.data.model.AppSettings
+import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.widget.MusicWidgetProvider
 import chromahub.rhythm.app.widget.glance.RhythmWidgetReceiver

@@ -80,10 +80,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.delay
 import chromahub.rhythm.app.R
-import chromahub.rhythm.app.data.PlaybackLocation
-import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
-import chromahub.rhythm.app.data.AppSettings
-import chromahub.rhythm.app.data.LyricsSourcePreference
+import chromahub.rhythm.app.shared.data.model.PlaybackLocation
+import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
+import chromahub.rhythm.app.shared.data.model.AppSettings
+import chromahub.rhythm.app.shared.data.model.LyricsSourcePreference
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.AutoEQSuggestionDialog
@@ -119,7 +119,7 @@ fun PlaybackBottomSheet(
     
     // AutoEQ Suggestion Dialog state
     var showAutoEQSuggestion by remember { mutableStateOf(false) }
-    var detectedDevice by remember { mutableStateOf<chromahub.rhythm.app.data.UserAudioDevice?>(null) }
+    var detectedDevice by remember { mutableStateOf<chromahub.rhythm.app.shared.data.model.UserAudioDevice?>(null) }
     var showDeviceConfig by remember { mutableStateOf(false) }
     
     // Collect settings

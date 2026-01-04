@@ -156,19 +156,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.painterResource
 import chromahub.rhythm.app.R
-import chromahub.rhythm.app.data.PlaybackLocation
-import chromahub.rhythm.app.data.Playlist
-import chromahub.rhythm.app.data.Song
-import chromahub.rhythm.app.features.local.presentation.components.common.WaveSlider
-import chromahub.rhythm.app.features.local.presentation.components.common.StyledProgressBar
-import chromahub.rhythm.app.features.local.presentation.components.common.ProgressStyle
-import chromahub.rhythm.app.features.local.presentation.components.common.ThumbStyle
-import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
-import chromahub.rhythm.app.features.local.presentation.components.common.AutoScrollingTextOnDemand
+import chromahub.rhythm.app.shared.data.model.PlaybackLocation
+import chromahub.rhythm.app.shared.data.model.Playlist
+import chromahub.rhythm.app.shared.data.model.Song
+import chromahub.rhythm.app.shared.presentation.components.common.WaveSlider
+import chromahub.rhythm.app.shared.presentation.components.common.StyledProgressBar
+import chromahub.rhythm.app.shared.presentation.components.common.ProgressStyle
+import chromahub.rhythm.app.shared.presentation.components.common.ThumbStyle
+import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
+import chromahub.rhythm.app.shared.presentation.components.common.AutoScrollingTextOnDemand
 import chromahub.rhythm.app.features.local.presentation.components.player.PlayingEqIcon
-import chromahub.rhythm.app.features.local.presentation.components.common.ShimmerBox
+import chromahub.rhythm.app.shared.presentation.components.common.ShimmerBox
 import chromahub.rhythm.app.ui.theme.PlayerButtonColor
-// import chromahub.rhythm.app.features.local.presentation.components.common.M3PlaceholderType
+// import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.util.HapticUtils
 import coil.compose.AsyncImage
@@ -177,7 +177,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
 import kotlin.math.abs
-import chromahub.rhythm.app.features.local.presentation.components.common.M3CircularLoader
+import chromahub.rhythm.app.shared.presentation.components.common.M3CircularLoader
 import android.view.animation.OvershootInterpolator
 import chromahub.rhythm.app.features.local.presentation.components.player.SleepTimerBottomSheetNew
 import chromahub.rhythm.app.features.local.presentation.components.lyrics.SyncedLyricsView
@@ -187,7 +187,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.material.icons.rounded.AccessTime
 import chromahub.rhythm.app.features.local.presentation.components.player.formatDuration
 import java.util.concurrent.TimeUnit // Import TimeUnit for duration formatting
-import chromahub.rhythm.app.features.local.presentation.components.common.M3CircularLoader // Added for play/pause button loader
+import chromahub.rhythm.app.shared.presentation.components.common.M3CircularLoader // Added for play/pause button loader
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.QueueBottomSheet
 import chromahub.rhythm.app.features.local.presentation.screens.LibraryTab
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AddToPlaylistBottomSheet
@@ -200,10 +200,10 @@ import chromahub.rhythm.app.features.local.presentation.components.lyrics.Lyrics
 import chromahub.rhythm.app.shared.presentation.components.AudioQualityBadges
 import chromahub.rhythm.app.util.MediaUtils
 import chromahub.rhythm.app.features.local.presentation.components.player.CanvasPlayer
-import chromahub.rhythm.app.data.CanvasRepository
-import chromahub.rhythm.app.data.CanvasData
-import chromahub.rhythm.app.data.Album
-import chromahub.rhythm.app.data.Artist
+import chromahub.rhythm.app.shared.data.model.CanvasRepository
+import chromahub.rhythm.app.shared.data.model.CanvasData
+import chromahub.rhythm.app.shared.data.model.Album
+import chromahub.rhythm.app.shared.data.model.Artist
 import chromahub.rhythm.app.features.local.presentation.navigation.Screen
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import chromahub.rhythm.app.features.local.presentation.components.player.formatDuration
@@ -248,7 +248,7 @@ fun PlayerScreen(
     isFavorite: Boolean = false,
     showLyrics: Boolean = true,
     onlineOnlyLyrics: Boolean = false,
-    lyrics: chromahub.rhythm.app.data.LyricsData? = null,
+    lyrics: chromahub.rhythm.app.shared.data.model.LyricsData? = null,
     isLoadingLyrics: Boolean = false,
     onRetryLyrics: () -> Unit = {},
     onEditLyrics: (String) -> Unit = {},
@@ -281,7 +281,7 @@ fun PlayerScreen(
     onShuffleAlbumSongs: (List<Song>) -> Unit = {},
     onPlayArtistSongs: (List<Song>) -> Unit = {},
     onShuffleArtistSongs: (List<Song>) -> Unit = {},
-    appSettings: chromahub.rhythm.app.data.AppSettings,
+    appSettings: chromahub.rhythm.app.shared.data.model.AppSettings,
     musicViewModel: chromahub.rhythm.app.viewmodel.MusicViewModel,
     navController: NavController
 ) {
@@ -294,7 +294,7 @@ fun PlayerScreen(
 
     // Get AppSettings for volume control setting
     val appSettingsInstance =
-        appSettings ?: chromahub.rhythm.app.data.AppSettings.getInstance(context)
+        appSettings ?: chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context)
     val useSystemVolume by appSettingsInstance.useSystemVolume.collectAsState()
     val groupByAlbumArtist by appSettingsInstance.groupByAlbumArtist.collectAsState()
     val useHoursFormat by appSettingsInstance.useHoursInTimeFormat.collectAsState()
@@ -799,7 +799,7 @@ fun PlayerScreen(
                 showDeviceOutputSheet = false
                 onStopDeviceMonitoring()
             },
-            appSettings = appSettings ?: chromahub.rhythm.app.data.AppSettings.getInstance(context),
+            appSettings = appSettings ?: chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context),
             sheetState = deviceOutputSheetState
         )
     }

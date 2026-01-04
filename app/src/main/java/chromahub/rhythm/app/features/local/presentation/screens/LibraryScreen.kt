@@ -164,18 +164,18 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import chromahub.rhythm.app.R
-import chromahub.rhythm.app.data.Album
-import chromahub.rhythm.app.data.Artist
-import chromahub.rhythm.app.data.Playlist
-import chromahub.rhythm.app.data.Song
-import chromahub.rhythm.app.data.AlbumViewType
-import chromahub.rhythm.app.data.ArtistViewType
-import chromahub.rhythm.app.data.PlaylistViewType
-import chromahub.rhythm.app.data.AppSettings
+import chromahub.rhythm.app.shared.data.model.Album
+import chromahub.rhythm.app.shared.data.model.Artist
+import chromahub.rhythm.app.shared.data.model.Playlist
+import chromahub.rhythm.app.shared.data.model.Song
+import chromahub.rhythm.app.shared.data.model.AlbumViewType
+import chromahub.rhythm.app.shared.data.model.ArtistViewType
+import chromahub.rhythm.app.shared.data.model.PlaylistViewType
+import chromahub.rhythm.app.shared.data.model.AppSettings
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AddToPlaylistBottomSheet
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog
 import chromahub.rhythm.app.features.local.presentation.components.player.MiniPlayer
-import chromahub.rhythm.app.features.local.presentation.components.common.M3PlaceholderType
+import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.BulkPlaylistExportDialog
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistImportDialog
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistOperationProgressDialog
@@ -204,14 +204,14 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.material.icons.rounded.ArrowCircleDown
 import androidx.compose.material.icons.rounded.ArrowCircleUp
 import androidx.compose.ui.text.font.FontFamily
-import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
+import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.features.local.presentation.components.player.PlayingEqIcon
-import chromahub.rhythm.app.features.local.presentation.components.common.M3FourColorCircularLoader
-import chromahub.rhythm.app.features.local.presentation.components.common.AlphabetBar
-import chromahub.rhythm.app.features.local.presentation.components.common.ScrollToTopButton
+import chromahub.rhythm.app.shared.presentation.components.common.M3FourColorCircularLoader
+import chromahub.rhythm.app.shared.presentation.components.common.AlphabetBar
+import chromahub.rhythm.app.shared.presentation.components.common.ScrollToTopButton
 import chromahub.rhythm.app.util.AudioFormatDetector
 import chromahub.rhythm.app.util.AudioQualityDetector
-import chromahub.rhythm.app.features.local.presentation.components.common.SimpleCircularLoader
+import chromahub.rhythm.app.shared.presentation.components.common.SimpleCircularLoader
 
 
 enum class LibraryTab { SONGS, PLAYLISTS, ALBUMS, ARTISTS, EXPLORER }
@@ -6871,7 +6871,7 @@ fun SingleCardExplorerContent(
                                         
                                         // Wait for playlist to be created and available in the list
                                         var attempts = 0
-                                        var newPlaylist: chromahub.rhythm.app.data.Playlist? = null
+                                        var newPlaylist: chromahub.rhythm.app.shared.data.model.Playlist? = null
                                         while (attempts < 20 && newPlaylist == null) {
                                             kotlinx.coroutines.delay(100)
                                             newPlaylist = playlists.firstOrNull { it.name == playlistName }

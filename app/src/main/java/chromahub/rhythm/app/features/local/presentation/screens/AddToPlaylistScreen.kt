@@ -33,11 +33,11 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import kotlinx.coroutines.launch
 import chromahub.rhythm.app.R
-import chromahub.rhythm.app.data.Playlist
-import chromahub.rhythm.app.data.Song
-import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
-import chromahub.rhythm.app.features.local.presentation.components.common.CollapsibleHeaderScreen
-import chromahub.rhythm.app.features.local.presentation.components.common.M3PlaceholderType
+import chromahub.rhythm.app.shared.data.model.Playlist
+import chromahub.rhythm.app.shared.data.model.Song
+import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
+import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
+import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.util.ImageUtils
 

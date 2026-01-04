@@ -2,7 +2,7 @@ package chromahub.rhythm.app.util
 
 import android.content.Context
 import android.net.Uri
-import chromahub.rhythm.app.data.AutoEQProfile
+import chromahub.rhythm.app.shared.data.model.AutoEQProfile
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedReader

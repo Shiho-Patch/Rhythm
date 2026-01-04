@@ -62,9 +62,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import chromahub.rhythm.app.R
-import chromahub.rhythm.app.features.local.presentation.components.common.M3ExpressiveLinearIndicator
-import chromahub.rhythm.app.features.local.presentation.components.common.M3FourColorCircularLoader
-import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
+import chromahub.rhythm.app.shared.presentation.components.common.M3ExpressiveLinearIndicator
+import chromahub.rhythm.app.shared.presentation.components.common.M3FourColorCircularLoader
+import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import kotlinx.coroutines.delay
 import android.util.Log

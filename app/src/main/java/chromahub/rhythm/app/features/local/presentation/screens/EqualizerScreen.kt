@@ -66,28 +66,28 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import chromahub.rhythm.app.BuildConfig
-import chromahub.rhythm.app.data.AppSettings
-import chromahub.rhythm.app.data.Playlist
-import chromahub.rhythm.app.data.Song
+import chromahub.rhythm.app.shared.data.model.AppSettings
+import chromahub.rhythm.app.shared.data.model.Playlist
+import chromahub.rhythm.app.shared.data.model.Song
 import chromahub.rhythm.app.util.GsonUtils
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.util.EqualizerUtils
-import chromahub.rhythm.app.MainActivity
+import chromahub.rhythm.app.activities.MainActivity
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import kotlin.system.exitProcess
-import chromahub.rhythm.app.features.local.presentation.components.common.CollapsibleHeaderScreen
-import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
+import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
+import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.StandardBottomSheetHeader
-import chromahub.rhythm.app.features.local.presentation.components.common.StyledProgressBar
-import chromahub.rhythm.app.features.local.presentation.components.common.CircularStyledProgressBar
-import chromahub.rhythm.app.features.local.presentation.components.common.ProgressStyle
-import chromahub.rhythm.app.features.local.presentation.components.common.ThumbStyle
+import chromahub.rhythm.app.shared.presentation.components.common.StyledProgressBar
+import chromahub.rhythm.app.shared.presentation.components.common.CircularStyledProgressBar
+import chromahub.rhythm.app.shared.presentation.components.common.ProgressStyle
+import chromahub.rhythm.app.shared.presentation.components.common.ThumbStyle
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.LicensesBottomSheet
 import chromahub.rhythm.app.ui.utils.LazyListStateSaver
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
-import chromahub.rhythm.app.viewmodel.AppUpdaterViewModel
+import chromahub.rhythm.app.shared.presentation.viewmodel.AppUpdaterViewModel
 import chromahub.rhythm.app.ui.theme.getFontPreviewStyle
 import kotlinx.coroutines.delay
 import androidx.compose.animation.AnimatedContent
@@ -272,9 +272,9 @@ import chromahub.rhythm.app.features.local.presentation.screens.AddToPlaylistScr
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.QueueActionDialog
 import chromahub.rhythm.app.features.local.presentation.components.player.MiniPlayer
-import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons.Delete
+import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons.Delete
 import chromahub.rhythm.app.features.local.presentation.screens.LibraryScreen
-import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons.Delete
+import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons.Delete
 import chromahub.rhythm.app.features.local.presentation.screens.HomeScreen
 import chromahub.rhythm.app.features.local.presentation.screens.ListeningStatsScreen
 import chromahub.rhythm.app.features.local.presentation.screens.PlayerScreen
@@ -283,7 +283,7 @@ import chromahub.rhythm.app.features.local.presentation.screens.SearchScreen
 import chromahub.rhythm.app.features.local.presentation.screens.settings.SettingsScreenWrapper
 import chromahub.rhythm.app.features.local.presentation.screens.settings.*
 import chromahub.rhythm.app.shared.presentation.components.MediaScanLoader
-import chromahub.rhythm.app.viewmodel.ThemeViewModel
+import chromahub.rhythm.app.shared.presentation.viewmodel.ThemeViewModel
 import coil.compose.AsyncImage
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -330,7 +330,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.AutoEQProfileSelector
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.DeviceConfigurationBottomSheet
-import chromahub.rhythm.app.data.AutoEQProfile
+import chromahub.rhythm.app.shared.data.model.AutoEQProfile
 
 // Equalizer Preset Data Class
 data class EqualizerPreset(

@@ -3,7 +3,7 @@ package chromahub.rhythm.app
 import android.app.Application
 import android.os.Build
 import android.util.Log
-import chromahub.rhythm.app.data.AppSettings
+import chromahub.rhythm.app.shared.data.model.AppSettings
 import chromahub.rhythm.app.util.ANRWatchdog
 import chromahub.rhythm.app.util.CrashReporter
 

@@ -75,14 +75,14 @@
         
         <!-- Music Widget Receiver (Legacy RemoteViews) -->
         <receiver
-            android:name=".widget.MusicWidgetProvider"
+            android:name=".infrastructure.widget.MusicWidgetProvider"
             android:exported="true"
             android:label="Rhythm Music (Legacy)">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="chromahub.rhythm.app.widget.PLAY_PAUSE" />
-                <action android:name="chromahub.rhythm.app.widget.SKIP_NEXT" />
-                <action android:name="chromahub.rhythm.app.widget.SKIP_PREVIOUS" />
+                <action android:name="chromahub.rhythm.app.infrastructure.widget.PLAY_PAUSE" />
+                <action android:name="chromahub.rhythm.app.infrastructure.widget.SKIP_NEXT" />
+                <action android:name="chromahub.rhythm.app.infrastructure.widget.SKIP_PREVIOUS" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
@@ -91,7 +91,7 @@
         
         <!-- Rhythm Music Widget (Modern Glance with Material 3) -->
         <receiver
-            android:name=".widget.glance.RhythmWidgetReceiver"
+            android:name=".infrastructure.widget.glance.RhythmWidgetReceiver"
             android:exported="true"
             android:label="@string/widget_name_glance"
             android:enabled="true">
@@ -104,7 +104,7 @@
         </receiver>
         
         <service
-            android:name=".service.MediaPlaybackService"
+            android:name=".infrastructure.service.MediaPlaybackService"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback">
             <intent-filter>
@@ -132,13 +132,13 @@
         </service>
         
         <activity
-            android:name=".ui.screens.CrashActivity"
+            android:name=".activities.CrashActivity"
             android:exported="false"
             android:theme="@style/Theme.Rhythm"
             android:process=":crash_process" />
 
         <activity
-            android:name=".MainActivity"
+            android:name=".activities.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.Rhythm"
@@ -166,7 +166,7 @@
         
         <!-- External playback activity for quick audio file playback -->
         <activity
-            android:name=".ExternalPlaybackActivity"
+            android:name=".activities.ExternalPlaybackActivity"
             android:exported="true"
             android:label="Play Audio"
             android:theme="@android:style/Theme.DeviceDefault.Dialog.NoActionBar"

@@ -48,8 +48,8 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.media3.common.util.UnstableApi
 import kotlinx.coroutines.delay
-import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
-import chromahub.rhythm.app.features.local.presentation.components.common.M3CircularLoader
+import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
+import chromahub.rhythm.app.shared.presentation.components.common.M3CircularLoader
 import androidx.compose.material3.ExperimentalMaterial3Api
 
 /**

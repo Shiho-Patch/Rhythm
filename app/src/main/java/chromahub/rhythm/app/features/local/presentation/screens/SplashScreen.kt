@@ -47,7 +47,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import chromahub.rhythm.app.R
-import chromahub.rhythm.app.data.AppSettings
+import chromahub.rhythm.app.shared.data.model.AppSettings
 import chromahub.rhythm.app.ui.theme.festive.FestiveConfig
 import chromahub.rhythm.app.ui.theme.festive.FestiveThemeEngine
 import chromahub.rhythm.app.ui.theme.festive.FestiveThemeType

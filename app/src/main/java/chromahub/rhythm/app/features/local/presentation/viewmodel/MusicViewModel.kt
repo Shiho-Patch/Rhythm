@@ -21,16 +21,16 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import chromahub.rhythm.app.data.Album
-import chromahub.rhythm.app.data.AppSettings
-import chromahub.rhythm.app.data.Artist
-import chromahub.rhythm.app.data.LyricsSourcePreference
-import chromahub.rhythm.app.data.MusicRepository
-import chromahub.rhythm.app.data.PlaybackLocation
-import chromahub.rhythm.app.data.Playlist
-import chromahub.rhythm.app.data.Queue
-import chromahub.rhythm.app.data.Song
-import chromahub.rhythm.app.service.MediaPlaybackService
+import chromahub.rhythm.app.shared.data.model.Album
+import chromahub.rhythm.app.shared.data.model.AppSettings
+import chromahub.rhythm.app.shared.data.model.Artist
+import chromahub.rhythm.app.shared.data.model.LyricsSourcePreference
+import chromahub.rhythm.app.features.local.data.repository.MusicRepository
+import chromahub.rhythm.app.shared.data.model.PlaybackLocation
+import chromahub.rhythm.app.shared.data.model.Playlist
+import chromahub.rhythm.app.shared.data.model.Queue
+import chromahub.rhythm.app.shared.data.model.Song
+import chromahub.rhythm.app.infrastructure.service.MediaPlaybackService
 import chromahub.rhythm.app.util.AudioDeviceManager
 import chromahub.rhythm.app.util.EqualizerUtils
 import chromahub.rhythm.app.util.GsonUtils
@@ -56,9 +56,9 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.util.Calendar
 import java.io.File
-import chromahub.rhythm.app.data.LyricsData // Import LyricsData
+import chromahub.rhythm.app.shared.data.model.LyricsData // Import LyricsData
 import chromahub.rhythm.app.util.PendingWriteRequest // Import for metadata write requests
-import chromahub.rhythm.app.data.stats.PlaybackStatsRepository // Import for enhanced stats tracking
+import chromahub.rhythm.app.shared.data.model.PlaybackStatsRepository // Import for enhanced stats tracking
 
 class MusicViewModel(application: Application) : AndroidViewModel(application) {
     private val TAG = "MusicViewModel"
@@ -2284,11 +2284,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             } else {
                 // Fallback to querying if album.songs is empty
                 Log.d(TAG, "Album songs empty, querying repository")
-                val songs = repository.getSongsForAlbum(album.id)
+                val songs = repository.getSongsForAlbumLocal(album.id)
                 Log.d(TAG, "Found ${songs.size} songs for album")
                 if (songs.isNotEmpty()) {
                     // Sort by track number
-                    val sortedSongs = songs.sortedWith { a, b ->
+                    val sortedSongs = songs.sortedWith { a: Song, b: Song ->
                         when {
                             a.trackNumber > 0 && b.trackNumber > 0 -> a.trackNumber.compareTo(b.trackNumber)
                             a.trackNumber > 0 -> -1
@@ -2919,7 +2919,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
 
             val songsToAdd = mutableSetOf<Song>()
             currentYearAlbums.forEach { album ->
-                val albumSongs = repository.getSongsForAlbum(album.id)
+                val albumSongs = repository.getSongsForAlbumLocal(album.id)
                 songsToAdd.addAll(albumSongs)
             }
 
@@ -4692,8 +4692,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
      * Load detailed playback stats for a given time range
      */
     suspend fun loadPlaybackStats(
-        range: chromahub.rhythm.app.data.stats.StatsTimeRange = chromahub.rhythm.app.data.stats.StatsTimeRange.ALL_TIME
-    ): PlaybackStatsRepository.PlaybackStatsSummary {
+        range: chromahub.rhythm.app.shared.data.model.StatsTimeRange = chromahub.rhythm.app.shared.data.model.StatsTimeRange.ALL_TIME
+    ): chromahub.rhythm.app.shared.data.model.PlaybackStatsRepository.PlaybackStatsSummary {
         return playbackStatsRepository.loadSummary(
             range = range,
             songs = _songs.value
@@ -4842,7 +4842,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     fun playAlbumShuffled(album: Album) {
         viewModelScope.launch {
             Log.d(TAG, "Playing shuffled album: ${album.title} (ID: ${album.id})")
-            val songs = repository.getSongsForAlbum(album.id)
+            val songs = repository.getSongsForAlbumLocal(album.id)
             Log.d(TAG, "Found ${songs.size} songs for album")
             if (songs.isNotEmpty()) {
                 // Check shuffle setting
@@ -5076,8 +5076,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     // AutoEQ functions
-    private val _autoEQProfiles = MutableStateFlow<List<chromahub.rhythm.app.data.AutoEQProfile>>(emptyList())
-    val autoEQProfiles: StateFlow<List<chromahub.rhythm.app.data.AutoEQProfile>> = _autoEQProfiles.asStateFlow()
+    private val _autoEQProfiles = MutableStateFlow<List<chromahub.rhythm.app.shared.data.model.AutoEQProfile>>(emptyList())
+    val autoEQProfiles: StateFlow<List<chromahub.rhythm.app.shared.data.model.AutoEQProfile>> = _autoEQProfiles.asStateFlow()
     
     private val _autoEQLoading = MutableStateFlow(false)
     val autoEQLoading: StateFlow<Boolean> = _autoEQLoading.asStateFlow()
@@ -5099,11 +5099,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
-    fun searchAutoEQProfiles(query: String): List<chromahub.rhythm.app.data.AutoEQProfile> {
+    fun searchAutoEQProfiles(query: String): List<chromahub.rhythm.app.shared.data.model.AutoEQProfile> {
         return autoEQManager.searchProfiles(query)
     }
     
-    fun applyAutoEQProfile(profile: chromahub.rhythm.app.data.AutoEQProfile) {
+    fun applyAutoEQProfile(profile: chromahub.rhythm.app.shared.data.model.AutoEQProfile) {
         Log.d(TAG, "Applying AutoEQ profile: ${profile.name}")
         
         // Ensure we have 10 bands
@@ -5120,14 +5120,14 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         applyEqualizerPreset("AutoEQ: ${profile.name}", levels)
     }
     
-    fun getAutoEQRecommendedProfiles(): List<chromahub.rhythm.app.data.AutoEQProfile> {
+    fun getAutoEQRecommendedProfiles(): List<chromahub.rhythm.app.shared.data.model.AutoEQProfile> {
         return autoEQManager.getRecommendedProfiles()
     }
     
     // User Audio Device Management
-    fun saveUserAudioDevice(device: chromahub.rhythm.app.data.UserAudioDevice) {
+    fun saveUserAudioDevice(device: chromahub.rhythm.app.shared.data.model.UserAudioDevice) {
         val currentDevicesJson = appSettings.userAudioDevices.value
-        val currentDevices = chromahub.rhythm.app.data.UserAudioDevice.fromJson(currentDevicesJson).toMutableList()
+        val currentDevices = chromahub.rhythm.app.shared.data.model.UserAudioDevice.fromJson(currentDevicesJson).toMutableList()
         
         // Check if device already exists (update) or is new (add)
         val existingIndex = currentDevices.indexOfFirst { it.id == device.id }
@@ -5139,15 +5139,15 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             Log.d(TAG, "Added new audio device: ${device.name}")
         }
         
-        appSettings.setUserAudioDevices(chromahub.rhythm.app.data.UserAudioDevice.toJson(currentDevices))
+        appSettings.setUserAudioDevices(chromahub.rhythm.app.shared.data.model.UserAudioDevice.toJson(currentDevices))
     }
     
     fun deleteUserAudioDevice(deviceId: String) {
         val currentDevicesJson = appSettings.userAudioDevices.value
-        val currentDevices = chromahub.rhythm.app.data.UserAudioDevice.fromJson(currentDevicesJson).toMutableList()
+        val currentDevices = chromahub.rhythm.app.shared.data.model.UserAudioDevice.fromJson(currentDevicesJson).toMutableList()
         
         currentDevices.removeAll { it.id == deviceId }
-        appSettings.setUserAudioDevices(chromahub.rhythm.app.data.UserAudioDevice.toJson(currentDevices))
+        appSettings.setUserAudioDevices(chromahub.rhythm.app.shared.data.model.UserAudioDevice.toJson(currentDevices))
         
         // If deleted device was active, clear active device
         if (appSettings.activeAudioDeviceId.value == deviceId) {
@@ -5157,7 +5157,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         Log.d(TAG, "Deleted audio device: $deviceId")
     }
     
-    fun setActiveAudioDevice(device: chromahub.rhythm.app.data.UserAudioDevice) {
+    fun setActiveAudioDevice(device: chromahub.rhythm.app.shared.data.model.UserAudioDevice) {
         appSettings.setActiveAudioDeviceId(device.id)
         Log.d(TAG, "Set active audio device: ${device.name}")
         
@@ -5171,9 +5171,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
-    fun getActiveAudioDevice(): chromahub.rhythm.app.data.UserAudioDevice? {
+    fun getActiveAudioDevice(): chromahub.rhythm.app.shared.data.model.UserAudioDevice? {
         val activeId = appSettings.activeAudioDeviceId.value ?: return null
-        val devices = chromahub.rhythm.app.data.UserAudioDevice.fromJson(appSettings.userAudioDevices.value)
+        val devices = chromahub.rhythm.app.shared.data.model.UserAudioDevice.fromJson(appSettings.userAudioDevices.value)
         return devices.find { it.id == activeId }
     }
     
@@ -5181,8 +5181,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
      * Try to match a connected audio device (from PlaybackLocation) with saved UserAudioDevice
      * Uses fuzzy matching to account for slight name variations
      */
-    fun findMatchingUserDevice(deviceName: String): chromahub.rhythm.app.data.UserAudioDevice? {
-        val devices = chromahub.rhythm.app.data.UserAudioDevice.fromJson(appSettings.userAudioDevices.value)
+    fun findMatchingUserDevice(deviceName: String): chromahub.rhythm.app.shared.data.model.UserAudioDevice? {
+        val devices = chromahub.rhythm.app.shared.data.model.UserAudioDevice.fromJson(appSettings.userAudioDevices.value)
         if (devices.isEmpty()) return null
         
         val normalizedSearchName = deviceName.lowercase().trim()

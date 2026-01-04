@@ -5,8 +5,8 @@ import android.net.Uri
 import android.os.Environment
 import android.util.Log
 import androidx.documentfile.provider.DocumentFile
-import chromahub.rhythm.app.data.Playlist
-import chromahub.rhythm.app.data.Song
+import chromahub.rhythm.app.shared.data.model.Playlist
+import chromahub.rhythm.app.shared.data.model.Song
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.*

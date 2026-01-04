@@ -71,4 +71,9 @@ interface MusicRepository {
      * Get a playlist by its ID.
      */
     suspend fun getPlaylistById(id: String): PlaylistItem?
+    
+    /**
+     * Get songs for a specific album by album ID.
+     */
+    suspend fun getSongsForAlbum(albumId: String): List<PlayableItem>
 }

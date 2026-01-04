@@ -67,7 +67,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import chromahub.rhythm.app.data.Song
+import chromahub.rhythm.app.shared.data.model.Song
 import chromahub.rhythm.app.R
 import chromahub.rhythm.app.ui.theme.PlayerButtonColor
 import chromahub.rhythm.app.ui.theme.PlayerProgressColor
@@ -88,9 +88,9 @@ import androidx.compose.ui.unit.IntOffset
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
-import chromahub.rhythm.app.features.local.presentation.components.common.M3LinearLoader
+import chromahub.rhythm.app.shared.presentation.components.common.M3LinearLoader
 import chromahub.rhythm.app.features.local.presentation.components.player.PlayingEqIcon
-import chromahub.rhythm.app.features.local.presentation.components.common.AutoScrollingTextOnDemand
+import chromahub.rhythm.app.shared.presentation.components.common.AutoScrollingTextOnDemand
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
@@ -98,12 +98,12 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.windowInsetsPadding
 import chromahub.rhythm.app.util.HapticUtils
-import chromahub.rhythm.app.features.local.presentation.components.common.RhythmIcons
-import chromahub.rhythm.app.features.local.presentation.components.common.ShimmerBox
-import chromahub.rhythm.app.features.local.presentation.components.common.StyledProgressBar
-import chromahub.rhythm.app.features.local.presentation.components.common.ProgressStyle
-import chromahub.rhythm.app.features.local.presentation.components.common.CircularStyledProgressBar
-import chromahub.rhythm.app.data.AppSettings
+import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
+import chromahub.rhythm.app.shared.presentation.components.common.ShimmerBox
+import chromahub.rhythm.app.shared.presentation.components.common.StyledProgressBar
+import chromahub.rhythm.app.shared.presentation.components.common.ProgressStyle
+import chromahub.rhythm.app.shared.presentation.components.common.CircularStyledProgressBar
+import chromahub.rhythm.app.shared.data.model.AppSettings
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalConfiguration
 
