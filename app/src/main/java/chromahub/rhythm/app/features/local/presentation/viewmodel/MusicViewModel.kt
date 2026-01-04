@@ -109,6 +109,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     val virtualizerEnabled = appSettings.virtualizerEnabled
     val virtualizerStrength = appSettings.virtualizerStrength
     
+    // Spatialization status
+    private val _spatializationStatus = MutableStateFlow("Unknown")
+    val spatializationStatus: StateFlow<String> = _spatializationStatus.asStateFlow()
+    
+    private val _isSpatializationAvailable = MutableStateFlow(false)
+    val isSpatializationAvailable: StateFlow<Boolean> = _isSpatializationAvailable.asStateFlow()
+    
     // Media scanning progress
     val scanProgress = repository.scanProgress
     val lastScanTimestamp = appSettings.lastScanTimestamp
@@ -5057,6 +5064,40 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
         context.startService(intent)
         Log.d(TAG, "Set virtualizer enabled: $enabled, strength: $strength")
+        
+        // Update spatialization status after a short delay
+        viewModelScope.launch {
+            delay(200)
+            updateSpatializationStatus()
+        }
+    }
+    
+    fun updateSpatializationStatus() {
+        viewModelScope.launch {
+            try {
+                val context = getApplication<Application>()
+                val serviceIntent = Intent(context, MediaPlaybackService::class.java)
+                // We'll need to get the service instance to call methods
+                // For now, just update based on Android version
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+                    val spatializer = audioManager.spatializer
+                    _isSpatializationAvailable.value = spatializer?.isAvailable == true
+                    _spatializationStatus.value = when {
+                        spatializer == null -> "Not available"
+                        !spatializer.isAvailable -> "Not available on this device"
+                        !spatializer.isEnabled -> "Available (enable in system settings)"
+                        else -> "Active"
+                    }
+                } else {
+                    _isSpatializationAvailable.value = false
+                    _spatializationStatus.value = "Requires Android 12+"
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error updating spatialization status", e)
+                _spatializationStatus.value = "Error checking status"
+            }
+        }
     }
     
     fun applyEqualizerPreset(preset: String, levels: List<Float>) {

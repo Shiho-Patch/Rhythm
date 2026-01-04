@@ -1,6 +1,7 @@
 package chromahub.rhythm.app
 
 import android.app.Application
+import android.content.ComponentCallbacks2
 import android.os.Build
 import android.util.Log
 import chromahub.rhythm.app.shared.data.model.AppSettings
@@ -121,13 +122,13 @@ class RhythmApplication : Application() {
         super.onTrimMemory(level)
         
         val levelName = when (level) {
-            TRIM_MEMORY_RUNNING_MODERATE -> "RUNNING_MODERATE"
-            TRIM_MEMORY_RUNNING_LOW -> "RUNNING_LOW"
-            TRIM_MEMORY_RUNNING_CRITICAL -> "RUNNING_CRITICAL"
-            TRIM_MEMORY_UI_HIDDEN -> "UI_HIDDEN"
-            TRIM_MEMORY_BACKGROUND -> "BACKGROUND"
-            TRIM_MEMORY_MODERATE -> "MODERATE"
-            TRIM_MEMORY_COMPLETE -> "COMPLETE"
+            ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE -> "RUNNING_MODERATE"
+            ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW -> "RUNNING_LOW"
+            ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL -> "RUNNING_CRITICAL"
+            ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN -> "UI_HIDDEN"
+            ComponentCallbacks2.TRIM_MEMORY_BACKGROUND -> "BACKGROUND"
+            ComponentCallbacks2.TRIM_MEMORY_MODERATE -> "MODERATE"
+            ComponentCallbacks2.TRIM_MEMORY_COMPLETE -> "COMPLETE"
             else -> "UNKNOWN($level)"
         }
         
@@ -135,14 +136,14 @@ class RhythmApplication : Application() {
         
         // Perform cleanup based on memory pressure level
         when (level) {
-            TRIM_MEMORY_RUNNING_CRITICAL,
-            TRIM_MEMORY_COMPLETE -> {
+            ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL,
+            ComponentCallbacks2.TRIM_MEMORY_COMPLETE -> {
                 Log.w(TAG, "Critical memory pressure - performing aggressive cleanup")
                 // Trigger aggressive cleanup
                 // You can broadcast an event here for repositories to clear caches
             }
-            TRIM_MEMORY_RUNNING_LOW,
-            TRIM_MEMORY_MODERATE -> {
+            ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW,
+            ComponentCallbacks2.TRIM_MEMORY_MODERATE -> {
                 Log.w(TAG, "Moderate memory pressure - performing standard cleanup")
                 // Trigger standard cleanup
             }

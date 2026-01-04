@@ -420,6 +420,13 @@ fun EqualizerScreen(
     val bassBoostStrengthState by viewModel.bassBoostStrength.collectAsState()
     val virtualizerEnabledState by viewModel.virtualizerEnabled.collectAsState()
     val virtualizerStrengthState by viewModel.virtualizerStrength.collectAsState()
+    val spatializationStatus by viewModel.spatializationStatus.collectAsState()
+    val isSpatializationAvailable by viewModel.isSpatializationAvailable.collectAsState()
+    
+    // Update spatialization status when screen is shown
+    LaunchedEffect(Unit) {
+        viewModel.updateSpatializationStatus()
+    }
 
     // Local mutable states for UI
     var isEqualizerEnabled by remember(equalizerEnabledState) { mutableStateOf(equalizerEnabledState) }
@@ -1316,11 +1323,20 @@ fun EqualizerScreen(
 
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            // Virtualizer with tertiary color
+                            // Spatial Audio (Virtualizer) with tertiary color
                             val tertiaryColor = MaterialTheme.colorScheme.tertiary
+                            val isAndroid12Plus = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                            val statusText = when {
+                                !isAndroid12Plus -> "Requires Android 12+"
+                                !isSpatializationAvailable -> "Not available on this device"
+                                isVirtualizerEnabled -> spatializationStatus
+                                else -> "Spatial audio enhancement"
+                            }
+                            val showIntensitySlider = isAndroid12Plus && isSpatializationAvailable && isVirtualizerEnabled
+                            
                             Card(
                                 colors = CardDefaults.cardColors(
-                                    containerColor = if (isVirtualizerEnabled)
+                                    containerColor = if (isVirtualizerEnabled && isSpatializationAvailable)
                                         tertiaryColor.copy(alpha = 0.15f)
                                     else
                                         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
@@ -1336,7 +1352,7 @@ fun EqualizerScreen(
                                     ) {
                                         Surface(
                                             shape = RoundedCornerShape(12.dp),
-                                            color = if (isVirtualizerEnabled)
+                                            color = if (isVirtualizerEnabled && isSpatializationAvailable)
                                                 tertiaryColor.copy(alpha = 0.2f)
                                             else
                                                 MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f),
@@ -1346,7 +1362,7 @@ fun EqualizerScreen(
                                                 Icon(
                                                     imageVector = Icons.Rounded.Headphones,
                                                     contentDescription = null,
-                                                    tint = if (isVirtualizerEnabled)
+                                                    tint = if (isVirtualizerEnabled && isSpatializationAvailable)
                                                         tertiaryColor
                                                     else
                                                         MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1359,34 +1375,84 @@ fun EqualizerScreen(
 
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(
-                                                text = context.getString(R.string.virtualizer),
+                                                text = if (isAndroid12Plus) "Spatial Audio" else context.getString(R.string.virtualizer),
                                                 style = MaterialTheme.typography.titleSmall,
                                                 fontWeight = FontWeight.SemiBold
                                             )
                                             Text(
-                                                text = if (isVirtualizerEnabled) "${(virtualizerStrength/10).toInt()}% intensity" else "Spatial audio enhancement",
+                                                text = statusText,
                                                 style = MaterialTheme.typography.bodySmall,
-                                                color = if (isVirtualizerEnabled) tertiaryColor else MaterialTheme.colorScheme.onSurfaceVariant
+                                                color = if (isVirtualizerEnabled && isSpatializationAvailable) 
+                                                    tertiaryColor 
+                                                else 
+                                                    MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
 
-                                        TunerAnimatedSwitch(
-                                            checked = isVirtualizerEnabled,
-                                            onCheckedChange = { enabled ->
-                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                                isVirtualizerEnabled = enabled
-                                                viewModel.setVirtualizer(enabled, virtualizerStrength.toInt().toShort())
-                                            }
+                                        Box(
+                                            modifier = Modifier.alpha(if (isAndroid12Plus) 1f else 0.5f)
+                                        ) {
+                                            TunerAnimatedSwitch(
+                                                checked = isVirtualizerEnabled,
+                                                onCheckedChange = { enabled ->
+                                                    if (isAndroid12Plus) {
+                                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                                        isVirtualizerEnabled = enabled
+                                                        viewModel.setVirtualizer(enabled, virtualizerStrength.toInt().toShort())
+                                                    }
+                                                }
+                                            )
+                                        }
+                                    }
+
+                                    // Info text for Android < 12
+                                    if (!isAndroid12Plus && isVirtualizerEnabled) {
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = "🔔 This feature requires Android 12 or higher. Please update your device OS.",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.padding(horizontal = 4.dp)
+                                        )
+                                    }
+                                    
+                                    // Info text for unavailable spatializer
+                                    if (isAndroid12Plus && !isSpatializationAvailable && isVirtualizerEnabled) {
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = "ℹ️ Spatial audio is not supported on this device.",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.padding(horizontal = 4.dp)
+                                        )
+                                    }
+                                    
+                                    // Info about system settings
+                                    if (isAndroid12Plus && isSpatializationAvailable && spatializationStatus.contains("system settings") && isVirtualizerEnabled) {
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = "⚙️ To use spatial audio, enable it in your device's Sound settings.",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = tertiaryColor,
+                                            modifier = Modifier.padding(horizontal = 4.dp)
                                         )
                                     }
 
+                                    // Slider for intensity (informational only, as Spatializer is system-controlled)
                                     AnimatedVisibility(
-                                        visible = isVirtualizerEnabled,
+                                        visible = showIntensitySlider,
                                         enter = fadeIn() + androidx.compose.animation.expandVertically(),
                                         exit = fadeOut() + androidx.compose.animation.shrinkVertically()
                                     ) {
                                         Column {
                                             Spacer(modifier = Modifier.height(12.dp))
+                                            
+                                            Text(
+                                                text = "Intensity preference: ${(virtualizerStrength/10).toInt()}%",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp)
+                                            )
 
                                             Slider(
                                                 value = virtualizerStrength,
@@ -1402,6 +1468,14 @@ fun EqualizerScreen(
                                                     activeTrackColor = tertiaryColor,
                                                     inactiveTrackColor = tertiaryColor.copy(alpha = 0.2f)
                                                 )
+                                            )
+                                            
+                                            Text(
+                                                text = "Note: Actual spatial audio effect is system-controlled and depends on your audio output device.",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                                modifier = Modifier.padding(horizontal = 4.dp),
+                                                fontSize = 11.sp
                                             )
                                         }
                                     }

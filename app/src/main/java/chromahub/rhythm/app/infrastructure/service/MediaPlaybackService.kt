@@ -80,7 +80,8 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     // Audio effects (for equalizer integration)
     private var equalizer: android.media.audiofx.Equalizer? = null
     private var bassBoost: android.media.audiofx.BassBoost? = null
-    private var virtualizer: android.media.audiofx.Virtualizer? = null
+    private var spatializer: android.media.Spatializer? = null
+    private var virtualizerStrength: Short = 0 // Store strength for older devices
     
     // BroadcastReceiver to listen for favorite changes from ViewModel
     private val favoriteChangeReceiver = object : BroadcastReceiver() {
@@ -454,22 +455,29 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                     SessionCommand(REPEAT_MODE_OFF, Bundle.EMPTY)
                 )
                 .build(),
-            // Favorite commands
-            CommandButton.Builder()
-                .setDisplayName("Add to favorites")
-                .setIconResId(chromahub.rhythm.app.R.drawable.ic_favorite_border)
-                .setSessionCommand(
-                    SessionCommand(FAVORITE_ON, Bundle.EMPTY)
-                )
-                .build(),
-            CommandButton.Builder()
-                .setDisplayName("Remove from favorites")
-                .setIconResId(chromahub.rhythm.app.R.drawable.ic_favorite_filled)
-                .setSessionCommand(
-                    SessionCommand(FAVORITE_OFF, Bundle.EMPTY)
-                )
-                .build()
+            // Favorite commands - use custom icons via extras bundle
+            createCustomIconButton(
+                "Add to favorites",
+                FAVORITE_ON,
+                chromahub.rhythm.app.R.drawable.ic_favorite_border
+            ),
+            createCustomIconButton(
+                "Remove from favorites",
+                FAVORITE_OFF,
+                chromahub.rhythm.app.R.drawable.ic_favorite_filled
+            )
         )
+    }
+
+    private fun createCustomIconButton(displayName: String, commandAction: String, iconResId: Int): CommandButton {
+        val extras = Bundle().apply {
+            putInt("iconResId", iconResId)
+        }
+        return CommandButton.Builder(CommandButton.ICON_UNDEFINED)
+            .setDisplayName(displayName)
+            .setSessionCommand(SessionCommand(commandAction, extras))
+            .setExtras(extras)
+            .build()
     }
 
     private fun createMediaSession(): MediaLibrarySession {
@@ -1525,31 +1533,26 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                 }
             }
             
-            // Check if virtualizer is available on this device
-            val virtualizerAvailable = try {
-                // Try to create a dummy virtualizer to check availability
-                val dummy = android.media.audiofx.Virtualizer(0, 0)
-                dummy.release()
-                true
-            } catch (e: Exception) {
-                false
-            }
-            
-            if (!virtualizerAvailable) {
-                Log.w(TAG, "Virtualizer is not available on this device")
-                virtualizer = null
-            } else {
-                // Initialize virtualizer
+            // Initialize spatial audio (Android 12+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 try {
-                    virtualizer?.release()
-                    virtualizer = android.media.audiofx.Virtualizer(0, audioSessionId).apply {
-                        enabled = false
+                    val audioManager = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+                    spatializer = audioManager.spatializer
+                    if (spatializer?.isAvailable == true) {
+                        // Spatializer is available - actual spatialization depends on system settings
+                        Log.d(TAG, "Spatializer available, isEnabled=${spatializer?.isEnabled}")
+                    } else {
+                        Log.w(TAG, "Spatializer not available on this device")
+                        spatializer = null
                     }
-                    Log.d(TAG, "Virtualizer initialized")
                 } catch (e: Exception) {
-                    Log.w(TAG, "Virtualizer initialization failed: ${e.message}")
-                    virtualizer = null
+                    Log.w(TAG, "Spatializer initialization failed: ${e.message}")
+                    spatializer = null
                 }
+            } else {
+                // For Android 11 and below, spatial audio effects are not supported
+                Log.d(TAG, "Spatial audio requires Android 12+. Current version: ${Build.VERSION.SDK_INT}")
+                spatializer = null
             }
             
             // Load saved settings and apply them
@@ -1579,10 +1582,18 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                 bassBoost?.setStrength(appSettings.bassBoostStrength.value.toShort())
             }
             
-            // Load virtualizer settings
-            virtualizer?.enabled = appSettings.virtualizerEnabled.value
-            if (appSettings.virtualizerEnabled.value) {
-                virtualizer?.setStrength(appSettings.virtualizerStrength.value.toShort())
+            // Load spatial audio settings
+            virtualizerStrength = appSettings.virtualizerStrength.value.toShort()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val virtualizerEnabled = appSettings.virtualizerEnabled.value
+                // Note: Spatializer is system-wide and requires compatible audio output
+                // We track user preference but actual spatialization depends on device capabilities
+                Log.d(TAG, "Spatial audio preference: enabled=$virtualizerEnabled, strength=$virtualizerStrength")
+                if (spatializer?.isAvailable == true) {
+                    Log.d(TAG, "Spatializer is available and system-controlled")
+                }
+            } else {
+                Log.d(TAG, "Spatial audio not supported (Android < 12), stored preference: $virtualizerStrength")
             }
             
             Log.d(TAG, "Loaded saved audio effects - EQ: ${appSettings.equalizerEnabled.value}, Bass: ${appSettings.bassBoostEnabled.value}, Virtualizer: ${appSettings.virtualizerEnabled.value}")
@@ -1729,21 +1740,66 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     }
     
     fun setVirtualizerEnabled(enabled: Boolean) {
-        virtualizer?.enabled = enabled
-        Log.d(TAG, "Virtualizer enabled: $enabled")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (spatializer?.isAvailable == true) {
+                // Spatializer is system-controlled
+                // The actual spatialization depends on:
+                // 1. System settings (user must enable it in device settings)
+                // 2. Audio output device (e.g., headphones with head tracking)
+                // 3. Audio attributes of the content
+                val isSystemEnabled = spatializer?.isEnabled ?: false
+                Log.d(TAG, "Spatial audio preference: $enabled | System enabled: $isSystemEnabled")
+                
+                if (!isSystemEnabled && enabled) {
+                    Log.w(TAG, "User wants spatial audio but it's disabled in system settings")
+                }
+            } else {
+                Log.w(TAG, "Spatial audio requested but not available on this device")
+            }
+        } else {
+            Log.w(TAG, "Spatial audio requires Android 12+. Current: ${Build.VERSION.SDK_INT}")
+        }
     }
     
     fun setVirtualizerStrength(strength: Short) {
         try {
-            virtualizer?.setStrength(strength)
-            Log.d(TAG, "Virtualizer strength set to $strength")
+            virtualizerStrength = strength
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                // Spatializer strength is system-controlled
+                // We store the preference but can't directly control the effect
+                Log.d(TAG, "Spatial audio strength preference set: $strength (system-controlled)")
+            } else {
+                Log.d(TAG, "Spatial audio not supported on Android < 12")
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error setting virtualizer strength", e)
         }
     }
     
     fun getVirtualizerStrength(): Short {
-        return virtualizer?.roundedStrength ?: 0
+        return virtualizerStrength
+    }
+    
+    fun isSpatializationAvailable(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            spatializer?.isAvailable == true
+        } else {
+            false
+        }
+    }
+    
+    fun getSpatializationStatus(): String {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val spatializer = this.spatializer
+            when {
+                spatializer == null -> "Not available"
+                !spatializer.isAvailable -> "Not available on this device"
+                !spatializer.isEnabled -> "Available but disabled in system settings"
+                else -> "Active"
+            }
+        } else {
+            "Requires Android 12+"
+        }
     }
     
     // Public methods for external access
@@ -1757,10 +1813,10 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         try {
             equalizer?.release()
             bassBoost?.release()
-            virtualizer?.release()
+            // Spatializer is system-managed, no need to release
+            spatializer = null
             equalizer = null
             bassBoost = null
-            virtualizer = null
             Log.d(TAG, "Audio effects released")
         } catch (e: Exception) {
             Log.e(TAG, "Error releasing audio effects", e)
