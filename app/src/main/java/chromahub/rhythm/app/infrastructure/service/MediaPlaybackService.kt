@@ -700,8 +700,8 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             val type = object : TypeToken<List<Playlist>>() {}.type
             val playlists: MutableList<Playlist> = Gson().fromJson(playlistsJson, type)
             
-            // Find and update the Favorites playlist (ID: "1")
-            val favoritesPlaylist = playlists.find { it.id == "1" && it.name == "Favorites" }
+            // Find and update the Liked playlist (ID: "1")
+            val favoritesPlaylist = playlists.find { it.id == "1" && it.name == "Liked" }
             if (favoritesPlaylist != null) {
                 val updatedPlaylist = if (isAdding) {
                     // Add song to favorites playlist if not already there

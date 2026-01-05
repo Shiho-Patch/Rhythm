@@ -1805,33 +1805,10 @@ fun SingleCardSongsContent(
 
             android.util.Log.d("SongsTab", "Recomputing categories for ${songs.size} songs")
 
-            // Favorites filter - show if there are any favorite songs
-            val favoriteSongsList = songs.filter { it.id in favoriteSongs }
-            if (favoriteSongsList.isNotEmpty()) {
-                allCategories.add("❤️ Favorites")
-            }
-
-            // Rating-based categories (5★ = Absolute Favorite, 4★ = Loved, 3★ = Great, 2★ = Good, 1★ = Liked)
-            // Only show if rating system is enabled
-            if (enableRatingSystem) {
-                val appSettings = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context)
-                val ratingDistribution = appSettings.getRatingDistribution()
-                
-                if ((ratingDistribution[5] ?: 0) > 0) {
-                    allCategories.add("⭐⭐⭐⭐⭐ Absolute Favorites")
-                }
-                if ((ratingDistribution[4] ?: 0) > 0) {
-                    allCategories.add("⭐⭐⭐⭐ Loved")
-                }
-                if ((ratingDistribution[3] ?: 0) > 0) {
-                    allCategories.add("⭐⭐⭐ Great")
-                }
-                if ((ratingDistribution[2] ?: 0) > 0) {
-                    allCategories.add("⭐⭐ Good")
-                }
-                if ((ratingDistribution[1] ?: 0) > 0) {
-                    allCategories.add("⭐ Liked")
-                }
+// Favorites filter - show if there are any favorite songs
+        val favoriteSongsList = songs.filter { it.id in favoriteSongs }
+        if (favoriteSongsList.isNotEmpty()) {
+            allCategories.add("❤️ Favorites")
             }
 
             // Audio Quality Filters (Mutually Exclusive) - Most specific first
@@ -1868,6 +1845,29 @@ fun SingleCardSongsContent(
             if (songs.isNotEmpty()) {
                 val sampleSong = songs.first()
                 android.util.Log.d("SongsTab", "Sample song metadata: ${sampleSong.title} - bitrate=${sampleSong.bitrate}, sampleRate=${sampleSong.sampleRate}, channels=${sampleSong.channels}, codec=${sampleSong.codec}")
+            }
+
+            // Rating-based categories (5★ = Absolute Favorite, 4★ = Loved, 3★ = Great, 2★ = Good, 1★ = Liked)
+            // Only show if rating system is enabled
+            if (enableRatingSystem) {
+                val appSettings = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context)
+                val ratingDistribution = appSettings.getRatingDistribution()
+                
+                if ((ratingDistribution[5] ?: 0) > 0) {
+                    allCategories.add("⭐⭐⭐⭐⭐ Absolute Favorites")
+                }
+                if ((ratingDistribution[4] ?: 0) > 0) {
+                    allCategories.add("⭐⭐⭐⭐ Loved")
+                }
+                if ((ratingDistribution[3] ?: 0) > 0) {
+                    allCategories.add("⭐⭐⭐ Great")
+                }
+                if ((ratingDistribution[2] ?: 0) > 0) {
+                    allCategories.add("⭐⭐ Good")
+                }
+                if ((ratingDistribution[1] ?: 0) > 0) {
+                    allCategories.add("⭐ Liked")
+                }
             }
 
             // Quality-based categories for lossy audio
@@ -2956,29 +2956,6 @@ fun SongsTab(
             allCategories.add("❤️ Favorites")
         }
         
-        // Rating-based categories (5★ = Absolute Favorite, 4★ = Loved, 3★ = Great, 2★ = Good, 1★ = Liked)
-        // Only show if rating system is enabled
-        if (enableRatingSystem) {
-            val appSettings = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context)
-            val ratingDistribution = appSettings.getRatingDistribution()
-            
-            if ((ratingDistribution[5] ?: 0) > 0) {
-                allCategories.add("⭐⭐⭐⭐⭐ Absolute Favorites")
-            }
-            if ((ratingDistribution[4] ?: 0) > 0) {
-                allCategories.add("⭐⭐⭐⭐ Loved")
-            }
-            if ((ratingDistribution[3] ?: 0) > 0) {
-                allCategories.add("⭐⭐⭐ Great")
-            }
-            if ((ratingDistribution[2] ?: 0) > 0) {
-                allCategories.add("⭐⭐ Good")
-            }
-            if ((ratingDistribution[1] ?: 0) > 0) {
-                allCategories.add("⭐ Liked")
-            }
-        }
-        
         // Audio Quality Filters (Mutually Exclusive) - Most specific first
         val hiResLosslessSongs = songs.filter { isHiResLossless(it) && !isDolbyOrSurround(it) }
         android.util.Log.d("SongsTab", "Found ${hiResLosslessSongs.size} Hi-Res Lossless songs")
@@ -3015,6 +2992,29 @@ fun SongsTab(
         }
         android.util.Log.d("SongsTab", "Found ${monoSongs.size} Mono songs")
         if (monoSongs.isNotEmpty()) allCategories.add("Mono")
+        
+        // Rating-based categories (5★ = Absolute Favorite, 4★ = Loved, 3★ = Great, 2★ = Good, 1★ = Liked)
+        // Only show if rating system is enabled
+        if (enableRatingSystem) {
+            val appSettings = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context)
+            val ratingDistribution = appSettings.getRatingDistribution()
+            
+            if ((ratingDistribution[5] ?: 0) > 0) {
+                allCategories.add("⭐⭐⭐⭐⭐ Absolute Favorites")
+            }
+            if ((ratingDistribution[4] ?: 0) > 0) {
+                allCategories.add("⭐⭐⭐⭐ Loved")
+            }
+            if ((ratingDistribution[3] ?: 0) > 0) {
+                allCategories.add("⭐⭐⭐ Great")
+            }
+            if ((ratingDistribution[2] ?: 0) > 0) {
+                allCategories.add("⭐⭐ Good")
+            }
+            if ((ratingDistribution[1] ?: 0) > 0) {
+                allCategories.add("⭐ Liked")
+            }
+        }
         
         // Log sample metadata for debugging
         if (songs.isNotEmpty()) {

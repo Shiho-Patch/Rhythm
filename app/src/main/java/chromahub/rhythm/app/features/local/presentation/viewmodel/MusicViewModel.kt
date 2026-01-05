@@ -1391,14 +1391,14 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 val defaultPlaylistsEnabled = appSettings.defaultPlaylistsEnabled.value
                 if (defaultPlaylistsEnabled) {
                     listOf(
-                        Playlist("1", "Favorites"),
+                        Playlist("1", "Liked"),
                         Playlist("2", "Recently Added"),
                         Playlist("3", "Most Played")
                     )
                 } else {
-                    // Only Favorites playlist when default playlists are disabled
+                    // Only Liked playlist when default playlists are disabled
                     listOf(
-                        Playlist("1", "Favorites")
+                        Playlist("1", "Liked")
                     )
                 }
             }
@@ -1420,13 +1420,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             val defaultPlaylistsEnabled = appSettings.defaultPlaylistsEnabled.value
             _playlists.value = if (defaultPlaylistsEnabled) {
                 listOf(
-                    Playlist("1", "Favorites"),
+                    Playlist("1", "Liked"),
                     Playlist("2", "Recently Added"),
                     Playlist("3", "Most Played")
                 )
             } else {
                 listOf(
-                    Playlist("1", "Favorites")
+                    Playlist("1", "Liked")
                 )
             }
             _favoriteSongs.value = emptySet()
