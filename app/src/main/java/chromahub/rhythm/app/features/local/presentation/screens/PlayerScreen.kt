@@ -2980,7 +2980,7 @@ fun PlayerScreen(
                                                     },
                                                     label = {
                                                         Text(
-                                                            "Favorite",
+                                                            "Like",
                                                             style = MaterialTheme.typography.labelLarge
                                                         )
                                                     },

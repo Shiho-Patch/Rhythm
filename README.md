@@ -551,22 +551,22 @@ We're grateful to:
 We believe great software is built by great communities! Here's how you can help make Rhythm even better:
 
 📖 **Quick Links:**
-- [📋 Contributing Guidelines](CONTRIBUTING.md)
-- [🤝 Code of Conduct](CODE_OF_CONDUCT.md)
-- [🔒 Security Policy](SECURITY.md)
-- [📝 Changelog](CHANGELOG.md)
+- [📋 Contributing Guidelines](docs/CONTRIBUTING.md)
+- [🤝 Code of Conduct](docs/CODE_OF_CONDUCT.md)
+- [🔒 Security Policy](docs/SECURITY.md)
+- [📝 Changelog](docs/CHANGELOG.md)
 
 ### Ways to Contribute
 
 - 🐛 **Report Issues** - Found a bug? [Open an issue](https://github.com/cromaguy/Rhythm/issues)
 - 💡 **Suggest Features** - Have an idea? [Create a feature request](https://github.com/cromaguy/Rhythm/issues)
-- 👨‍💻 **Code Contributions** - Ready to contribute code? See our [Contributing Guidelines](CONTRIBUTING.md)
+- 👨‍💻 **Code Contributions** - Ready to contribute code? See our [Contributing Guidelines](docs/CONTRIBUTING.md)
 - 🌍 **Translations** - Help translate Rhythm to your language
 - 💬 **Community Support** - Help other users in [Discussions](https://github.com/cromaguy/Rhythm/discussions)
 
 ### Getting Started
 
-1. Read our [Contributing Guidelines](CONTRIBUTING.md)
+1. Read our [Contributing Guidelines](docs/CONTRIBUTING.md)
 2. Check existing [Issues](https://github.com/cromaguy/Rhythm/issues) and [Pull Requests](https://github.com/cromaguy/Rhythm/pulls)
 3. Join our [Telegram Community](https://t.me/RhythmSupport) for discussions
 
@@ -610,7 +610,7 @@ We're grateful to these amazing individuals who have contributed to making Rhyth
 
 ## 📄 **License**
 
-This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](docs/LICENSE) file for details.
 
 ---
 
