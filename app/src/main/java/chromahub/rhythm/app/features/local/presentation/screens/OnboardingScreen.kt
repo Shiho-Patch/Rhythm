@@ -1327,96 +1327,174 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit, isTablet: Boolean = false, co
                 .fillMaxWidth()
                 .padding(horizontal = 32.dp)
         ) {
-            // App logo with glowing effect
-            AnimatedVisibility(
-                visible = true,
-                enter = scaleIn(
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMediumLow
-                    )
-                ) + fadeIn(
-                    animationSpec = tween(1000)
-                )
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(120.dp)
-                        .clip(CircleShape),
-//                        .background(
-//                            Brush.radialGradient(
-//                                colors = listOf(
-//                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.3f * logoGlow),
-//                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f * logoGlow),
-//                                    androidx.compose.ui.graphics.Color.Transparent
-//                                )
-//                            )
-//                        ),
-                    contentAlignment = Alignment.Center
+            // Logo and App Name - Adaptive Layout
+            if (isTablet) {
+                // Tablet: Logo and name on the same line
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.rhythm_splash_logo),
-                        contentDescription = "Rhythm Logo",
-                        modifier = Modifier.size(if (isTablet) 160.dp else 130.dp)
+                    // App logo with glowing effect
+                    AnimatedVisibility(
+                        visible = true,
+                        enter = scaleIn(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMediumLow
+                            )
+                        ) + fadeIn(
+                            animationSpec = tween(1000)
+                        )
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(140.dp)
+                                .clip(CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.rhythm_splash_logo),
+                                contentDescription = "Rhythm Logo",
+                                modifier = Modifier.size(140.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(2.dp))
+
+                    // App name with staggered animation
+                    Column(
+                        horizontalAlignment = Alignment.Start,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = slideInVertically(
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessMedium
+                                ),
+                                initialOffsetY = { it / 2 }
+                            ) + fadeIn(animationSpec = tween(800, delayMillis = 200))
+                        ) {
+                            Text(
+                                text = context.getString(R.string.onboarding_welcome_title),
+                                style = MaterialTheme.typography.displayLarge.copy(
+                                    fontSize = 64.sp,
+                                    letterSpacing = 0.8.sp
+                                ),
+                                fontWeight = FontWeight.ExtraBold,
+                                textAlign = TextAlign.Start,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+
+                        // Subtitle with modern styling and delayed animation
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = slideInVertically(
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessMedium
+                                ),
+                                initialOffsetY = { it / 2 }
+                            ) + fadeIn(animationSpec = tween(800, delayMillis = 400))
+                        ) {
+                            Text(
+                                text = context.getString(R.string.onboarding_welcome_subtitle),
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    letterSpacing = 0.4.sp
+                                ),
+                                fontWeight = FontWeight.SemiBold,
+                                textAlign = TextAlign.Start,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+            } else {
+                // Phone: Vertical layout (original)
+                // App logo with glowing effect
+                AnimatedVisibility(
+                    visible = true,
+                    enter = scaleIn(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        )
+                    ) + fadeIn(
+                        animationSpec = tween(1000)
                     )
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(120.dp)
+                            .clip(CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.rhythm_splash_logo),
+                            contentDescription = "Rhythm Logo",
+                            modifier = Modifier.size(130.dp)
+                        )
+                    }
+                }
+
+                // App name with staggered animation
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    AnimatedVisibility(
+                        visible = true,
+                        enter = slideInVertically(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            ),
+                            initialOffsetY = { it / 2 }
+                        ) + fadeIn(animationSpec = tween(800, delayMillis = 200))
+                    ) {
+                        Text(
+                            text = context.getString(R.string.onboarding_welcome_title),
+                            style = MaterialTheme.typography.displayLarge.copy(
+                                fontSize = 48.sp,
+                                letterSpacing = 0.8.sp
+                            ),
+                            fontWeight = FontWeight.ExtraBold,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Subtitle with modern styling and delayed animation
+                    AnimatedVisibility(
+                        visible = true,
+                        enter = slideInVertically(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            ),
+                            initialOffsetY = { it / 2 }
+                        ) + fadeIn(animationSpec = tween(800, delayMillis = 400))
+                    ) {
+                        Text(
+                            text = context.getString(R.string.onboarding_welcome_subtitle),
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                letterSpacing = 0.4.sp
+                            ),
+                            fontWeight = FontWeight.SemiBold,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
 
-//            Spacer(modifier = Modifier.height(20.dp))
-
-            // App name with staggered animation
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                AnimatedVisibility(
-                    visible = true,
-                    enter = slideInVertically(
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium
-                        ),
-                        initialOffsetY = { it / 2 }
-                    ) + fadeIn(animationSpec = tween(800, delayMillis = 200))
-                ) {
-                    Text(
-                        text = context.getString(R.string.onboarding_welcome_title),
-                        style = MaterialTheme.typography.displayLarge.copy(
-                            fontSize = if (isTablet) 56.sp else 48.sp,
-                            letterSpacing = 0.8.sp
-                        ),
-                        fontWeight = FontWeight.ExtraBold,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Subtitle with modern styling and delayed animation
-                AnimatedVisibility(
-                    visible = true,
-                    enter = slideInVertically(
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium
-                        ),
-                        initialOffsetY = { it / 2 }
-                    ) + fadeIn(animationSpec = tween(800, delayMillis = 400))
-                ) {
-                    Text(
-                        text = context.getString(R.string.onboarding_welcome_subtitle),
-                        style = MaterialTheme.typography.titleSmall.copy(
-                            letterSpacing = 0.4.sp
-                        ),
-                        fontWeight = FontWeight.SemiBold,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(34.dp))
+            Spacer(modifier = Modifier.height(if (isTablet) 48.dp else 34.dp))
 
             // Minimal description with better typography and animation
             AnimatedVisibility(
@@ -1430,16 +1508,16 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit, isTablet: Boolean = false, co
                 Text(
                     text = context.getString(R.string.onboarding_welcome_desc),
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = 12.sp,
-                        lineHeight = 22.sp
+                        fontSize = if (isTablet) 16.sp else 12.sp,
+                        lineHeight = if (isTablet) 26.sp else 22.sp
                     ),
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 8.dp)
+                    modifier = Modifier.padding(horizontal = if (isTablet) 64.dp else 8.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(44.dp))
+            Spacer(modifier = Modifier.height(if (isTablet) 56.dp else 44.dp))
 
             // Enhanced Get Started button with modern design and animation
             AnimatedVisibility(
@@ -1457,13 +1535,15 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit, isTablet: Boolean = false, co
                         onNextStep()
                     },
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(if (isTablet) 80.dp else 68.dp),
+                        .then(
+                            if (isTablet) Modifier.width(500.dp) else Modifier.fillMaxWidth()
+                        )
+                        .height(if (isTablet) 72.dp else 68.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary
                     ),
-                    shape = RoundedCornerShape(24.dp)
+                    shape = RoundedCornerShape(if (isTablet) 28.dp else 24.dp)
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.Center,
@@ -1473,13 +1553,13 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit, isTablet: Boolean = false, co
                         Icon(
                             imageVector = RhythmIcons.Play,
                             contentDescription = null,
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(if (isTablet) 32.dp else 28.dp)
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         Text(
                             text = context.getString(R.string.onboarding_get_started),
                             style = MaterialTheme.typography.titleLarge.copy(
-                                fontSize = 20.sp
+                                fontSize = if (isTablet) 22.sp else 20.sp
                             ),
                             fontWeight = FontWeight.Bold
                         )
@@ -1516,7 +1596,7 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit, isTablet: Boolean = false, co
 //                }
 //            }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(if (isTablet) 32.dp else 24.dp))
 
             // Version info or subtle additional info with animation
             AnimatedVisibility(
@@ -1526,6 +1606,7 @@ fun EnhancedWelcomeContent(onNextStep: () -> Unit, isTablet: Boolean = false, co
                 Text(
                     text = context.getString(R.string.onboarding_tagline),
                     style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = if (isTablet) 14.sp else 12.sp,
                         letterSpacing = 0.3.sp
                     ),
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
