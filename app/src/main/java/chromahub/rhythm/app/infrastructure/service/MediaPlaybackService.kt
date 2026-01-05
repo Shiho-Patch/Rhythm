@@ -1667,8 +1667,8 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                 }
             }
             
-            // Initialize spatial audio (Android 12+)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // Initialize spatial audio (Android 13+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 try {
                     val audioManager = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
                     spatializer = audioManager.spatializer
@@ -1684,8 +1684,8 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                     spatializer = null
                 }
             } else {
-                // For Android 11 and below, spatial audio effects are not supported
-                Log.d(TAG, "Spatial audio requires Android 12+. Current version: ${Build.VERSION.SDK_INT}")
+                // For Android 12 and below, spatial audio effects are not supported
+                Log.d(TAG, "Spatial audio requires Android 13+. Current version: ${Build.VERSION.SDK_INT}")
                 spatializer = null
             }
             
@@ -1718,7 +1718,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             
             // Load spatial audio settings
             virtualizerStrength = appSettings.virtualizerStrength.value.toShort()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 val virtualizerEnabled = appSettings.virtualizerEnabled.value
                 // Note: Spatializer is system-wide and requires compatible audio output
                 // We track user preference but actual spatialization depends on device capabilities
@@ -1727,7 +1727,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                     Log.d(TAG, "Spatializer is available and system-controlled")
                 }
             } else {
-                Log.d(TAG, "Spatial audio not supported (Android < 12), stored preference: $virtualizerStrength")
+                Log.d(TAG, "Spatial audio not supported (Android < 13), stored preference: $virtualizerStrength")
             }
             
             Log.d(TAG, "Loaded saved audio effects - EQ: ${appSettings.equalizerEnabled.value}, Bass: ${appSettings.bassBoostEnabled.value}, Virtualizer: ${appSettings.virtualizerEnabled.value}")
@@ -1874,7 +1874,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     }
     
     fun setVirtualizerEnabled(enabled: Boolean) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (spatializer?.isAvailable == true) {
                 // Spatializer is system-controlled
                 // The actual spatialization depends on:
@@ -1891,19 +1891,19 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                 Log.w(TAG, "Spatial audio requested but not available on this device")
             }
         } else {
-            Log.w(TAG, "Spatial audio requires Android 12+. Current: ${Build.VERSION.SDK_INT}")
+            Log.w(TAG, "Spatial audio requires Android 13+. Current: ${Build.VERSION.SDK_INT}")
         }
     }
     
     fun setVirtualizerStrength(strength: Short) {
         try {
             virtualizerStrength = strength
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 // Spatializer strength is system-controlled
                 // We store the preference but can't directly control the effect
                 Log.d(TAG, "Spatial audio strength preference set: $strength (system-controlled)")
             } else {
-                Log.d(TAG, "Spatial audio not supported on Android < 12")
+                Log.d(TAG, "Spatial audio not supported on Android < 13")
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error setting virtualizer strength", e)
@@ -1915,7 +1915,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     }
     
     fun isSpatializationAvailable(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             spatializer?.isAvailable == true
         } else {
             false
@@ -1923,7 +1923,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     }
     
     fun getSpatializationStatus(): String {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val spatializer = this.spatializer
             when {
                 spatializer == null -> "Not available"
@@ -1932,7 +1932,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                 else -> "Active"
             }
         } else {
-            "Requires Android 12+"
+            "Requires Android 13+"
         }
     }
     
