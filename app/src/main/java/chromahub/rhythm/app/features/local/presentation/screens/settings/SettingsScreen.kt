@@ -293,7 +293,7 @@ fun SettingsScreen(
                     SettingItem(Icons.Default.AutoGraph, context.getString(R.string.settings_rhythm_stats), context.getString(R.string.settings_rhythm_stats_desc), onClick = { onNavigateTo(SettingsRoutes.LISTENING_STATS) })
                 )
             ) else null,
-            // API Management - only show in LOCAL mode (for lyrics/metadata APIs)
+            // Integrations - only show in LOCAL mode (for external services, scrobbling, etc)
             if (appMode == "LOCAL") SettingGroup(
                 title = context.getString(R.string.settings_section_services),
                 items = listOf(

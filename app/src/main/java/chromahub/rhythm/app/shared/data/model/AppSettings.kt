@@ -144,6 +144,15 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_SPOTIFY_CLIENT_ID = "spotify_client_id"
         private const val KEY_SPOTIFY_CLIENT_SECRET = "spotify_client_secret"
         
+        // Scrobbling Settings
+        private const val KEY_SCROBBLING_ENABLED = "scrobbling_enabled"
+        
+        // Discord Rich Presence Settings
+        private const val KEY_DISCORD_RICH_PRESENCE_ENABLED = "discord_rich_presence_enabled"
+        
+        // General Broadcast Status Settings (for Tasker, KWGT, etc.)
+        private const val KEY_BROADCAST_STATUS_ENABLED = "broadcast_status_enabled"
+        
         // Enhanced User Preferences
         private const val KEY_FAVORITE_GENRES = "favorite_genres"
         private const val KEY_DAILY_LISTENING_STATS = "daily_listening_stats"
@@ -773,6 +782,18 @@ class AppSettings private constructor(context: Context) {
     
     private val _spotifyClientSecret = MutableStateFlow(prefs.getString(KEY_SPOTIFY_CLIENT_SECRET, "") ?: "")
     val spotifyClientSecret: StateFlow<String> = _spotifyClientSecret.asStateFlow()
+
+    // Scrobbling Settings
+    private val _scrobblingEnabled = MutableStateFlow(prefs.getBoolean(KEY_SCROBBLING_ENABLED, false))
+    val scrobblingEnabled: StateFlow<Boolean> = _scrobblingEnabled.asStateFlow()
+    
+    // Discord Rich Presence Settings
+    private val _discordRichPresenceEnabled = MutableStateFlow(prefs.getBoolean(KEY_DISCORD_RICH_PRESENCE_ENABLED, false))
+    val discordRichPresenceEnabled: StateFlow<Boolean> = _discordRichPresenceEnabled.asStateFlow()
+    
+    // General Broadcast Status Settings
+    private val _broadcastStatusEnabled = MutableStateFlow(prefs.getBoolean(KEY_BROADCAST_STATUS_ENABLED, false))
+    val broadcastStatusEnabled: StateFlow<Boolean> = _broadcastStatusEnabled.asStateFlow()
 
     // Enhanced User Preferences
     private val _favoriteGenres = MutableStateFlow<Map<String, Int>>(
@@ -1617,6 +1638,24 @@ class AppSettings private constructor(context: Context) {
     fun setSpotifyClientSecret(clientSecret: String) {
         prefs.edit().putString(KEY_SPOTIFY_CLIENT_SECRET, clientSecret).apply()
         _spotifyClientSecret.value = clientSecret
+    }
+
+    // Scrobbling Methods
+    fun setScrobblingEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_SCROBBLING_ENABLED, enabled).apply()
+        _scrobblingEnabled.value = enabled
+    }
+    
+    // Discord Rich Presence Methods
+    fun setDiscordRichPresenceEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_DISCORD_RICH_PRESENCE_ENABLED, enabled).apply()
+        _discordRichPresenceEnabled.value = enabled
+    }
+    
+    // General Broadcast Status Methods
+    fun setBroadcastStatusEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_BROADCAST_STATUS_ENABLED, enabled).apply()
+        _broadcastStatusEnabled.value = enabled
     }
 
     // Enhanced User Preferences Methods
@@ -2756,6 +2795,15 @@ class AppSettings private constructor(context: Context) {
         _spotifyApiEnabled.value = prefs.getBoolean(KEY_SPOTIFY_API_ENABLED, false)
         _spotifyClientId.value = prefs.getString(KEY_SPOTIFY_CLIENT_ID, "") ?: ""
         _spotifyClientSecret.value = prefs.getString(KEY_SPOTIFY_CLIENT_SECRET, "") ?: ""
+        
+        // Scrobbling Settings
+        _scrobblingEnabled.value = prefs.getBoolean(KEY_SCROBBLING_ENABLED, false)
+        
+        // Discord Rich Presence Settings
+        _discordRichPresenceEnabled.value = prefs.getBoolean(KEY_DISCORD_RICH_PRESENCE_ENABLED, false)
+        
+        // General Broadcast Status Settings
+        _broadcastStatusEnabled.value = prefs.getBoolean(KEY_BROADCAST_STATUS_ENABLED, false)
         
         // App Updates
         _autoCheckForUpdates.value = prefs.getBoolean(KEY_AUTO_CHECK_FOR_UPDATES, true)

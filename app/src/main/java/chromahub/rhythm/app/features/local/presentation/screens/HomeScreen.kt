@@ -715,10 +715,12 @@ private fun ModernScrollableContent(
     }
     
     // Safe carousel state initialization - ensure at least 1 item to prevent crashes
+    // Use a unique key to prevent state restoration issues when item count changes
     val safeItemCount = maxOf(1, currentFeaturedAlbums.size)
     val featuredCarouselState = rememberCarouselState(
         initialItem = 0,
-        itemCount = { safeItemCount }
+        itemCount = { safeItemCount },
+        key = "home_featured_carousel_$safeItemCount" // Prevent invalid state restoration
     )
     
     // Auto-refresh featured content periodically

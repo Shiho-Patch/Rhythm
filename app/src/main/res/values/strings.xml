@@ -931,7 +931,44 @@
     
     <!-- Services -->
     <string name="external_services">External Services</string>
-    <string name="api_services">API Services</string>
+    <string name="api_services">Integrated APIs</string>
+    
+    <!-- Scrobbling -->
+    <string name="scrobbling_title">Scrobbling Support</string>
+    <string name="scrobbling_enabled">Enable Scrobbling</string>
+    <string name="scrobbling_desc">Send playback info to Last.fm, Pano Scrobbler, and compatible apps</string>
+    <string name="scrobbling_info_title">What is Scrobbling?</string>
+    <string name="scrobbling_info_desc">This allows you to track your listening history, discover new music, and share your music taste with friends.</string>
+    <string name="scrobbling_compatible_apps">Compatible Apps</string>
+    <string name="scrobbling_apps_list">• Last.fm for Android\n• Pano Scrobbler\n• Simple Last.fm Scrobbler\n• Other SLS API compatible apps</string>
+    <string name="scrobbling_how_to">How to Use</string>
+    <string name="scrobbling_setup_steps">1. Install a scrobbling app (e.g., Pano Scrobbler from F-Droid)\n2. Enable scrobbling here\n3. Your listening activity will be automatically tracked!</string>
+    
+    <!-- Discord Rich Presence -->
+    <string name="discord_title">Discord Rich Presence</string>
+    <string name="discord_enabled">Enable Discord Rich Presence</string>
+    <string name="discord_desc">Show what you\'re listening to in your Discord status</string>
+    <string name="discord_info_title">What is Discord Rich Presence?</string>
+    <string name="discord_info_desc">Shows song title, artist, album, and playback progress.</string>
+    <string name="discord_compatible_apps">Requirements</string>
+    <string name="discord_apps_list">• Discord for Android\n• Discord must be running\n• Music status must be enabled in Discord settings</string>
+    <string name="discord_how_to">How to Use</string>
+    <string name="discord_setup_steps">1. Install Discord for Android\n2. Enable this setting in Rhythm\n3. Open Discord and enable \"Display current activity\" in User Settings → Activity Status\n4. Your now playing info will appear in your Discord status!</string>
+    <string name="discord_privacy_note">Privacy Note</string>
+    <string name="discord_privacy_desc">Only broadcasts when music is playing. You can toggle this on/off anytime. Discord controls who can see your activity status.</string>
+    
+    <!-- Broadcast Status (Tasker/KWGT) -->
+    <string name="broadcast_status_title">Broadcast Status</string>
+    <string name="broadcast_status_enabled">Enable Status Broadcasting</string>
+    <string name="broadcast_status_desc">Send playback info to Tasker, KWGT, and automation apps</string>
+    <string name="broadcast_status_info_title">What is Status Broadcasting?</string>
+    <string name="broadcast_status_info_desc">Status broadcasting sends standard Android music player intents that automation and widget apps listen for. This allows third-party apps to display your now playing info or trigger automations based on what you\'re listening to.</string>
+    <string name="broadcast_compatible_apps">Compatible Apps</string>
+    <string name="broadcast_apps_list">• Tasker (automation)\n• KWGT/KLWP (Kustom widgets)\n• MacroDroid\n• AutoApps\n• Zooper Widget\n• Any app that listens to music player intents</string>
+    <string name="broadcast_how_to">How to Use</string>
+    <string name="broadcast_setup_steps">1. Install your automation/widget app (e.g., Tasker, KWGT)\n2. Enable this setting\n3. Configure your app to listen for:\n   • com.android.music.metachanged (track changes)\n   • com.android.music.playstatechanged (play/pause)\n4. Access song data via standard intents!</string>
+    <string name="broadcast_use_cases">Use Cases</string>
+    <string name="broadcast_use_cases_list">• Display now playing in custom widgets\n• Trigger smart home scenes based on music\n• Auto-pause music when certain apps open\n• Log your listening history\n• Control other apps based on playback state</string>
     
     <!-- Equalizer -->
     <string name="equalizer">Equalizer</string>
@@ -1061,8 +1098,8 @@
     <string name="settings_backup_restore_title">Backup &amp; Restore</string>
     <string name="settings_backup_restore_desc">Safeguard settings and playlists</string>
     <string name="settings_section_services">Services</string>
-    <string name="settings_api_management">API Management</string>
-    <string name="settings_api_management_desc">Configure external API services</string>
+    <string name="settings_api_management">Integrations</string>
+    <string name="settings_api_management_desc">Configure APIs, scrobbling, and DRP</string>
     <string name="settings_section_updates_info">Updates &amp; Info</string>
     <string name="settings_updates_title">Updates</string>
     <string name="settings_updates_desc">Check for app updates</string>

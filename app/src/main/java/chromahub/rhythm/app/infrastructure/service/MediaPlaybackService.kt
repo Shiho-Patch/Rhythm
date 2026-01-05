@@ -128,6 +128,15 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     // Settings manager
     private lateinit var appSettings: AppSettings
     
+    // Scrobbler manager for Last.fm / Pano Scrobbler integration
+    private lateinit var scrobblerManager: chromahub.rhythm.app.utils.ScrobblerManager
+    
+    // Discord Rich Presence manager
+    private lateinit var discordRichPresenceManager: chromahub.rhythm.app.utils.DiscordRichPresenceManager
+    
+    // Status broadcaster for Tasker, KWGT, and other automation apps
+    private lateinit var statusBroadcaster: chromahub.rhythm.app.utils.StatusBroadcaster
+    
     // Custom notification provider for app-specific notifications
     private var customNotificationProvider: DefaultMediaNotificationProvider? = null
     
@@ -208,6 +217,15 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         // Initialize settings manager (fast operation)
         updateForegroundNotification("Rhythm Music", "Loading settings...")
         appSettings = AppSettings.getInstance(applicationContext)
+        
+        // Initialize scrobbler manager
+        scrobblerManager = chromahub.rhythm.app.utils.ScrobblerManager(applicationContext)
+        
+        // Initialize Discord Rich Presence manager
+        discordRichPresenceManager = chromahub.rhythm.app.utils.DiscordRichPresenceManager(applicationContext)
+        
+        // Initialize status broadcaster for Tasker/KWGT
+        statusBroadcaster = chromahub.rhythm.app.utils.StatusBroadcaster(applicationContext)
 
         // Register BroadcastReceiver for favorite changes
         updateForegroundNotification("Rhythm Music", "Setting up components...")
@@ -367,6 +385,90 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             
             override fun onPlayerError(error: PlaybackException) {
                 handlePlaybackError(error)
+            }
+            
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                // Send scrobble broadcast when play/pause state changes
+                if (appSettings.scrobblingEnabled.value) {
+                    val position = player.currentPosition
+                    if (isPlaying) {
+                        scrobblerManager.scrobbleResumed(position)
+                    } else {
+                        scrobblerManager.scrobblePaused(position)
+                    }
+                }
+                
+                // Update Discord Rich Presence when play/pause state changes
+                if (appSettings.discordRichPresenceEnabled.value) {
+                    val currentMediaItem = player.currentMediaItem
+                    if (currentMediaItem != null) {
+                        val song = convertMediaItemToSong(currentMediaItem)
+                        if (song != null) {
+                            if (isPlaying) {
+                                discordRichPresenceManager.updateNowPlaying(song, true, player.currentPosition)
+                            } else {
+                                discordRichPresenceManager.updatePaused(song)
+                            }
+                        }
+                    } else if (!isPlaying) {
+                        discordRichPresenceManager.clearPresence()
+                    }
+                }
+                
+                // Broadcast status for Tasker/KWGT/automation apps
+                if (appSettings.broadcastStatusEnabled.value) {
+                    statusBroadcaster.broadcastPlaystateChanged(isPlaying, player.currentPosition)
+                }
+            }
+            
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                // Send scrobble broadcast when track changes
+                if (appSettings.scrobblingEnabled.value && mediaItem != null) {
+                    try {
+                        val song = convertMediaItemToSong(mediaItem)
+                        if (song != null) {
+                            scrobblerManager.scrobbleNowPlaying(song, player.currentPosition)
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error scrobbling track change", e)
+                    }
+                }
+                
+                // Update Discord Rich Presence when track changes
+                if (appSettings.discordRichPresenceEnabled.value && mediaItem != null) {
+                    try {
+                        val song = convertMediaItemToSong(mediaItem)
+                        if (song != null) {
+                            discordRichPresenceManager.resetStartTime()
+                            discordRichPresenceManager.updateNowPlaying(song, player.isPlaying, player.currentPosition)
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error updating Discord presence on track change", e)
+                    }
+                }
+                
+                // Broadcast status for Tasker/KWGT/automation apps
+                if (appSettings.broadcastStatusEnabled.value && mediaItem != null) {
+                    try {
+                        val song = convertMediaItemToSong(mediaItem)
+                        if (song != null) {
+                            statusBroadcaster.broadcastNowPlaying(
+                                song,
+                                player.isPlaying,
+                                player.currentPosition,
+                                player.mediaItemCount,
+                                player.currentMediaItemIndex
+                            )
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error broadcasting status on track change", e)
+                    }
+                }
+                
+                // Update widget when media item changes
+                serviceScope.launch {
+                    updateWidgetFromMediaItem(mediaItem)
+                }
             }
             
             // NEW in Media3 1.9.0: Monitor audio capabilities changes
@@ -1327,22 +1429,39 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         updateWidgetFromMediaItem(player.currentMediaItem)
     }
     
-    private fun updateWidgetFromMediaItem(mediaItem: MediaItem?) {
-        if (mediaItem != null) {
-            val song = Song(
+    /**
+     * Helper function to convert MediaItem to Song for scrobbling and widgets
+     */
+    private fun convertMediaItemToSong(mediaItem: MediaItem): Song? {
+        return try {
+            Song(
                 id = mediaItem.mediaId,
                 title = mediaItem.mediaMetadata.title?.toString() ?: "Unknown",
                 artist = mediaItem.mediaMetadata.artist?.toString() ?: "Unknown",
                 album = mediaItem.mediaMetadata.albumTitle?.toString() ?: "",
                 uri = mediaItem.requestMetadata.mediaUri ?: Uri.EMPTY,
                 artworkUri = mediaItem.mediaMetadata.artworkUri,
-                duration = 0L,
+                duration = player.duration.takeIf { it > 0 } ?: 0L,
                 trackNumber = 0,
                 year = 0,
                 genre = "",
-                albumId = ""
+                albumId = "",
+                albumArtist = mediaItem.mediaMetadata.albumArtist?.toString()
             )
-            WidgetUpdater.updateWidget(this, song, player.isPlaying)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error converting MediaItem to Song", e)
+            null
+        }
+    }
+    
+    private fun updateWidgetFromMediaItem(mediaItem: MediaItem?) {
+        if (mediaItem != null) {
+            val song = convertMediaItemToSong(mediaItem)
+            if (song != null) {
+                WidgetUpdater.updateWidget(this, song, player.isPlaying)
+            } else {
+                WidgetUpdater.updateWidget(this, null, false)
+            }
         } else {
             WidgetUpdater.updateWidget(this, null, false)
         }
