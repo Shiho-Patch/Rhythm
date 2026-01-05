@@ -163,7 +163,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.WaveSlider
 import chromahub.rhythm.app.shared.presentation.components.common.StyledProgressBar
 import chromahub.rhythm.app.shared.presentation.components.common.ProgressStyle
 import chromahub.rhythm.app.shared.presentation.components.common.ThumbStyle
-import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
+import chromahub.rhythm.app.shared.presentation.components.common.FixedHeaderScreen
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.shared.presentation.components.common.AutoScrollingTextOnDemand
 import chromahub.rhythm.app.features.local.presentation.components.player.PlayingEqIcon
@@ -952,14 +952,13 @@ fun PlayerScreen(
         )
     }
 
-    CollapsibleHeaderScreen(
+    FixedHeaderScreen(
         title = "Player",
         showBackButton = true,
         onBackClick = {
             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
             onBack()
         },
-        alwaysCollapsed = true, // Keep header collapsed on player screen
         containerColor = playerBackgroundColor, // Use surfaceContainer for player screen header
         actions = {
             // Song info display in actions

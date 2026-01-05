@@ -251,6 +251,115 @@ fun CollapsibleHeaderScreen(
     }
 }
 
+/**
+ * Non-expandable header for Player Screen - looks exactly like the collapsible header
+ * but doesn't expand/collapse at all. Always stays in a consistent state.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FixedHeaderScreen(
+    title: String,
+    showBackButton: Boolean = false,
+    onBackClick: () -> Unit = {},
+    actions: @Composable () -> Unit = {},
+    containerColor: Color = Color.Transparent,
+    content: @Composable (Modifier) -> Unit
+) {
+    // Entrance animation state
+    var showContent by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(Unit) {
+        delay(50) // Small delay for smoother transition
+        showContent = true
+    }
+    
+    val contentAlpha by animateFloatAsState(
+        targetValue = if (showContent) 1f else 0f,
+        animationSpec = tween(durationMillis = 400),
+        label = "contentAlpha"
+    )
+    
+    val contentOffset by animateFloatAsState(
+        targetValue = if (showContent) 0f else 30f,
+        animationSpec = tween(durationMillis = 450),
+        label = "contentOffset"
+    )
+
+    Scaffold(
+        containerColor = containerColor,
+        topBar = {
+            Column {
+                Spacer(modifier = Modifier.height(10.dp))
+                androidx.compose.material3.TopAppBar(
+                    title = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.padding(start = 14.dp)
+                        ) {
+                            Text(
+                                text = title,
+                                style = MaterialTheme.typography.headlineMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 24.sp
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    },
+                    navigationIcon = {
+                        if (showBackButton) {
+                            IconButton(
+                                onClick = onBackClick,
+                                modifier = Modifier.padding(start = 12.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(RoundedCornerShape(50))
+                                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = "Back",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    actions = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(end = 10.dp)
+                        ) {
+                            actions()
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = containerColor,
+                        scrolledContainerColor = containerColor
+                    )
+                )
+            }
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .graphicsLayer {
+                    alpha = contentAlpha
+                    translationY = contentOffset
+                }
+        ) {
+            content(Modifier.fillMaxSize())
+        }
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun CollapsibleHeaderScreenPreview() {

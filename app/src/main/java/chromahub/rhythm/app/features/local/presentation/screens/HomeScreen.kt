@@ -252,8 +252,9 @@ fun HomeScreen(
     var showHomeSectionOrderSheet by remember { mutableStateOf(false) }
     
     // Select featured content from all albums (enhanced selection)
+    // Note: Don't limit here, let the carousel use discoverItemCount setting
     val featuredContent = remember(albums) {
-        albums.shuffled().take(6) // Increased to 6 for better variety
+        albums.shuffled()
     }
     
     // Get all unique artists (already handled by repository based on user preference)
@@ -711,19 +712,20 @@ private fun ModernScrollableContent(
     
     // Featured albums with auto-refresh
     var currentFeaturedAlbums by remember(featuredContent, discoverItemCount) { 
-        mutableStateOf(featuredContent.take(discoverItemCount).ifEmpty { listOf() }) 
+        mutableStateOf(featuredContent.ifEmpty { listOf() }) 
     }
     
     // Safe carousel state initialization - ensure at least 1 item to prevent crashes
-    val safeItemCount = maxOf(1, currentFeaturedAlbums.size)
+    // Use a dynamic itemCount that updates when discoverItemCount changes
     val featuredCarouselState = rememberCarouselState(
         initialItem = 0,
-        itemCount = { safeItemCount }
+        itemCount = { maxOf(1, minOf(currentFeaturedAlbums.size, discoverItemCount)) }
     )
     
     // Reset carousel when item count changes to prevent state restoration crash
-    LaunchedEffect(safeItemCount) {
-        if (featuredCarouselState.currentItem >= safeItemCount) {
+    LaunchedEffect(currentFeaturedAlbums.size, discoverItemCount) {
+        val newItemCount = maxOf(1, minOf(currentFeaturedAlbums.size, discoverItemCount))
+        if (featuredCarouselState.currentItem >= newItemCount) {
             featuredCarouselState.scrollToItem(0)
         }
     }
@@ -733,7 +735,7 @@ private fun ModernScrollableContent(
         while (true) {
             delay(45000) // 45 seconds for better user experience
             if (albums.size > discoverItemCount) {
-                currentFeaturedAlbums = albums.shuffled().take(discoverItemCount)
+                currentFeaturedAlbums = albums.shuffled()
             }
         }
     }
