@@ -2192,7 +2192,7 @@ fun SingleCardSongsContent(
             // Songs Items
             items(
                 items = filteredSongs,
-                key = { it.id },
+                key = { "song_${it.id}_${it.uri}" },
                 contentType = { "song" }
             ) { song ->
                     AnimateIn(modifier = Modifier.animateItem()) {
@@ -3337,7 +3337,7 @@ fun SongsTab(
             // Songs Items
             items(
                 items = filteredSongs,
-                key = { it.id }
+                key = { "song_${it.id}_${it.uri}" }
             ) { song ->
                 AnimateIn {
                     LibrarySongItemWrapper(
@@ -6716,7 +6716,14 @@ fun SingleCardExplorerContent(
                 if (!isLoadingDirectory && currentPath != null) {
                     items(
                         items = currentItems,
-                        key = { it.path + it.name + it.type }
+                        key = { item -> 
+                            // Use song ID if it's a file with a song, otherwise use path + name + type
+                            if (item.type == ExplorerItemType.FILE && item.song != null) {
+                                "song_${item.song.id}"
+                            } else {
+                                "${item.type}_${item.path}_${item.name}"
+                            }
+                        }
                     ) { item ->
                         AnimateIn {
                             ExplorerItemCard(
