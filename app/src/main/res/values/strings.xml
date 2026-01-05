@@ -545,6 +545,12 @@
     <string name="onboarding_sleep_timer_desc">Sleep Timer: Auto-stop playback after set time (access from Now Playing screen)</string>
     <string name="onboarding_library_title">Organize Your Music Library</string>
     <string name="onboarding_library_desc">Customize how your albums, artists, and songs are displayed. Choose your preferred layout, sorting order, and tab arrangement.</string>
+    <string name="onboarding_library_album_grid">Album Grid View</string>
+    <string name="onboarding_library_album_grid_desc">Display albums in grid layout for better visual browsing</string>
+    <string name="onboarding_library_artist_grid">Artist Grid View</string>
+    <string name="onboarding_library_artist_grid_desc">Display artists in grid layout with profile pictures</string>
+    <string name="onboarding_library_show_lyrics">Show Lyrics</string>
+    <string name="onboarding_library_show_lyrics_desc">Display synchronized lyrics in the player screen</string>
     <string name="onboarding_library_how_works">How Library Organization Works</string>
     <string name="onboarding_library_1">Customize tab order in Library for quick access to your favorites</string>
     <string name="onboarding_library_2">Create and manage playlists directly from the Library screen</string>
@@ -701,6 +707,88 @@
     <string name="onboarding_in_progress">In Progress</string>
     <string name="onboarding_dismiss">Dismiss</string>
     <string name="onboarding_retry">Retry</string>
+    
+    <!-- Onboarding: Notifications Step -->
+    <string name="onboarding_notifications_title">Playback Notifications</string>
+    <string name="onboarding_notifications_desc">Control how Rhythm displays music playback in your notification shade. Choose between custom styled notifications or the standard system media controls.</string>
+    <string name="onboarding_custom_notifications">Custom Notification Style</string>
+    <string name="onboarding_custom_notifications_desc">Use Rhythm\'s enhanced notification design with additional controls and styling</string>
+    <string name="onboarding_notifications_info_title">Notification Features</string>
+    <string name="onboarding_notification_tip_1">See current track info at a glance</string>
+    <string name="onboarding_notification_tip_2">Control playback with quick actions</string>
+    <string name="onboarding_notification_tip_3">Custom style matches your theme</string>
+    
+    <!-- Onboarding: Gestures Step -->
+    <string name="onboarding_gestures_title">Touch Gestures</string>
+    <string name="onboarding_gestures_desc">Navigate your music library faster with intuitive swipe and tap gestures. Customize gestures for the mini player and full player screens.</string>
+    <string name="onboarding_gestures_miniplayer">Mini Player</string>
+    <string name="onboarding_gestures_player">Full Player</string>
+    <string name="onboarding_gesture_swipe">Mini Player Swipe</string>
+    <string name="onboarding_gesture_swipe_desc">Swipe left/right on mini player to skip tracks</string>
+    <string name="onboarding_gesture_dismiss">Swipe to Dismiss</string>
+    <string name="onboarding_gesture_dismiss_desc">Swipe down on full player to return to mini player</string>
+    <string name="onboarding_gesture_tracks">Swipe for Tracks</string>
+    <string name="onboarding_gesture_tracks_desc">Swipe on artwork to skip to next/previous song</string>
+    <string name="onboarding_gesture_doubletap">Double Tap Artwork</string>
+    <string name="onboarding_gesture_doubletap_desc">Double tap album art to like the current song</string>
+    <string name="onboarding_gestures_tips_title">Gesture Tips</string>
+    <string name="onboarding_gesture_tip_1">Swipe gestures work in both directions</string>
+    <string name="onboarding_gesture_tip_2">Quick swipes respond faster than slow ones</string>
+    
+    <!-- Onboarding: Widgets Step -->
+    <string name="onboarding_widgets_title">Launcher Widgets</string>
+    <string name="onboarding_widgets_desc">Add Rhythm widgets to your launcher for quick music control. Customize what information is displayed and how the widget looks.</string>
+    <string name="onboarding_widget_album_art">Show Album Art</string>
+    <string name="onboarding_widget_album_art_desc">Display album artwork in the widget</string>
+    <string name="onboarding_widget_artist">Show Artist Name</string>
+    <string name="onboarding_widget_artist_desc">Display the current artist in the widget</string>
+    <string name="onboarding_widget_album">Show Album Name</string>
+    <string name="onboarding_widget_album_desc">Display the album title in the widget</string>
+    <string name="onboarding_widget_auto_update">Auto Update Widget</string>
+    <string name="onboarding_widget_auto_update_desc">Update widget automatically when song changes</string>
+    <string name="onboarding_widgets_tips_title">Widget Tips</string>
+    <string name="onboarding_widget_tip_1">Tap the widget to open the app</string>
+    <string name="onboarding_widget_tip_2">Resize widgets for different layouts (2x1 to 5x5)</string>
+    <string name="onboarding_widget_tip_3">Widgets update in real-time during playback</string>
+    
+    <!-- Onboarding: Integrations Step -->
+    <string name="onboarding_integrations_title">Connect Your Services</string>
+    <string name="onboarding_integrations_desc">Enhance your listening experience by connecting to external services. Get album art, lyrics, scrobble your plays, and share what you\'re listening to.</string>
+    <string name="onboarding_integrations_apis">API Services</string>
+    <string name="onboarding_integrations_social">Social Features</string>
+    <string name="onboarding_integration_deezer">Deezer API</string>
+    <string name="onboarding_integration_deezer_desc">Fetch high-quality album artwork and metadata</string>
+    <string name="onboarding_integration_canvas">Spotify Canvas</string>
+    <string name="onboarding_integration_canvas_desc">Display animated video backgrounds for songs</string>
+    <string name="onboarding_integration_lrclib">LrcLib API</string>
+    <string name="onboarding_integration_lrclib_desc">Download synchronized lyrics for your songs</string>
+    <string name="onboarding_integration_ytmusic">YouTube Music</string>
+    <string name="onboarding_integration_ytmusic_desc">Access metadata and recommendations from YouTube Music</string>
+    <string name="onboarding_integration_spotify">Spotify API</string>
+    <string name="onboarding_integration_spotify_desc">Fetch album art and metadata from Spotify</string>
+    <string name="onboarding_integration_scrobbling">Last.fm Scrobbling</string>
+    <string name="onboarding_integration_scrobbling_desc">Track your listening history on Last.fm</string>
+    <string name="onboarding_integration_discord">Discord Rich Presence</string>
+    <string name="onboarding_integration_discord_desc">Show what you\'re listening to on Discord</string>
+    <string name="onboarding_integration_broadcast">Broadcast Status</string>
+    <string name="onboarding_integration_broadcast_desc">Share playback status with other apps</string>
+    <string name="onboarding_integrations_info_title">Privacy Note</string>
+    <string name="onboarding_integrations_info_desc">These features send limited data (song titles, artists) to external services. Your personal data and music files stay on your device. You can enable or disable these at any time in Settings.</string>
+    
+    <!-- Onboarding: Rhythm Stats Step -->
+    <string name="onboarding_stats_title">Rhythm Stats</string>
+    <string name="onboarding_stats_desc">Discover insights about your music habits. Track your listening time, most played songs, favorite artists, and more with beautiful visualizations.</string>
+    <string name="onboarding_stats_show_home">Show Stats on Home</string>
+    <string name="onboarding_stats_show_home_desc">Display a listening stats widget on your home screen</string>
+    <string name="onboarding_stats_rating">Enable Song Ratings</string>
+    <string name="onboarding_stats_rating_desc">Rate your songs to track favorites and build smart playlists</string>
+    <string name="onboarding_stats_features_title">Stats Features</string>
+    <string name="onboarding_stats_feature_1">Track total listening time by day, week, or month</string>
+    <string name="onboarding_stats_feature_2">See your most played songs</string>
+    <string name="onboarding_stats_feature_3">Discover your top artists</string>
+    <string name="onboarding_stats_feature_4">Explore album listening patterns</string>
+    <string name="onboarding_stats_info_title">How It Works</string>
+    <string name="onboarding_stats_info_desc">Stats are calculated locally on your device based on your playback history. No data is sent to external servers. Access detailed stats anytime from the home screen or settings.</string>
     
     <!-- MiniPlayer Swipe Hints -->
     <string name="miniplayer_swipe_up_hint">↑ Full Player</string>

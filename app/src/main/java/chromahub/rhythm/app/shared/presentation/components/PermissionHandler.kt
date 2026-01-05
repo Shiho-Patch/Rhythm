@@ -297,7 +297,7 @@ fun PermissionHandler(
                             when (permissionScreenState) {
                                 PermissionScreenState.PermissionsGranted -> {
                                     // Already granted, move to next step
-                                    currentOnboardingStep = OnboardingStep.BACKUP_RESTORE
+                                    currentOnboardingStep = OnboardingStep.NOTIFICATIONS
                                 }
                                 PermissionScreenState.RedirectToSettings -> {
                                     // This is handled by onRequestAgain callback
@@ -317,11 +317,16 @@ fun PermissionHandler(
                                 }
                             }
                         }
+                        OnboardingStep.NOTIFICATIONS -> currentOnboardingStep = OnboardingStep.BACKUP_RESTORE // Move to backup restore
                         OnboardingStep.BACKUP_RESTORE -> currentOnboardingStep = OnboardingStep.AUDIO_PLAYBACK // Move to audio playback
                         OnboardingStep.AUDIO_PLAYBACK -> currentOnboardingStep = OnboardingStep.THEMING // Move to theming
-                        OnboardingStep.THEMING -> currentOnboardingStep = OnboardingStep.LIBRARY_SETUP // Move to library setup
+                        OnboardingStep.THEMING -> currentOnboardingStep = OnboardingStep.GESTURES // Move to gestures
+                        OnboardingStep.GESTURES -> currentOnboardingStep = OnboardingStep.LIBRARY_SETUP // Move to library setup
                         OnboardingStep.LIBRARY_SETUP -> currentOnboardingStep = OnboardingStep.MEDIA_SCAN // Move to media scan
-                        OnboardingStep.MEDIA_SCAN -> currentOnboardingStep = OnboardingStep.UPDATER // Move to updater
+                        OnboardingStep.MEDIA_SCAN -> currentOnboardingStep = OnboardingStep.WIDGETS // Move to widgets
+                        OnboardingStep.WIDGETS -> currentOnboardingStep = OnboardingStep.INTEGRATIONS // Move to integrations
+                        OnboardingStep.INTEGRATIONS -> currentOnboardingStep = OnboardingStep.RHYTHM_STATS // Move to rhythm stats
+                        OnboardingStep.RHYTHM_STATS -> currentOnboardingStep = OnboardingStep.UPDATER // Move to updater
                         OnboardingStep.UPDATER -> currentOnboardingStep = OnboardingStep.SETUP_FINISHED // Move to setup finished
                         OnboardingStep.SETUP_FINISHED -> {
                             appSettings.setOnboardingCompleted(true) // Mark onboarding as complete
@@ -339,7 +344,7 @@ fun PermissionHandler(
                 onPrevStep = {
                     when (currentOnboardingStep) {
                         OnboardingStep.PERMISSIONS -> currentOnboardingStep = OnboardingStep.WELCOME
-                        OnboardingStep.BACKUP_RESTORE -> {
+                        OnboardingStep.NOTIFICATIONS -> {
                             currentOnboardingStep = OnboardingStep.PERMISSIONS
                             // Re-evaluate permissions when going back to permission screen
                             scope.launch {
@@ -347,11 +352,16 @@ fun PermissionHandler(
                                 evaluatePermissionsAndSetStep()
                             }
                         }
+                        OnboardingStep.BACKUP_RESTORE -> currentOnboardingStep = OnboardingStep.NOTIFICATIONS
                         OnboardingStep.AUDIO_PLAYBACK -> currentOnboardingStep = OnboardingStep.BACKUP_RESTORE
                         OnboardingStep.THEMING -> currentOnboardingStep = OnboardingStep.AUDIO_PLAYBACK
-                        OnboardingStep.LIBRARY_SETUP -> currentOnboardingStep = OnboardingStep.THEMING
+                        OnboardingStep.GESTURES -> currentOnboardingStep = OnboardingStep.THEMING
+                        OnboardingStep.LIBRARY_SETUP -> currentOnboardingStep = OnboardingStep.GESTURES
                         OnboardingStep.MEDIA_SCAN -> currentOnboardingStep = OnboardingStep.LIBRARY_SETUP
-                        OnboardingStep.UPDATER -> currentOnboardingStep = OnboardingStep.MEDIA_SCAN
+                        OnboardingStep.WIDGETS -> currentOnboardingStep = OnboardingStep.MEDIA_SCAN
+                        OnboardingStep.INTEGRATIONS -> currentOnboardingStep = OnboardingStep.WIDGETS
+                        OnboardingStep.RHYTHM_STATS -> currentOnboardingStep = OnboardingStep.INTEGRATIONS
+                        OnboardingStep.UPDATER -> currentOnboardingStep = OnboardingStep.RHYTHM_STATS
                         OnboardingStep.SETUP_FINISHED -> currentOnboardingStep = OnboardingStep.UPDATER
                         else -> { /* Should not happen for WELCOME or COMPLETE */ }
                     }

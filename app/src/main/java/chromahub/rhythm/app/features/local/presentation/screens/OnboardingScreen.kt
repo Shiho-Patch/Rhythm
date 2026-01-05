@@ -59,33 +59,57 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Album
+import androidx.compose.material.icons.filled.Api
+import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.AutoGraph
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.FontDownload
 import androidx.compose.material.icons.filled.FormatListNumbered
+import androidx.compose.material.icons.filled.Gamepad
+import androidx.compose.material.icons.filled.Gesture
 import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.Lyrics
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RestoreFromTrash
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Queue
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SortByAlpha
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Stars
 import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.Style
+import androidx.compose.material.icons.filled.SwipeVertical
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.WavingHand
+import androidx.compose.material.icons.filled.Widgets
+import androidx.compose.material.icons.rounded.Swipe
+import androidx.compose.material.icons.rounded.SwipeDown
+import androidx.compose.material.icons.rounded.SwipeLeft
+import androidx.compose.material.icons.rounded.TouchApp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -95,6 +119,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -126,7 +151,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.content.Intent
+import android.provider.DocumentsContract
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import chromahub.rhythm.app.R
+import chromahub.rhythm.app.shared.data.model.AlbumViewType
+import chromahub.rhythm.app.shared.data.model.ArtistViewType
 import chromahub.rhythm.app.shared.data.model.AppSettings
 import chromahub.rhythm.app.shared.presentation.components.common.M3LinearLoader
 import chromahub.rhythm.app.shared.presentation.components.common.M3FourColorCircularLoader
@@ -156,6 +188,7 @@ import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSiz
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
+import androidx.compose.ui.graphics.Color
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
@@ -187,21 +220,26 @@ fun OnboardingScreen(
     val horizontalPadding = if (isTablet) 40.dp else 20.dp
     val cardPadding = if (isTablet) 32.dp else 20.dp
 
-    // Get current step index
+    // Get current step index - Skip NOTIFICATIONS (2) and LIBRARY_SETUP (7)
     val stepIndex = when (currentStep) {
         OnboardingStep.WELCOME -> 0
         OnboardingStep.PERMISSIONS -> 1
+        OnboardingStep.NOTIFICATIONS -> 1 // Skip - map to previous step
         OnboardingStep.BACKUP_RESTORE -> 2
         OnboardingStep.AUDIO_PLAYBACK -> 3
         OnboardingStep.THEMING -> 4
-        OnboardingStep.LIBRARY_SETUP -> 5
+        OnboardingStep.GESTURES -> 5
+        OnboardingStep.LIBRARY_SETUP -> 5 // Skip - map to previous step
         OnboardingStep.MEDIA_SCAN -> 6
-        OnboardingStep.UPDATER -> 7
-        OnboardingStep.SETUP_FINISHED -> 8
-        OnboardingStep.COMPLETE -> 9
+        OnboardingStep.WIDGETS -> 7
+        OnboardingStep.INTEGRATIONS -> 8
+        OnboardingStep.RHYTHM_STATS -> 9
+        OnboardingStep.UPDATER -> 10
+        OnboardingStep.SETUP_FINISHED -> 11
+        OnboardingStep.COMPLETE -> 12
     }
 
-    val totalSteps = 9
+    val totalSteps = 12 // Reduced from 14 (skipping NOTIFICATIONS and LIBRARY_SETUP)
 
     // Create pager state
     val pagerState = rememberPagerState(
@@ -216,18 +254,21 @@ fun OnboardingScreen(
         }
     }
 
-    // Sync step with pager changes
+    // Sync step with pager changes - Updated mapping without skipped steps (NOTIFICATIONS and LIBRARY_SETUP)
     LaunchedEffect(pagerState.currentPage) {
         val newStep = when (pagerState.currentPage) {
             0 -> OnboardingStep.WELCOME
             1 -> OnboardingStep.PERMISSIONS
-            2 -> OnboardingStep.BACKUP_RESTORE
+            2 -> OnboardingStep.BACKUP_RESTORE  // Skip NOTIFICATIONS
             3 -> OnboardingStep.AUDIO_PLAYBACK
             4 -> OnboardingStep.THEMING
-            5 -> OnboardingStep.LIBRARY_SETUP
-            6 -> OnboardingStep.MEDIA_SCAN
-            7 -> OnboardingStep.UPDATER
-            8 -> OnboardingStep.SETUP_FINISHED
+            5 -> OnboardingStep.GESTURES
+            6 -> OnboardingStep.MEDIA_SCAN       // Skip LIBRARY_SETUP
+            7 -> OnboardingStep.WIDGETS
+            8 -> OnboardingStep.INTEGRATIONS
+            9 -> OnboardingStep.RHYTHM_STATS
+            10 -> OnboardingStep.UPDATER
+            11 -> OnboardingStep.SETUP_FINISHED
             else -> OnboardingStep.COMPLETE
         }
         if (newStep != currentStep && pagerState.currentPage < stepIndex) {
@@ -259,7 +300,21 @@ fun OnboardingScreen(
                 modifier = Modifier.fillMaxSize(),
                 key = { page -> page } // Add key to preserve page state
             ) { page ->
-                val step = OnboardingStep.values()[page]
+                val step = when (page) {
+                    0 -> OnboardingStep.WELCOME
+                    1 -> OnboardingStep.PERMISSIONS
+                    2 -> OnboardingStep.BACKUP_RESTORE
+                    3 -> OnboardingStep.AUDIO_PLAYBACK
+                    4 -> OnboardingStep.THEMING
+                    5 -> OnboardingStep.GESTURES
+                    6 -> OnboardingStep.MEDIA_SCAN
+                    7 -> OnboardingStep.WIDGETS
+                    8 -> OnboardingStep.INTEGRATIONS
+                    9 -> OnboardingStep.RHYTHM_STATS
+                    10 -> OnboardingStep.UPDATER
+                    11 -> OnboardingStep.SETUP_FINISHED
+                    else -> OnboardingStep.COMPLETE
+                }
                 // Container for step-specific content - positioned at top within pager page
                 Box(
                     modifier = Modifier.fillMaxSize().padding(top=54.dp, start = horizontalPadding, end = horizontalPadding, bottom = cardPadding),
@@ -271,6 +326,12 @@ fun OnboardingScreen(
                             OnboardingStep.WELCOME -> {
                                 // Welcome screen without card
                                 EnhancedWelcomeContent(onNextStep = onNextStep, isTablet = isTablet, contentMaxWidth = contentMaxWidth)
+                            }
+                            OnboardingStep.NOTIFICATIONS -> {
+                                // Step skipped - should not reach here
+                            }
+                            OnboardingStep.LIBRARY_SETUP -> {
+                                // Step skipped - should not reach here
                             }
                             OnboardingStep.PERMISSIONS -> {
                                 EnhancedPermissionContent(
@@ -418,6 +479,8 @@ fun OnboardingScreen(
                                     }
                                 )
                             }
+                            // NOTIFICATIONS step skipped
+                            // OnboardingStep.NOTIFICATIONS -> { ... }
                             OnboardingStep.BACKUP_RESTORE -> {
                                 EnhancedBackupRestoreContent(
                                     onNextStep = onNextStep,
@@ -659,11 +722,10 @@ fun OnboardingScreen(
                                     }
                                 )
                             }
-                            OnboardingStep.LIBRARY_SETUP -> {
-                                EnhancedLibrarySetupContent(
+                            OnboardingStep.GESTURES -> {
+                                EnhancedGesturesContent(
                                     onNextStep = onNextStep,
                                     appSettings = appSettings,
-                                    onOpenTabOrderBottomSheet = { showLibraryTabOrderBottomSheet = true },
                                     isTablet = isTablet,
                                     backButton = if (stepIndex > 0) {
                                         {
@@ -739,10 +801,249 @@ fun OnboardingScreen(
                                     }
                                 )
                             }
+                            // LIBRARY_SETUP step skipped
+                            // OnboardingStep.LIBRARY_SETUP -> { ... }
                             OnboardingStep.MEDIA_SCAN -> {
                                 EnhancedMediaScanContent(
                                     onNextStep = onNextStep,
                                     onSkip = onNextStep,
+                                    appSettings = appSettings,
+                                    isTablet = isTablet,
+                                    backButton = if (stepIndex > 0) {
+                                        {
+                                            val buttonScale = remember { Animatable(1f) }
+                                            OutlinedButton(
+                                                onClick = {
+                                                    scope.launch {
+                                                        buttonScale.animateTo(0.92f, animationSpec = tween(100))
+                                                        buttonScale.animateTo(1f, animationSpec = spring(
+                                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                            stiffness = Spring.StiffnessHigh
+                                                        ))
+                                                    }
+                                                    onPrevStep()
+                                                },
+                                                modifier = Modifier
+                                                    .height(56.dp)
+                                                    .graphicsLayer {
+                                                        scaleX = buttonScale.value
+                                                        scaleY = buttonScale.value
+                                                    },
+                                                shape = RoundedCornerShape(32.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(context.getString(R.string.onboarding_back), style = MaterialTheme.typography.labelLarge)
+                                            }
+                                        }
+                                    } else null,
+                                    nextButton = {
+                                        val nextButtonScale = remember { Animatable(1f) }
+                                        Button(
+                                            onClick = {
+                                                scope.launch {
+                                                    nextButtonScale.animateTo(0.92f, animationSpec = tween(100))
+                                                    nextButtonScale.animateTo(1f, animationSpec = spring(
+                                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                        stiffness = Spring.StiffnessHigh
+                                                    ))
+                                                }
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                onNextStep()
+                                            },
+                                            modifier = Modifier
+                                                .height(56.dp)
+                                                .graphicsLayer {
+                                                    scaleX = nextButtonScale.value
+                                                    scaleY = nextButtonScale.value
+                                                },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = MaterialTheme.colorScheme.primary,
+                                                contentColor = MaterialTheme.colorScheme.onPrimary
+                                            ),
+                                            shape = RoundedCornerShape(32.dp)
+                                        ) {
+                                            Text(
+                                                context.getString(R.string.onboarding_next),
+                                                style = MaterialTheme.typography.labelLarge.copy(
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
+                                )
+                            }
+                            OnboardingStep.WIDGETS -> {
+                                EnhancedWidgetsContent(
+                                    onNextStep = onNextStep,
+                                    appSettings = appSettings,
+                                    isTablet = isTablet,
+                                    backButton = if (stepIndex > 0) {
+                                        {
+                                            val buttonScale = remember { Animatable(1f) }
+                                            OutlinedButton(
+                                                onClick = {
+                                                    scope.launch {
+                                                        buttonScale.animateTo(0.92f, animationSpec = tween(100))
+                                                        buttonScale.animateTo(1f, animationSpec = spring(
+                                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                            stiffness = Spring.StiffnessHigh
+                                                        ))
+                                                    }
+                                                    onPrevStep()
+                                                },
+                                                modifier = Modifier
+                                                    .height(56.dp)
+                                                    .graphicsLayer {
+                                                        scaleX = buttonScale.value
+                                                        scaleY = buttonScale.value
+                                                    },
+                                                shape = RoundedCornerShape(32.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(context.getString(R.string.onboarding_back), style = MaterialTheme.typography.labelLarge)
+                                            }
+                                        }
+                                    } else null,
+                                    nextButton = {
+                                        val nextButtonScale = remember { Animatable(1f) }
+                                        Button(
+                                            onClick = {
+                                                scope.launch {
+                                                    nextButtonScale.animateTo(0.92f, animationSpec = tween(100))
+                                                    nextButtonScale.animateTo(1f, animationSpec = spring(
+                                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                        stiffness = Spring.StiffnessHigh
+                                                    ))
+                                                }
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                onNextStep()
+                                            },
+                                            modifier = Modifier
+                                                .height(56.dp)
+                                                .graphicsLayer {
+                                                    scaleX = nextButtonScale.value
+                                                    scaleY = nextButtonScale.value
+                                                },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = MaterialTheme.colorScheme.primary,
+                                                contentColor = MaterialTheme.colorScheme.onPrimary
+                                            ),
+                                            shape = RoundedCornerShape(32.dp)
+                                        ) {
+                                            Text(
+                                                context.getString(R.string.onboarding_next),
+                                                style = MaterialTheme.typography.labelLarge.copy(
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
+                                )
+                            }
+                            OnboardingStep.INTEGRATIONS -> {
+                                EnhancedIntegrationsContent(
+                                    onNextStep = onNextStep,
+                                    appSettings = appSettings,
+                                    isTablet = isTablet,
+                                    backButton = if (stepIndex > 0) {
+                                        {
+                                            val buttonScale = remember { Animatable(1f) }
+                                            OutlinedButton(
+                                                onClick = {
+                                                    scope.launch {
+                                                        buttonScale.animateTo(0.92f, animationSpec = tween(100))
+                                                        buttonScale.animateTo(1f, animationSpec = spring(
+                                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                            stiffness = Spring.StiffnessHigh
+                                                        ))
+                                                    }
+                                                    onPrevStep()
+                                                },
+                                                modifier = Modifier
+                                                    .height(56.dp)
+                                                    .graphicsLayer {
+                                                        scaleX = buttonScale.value
+                                                        scaleY = buttonScale.value
+                                                    },
+                                                shape = RoundedCornerShape(32.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(context.getString(R.string.onboarding_back), style = MaterialTheme.typography.labelLarge)
+                                            }
+                                        }
+                                    } else null,
+                                    nextButton = {
+                                        val nextButtonScale = remember { Animatable(1f) }
+                                        Button(
+                                            onClick = {
+                                                scope.launch {
+                                                    nextButtonScale.animateTo(0.92f, animationSpec = tween(100))
+                                                    nextButtonScale.animateTo(1f, animationSpec = spring(
+                                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                        stiffness = Spring.StiffnessHigh
+                                                    ))
+                                                }
+                                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                                onNextStep()
+                                            },
+                                            modifier = Modifier
+                                                .height(56.dp)
+                                                .graphicsLayer {
+                                                    scaleX = nextButtonScale.value
+                                                    scaleY = nextButtonScale.value
+                                                },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = MaterialTheme.colorScheme.primary,
+                                                contentColor = MaterialTheme.colorScheme.onPrimary
+                                            ),
+                                            shape = RoundedCornerShape(32.dp)
+                                        ) {
+                                            Text(
+                                                context.getString(R.string.onboarding_next),
+                                                style = MaterialTheme.typography.labelLarge.copy(
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
+                                )
+                            }
+                            OnboardingStep.RHYTHM_STATS -> {
+                                EnhancedRhythmStatsContent(
+                                    onNextStep = onNextStep,
                                     appSettings = appSettings,
                                     isTablet = isTablet,
                                     backButton = if (stepIndex > 0) {
@@ -2353,59 +2654,20 @@ fun EnhancedBackupRestoreContent(
             ) {
                 // Auto-backup toggle card
                 Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
-                            appSettings.setAutoBackupEnabled(!autoBackupEnabled)
-                        }
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(20.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Autorenew,
-                            contentDescription = null,
-                            tint = if (autoBackupEnabled)
-                                MaterialTheme.colorScheme.primary
-                            else
-                                MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(24.dp)
-                        )
-
-                        Spacer(modifier = Modifier.width(16.dp))
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = context.getString(R.string.onboarding_auto_backup),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                text = context.getString(R.string.onboarding_auto_backup_desc),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                    OnboardingSettingRow(
+                        icon = Icons.Filled.Autorenew,
+                        title = context.getString(R.string.onboarding_auto_backup),
+                        description = context.getString(R.string.onboarding_auto_backup_desc),
+                        isEnabled = autoBackupEnabled,
+                        onToggle = { 
+                            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                            appSettings.setAutoBackupEnabled(it)
                         }
-
-                        Switch(
-                            checked = autoBackupEnabled,
-                            onCheckedChange = {
-                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
-                                appSettings.setAutoBackupEnabled(it)
-                            },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = MaterialTheme.colorScheme.primary,
-                                checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
-                            )
-                        )
-                    }
+                    )
                 }
 
                 // Backup & Restore management card
@@ -2542,59 +2804,20 @@ fun EnhancedBackupRestoreContent(
             ) {
                 // Auto-backup toggle card
                 Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
-                            appSettings.setAutoBackupEnabled(!autoBackupEnabled)
-                        }
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(20.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Autorenew,
-                            contentDescription = null,
-                            tint = if (autoBackupEnabled)
-                                MaterialTheme.colorScheme.primary
-                            else
-                                MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(24.dp)
-                        )
-
-                        Spacer(modifier = Modifier.width(16.dp))
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = context.getString(R.string.onboarding_auto_backup),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                text = context.getString(R.string.onboarding_auto_backup_desc),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                    OnboardingSettingRow(
+                        icon = Icons.Filled.Autorenew,
+                        title = context.getString(R.string.onboarding_auto_backup),
+                        description = context.getString(R.string.onboarding_auto_backup_desc),
+                        isEnabled = autoBackupEnabled,
+                        onToggle = { 
+                            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
+                            appSettings.setAutoBackupEnabled(it)
                         }
-
-                        Switch(
-                            checked = autoBackupEnabled,
-                            onCheckedChange = {
-                                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
-                                appSettings.setAutoBackupEnabled(it)
-                            },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = MaterialTheme.colorScheme.primary,
-                                checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
-                            )
-                        )
-                    }
+                    )
                 }
 
                 // Backup & Restore management card
@@ -2784,6 +3007,7 @@ fun EnhancedAudioPlaybackContent(
     val useSystemVolume by appSettings.useSystemVolume.collectAsState()
     val showLyrics by appSettings.showLyrics.collectAsState()
     val lyricsSourcePreference by appSettings.lyricsSourcePreference.collectAsState()
+    val useHoursInTimeFormat by appSettings.useHoursInTimeFormat.collectAsState()
     val scrollState = rememberScrollState()
 
     if (isTablet) {
@@ -2889,94 +3113,32 @@ fun EnhancedAudioPlaybackContent(
                 }
             }
 
-            // Right side: Toggles and dropdowns
+            // Right side: Consolidated settings card
             Column(
                 horizontalAlignment = Alignment.Start,
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Haptic feedback toggle
-                EnhancedThemeOption(
-                    icon = Icons.Filled.TouchApp,
-                    title = context.getString(R.string.onboarding_haptic_title),
-                    description = context.getString(R.string.onboarding_haptic_desc),
-                    isEnabled = hapticFeedbackEnabled,
-                    onToggle = { appSettings.setHapticFeedbackEnabled(it) }
-                )
-
-                // Default Landing Screen dropdown
-                SettingsDropdownItem(
-                    title = context.getString(R.string.onboarding_default_screen_title),
-                    description = context.getString(R.string.onboarding_default_screen_desc),
-                    selectedOption = if (appSettings.defaultScreen.collectAsState().value == "library") context.getString(R.string.option_library) else context.getString(R.string.option_home),
-                    icon = Icons.Filled.Home,
-                    options = listOf(context.getString(R.string.option_home), context.getString(R.string.option_library)),
-                    onOptionSelected = { selectedOption ->
-                        appSettings.setDefaultScreen(selectedOption.lowercase())
-                    }
-                )
-
-                // System volume control toggle
-                EnhancedThemeOption(
-                    icon = RhythmIcons.Player.VolumeUp,
-                    title = context.getString(R.string.onboarding_system_volume_title),
-                    description = context.getString(R.string.onboarding_system_volume_desc),
-                    isEnabled = useSystemVolume,
-                    onToggle = { appSettings.setUseSystemVolume(it) }
-                )
-
-                // Auto Add to Queue toggle
-                EnhancedThemeOption(
-                    icon = Icons.Filled.Queue,
-                    title = context.getString(R.string.onboarding_auto_queue_title),
-                    description = context.getString(R.string.onboarding_auto_queue_desc),
-                    isEnabled = appSettings.autoAddToQueue.collectAsState().value,
-                    onToggle = { appSettings.setAutoAddToQueue(it) }
-                )
-
-                // Clear Queue on New Song toggle
-                EnhancedThemeOption(
-                    icon = Icons.Filled.Delete,
-                    title = context.getString(R.string.onboarding_clear_queue_title),
-                    description = context.getString(R.string.onboarding_clear_queue_desc),
-                    isEnabled = appSettings.clearQueueOnNewSong.collectAsState().value,
-                    onToggle = { appSettings.setClearQueueOnNewSong(it) }
-                )
-
-                // Repeat Mode Persistence toggle
-                EnhancedThemeOption(
-                    icon = Icons.Filled.Repeat,
-                    title = context.getString(R.string.onboarding_repeat_mode_title),
-                    description = context.getString(R.string.onboarding_repeat_mode_desc),
-                    isEnabled = appSettings.repeatModePersistence.collectAsState().value,
-                    onToggle = { appSettings.setRepeatModePersistence(it) }
-                )
-
-                // Shuffle Mode Persistence toggle
-                EnhancedThemeOption(
-                    icon = Icons.Filled.Shuffle,
-                    title = context.getString(R.string.onboarding_shuffle_mode_title),
-                    description = context.getString(R.string.onboarding_shuffle_mode_desc),
-                    isEnabled = appSettings.shuffleModePersistence.collectAsState().value,
-                    onToggle = { appSettings.setShuffleModePersistence(it) }
-                )
-
-                // ExoPlayer Shuffle toggle
-                EnhancedThemeOption(
-                    icon = Icons.Filled.Shuffle,
-                    title = context.getString(R.string.onboarding_exoplayer_shuffle_title),
-                    description = context.getString(R.string.onboarding_exoplayer_shuffle_desc),
-                    isEnabled = appSettings.shuffleUsesExoplayer.collectAsState().value,
-                    onToggle = { appSettings.setShuffleUsesExoplayer(it) }
-                )
-
-                // Show Lyrics toggle
-                EnhancedThemeOption(
-                    icon = Icons.Filled.Lyrics,
-                    title = context.getString(R.string.onboarding_show_lyrics_title),
-                    description = context.getString(R.string.onboarding_show_lyrics_desc),
-                    isEnabled = showLyrics,
-                    onToggle = { appSettings.setShowLyrics(it) }
+                // Consolidated Audio Settings Card
+                AudioPlaybackSettingsCard(
+                    hapticFeedbackEnabled = hapticFeedbackEnabled,
+                    useSystemVolume = useSystemVolume,
+                    autoAddToQueue = appSettings.autoAddToQueue.collectAsState().value,
+                    clearQueueOnNewSong = appSettings.clearQueueOnNewSong.collectAsState().value,
+                    repeatModePersistence = appSettings.repeatModePersistence.collectAsState().value,
+                    shuffleModePersistence = appSettings.shuffleModePersistence.collectAsState().value,
+                    shuffleUsesExoplayer = appSettings.shuffleUsesExoplayer.collectAsState().value,
+                    showLyrics = showLyrics,
+                    useHoursInTimeFormat = useHoursInTimeFormat,
+                    onHapticChange = { appSettings.setHapticFeedbackEnabled(it) },
+                    onSystemVolumeChange = { appSettings.setUseSystemVolume(it) },
+                    onAutoQueueChange = { appSettings.setAutoAddToQueue(it) },
+                    onClearQueueChange = { appSettings.setClearQueueOnNewSong(it) },
+                    onRepeatModeChange = { appSettings.setRepeatModePersistence(it) },
+                    onShuffleModeChange = { appSettings.setShuffleModePersistence(it) },
+                    onExoplayerShuffleChange = { appSettings.setShuffleUsesExoplayer(it) },
+                    onShowLyricsChange = { appSettings.setShowLyrics(it) },
+                    onUseHoursChange = { appSettings.setUseHoursInTimeFormat(it) }
                 )
 
                 // Lyrics Source Priority dropdown (shown when lyrics are enabled)
@@ -3082,89 +3244,26 @@ fun EnhancedAudioPlaybackContent(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)
             ) {
-                // Audio options
-                // Haptic feedback toggle
-                EnhancedThemeOption(
-                    icon = Icons.Filled.TouchApp,
-                    title = context.getString(R.string.onboarding_haptic_title),
-                    description = context.getString(R.string.onboarding_haptic_desc),
-                    isEnabled = hapticFeedbackEnabled,
-                    onToggle = { appSettings.setHapticFeedbackEnabled(it) }
-                )
-
-                // Default Landing Screen dropdown
-                SettingsDropdownItem(
-                    title = context.getString(R.string.onboarding_default_screen_title),
-                    description = context.getString(R.string.onboarding_default_screen_desc),
-                    selectedOption = if (appSettings.defaultScreen.collectAsState().value == "library") context.getString(R.string.option_library) else context.getString(R.string.option_home),
-                    icon = Icons.Filled.Home,
-                    options = listOf(context.getString(R.string.option_home), context.getString(R.string.option_library)),
-                    onOptionSelected = { selectedOption ->
-                        appSettings.setDefaultScreen(selectedOption.lowercase())
-                    }
-                )
-
-                // System volume control toggle
-                EnhancedThemeOption(
-                    icon = RhythmIcons.Player.VolumeUp,
-                    title = context.getString(R.string.onboarding_system_volume_title),
-                    description = context.getString(R.string.onboarding_system_volume_desc),
-                    isEnabled = useSystemVolume,
-                    onToggle = { appSettings.setUseSystemVolume(it) }
-                )
-
-                // Auto Add to Queue toggle
-                EnhancedThemeOption(
-                    icon = Icons.Filled.Queue,
-                    title = context.getString(R.string.onboarding_auto_queue_title),
-                    description = context.getString(R.string.onboarding_auto_queue_desc),
-                    isEnabled = appSettings.autoAddToQueue.collectAsState().value,
-                    onToggle = { appSettings.setAutoAddToQueue(it) }
-                )
-
-                // Clear Queue on New Song toggle
-                EnhancedThemeOption(
-                    icon = Icons.Filled.Delete,
-                    title = context.getString(R.string.onboarding_clear_queue_title),
-                    description = context.getString(R.string.onboarding_clear_queue_desc),
-                    isEnabled = appSettings.clearQueueOnNewSong.collectAsState().value,
-                    onToggle = { appSettings.setClearQueueOnNewSong(it) }
-                )
-
-                // Repeat Mode Persistence toggle
-                EnhancedThemeOption(
-                    icon = Icons.Filled.Repeat,
-                    title = context.getString(R.string.onboarding_repeat_mode_title),
-                    description = context.getString(R.string.onboarding_repeat_mode_desc),
-                    isEnabled = appSettings.repeatModePersistence.collectAsState().value,
-                    onToggle = { appSettings.setRepeatModePersistence(it) }
-                )
-
-                // Shuffle Mode Persistence toggle
-                EnhancedThemeOption(
-                    icon = Icons.Filled.Shuffle,
-                    title = context.getString(R.string.onboarding_shuffle_mode_title),
-                    description = context.getString(R.string.onboarding_shuffle_mode_desc),
-                    isEnabled = appSettings.shuffleModePersistence.collectAsState().value,
-                    onToggle = { appSettings.setShuffleModePersistence(it) }
-                )
-
-                // ExoPlayer Shuffle toggle
-                EnhancedThemeOption(
-                    icon = Icons.Filled.Shuffle,
-                    title = context.getString(R.string.onboarding_exoplayer_shuffle_title),
-                    description = context.getString(R.string.onboarding_exoplayer_shuffle_desc),
-                    isEnabled = appSettings.shuffleUsesExoplayer.collectAsState().value,
-                    onToggle = { appSettings.setShuffleUsesExoplayer(it) }
-                )
-
-                // Show Lyrics toggle
-                EnhancedThemeOption(
-                    icon = Icons.Filled.Lyrics,
-                    title = context.getString(R.string.onboarding_show_lyrics_title),
-                    description = context.getString(R.string.onboarding_show_lyrics_desc),
-                    isEnabled = showLyrics,
-                    onToggle = { appSettings.setShowLyrics(it) }
+                // Consolidated Audio Settings Card
+                AudioPlaybackSettingsCard(
+                    hapticFeedbackEnabled = hapticFeedbackEnabled,
+                    useSystemVolume = useSystemVolume,
+                    autoAddToQueue = appSettings.autoAddToQueue.collectAsState().value,
+                    clearQueueOnNewSong = appSettings.clearQueueOnNewSong.collectAsState().value,
+                    repeatModePersistence = appSettings.repeatModePersistence.collectAsState().value,
+                    shuffleModePersistence = appSettings.shuffleModePersistence.collectAsState().value,
+                    shuffleUsesExoplayer = appSettings.shuffleUsesExoplayer.collectAsState().value,
+                    showLyrics = showLyrics,
+                    useHoursInTimeFormat = useHoursInTimeFormat,
+                    onHapticChange = { appSettings.setHapticFeedbackEnabled(it) },
+                    onSystemVolumeChange = { appSettings.setUseSystemVolume(it) },
+                    onAutoQueueChange = { appSettings.setAutoAddToQueue(it) },
+                    onClearQueueChange = { appSettings.setClearQueueOnNewSong(it) },
+                    onRepeatModeChange = { appSettings.setRepeatModePersistence(it) },
+                    onShuffleModeChange = { appSettings.setShuffleModePersistence(it) },
+                    onExoplayerShuffleChange = { appSettings.setShuffleUsesExoplayer(it) },
+                    onShowLyricsChange = { appSettings.setShowLyrics(it) },
+                    onUseHoursChange = { appSettings.setUseHoursInTimeFormat(it) }
                 )
 
                 // Lyrics Source Priority dropdown (shown when lyrics are enabled)
@@ -3275,10 +3374,15 @@ fun EnhancedLibrarySetupContent(
     nextButton: @Composable () -> Unit
 ) {
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
     val albumViewType by appSettings.albumViewType.collectAsState()
     val artistViewType by appSettings.artistViewType.collectAsState()
     val albumSortOrder by appSettings.albumSortOrder.collectAsState()
+    val showLyrics by appSettings.showLyrics.collectAsState()
     val scrollState = rememberScrollState()
+    
+    val albumViewIsGrid = albumViewType == AlbumViewType.GRID
+    val artistViewIsGrid = artistViewType == ArtistViewType.GRID
 
     if (isTablet) {
         // Tablet layout: Left side - icon, title, description, tips, action buttons; Right side - toggles and cards
@@ -3392,19 +3496,23 @@ fun EnhancedLibrarySetupContent(
                 }
             }
 
-            // Right side: Toggles and cards
+            // Right side: Library settings
             Column(
                 horizontalAlignment = Alignment.Start,
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Library tab order feature
-                LibraryFeatureCard(
-                    icon = Icons.Filled.FormatListNumbered,
-                    title = context.getString(R.string.onboarding_tab_order_title),
-                    description = context.getString(R.string.onboarding_tab_order_desc),
-                    onClick = onOpenTabOrderBottomSheet,
-                    useTertiaryStyle = true
+                LibrarySettingsCard(
+                    albumViewIsGrid = albumViewIsGrid,
+                    artistViewIsGrid = artistViewIsGrid,
+                    showLyrics = showLyrics,
+                    onAlbumViewChange = { isGrid ->
+                        appSettings.setAlbumViewType(if (isGrid) AlbumViewType.GRID else AlbumViewType.LIST)
+                    },
+                    onArtistViewChange = { isGrid ->
+                        appSettings.setArtistViewType(if (isGrid) ArtistViewType.GRID else ArtistViewType.LIST)
+                    },
+                    onShowLyricsChange = { appSettings.setShowLyrics(it) }
                 )
             }
         }
@@ -3451,16 +3559,20 @@ fun EnhancedLibrarySetupContent(
                 text = context.getString(R.string.onboarding_library_desc),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 32.dp)
+                modifier = Modifier.padding(bottom = 24.dp)
             )
 
-            // Library tab order feature
-            LibraryFeatureCard(
-                icon = Icons.Filled.FormatListNumbered,
-                title = context.getString(R.string.onboarding_tab_order_title),
-                description = context.getString(R.string.onboarding_tab_order_desc),
-                onClick = onOpenTabOrderBottomSheet,
-                useTertiaryStyle = true
+            LibrarySettingsCard(
+                albumViewIsGrid = albumViewIsGrid,
+                artistViewIsGrid = artistViewIsGrid,
+                showLyrics = showLyrics,
+                onAlbumViewChange = { isGrid ->
+                    appSettings.setAlbumViewType(if (isGrid) AlbumViewType.GRID else AlbumViewType.LIST)
+                },
+                onArtistViewChange = { isGrid ->
+                    appSettings.setArtistViewType(if (isGrid) ArtistViewType.GRID else ArtistViewType.LIST)
+                },
+                onShowLyricsChange = { appSettings.setShowLyrics(it) }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -3513,6 +3625,463 @@ fun EnhancedLibrarySetupContent(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun LibrarySettingsCard(
+    albumViewIsGrid: Boolean,
+    artistViewIsGrid: Boolean,
+    showLyrics: Boolean,
+    onAlbumViewChange: (Boolean) -> Unit,
+    onArtistViewChange: (Boolean) -> Unit,
+    onShowLyricsChange: (Boolean) -> Unit
+) {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column {
+            OnboardingSettingRow(
+                icon = Icons.Default.GridView,
+                title = context.getString(R.string.onboarding_library_album_grid),
+                description = context.getString(R.string.onboarding_library_album_grid_desc),
+                isEnabled = albumViewIsGrid,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onAlbumViewChange(it) 
+                }
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+            )
+            OnboardingSettingRow(
+                icon = Icons.Default.PersonOutline,
+                title = context.getString(R.string.onboarding_library_artist_grid),
+                description = context.getString(R.string.onboarding_library_artist_grid_desc),
+                isEnabled = artistViewIsGrid,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onArtistViewChange(it) 
+                }
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+            )
+            OnboardingSettingRow(
+                icon = Icons.Default.Lyrics,
+                title = context.getString(R.string.onboarding_library_show_lyrics),
+                description = context.getString(R.string.onboarding_library_show_lyrics_desc),
+                isEnabled = showLyrics,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onShowLyricsChange(it) 
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun FolderManagementCard(
+    isBlacklistMode: Boolean,
+    blacklistedFolders: List<String>,
+    whitelistedFolders: List<String>,
+    onModeChange: (Boolean) -> Unit,
+    onAddFolder: () -> Unit,
+    onRemoveFolder: (String) -> Unit
+) {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    val currentFolders = if (isBlacklistMode) blacklistedFolders else whitelistedFolders
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column {
+            // Mode toggle row
+            OnboardingSettingRow(
+                icon = if (isBlacklistMode) Icons.Default.Block else Icons.Default.CheckCircle,
+                title = if (isBlacklistMode) "Blacklist Mode" else "Whitelist Mode",
+                description = if (isBlacklistMode) 
+                    "Exclude selected folders from library" 
+                else 
+                    "Only include selected folders in library",
+                isEnabled = isBlacklistMode,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onModeChange(it) 
+                }
+            )
+
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+            )
+
+            // Add folder button
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onAddFolder() }
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.secondaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CreateNewFolder,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Add Folder",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = if (isBlacklistMode) 
+                            "Select folders to block from library"
+                        else
+                            "Select folders to include in library",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            // Folder count info
+            if (currentFolders.isNotEmpty()) {
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                )
+                
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Folder,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = "${currentFolders.size} ${if (isBlacklistMode) "blocked" else "whitelisted"} folders",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                // List folders with remove option
+                currentFolders.forEach { folder ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = folder.substringAfterLast("/"),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            modifier = Modifier.weight(1f)
+                        )
+                        IconButton(
+                            onClick = { onRemoveFolder(folder) },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Remove",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun AudioPlaybackSettingsCard(
+    hapticFeedbackEnabled: Boolean,
+    useSystemVolume: Boolean,
+    autoAddToQueue: Boolean,
+    clearQueueOnNewSong: Boolean,
+    repeatModePersistence: Boolean,
+    shuffleModePersistence: Boolean,
+    shuffleUsesExoplayer: Boolean,
+    showLyrics: Boolean,
+    useHoursInTimeFormat: Boolean,
+    onHapticChange: (Boolean) -> Unit,
+    onSystemVolumeChange: (Boolean) -> Unit,
+    onAutoQueueChange: (Boolean) -> Unit,
+    onClearQueueChange: (Boolean) -> Unit,
+    onRepeatModeChange: (Boolean) -> Unit,
+    onShuffleModeChange: (Boolean) -> Unit,
+    onExoplayerShuffleChange: (Boolean) -> Unit,
+    onShowLyricsChange: (Boolean) -> Unit,
+    onUseHoursChange: (Boolean) -> Unit
+) {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column {
+            OnboardingSettingRow(
+                icon = Icons.Filled.TouchApp,
+                title = context.getString(R.string.onboarding_haptic_title),
+                description = context.getString(R.string.onboarding_haptic_desc),
+                isEnabled = hapticFeedbackEnabled,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onHapticChange(it) 
+                }
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+            )
+            OnboardingSettingRow(
+                icon = RhythmIcons.Player.VolumeUp,
+                title = context.getString(R.string.onboarding_system_volume_title),
+                description = context.getString(R.string.onboarding_system_volume_desc),
+                isEnabled = useSystemVolume,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onSystemVolumeChange(it) 
+                }
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+            )
+            OnboardingSettingRow(
+                icon = Icons.Filled.Queue,
+                title = context.getString(R.string.onboarding_auto_queue_title),
+                description = context.getString(R.string.onboarding_auto_queue_desc),
+                isEnabled = autoAddToQueue,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onAutoQueueChange(it) 
+                }
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+            )
+            OnboardingSettingRow(
+                icon = Icons.Filled.Delete,
+                title = context.getString(R.string.onboarding_clear_queue_title),
+                description = context.getString(R.string.onboarding_clear_queue_desc),
+                isEnabled = clearQueueOnNewSong,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onClearQueueChange(it) 
+                }
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+            )
+            OnboardingSettingRow(
+                icon = Icons.Filled.Repeat,
+                title = context.getString(R.string.onboarding_repeat_mode_title),
+                description = context.getString(R.string.onboarding_repeat_mode_desc),
+                isEnabled = repeatModePersistence,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onRepeatModeChange(it) 
+                }
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+            )
+            OnboardingSettingRow(
+                icon = Icons.Filled.Shuffle,
+                title = context.getString(R.string.onboarding_shuffle_mode_title),
+                description = context.getString(R.string.onboarding_shuffle_mode_desc),
+                isEnabled = shuffleModePersistence,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onShuffleModeChange(it) 
+                }
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+            )
+            OnboardingSettingRow(
+                icon = Icons.Filled.Shuffle,
+                title = context.getString(R.string.onboarding_exoplayer_shuffle_title),
+                description = context.getString(R.string.onboarding_exoplayer_shuffle_desc),
+                isEnabled = shuffleUsesExoplayer,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onExoplayerShuffleChange(it) 
+                }
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+            )
+            OnboardingSettingRow(
+                icon = Icons.Filled.AccessTime,
+                title = context.getString(R.string.settings_use_hours),
+                description = if (useHoursInTimeFormat) context.getString(R.string.settings_use_hours_enabled) else context.getString(R.string.settings_use_hours_disabled),
+                isEnabled = useHoursInTimeFormat,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onUseHoursChange(it) 
+                }
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+            )
+            OnboardingSettingRow(
+                icon = Icons.Filled.Lyrics,
+                title = context.getString(R.string.onboarding_show_lyrics_title),
+                description = context.getString(R.string.onboarding_show_lyrics_desc),
+                isEnabled = showLyrics,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onShowLyricsChange(it) 
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun ThemeSettingsCard(
+    useSystemTheme: Boolean,
+    darkMode: Boolean,
+    useDynamicColors: Boolean,
+    festiveTheme: Boolean,
+    onSystemThemeChange: (Boolean) -> Unit,
+    onDarkModeChange: (Boolean) -> Unit,
+    onDynamicColorsChange: (Boolean) -> Unit,
+    onFestiveThemeChange: (Boolean) -> Unit
+) {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column {
+            OnboardingSettingRow(
+                icon = Icons.Filled.DarkMode,
+                title = context.getString(R.string.onboarding_follow_system_title),
+                description = context.getString(R.string.onboarding_follow_system_desc),
+                isEnabled = useSystemTheme,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onSystemThemeChange(it) 
+                }
+            )
+            // Manual dark mode toggle (only shown when system theme is off)
+            AnimatedVisibility(
+                visible = !useSystemTheme,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Column {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 20.dp),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                    )
+                    OnboardingSettingRow(
+                        icon = Icons.Filled.DarkMode,
+                        title = context.getString(R.string.onboarding_dark_mode_title),
+                        description = context.getString(R.string.onboarding_dark_mode_desc),
+                        isEnabled = darkMode,
+                        onToggle = { 
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            onDarkModeChange(it) 
+                        }
+                    )
+                }
+            }
+            // Dynamic colors (Material You) - only on Android 12+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                )
+                OnboardingSettingRow(
+                    icon = Icons.Filled.Palette,
+                    title = context.getString(R.string.onboarding_dynamic_colors_title),
+                    description = context.getString(R.string.onboarding_dynamic_colors_desc),
+                    isEnabled = useDynamicColors,
+                    onToggle = { 
+                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        onDynamicColorsChange(it) 
+                    }
+                )
+            }
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+            )
+            OnboardingSettingRow(
+                icon = Icons.Filled.AutoAwesome,
+                title = "Festive Theme",
+                description = "Enable festive decorations and seasonal themes",
+                isEnabled = festiveTheme,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onFestiveThemeChange(it) 
+                }
+            )
         }
     }
 }
@@ -3605,11 +4174,16 @@ fun EnhancedThemingContent(
     nextButton: @Composable () -> Unit
 ) {
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
     val useSystemTheme by themeViewModel.useSystemTheme.collectAsState()
     val darkMode by themeViewModel.darkMode.collectAsState()
     val useDynamicColors by themeViewModel.useDynamicColors.collectAsState()
+    val festiveTheme by appSettings.festiveThemeEnabled.collectAsState()
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
+    
+    // Font selection state
+    var showFontSelectionDialog by remember { mutableStateOf(false) }
 
     if (isTablet) {
         // Tablet layout: Left side - icon, title, description, tips, action buttons; Right side - toggles and cards
@@ -3719,13 +4293,13 @@ fun EnhancedThemingContent(
                 }
             }
 
-            // Right side: Preview card and toggles
+            // Right side: Preview card, toggles, and font selection
             Column(
                 horizontalAlignment = Alignment.Start,
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Live theme preview card
+                /* // Enhanced live theme preview card
                 AnimatedVisibility(
                     visible = true,
                     enter = fadeIn(animationSpec = tween(600)) + expandVertically(animationSpec = tween(600))
@@ -3734,7 +4308,8 @@ fun EnhancedThemingContent(
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceContainer
                         ),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp)
                     ) {
                         Column(
                             modifier = Modifier.padding(20.dp),
@@ -3748,137 +4323,174 @@ fun EnhancedThemingContent(
                                 modifier = Modifier.padding(bottom = 16.dp)
                             )
 
-                            // Preview components
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                modifier = Modifier.fillMaxWidth()
+                            // Theme preview sample UI
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(MaterialTheme.colorScheme.background)
+                                    .padding(12.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                // Primary color preview
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    modifier = Modifier.weight(1f)
+                                // Primary button preview
+                                Button(
+                                    onClick = {},
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(40.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    enabled = false
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(72.dp)
-                                            .clip(RoundedCornerShape(16.dp))
-                                            .background(MaterialTheme.colorScheme.primary),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Filled.MusicNote,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onPrimary,
-                                            modifier = Modifier.size(32.dp)
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.height(8.dp))
                                     Text(
-                                        text = context.getString(R.string.onboarding_primary),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        "Sample Button",
+                                        style = MaterialTheme.typography.labelMedium
                                     )
                                 }
 
-                                // Secondary color preview
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    modifier = Modifier.weight(1f)
+                                // Color swatches
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(72.dp)
-                                            .clip(RoundedCornerShape(16.dp))
-                                            .background(MaterialTheme.colorScheme.secondaryContainer),
-                                        contentAlignment = Alignment.Center
+                                    // Primary color
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.weight(1f)
                                     ) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Album,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                                            modifier = Modifier.size(32.dp)
+                                        Box(
+                                            modifier = Modifier
+                                                .size(56.dp)
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(MaterialTheme.colorScheme.primary),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.MusicNote,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.onPrimary,
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            "Primary",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = context.getString(R.string.onboarding_container),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
 
-                                // Tertiary color preview
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(72.dp)
-                                            .clip(RoundedCornerShape(16.dp))
-                                            .background(MaterialTheme.colorScheme.tertiaryContainer),
-                                        contentAlignment = Alignment.Center
+                                    // Secondary color
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.weight(1f)
                                     ) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Person,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                                            modifier = Modifier.size(32.dp)
+                                        Box(
+                                            modifier = Modifier
+                                                .size(56.dp)
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(MaterialTheme.colorScheme.secondary),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.Album,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.onSecondary,
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            "Secondary",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = context.getString(R.string.onboarding_accent),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+
+                                    // Tertiary color
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(56.dp)
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(MaterialTheme.colorScheme.tertiary),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.Palette,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.onTertiary,
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            "Tertiary",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
-                }
+                } */
 
-                // Theme options
-                Column(
+                // Theme toggles - wrapped in Card
+                Card(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                 ) {
-                    // System theme toggle
-                    EnhancedThemeOption(
-                        icon = Icons.Filled.DarkMode,
-                        title = context.getString(R.string.onboarding_follow_system_title),
-                        description = context.getString(R.string.onboarding_follow_system_desc),
-                        isEnabled = useSystemTheme,
-                        onToggle = { enabled ->
-                            scope.launch {
-                                themeViewModel.setUseSystemTheme(enabled)
-                            }
-                        }
-                    )
-
-                    // Manual dark mode toggle (only shown when system theme is off)
-                    AnimatedVisibility(
-                        visible = !useSystemTheme,
-                        enter = expandVertically() + fadeIn(),
-                        exit = shrinkVertically() + fadeOut()
-                    ) {
-                        EnhancedThemeOption(
-                            icon = Icons.Filled.DarkMode,
-                            title = context.getString(R.string.onboarding_dark_mode_title),
-                            description = context.getString(R.string.onboarding_dark_mode_desc),
-                            isEnabled = darkMode,
+                    Column {
+                        // System Theme toggle
+                        OnboardingSettingRow(
+                            icon = Icons.Filled.Settings,
+                            title = context.getString(R.string.onboarding_follow_system_title),
+                            description = context.getString(R.string.onboarding_follow_system_desc),
+                            isEnabled = useSystemTheme,
                             onToggle = { enabled ->
                                 scope.launch {
-                                    themeViewModel.setDarkMode(enabled)
+                                    themeViewModel.setUseSystemTheme(enabled)
                                 }
                             }
                         )
-                    }
 
-                    // Dynamic colors (Material You) - only on Android 12+
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        EnhancedThemeOption(
-                            icon = Icons.Filled.Palette,
+                        // Dark Mode toggle
+                        AnimatedVisibility(
+                            visible = !useSystemTheme,
+                            enter = expandVertically() + fadeIn(),
+                            exit = shrinkVertically() + fadeOut()
+                        ) {
+                            Column {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                                OnboardingSettingRow(
+                                    icon = Icons.Filled.DarkMode,
+                                    title = context.getString(R.string.onboarding_dark_mode_title),
+                                    description = context.getString(R.string.onboarding_dark_mode_desc),
+                                    isEnabled = darkMode,
+                                    onToggle = { enabled ->
+                                        scope.launch {
+                                            themeViewModel.setDarkMode(enabled)
+                                        }
+                                    }
+                                )
+                            }
+                        }
+
+                        // Dynamic Colors toggle
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        OnboardingSettingRow(
+                            icon = Icons.Filled.AutoAwesome,
                             title = context.getString(R.string.onboarding_dynamic_colors_title),
                             description = context.getString(R.string.onboarding_dynamic_colors_desc),
                             isEnabled = useDynamicColors,
@@ -3888,8 +4500,77 @@ fun EnhancedThemingContent(
                                 }
                             }
                         )
+
+                        // Festive Theme toggle
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        OnboardingSettingRow(
+                            icon = Icons.Filled.AutoAwesome,
+                            title = "Festive Theme",
+                            description = "Enable festive decorations and seasonal themes",
+                            isEnabled = festiveTheme,
+                            onToggle = { enabled ->
+                                appSettings.setFestiveThemeEnabled(enabled)
+                            }
+                        )
                     }
                 }
+
+//                // Font selection card
+//                Card(
+//                    onClick = { showFontSelectionDialog = true },
+//                    colors = CardDefaults.cardColors(
+//                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+//                    ),
+//                    modifier = Modifier.fillMaxWidth(),
+//                    shape = RoundedCornerShape(18.dp)
+//                ) {
+//                    Row(
+//                        modifier = Modifier.padding(16.dp),
+//                        verticalAlignment = Alignment.CenterVertically
+//                    ) {
+//                        Icon(
+//                            imageVector = Icons.Filled.FontDownload,
+//                            contentDescription = null,
+//                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+//                            modifier = Modifier.size(24.dp)
+//                        )
+//                        Spacer(modifier = Modifier.width(12.dp))
+//                        Column(modifier = Modifier.weight(1f)) {
+//                            Text(
+//                                text = context.getString(R.string.theme_font_selection),
+//                                style = MaterialTheme.typography.labelLarge,
+//                                fontWeight = FontWeight.SemiBold,
+//                                color = MaterialTheme.colorScheme.onPrimaryContainer
+//                            )
+//                            Text(
+//                                text = context.getString(R.string.theme_font_selection_desc),
+//                                style = MaterialTheme.typography.bodySmall,
+//                                color = MaterialTheme.colorScheme.onPrimaryContainer
+//                            )
+//                        }
+//                        Icon(
+//                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+//                            contentDescription = null,
+//                            tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f),
+//                            modifier = Modifier.size(20.dp)
+//                        )
+//                    }
+//                }
+
+                // Default Landing Screen dropdown
+                SettingsDropdownItem(
+                    title = context.getString(R.string.onboarding_default_screen_title),
+                    description = context.getString(R.string.onboarding_default_screen_desc),
+                    selectedOption = if (appSettings.defaultScreen.collectAsState().value == "library") context.getString(R.string.option_library) else context.getString(R.string.option_home),
+                    icon = Icons.Filled.Home,
+                    options = listOf(context.getString(R.string.option_home), context.getString(R.string.option_library)),
+                    onOptionSelected = { selectedOption ->
+                        appSettings.setDefaultScreen(selectedOption.lowercase())
+                    }
+                )
             }
         }
     } else {
@@ -3938,37 +4619,57 @@ fun EnhancedThemingContent(
                 modifier = Modifier.padding(bottom = 32.dp)
             )
 
-            // Live theme preview card
-            AnimatedVisibility(
-                visible = true,
-                enter = fadeIn(animationSpec = tween(600)) + expandVertically(animationSpec = tween(600))
+            /* // Live theme preview card
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                ),
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp)
             ) {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 24.dp)
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = context.getString(R.string.onboarding_live_preview),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.padding(bottom = 16.dp)
-                        )
+                    Text(
+                        text = context.getString(R.string.onboarding_live_preview),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
 
-                        // Preview components
+                    // Theme preview sample UI
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.background)
+                            .padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Primary button preview
+                        Button(
+                            onClick = {},
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(40.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            enabled = false
+                        ) {
+                            Text(
+                                "Sample Button",
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
+
+                        // Color swatches
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            // Primary color preview
+                            // Primary color
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 modifier = Modifier.weight(1f)
@@ -3976,7 +4677,7 @@ fun EnhancedThemingContent(
                                 Box(
                                     modifier = Modifier
                                         .size(56.dp)
-                                        .clip(RoundedCornerShape(16.dp))
+                                        .clip(RoundedCornerShape(12.dp))
                                         .background(MaterialTheme.colorScheme.primary),
                                     contentAlignment = Alignment.Center
                                 ) {
@@ -3984,18 +4685,18 @@ fun EnhancedThemingContent(
                                         imageVector = Icons.Filled.MusicNote,
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.onPrimary,
-                                        modifier = Modifier.size(28.dp)
+                                        modifier = Modifier.size(24.dp)
                                     )
                                 }
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = context.getString(R.string.onboarding_primary),
+                                    "Primary",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
 
-                            // Secondary color preview
+                            // Secondary color
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 modifier = Modifier.weight(1f)
@@ -4003,26 +4704,26 @@ fun EnhancedThemingContent(
                                 Box(
                                     modifier = Modifier
                                         .size(56.dp)
-                                        .clip(RoundedCornerShape(16.dp))
-                                        .background(MaterialTheme.colorScheme.secondaryContainer),
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(MaterialTheme.colorScheme.secondary),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = Icons.Filled.Album,
                                         contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                                        modifier = Modifier.size(28.dp)
+                                        tint = MaterialTheme.colorScheme.onSecondary,
+                                        modifier = Modifier.size(24.dp)
                                     )
                                 }
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = context.getString(R.string.onboarding_container),
+                                    "Secondary",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
 
-                            // Tertiary color preview
+                            // Tertiary color
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 modifier = Modifier.weight(1f)
@@ -4030,20 +4731,20 @@ fun EnhancedThemingContent(
                                 Box(
                                     modifier = Modifier
                                         .size(56.dp)
-                                        .clip(RoundedCornerShape(16.dp))
-                                        .background(MaterialTheme.colorScheme.tertiaryContainer),
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(MaterialTheme.colorScheme.tertiary),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Filled.Person,
+                                        imageVector = Icons.Filled.Palette,
                                         contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                                        modifier = Modifier.size(28.dp)
+                                        tint = MaterialTheme.colorScheme.onTertiary,
+                                        modifier = Modifier.size(24.dp)
                                     )
                                 }
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = context.getString(R.string.onboarding_accent),
+                                    "Tertiary",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -4053,58 +4754,91 @@ fun EnhancedThemingContent(
                 }
             }
 
-            // Theme options - vertically centered
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)
-            ) {
-                // System theme toggle
-                EnhancedThemeOption(
-                    icon = Icons.Filled.DarkMode,
-                    title = context.getString(R.string.onboarding_follow_system_title),
-                    description = context.getString(R.string.onboarding_follow_system_desc),
-                    isEnabled = useSystemTheme,
-                    onToggle = { enabled ->
-                        scope.launch {
-                            themeViewModel.setUseSystemTheme(enabled)
-                        }
+            Spacer(modifier = Modifier.height(16.dp)) */
+
+            // Theme options - consolidated settings card
+            ThemeSettingsCard(
+                useSystemTheme = useSystemTheme,
+                darkMode = darkMode,
+                useDynamicColors = useDynamicColors,
+                festiveTheme = festiveTheme,
+                onSystemThemeChange = { enabled ->
+                    scope.launch {
+                        themeViewModel.setUseSystemTheme(enabled)
                     }
-                )
+                },
+                onDarkModeChange = { enabled ->
+                    scope.launch {
+                        themeViewModel.setDarkMode(enabled)
+                    }
+                },
+                onDynamicColorsChange = { enabled ->
+                    scope.launch {
+                        themeViewModel.setUseDynamicColors(enabled)
+                    }
+                },
+                onFestiveThemeChange = { enabled ->
+                    appSettings.setFestiveThemeEnabled(enabled)
+                }
+            )
 
-                // Manual dark mode toggle (only shown when system theme is off)
-                AnimatedVisibility(
-                    visible = !useSystemTheme,
-                    enter = expandVertically() + fadeIn(),
-                    exit = shrinkVertically() + fadeOut()
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Default Landing Screen dropdown
+            SettingsDropdownItem(
+                title = context.getString(R.string.onboarding_default_screen_title),
+                description = context.getString(R.string.onboarding_default_screen_desc),
+                selectedOption = if (appSettings.defaultScreen.collectAsState().value == "library") context.getString(R.string.option_library) else context.getString(R.string.option_home),
+                icon = Icons.Filled.Home,
+                options = listOf(context.getString(R.string.option_home), context.getString(R.string.option_library)),
+                onOptionSelected = { selectedOption ->
+                    appSettings.setDefaultScreen(selectedOption.lowercase())
+                }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            /* // Font selection card - commented out
+            Card(
+                onClick = { showFontSelectionDialog = true },
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                ),
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    EnhancedThemeOption(
-                        icon = Icons.Filled.DarkMode,
-                        title = context.getString(R.string.onboarding_dark_mode_title),
-                        description = context.getString(R.string.onboarding_dark_mode_desc),
-                        isEnabled = darkMode,
-                        onToggle = { enabled ->
-                            scope.launch {
-                                themeViewModel.setDarkMode(enabled)
-                            }
-                        }
+                    Icon(
+                        imageVector = Icons.Filled.FontDownload,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = context.getString(R.string.theme_font_selection),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            text = context.getString(R.string.theme_font_selection_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f),
+                        modifier = Modifier.size(20.dp)
                     )
                 }
-
-                // Dynamic colors (Material You) - only on Android 12+
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    EnhancedThemeOption(
-                        icon = Icons.Filled.Palette,
-                        title = context.getString(R.string.onboarding_dynamic_colors_title),
-                        description = context.getString(R.string.onboarding_dynamic_colors_desc),
-                        isEnabled = useDynamicColors,
-                        onToggle = { enabled ->
-                            scope.launch {
-                                themeViewModel.setUseDynamicColors(enabled)
-                            }
-                        }
-                    )
-                }
-            } // End vertically centered content
+            } */
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -4152,6 +4886,18 @@ fun EnhancedThemingContent(
                     )
                 }
             }
+        }
+    }
+    
+    // Font Selection Dialog - Simple implementation
+    // Note: Full font selection dialog is available in app settings
+    // This is a simplified version for onboarding
+    if (showFontSelectionDialog) {
+        // For now, just close the dialog and navigate user to settings
+        // In a future update, this could show a proper font selection UI
+        LaunchedEffect(Unit) {
+            showFontSelectionDialog = false
+            // TODO: Navigate to theme settings for full font customization
         }
     }
 }
@@ -4627,69 +5373,99 @@ fun EnhancedUpdaterContent(
             }
 
             // Right side: Update options (toggles and dropdowns)
+            val haptic = LocalHapticFeedback.current
             Column(
                 horizontalAlignment = Alignment.Start,
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Enable Updates toggle (NEW)
-                EnhancedUpdateOption(
-                    icon = Icons.Filled.SystemUpdate,
-                    title = context.getString(R.string.onboarding_enable_updates_title),
-                    description = context.getString(R.string.onboarding_enable_updates_desc),
-                    isEnabled = updatesEnabled,
-                    onToggle = { enabled ->
-                        scope.launch {
-                            appSettings.setUpdatesEnabled(enabled)
+                // Enable Updates toggle (NEW) - in Card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                ) {
+                    OnboardingSettingRow(
+                        icon = Icons.Filled.SystemUpdate,
+                        title = context.getString(R.string.onboarding_enable_updates_title),
+                        description = context.getString(R.string.onboarding_enable_updates_desc),
+                        isEnabled = updatesEnabled,
+                        onToggle = { enabled ->
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            scope.launch {
+                                appSettings.setUpdatesEnabled(enabled)
+                            }
                         }
-                    }
-                )
+                    )
+                }
 
                 // Animated visibility for other update options based on updatesEnabled
                 AnimatedVisibility(
-                    visible = updatesEnabled, // CHANGED from autoCheckForUpdates
+                    visible = updatesEnabled,
                     enter = expandVertically() + fadeIn(),
                     exit = shrinkVertically() + fadeOut()
                 ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) { // Changed spacing to 16.dp for consistency
-                        // Auto check for updates toggle (now inside AnimatedVisibility)
-                        EnhancedUpdateOption(
-                            icon = Icons.Filled.Autorenew,
-                            title = context.getString(R.string.onboarding_periodic_check_title),
-                            description = context.getString(R.string.onboarding_periodic_check_desc),
-                            isEnabled = autoCheckForUpdates,
-                            onToggle = { enabled ->
-                                scope.launch {
-                                    appSettings.setAutoCheckForUpdates(enabled)
-                                }
-                            }
-                        )
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        // Group all toggles and dropdowns in single card
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(18.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                        ) {
+                            Column {
+                                // Auto check for updates toggle
+                                OnboardingSettingRow(
+                                    icon = Icons.Filled.Autorenew,
+                                    title = context.getString(R.string.onboarding_periodic_check_title),
+                                    description = context.getString(R.string.onboarding_periodic_check_desc),
+                                    isEnabled = autoCheckForUpdates,
+                                    onToggle = { enabled ->
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        scope.launch {
+                                            appSettings.setAutoCheckForUpdates(enabled)
+                                        }
+                                    }
+                                )
 
-                        // Update Notifications toggle
-                        EnhancedUpdateOption(
-                            icon = Icons.Filled.Notifications,
-                            title = context.getString(R.string.onboarding_update_notifications_title),
-                            description = context.getString(R.string.onboarding_update_notifications_desc),
-                            isEnabled = updateNotificationsEnabled,
-                            onToggle = { enabled ->
-                                scope.launch {
-                                    appSettings.setUpdateNotificationsEnabled(enabled)
-                                }
-                            }
-                        )
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
 
-                        // Smart Polling toggle
-                        EnhancedUpdateOption(
-                            icon = Icons.Filled.CloudSync,
-                            title = context.getString(R.string.onboarding_smart_polling_title),
-                            description = context.getString(R.string.onboarding_smart_polling_desc),
-                            isEnabled = useSmartUpdatePolling,
-                            onToggle = { enabled ->
-                                scope.launch {
-                                    appSettings.setUseSmartUpdatePolling(enabled)
-                                }
+                                // Update Notifications toggle
+                                OnboardingSettingRow(
+                                    icon = Icons.Filled.Notifications,
+                                    title = context.getString(R.string.onboarding_update_notifications_title),
+                                    description = context.getString(R.string.onboarding_update_notifications_desc),
+                                    isEnabled = updateNotificationsEnabled,
+                                    onToggle = { enabled ->
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        scope.launch {
+                                            appSettings.setUpdateNotificationsEnabled(enabled)
+                                        }
+                                    }
+                                )
+
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+
+                                // Smart Polling toggle
+                                OnboardingSettingRow(
+                                    icon = Icons.Filled.CloudSync,
+                                    title = context.getString(R.string.onboarding_smart_polling_title),
+                                    description = context.getString(R.string.onboarding_smart_polling_desc),
+                                    isEnabled = useSmartUpdatePolling,
+                                    onToggle = { enabled ->
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        scope.launch {
+                                            appSettings.setUseSmartUpdatePolling(enabled)
+                                        }
+                                    }
+                                )
                             }
-                        )
+                        }
 
                         // Check Interval dropdown
                         SettingsDropdownItem(
@@ -4908,69 +5684,95 @@ fun EnhancedUpdaterContent(
                 )
             }
 
-            // Update options - vertically centered
+            // Update options - using Card + OnboardingSettingRow pattern like gesture step
+            val haptic = LocalHapticFeedback.current
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Enable Updates toggle (NEW)
-                EnhancedUpdateOption(
-                    icon = Icons.Filled.SystemUpdate,
-                    title = context.getString(R.string.onboarding_enable_updates_title),
-                    description = context.getString(R.string.onboarding_enable_updates_desc),
-                    isEnabled = updatesEnabled,
-                    onToggle = { enabled ->
-                        scope.launch {
-                            appSettings.setUpdatesEnabled(enabled)
+                // Enable Updates toggle in Card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                ) {
+                    OnboardingSettingRow(
+                        icon = Icons.Filled.SystemUpdate,
+                        title = context.getString(R.string.onboarding_enable_updates_title),
+                        description = context.getString(R.string.onboarding_enable_updates_desc),
+                        isEnabled = updatesEnabled,
+                        onToggle = { enabled ->
+                            scope.launch {
+                                appSettings.setUpdatesEnabled(enabled)
+                            }
                         }
-                    }
-                )
+                    )
+                }
 
                 // Animated visibility for other update options based on updatesEnabled
                 AnimatedVisibility(
-                    visible = updatesEnabled, // CHANGED from autoCheckForUpdates
+                    visible = updatesEnabled,
                     enter = expandVertically() + fadeIn(),
                     exit = shrinkVertically() + fadeOut()
                 ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) { // Changed spacing to 16.dp for consistency
-                        // Auto check for updates toggle (now inside AnimatedVisibility)
-                        EnhancedUpdateOption(
-                            icon = Icons.Filled.Autorenew,
-                            title = context.getString(R.string.onboarding_periodic_check_title),
-                            description = context.getString(R.string.onboarding_periodic_check_desc),
-                            isEnabled = autoCheckForUpdates,
-                            onToggle = { enabled ->
-                                scope.launch {
-                                    appSettings.setAutoCheckForUpdates(enabled)
-                                }
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        // Toggles grouped in one Card
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(18.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                        ) {
+                            Column {
+                                // Auto check for updates toggle
+                                OnboardingSettingRow(
+                                    icon = Icons.Filled.Autorenew,
+                                    title = context.getString(R.string.onboarding_periodic_check_title),
+                                    description = context.getString(R.string.onboarding_periodic_check_desc),
+                                    isEnabled = autoCheckForUpdates,
+                                    onToggle = { enabled ->
+                                        scope.launch {
+                                            appSettings.setAutoCheckForUpdates(enabled)
+                                        }
+                                    }
+                                )
+                                
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                                
+                                // Update Notifications toggle
+                                OnboardingSettingRow(
+                                    icon = Icons.Filled.Notifications,
+                                    title = context.getString(R.string.onboarding_update_notifications_title),
+                                    description = context.getString(R.string.onboarding_update_notifications_desc),
+                                    isEnabled = updateNotificationsEnabled,
+                                    onToggle = { enabled ->
+                                        scope.launch {
+                                            appSettings.setUpdateNotificationsEnabled(enabled)
+                                        }
+                                    }
+                                )
+                                
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                                
+                                // Smart Polling toggle
+                                OnboardingSettingRow(
+                                    icon = Icons.Filled.CloudSync,
+                                    title = context.getString(R.string.onboarding_smart_polling_title),
+                                    description = context.getString(R.string.onboarding_smart_polling_desc),
+                                    isEnabled = useSmartUpdatePolling,
+                                    onToggle = { enabled ->
+                                        scope.launch {
+                                            appSettings.setUseSmartUpdatePolling(enabled)
+                                        }
+                                    }
+                                )
                             }
-                        )
-
-                        // Update Notifications toggle
-                        EnhancedUpdateOption(
-                            icon = Icons.Filled.Notifications,
-                            title = context.getString(R.string.onboarding_update_notifications_title),
-                            description = context.getString(R.string.onboarding_update_notifications_desc),
-                            isEnabled = updateNotificationsEnabled,
-                            onToggle = { enabled ->
-                                scope.launch {
-                                    appSettings.setUpdateNotificationsEnabled(enabled)
-                                }
-                            }
-                        )
-
-                        // Smart Polling toggle
-                        EnhancedUpdateOption(
-                            icon = Icons.Filled.CloudSync,
-                            title = context.getString(R.string.onboarding_smart_polling_title),
-                            description = context.getString(R.string.onboarding_smart_polling_desc),
-                            isEnabled = useSmartUpdatePolling,
-                            onToggle = { enabled ->
-                                scope.launch {
-                                    appSettings.setUseSmartUpdatePolling(enabled)
-                                }
-                            }
-                        )
+                        }
 
                         // Check Interval dropdown
                         SettingsDropdownItem(
@@ -5042,7 +5844,7 @@ fun EnhancedUpdaterContent(
                         )
                     }
                 }
-            } // End vertically centered content
+            }
         }
     }
 }
@@ -5473,11 +6275,54 @@ fun EnhancedMediaScanContent(
     nextButton: @Composable () -> Unit
 ) {
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
 
     // Get current media scan mode preference
     val mediaScanMode by appSettings.mediaScanMode.collectAsState()
+    val isBlacklistMode = mediaScanMode == "blacklist"
+    val blacklistedFolders by appSettings.blacklistedFolders.collectAsState()
+    val whitelistedFolders by appSettings.whitelistedFolders.collectAsState()
+
+    // Folder picker launcher
+    val folderPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                try {
+                    val docId = DocumentsContract.getTreeDocumentId(uri)
+                    val split = docId.split(":")
+
+                    if (split.size >= 2) {
+                        val storageType = split[0]
+                        val relativePath = split[1]
+
+                        val fullPath = when (storageType) {
+                            "primary" -> "/storage/emulated/0/$relativePath"
+                            "home" -> "/storage/emulated/0/$relativePath"
+                            else -> {
+                                if (storageType.contains("-")) {
+                                    "/storage/$storageType/$relativePath"
+                                } else {
+                                    "/storage/emulated/0/$relativePath"
+                                }
+                            }
+                        }
+
+                        if (isBlacklistMode) {
+                            appSettings.addFolderToBlacklist(fullPath)
+                        } else {
+                            appSettings.addFolderToWhitelist(fullPath)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("OnboardingMediaScan", "Error parsing folder path", e)
+                }
+            }
+        }
+    }
 
     if (isTablet) {
         // Tablet layout: Left side - icon, description, media scan tips, action buttons; Right side - storage info and configuration
@@ -5587,88 +6432,33 @@ fun EnhancedMediaScanContent(
                 }
             }
 
-            // Right side: Storage info and configuration
+            // Right side: Scan mode settings and folder management
             Column(
                 horizontalAlignment = Alignment.Start,
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Cache management info card
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f)
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.padding(20.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Storage,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = context.getString(R.string.onboarding_storage_title),
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
-                            )
-                            Text(
-                                text = context.getString(R.string.onboarding_storage_desc),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
-                            )
+                FolderManagementCard(
+                    isBlacklistMode = isBlacklistMode,
+                    blacklistedFolders = blacklistedFolders,
+                    whitelistedFolders = whitelistedFolders,
+                    onModeChange = { useBlacklist ->
+                        appSettings.setMediaScanMode(if (useBlacklist) "blacklist" else "whitelist")
+                    },
+                    onAddFolder = {
+                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+                        folderPickerLauncher.launch(intent)
+                    },
+                    onRemoveFolder = { folder ->
+                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        if (isBlacklistMode) {
+                            appSettings.removeFolderFromBlacklist(folder)
+                        } else {
+                            appSettings.removeFolderFromWhitelist(folder)
                         }
                     }
-                }
-
-                // Media scan configuration card
-                Card(
-                    onClick = { /* onOpenBottomSheet */ },
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Tune,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = context.getString(R.string.onboarding_media_scan_configure),
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = context.getString(
-                                    R.string.onboarding_media_scan_current_mode,
-                                    mediaScanMode.replaceFirstChar { it.uppercase() }),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = "Open media scan settings",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
+                )
             }
         }
     } else {
@@ -5714,42 +6504,30 @@ fun EnhancedMediaScanContent(
                 text = context.getString(R.string.onboarding_media_scan_desc),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 32.dp)
+                modifier = Modifier.padding(bottom = 24.dp)
             )
 
-            // Cache management info card
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f)
-                ),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Storage,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = context.getString(R.string.onboarding_storage_title),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer
-                        )
-                        Text(
-                            text = context.getString(R.string.onboarding_storage_desc),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer
-                        )
+            FolderManagementCard(
+                isBlacklistMode = isBlacklistMode,
+                blacklistedFolders = blacklistedFolders,
+                whitelistedFolders = whitelistedFolders,
+                onModeChange = { useBlacklist ->
+                    appSettings.setMediaScanMode(if (useBlacklist) "blacklist" else "whitelist")
+                },
+                onAddFolder = {
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+                    folderPickerLauncher.launch(intent)
+                },
+                onRemoveFolder = { folder ->
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    if (isBlacklistMode) {
+                        appSettings.removeFolderFromBlacklist(folder)
+                    } else {
+                        appSettings.removeFolderFromWhitelist(folder)
                     }
                 }
-            }
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -5797,6 +6575,49 @@ fun EnhancedMediaScanContent(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun MediaScanSettingsCard(
+    isBlacklistMode: Boolean,
+    onModeChange: (Boolean) -> Unit
+) {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column {
+            OnboardingSettingRow(
+                icon = Icons.Default.Block,
+                title = context.getString(R.string.settings_blacklist_mode),
+                description = context.getString(R.string.settings_blacklist_mode_desc),
+                isEnabled = isBlacklistMode,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onModeChange(it) 
+                }
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+            )
+            OnboardingSettingRow(
+                icon = Icons.Default.CheckCircle,
+                title = context.getString(R.string.settings_whitelist_mode),
+                description = context.getString(R.string.settings_whitelist_mode_desc),
+                isEnabled = !isBlacklistMode,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onModeChange(!it) 
+                }
+            )
         }
     }
 }
@@ -6644,5 +7465,1640 @@ private fun SetupCompleteFeature(
                 modifier = Modifier.size(20.dp)
             )
         }
+    }
+}
+
+// =====================================================
+// NOTIFICATIONS ONBOARDING STEP
+// =====================================================
+
+@Composable
+fun EnhancedNotificationsContent(
+    onNextStep: () -> Unit,
+    appSettings: AppSettings,
+    isTablet: Boolean = false,
+    backButton: @Composable (() -> Unit)? = null,
+    nextButton: @Composable () -> Unit
+) {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    val scrollState = rememberScrollState()
+
+    // Notification settings
+    val useCustomNotification by appSettings.useCustomNotification.collectAsState()
+
+    if (isTablet) {
+        // Tablet layout
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+                .padding(vertical = 32.dp),
+            horizontalArrangement = Arrangement.spacedBy(32.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            // Left side
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                AnimatedVisibility(visible = true, enter = scaleIn() + fadeIn()) {
+                    Box(
+                        modifier = Modifier
+                            .size(96.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Notifications,
+                            contentDescription = "Notifications",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                }
+
+                Text(
+                    text = context.getString(R.string.onboarding_notifications_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                Text(
+                    text = context.getString(R.string.onboarding_notifications_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 32.dp)
+                )
+
+                // Info card
+                NotificationInfoCard()
+
+                // Action buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    backButton?.invoke()
+                    nextButton()
+                }
+            }
+
+            // Right side - settings
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                NotificationSettingsCard(
+                    useCustomNotification = useCustomNotification,
+                    onCustomNotificationChange = { appSettings.setUseCustomNotification(it) }
+                )
+            }
+        }
+    } else {
+        // Mobile layout
+        Column(
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+        ) {
+            AnimatedVisibility(visible = true, enter = scaleIn() + fadeIn()) {
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Notifications,
+                        contentDescription = "Notifications",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(40.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = context.getString(R.string.onboarding_notifications_title),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            Text(
+                text = context.getString(R.string.onboarding_notifications_desc),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 24.dp)
+            )
+
+            NotificationSettingsCard(
+                useCustomNotification = useCustomNotification,
+                onCustomNotificationChange = { appSettings.setUseCustomNotification(it) }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            NotificationInfoCard()
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+private fun NotificationSettingsCard(
+    useCustomNotification: Boolean,
+    onCustomNotificationChange: (Boolean) -> Unit
+) {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column {
+            OnboardingSettingRow(
+                icon = Icons.Filled.Style,
+                title = context.getString(R.string.onboarding_custom_notifications),
+                description = context.getString(R.string.onboarding_custom_notifications_desc),
+                isEnabled = useCustomNotification,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onCustomNotificationChange(it) 
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun NotificationInfoCard() {
+    val context = LocalContext.current
+    
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+        )
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Filled.Info,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = context.getString(R.string.onboarding_notifications_info_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OnboardingTipItem(
+                icon = Icons.Filled.MusicNote,
+                text = context.getString(R.string.onboarding_notification_tip_1)
+            )
+            OnboardingTipItem(
+                icon = Icons.Filled.SkipNext,
+                text = context.getString(R.string.onboarding_notification_tip_2)
+            )
+            OnboardingTipItem(
+                icon = Icons.Filled.Palette,
+                text = context.getString(R.string.onboarding_notification_tip_3)
+            )
+        }
+    }
+}
+
+// =====================================================
+// GESTURES ONBOARDING STEP
+// =====================================================
+
+@Composable
+fun EnhancedGesturesContent(
+    onNextStep: () -> Unit,
+    appSettings: AppSettings,
+    isTablet: Boolean = false,
+    backButton: @Composable (() -> Unit)? = null,
+    nextButton: @Composable () -> Unit
+) {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    val scrollState = rememberScrollState()
+
+    // Gesture settings
+    val miniPlayerSwipeGestures by appSettings.miniPlayerSwipeGestures.collectAsState()
+    val gesturePlayerSwipeDismiss by appSettings.gesturePlayerSwipeDismiss.collectAsState()
+    val gesturePlayerSwipeTracks by appSettings.gesturePlayerSwipeTracks.collectAsState()
+    val gestureArtworkDoubleTap by appSettings.gestureArtworkDoubleTap.collectAsState()
+
+    if (isTablet) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+                .padding(vertical = 32.dp),
+            horizontalArrangement = Arrangement.spacedBy(32.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                AnimatedVisibility(visible = true, enter = scaleIn() + fadeIn()) {
+                    Box(
+                        modifier = Modifier
+                            .size(96.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Gesture,
+                            contentDescription = "Gestures",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                }
+
+                Text(
+                    text = context.getString(R.string.onboarding_gestures_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                Text(
+                    text = context.getString(R.string.onboarding_gestures_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 32.dp)
+                )
+
+                GestureTipsCard()
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    backButton?.invoke()
+                    nextButton()
+                }
+            }
+
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                GestureSettingsCards(
+                    miniPlayerSwipeGestures = miniPlayerSwipeGestures,
+                    gesturePlayerSwipeDismiss = gesturePlayerSwipeDismiss,
+                    gesturePlayerSwipeTracks = gesturePlayerSwipeTracks,
+                    gestureArtworkDoubleTap = gestureArtworkDoubleTap,
+                    onMiniPlayerSwipeChange = { appSettings.setMiniPlayerSwipeGestures(it) },
+                    onSwipeDismissChange = { appSettings.setGesturePlayerSwipeDismiss(it) },
+                    onSwipeTracksChange = { appSettings.setGesturePlayerSwipeTracks(it) },
+                    onDoubleTapChange = { appSettings.setGestureArtworkDoubleTap(it) }
+                )
+            }
+        }
+    } else {
+        Column(
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+        ) {
+            AnimatedVisibility(visible = true, enter = scaleIn() + fadeIn()) {
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Gesture,
+                        contentDescription = "Gestures",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(40.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = context.getString(R.string.onboarding_gestures_title),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            Text(
+                text = context.getString(R.string.onboarding_gestures_desc),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 24.dp)
+            )
+
+            GestureSettingsCards(
+                miniPlayerSwipeGestures = miniPlayerSwipeGestures,
+                gesturePlayerSwipeDismiss = gesturePlayerSwipeDismiss,
+                gesturePlayerSwipeTracks = gesturePlayerSwipeTracks,
+                gestureArtworkDoubleTap = gestureArtworkDoubleTap,
+                onMiniPlayerSwipeChange = { appSettings.setMiniPlayerSwipeGestures(it) },
+                onSwipeDismissChange = { appSettings.setGesturePlayerSwipeDismiss(it) },
+                onSwipeTracksChange = { appSettings.setGesturePlayerSwipeTracks(it) },
+                onDoubleTapChange = { appSettings.setGestureArtworkDoubleTap(it) }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            GestureTipsCard()
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+private fun GestureSettingsCards(
+    miniPlayerSwipeGestures: Boolean,
+    gesturePlayerSwipeDismiss: Boolean,
+    gesturePlayerSwipeTracks: Boolean,
+    gestureArtworkDoubleTap: Boolean,
+    onMiniPlayerSwipeChange: (Boolean) -> Unit,
+    onSwipeDismissChange: (Boolean) -> Unit,
+    onSwipeTracksChange: (Boolean) -> Unit,
+    onDoubleTapChange: (Boolean) -> Unit
+) {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // Mini Player Section
+        Text(
+            text = context.getString(R.string.onboarding_gestures_miniplayer),
+            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(start = 16.dp, bottom = 4.dp)
+        )
+        
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        ) {
+            OnboardingSettingRow(
+                icon = Icons.Rounded.Swipe,
+                title = context.getString(R.string.onboarding_gesture_swipe),
+                description = context.getString(R.string.onboarding_gesture_swipe_desc),
+                isEnabled = miniPlayerSwipeGestures,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onMiniPlayerSwipeChange(it) 
+                }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Full Player Section
+        Text(
+            text = context.getString(R.string.onboarding_gestures_player),
+            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(start = 16.dp, bottom = 4.dp)
+        )
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        ) {
+            Column {
+                OnboardingSettingRow(
+                    icon = Icons.Rounded.SwipeDown,
+                    title = context.getString(R.string.onboarding_gesture_dismiss),
+                    description = context.getString(R.string.onboarding_gesture_dismiss_desc),
+                    isEnabled = gesturePlayerSwipeDismiss,
+                    onToggle = { 
+                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        onSwipeDismissChange(it) 
+                    }
+                )
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                )
+                OnboardingSettingRow(
+                    icon = Icons.Rounded.SwipeLeft,
+                    title = context.getString(R.string.onboarding_gesture_tracks),
+                    description = context.getString(R.string.onboarding_gesture_tracks_desc),
+                    isEnabled = gesturePlayerSwipeTracks,
+                    onToggle = { 
+                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        onSwipeTracksChange(it) 
+                    }
+                )
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                )
+                OnboardingSettingRow(
+                    icon = Icons.Rounded.TouchApp,
+                    title = context.getString(R.string.onboarding_gesture_doubletap),
+                    description = context.getString(R.string.onboarding_gesture_doubletap_desc),
+                    isEnabled = gestureArtworkDoubleTap,
+                    onToggle = { 
+                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        onDoubleTapChange(it) 
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun GestureTipsCard() {
+    val context = LocalContext.current
+    
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+        )
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Filled.Lightbulb,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = context.getString(R.string.onboarding_gestures_tips_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OnboardingTipItem(
+                icon = Icons.Default.SwipeVertical,
+                text = context.getString(R.string.onboarding_gesture_tip_1)
+            )
+            OnboardingTipItem(
+                icon = Icons.Default.Speed,
+                text = context.getString(R.string.onboarding_gesture_tip_2)
+            )
+        }
+    }
+}
+
+// =====================================================
+// WIDGETS ONBOARDING STEP
+// =====================================================
+
+@Composable
+fun EnhancedWidgetsContent(
+    onNextStep: () -> Unit,
+    appSettings: AppSettings,
+    isTablet: Boolean = false,
+    backButton: @Composable (() -> Unit)? = null,
+    nextButton: @Composable () -> Unit
+) {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    val scrollState = rememberScrollState()
+
+    // Widget settings
+    val showAlbumArt by appSettings.widgetShowAlbumArt.collectAsState()
+    val showArtist by appSettings.widgetShowArtist.collectAsState()
+    val showAlbum by appSettings.widgetShowAlbum.collectAsState()
+    val autoUpdate by appSettings.widgetAutoUpdate.collectAsState()
+
+    if (isTablet) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+                .padding(vertical = 32.dp),
+            horizontalArrangement = Arrangement.spacedBy(32.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                AnimatedVisibility(visible = true, enter = scaleIn() + fadeIn()) {
+                    Box(
+                        modifier = Modifier
+                            .size(96.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Widgets,
+                            contentDescription = "Widgets",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                }
+
+                Text(
+                    text = context.getString(R.string.onboarding_widgets_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                Text(
+                    text = context.getString(R.string.onboarding_widgets_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 32.dp)
+                )
+
+                WidgetTipsCard()
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    backButton?.invoke()
+                    nextButton()
+                }
+            }
+
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                WidgetSettingsCard(
+                    showAlbumArt = showAlbumArt,
+                    showArtist = showArtist,
+                    showAlbum = showAlbum,
+                    autoUpdate = autoUpdate,
+                    onAlbumArtChange = { appSettings.setWidgetShowAlbumArt(it) },
+                    onArtistChange = { appSettings.setWidgetShowArtist(it) },
+                    onAlbumChange = { appSettings.setWidgetShowAlbum(it) },
+                    onAutoUpdateChange = { appSettings.setWidgetAutoUpdate(it) }
+                )
+            }
+        }
+    } else {
+        Column(
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+        ) {
+            AnimatedVisibility(visible = true, enter = scaleIn() + fadeIn()) {
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Widgets,
+                        contentDescription = "Widgets",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(40.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = context.getString(R.string.onboarding_widgets_title),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            Text(
+                text = context.getString(R.string.onboarding_widgets_desc),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 24.dp)
+            )
+
+            WidgetSettingsCard(
+                showAlbumArt = showAlbumArt,
+                showArtist = showArtist,
+                showAlbum = showAlbum,
+                autoUpdate = autoUpdate,
+                onAlbumArtChange = { appSettings.setWidgetShowAlbumArt(it) },
+                onArtistChange = { appSettings.setWidgetShowArtist(it) },
+                onAlbumChange = { appSettings.setWidgetShowAlbum(it) },
+                onAutoUpdateChange = { appSettings.setWidgetAutoUpdate(it) }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            WidgetTipsCard()
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+private fun WidgetSettingsCard(
+    showAlbumArt: Boolean,
+    showArtist: Boolean,
+    showAlbum: Boolean,
+    autoUpdate: Boolean,
+    onAlbumArtChange: (Boolean) -> Unit,
+    onArtistChange: (Boolean) -> Unit,
+    onAlbumChange: (Boolean) -> Unit,
+    onAutoUpdateChange: (Boolean) -> Unit
+) {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+    ) {
+        Column {
+            OnboardingSettingRow(
+                icon = Icons.Default.Image,
+                title = context.getString(R.string.onboarding_widget_album_art),
+                description = context.getString(R.string.onboarding_widget_album_art_desc),
+                isEnabled = showAlbumArt,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onAlbumArtChange(it) 
+                }
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+            )
+            OnboardingSettingRow(
+                icon = Icons.Default.Person,
+                title = context.getString(R.string.onboarding_widget_artist),
+                description = context.getString(R.string.onboarding_widget_artist_desc),
+                isEnabled = showArtist,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onArtistChange(it) 
+                }
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+            )
+            OnboardingSettingRow(
+                icon = Icons.Default.Album,
+                title = context.getString(R.string.onboarding_widget_album),
+                description = context.getString(R.string.onboarding_widget_album_desc),
+                isEnabled = showAlbum,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onAlbumChange(it) 
+                }
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+            )
+            OnboardingSettingRow(
+                icon = Icons.Default.Refresh,
+                title = context.getString(R.string.onboarding_widget_auto_update),
+                description = context.getString(R.string.onboarding_widget_auto_update_desc),
+                isEnabled = autoUpdate,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onAutoUpdateChange(it) 
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun WidgetTipsCard() {
+    val context = LocalContext.current
+    
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+        )
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Filled.Info,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = context.getString(R.string.onboarding_widgets_tips_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OnboardingTipItem(
+                icon = Icons.Default.TouchApp,
+                text = context.getString(R.string.onboarding_widget_tip_1)
+            )
+            OnboardingTipItem(
+                icon = Icons.Default.AspectRatio,
+                text = context.getString(R.string.onboarding_widget_tip_2)
+            )
+            OnboardingTipItem(
+                icon = Icons.Default.Refresh,
+                text = context.getString(R.string.onboarding_widget_tip_3)
+            )
+        }
+    }
+}
+
+// =====================================================
+// INTEGRATIONS ONBOARDING STEP
+// =====================================================
+
+@Composable
+fun EnhancedIntegrationsContent(
+    onNextStep: () -> Unit,
+    appSettings: AppSettings,
+    isTablet: Boolean = false,
+    backButton: @Composable (() -> Unit)? = null,
+    nextButton: @Composable () -> Unit
+) {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    val scrollState = rememberScrollState()
+
+    // Integration settings
+    val deezerApiEnabled by appSettings.deezerApiEnabled.collectAsState()
+    val canvasApiEnabled by appSettings.canvasApiEnabled.collectAsState()
+    val lrclibApiEnabled by appSettings.lrclibApiEnabled.collectAsState()
+    val ytMusicApiEnabled by appSettings.ytMusicApiEnabled.collectAsState()
+    val spotifyApiEnabled by appSettings.spotifyApiEnabled.collectAsState()
+    val scrobblingEnabled by appSettings.scrobblingEnabled.collectAsState()
+    val discordRichPresenceEnabled by appSettings.discordRichPresenceEnabled.collectAsState()
+    val broadcastStatusEnabled by appSettings.broadcastStatusEnabled.collectAsState()
+
+    if (isTablet) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+                .padding(vertical = 32.dp),
+            horizontalArrangement = Arrangement.spacedBy(32.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                AnimatedVisibility(visible = true, enter = scaleIn() + fadeIn()) {
+                    Box(
+                        modifier = Modifier
+                            .size(96.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Api,
+                            contentDescription = "Integrations",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                }
+
+                Text(
+                    text = context.getString(R.string.onboarding_integrations_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                Text(
+                    text = context.getString(R.string.onboarding_integrations_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 32.dp)
+                )
+
+                IntegrationsInfoCard()
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    backButton?.invoke()
+                    nextButton()
+                }
+            }
+
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                IntegrationsSettingsCards(
+                    deezerApiEnabled = deezerApiEnabled,
+                    canvasApiEnabled = canvasApiEnabled,
+                    lrclibApiEnabled = lrclibApiEnabled,
+                    ytMusicApiEnabled = ytMusicApiEnabled,
+                    spotifyApiEnabled = spotifyApiEnabled,
+                    scrobblingEnabled = scrobblingEnabled,
+                    discordRichPresenceEnabled = discordRichPresenceEnabled,
+                    broadcastStatusEnabled = broadcastStatusEnabled,
+                    onDeezerChange = { appSettings.setDeezerApiEnabled(it) },
+                    onCanvasChange = { appSettings.setCanvasApiEnabled(it) },
+                    onLrcLibChange = { appSettings.setLrcLibApiEnabled(it) },
+                    onYtMusicChange = { appSettings.setYTMusicApiEnabled(it) },
+                    onSpotifyChange = { appSettings.setSpotifyApiEnabled(it) },
+                    onScrobblingChange = { appSettings.setScrobblingEnabled(it) },
+                    onDiscordChange = { appSettings.setDiscordRichPresenceEnabled(it) },
+                    onBroadcastChange = { appSettings.setBroadcastStatusEnabled(it) }
+                )
+            }
+        }
+    } else {
+        Column(
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+        ) {
+            AnimatedVisibility(visible = true, enter = scaleIn() + fadeIn()) {
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Api,
+                        contentDescription = "Integrations",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(40.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = context.getString(R.string.onboarding_integrations_title),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            Text(
+                text = context.getString(R.string.onboarding_integrations_desc),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 24.dp)
+            )
+
+            IntegrationsSettingsCards(
+                deezerApiEnabled = deezerApiEnabled,
+                canvasApiEnabled = canvasApiEnabled,
+                lrclibApiEnabled = lrclibApiEnabled,
+                ytMusicApiEnabled = ytMusicApiEnabled,
+                spotifyApiEnabled = spotifyApiEnabled,
+                scrobblingEnabled = scrobblingEnabled,
+                discordRichPresenceEnabled = discordRichPresenceEnabled,
+                broadcastStatusEnabled = broadcastStatusEnabled,
+                onDeezerChange = { appSettings.setDeezerApiEnabled(it) },
+                onCanvasChange = { appSettings.setCanvasApiEnabled(it) },
+                onLrcLibChange = { appSettings.setLrcLibApiEnabled(it) },
+                onYtMusicChange = { appSettings.setYTMusicApiEnabled(it) },
+                onSpotifyChange = { appSettings.setSpotifyApiEnabled(it) },
+                onScrobblingChange = { appSettings.setScrobblingEnabled(it) },
+                onDiscordChange = { appSettings.setDiscordRichPresenceEnabled(it) },
+                onBroadcastChange = { appSettings.setBroadcastStatusEnabled(it) }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            IntegrationsInfoCard()
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+private fun IntegrationsSettingsCards(
+    deezerApiEnabled: Boolean,
+    canvasApiEnabled: Boolean,
+    lrclibApiEnabled: Boolean,
+    ytMusicApiEnabled: Boolean,
+    spotifyApiEnabled: Boolean,
+    scrobblingEnabled: Boolean,
+    discordRichPresenceEnabled: Boolean,
+    broadcastStatusEnabled: Boolean,
+    onDeezerChange: (Boolean) -> Unit,
+    onCanvasChange: (Boolean) -> Unit,
+    onLrcLibChange: (Boolean) -> Unit,
+    onYtMusicChange: (Boolean) -> Unit,
+    onSpotifyChange: (Boolean) -> Unit,
+    onScrobblingChange: (Boolean) -> Unit,
+    onDiscordChange: (Boolean) -> Unit,
+    onBroadcastChange: (Boolean) -> Unit
+) {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // API Services
+        Text(
+            text = context.getString(R.string.onboarding_integrations_apis),
+            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(start = 16.dp, bottom = 4.dp)
+        )
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        ) {
+            Column {
+                OnboardingSettingRow(
+                    icon = Icons.Default.Public,
+                    title = context.getString(R.string.onboarding_integration_deezer),
+                    description = context.getString(R.string.onboarding_integration_deezer_desc),
+                    isEnabled = deezerApiEnabled,
+                    onToggle = { 
+                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        onDeezerChange(it) 
+                    }
+                )
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                )
+                OnboardingSettingRow(
+                    icon = Icons.Default.Brush,
+                    title = context.getString(R.string.onboarding_integration_canvas),
+                    description = context.getString(R.string.onboarding_integration_canvas_desc),
+                    isEnabled = canvasApiEnabled,
+                    onToggle = { 
+                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        onCanvasChange(it) 
+                    }
+                )
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                )
+                OnboardingSettingRow(
+                    icon = Icons.Default.Lyrics,
+                    title = context.getString(R.string.onboarding_integration_lrclib),
+                    description = context.getString(R.string.onboarding_integration_lrclib_desc),
+                    isEnabled = lrclibApiEnabled,
+                    onToggle = { 
+                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        onLrcLibChange(it) 
+                    }
+                )
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                )
+                OnboardingSettingRow(
+                    icon = Icons.Default.MusicVideo,
+                    title = context.getString(R.string.onboarding_integration_ytmusic),
+                    description = context.getString(R.string.onboarding_integration_ytmusic_desc),
+                    isEnabled = ytMusicApiEnabled,
+                    onToggle = { 
+                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        onYtMusicChange(it) 
+                    }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Social Features
+        Text(
+            text = context.getString(R.string.onboarding_integrations_social),
+            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(start = 16.dp, bottom = 4.dp)
+        )
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        ) {
+            Column {
+                OnboardingSettingRow(
+                    icon = Icons.Default.Share,
+                    title = context.getString(R.string.onboarding_integration_scrobbling),
+                    description = context.getString(R.string.onboarding_integration_scrobbling_desc),
+                    isEnabled = scrobblingEnabled,
+                    onToggle = { 
+                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        onScrobblingChange(it) 
+                    }
+                )
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                )
+                OnboardingSettingRow(
+                    icon = Icons.Default.Gamepad,
+                    title = context.getString(R.string.onboarding_integration_discord),
+                    description = context.getString(R.string.onboarding_integration_discord_desc),
+                    isEnabled = discordRichPresenceEnabled,
+                    onToggle = { 
+                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        onDiscordChange(it) 
+                    }
+                )
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                )
+                OnboardingSettingRow(
+                    icon = Icons.Default.Cast,
+                    title = context.getString(R.string.onboarding_integration_broadcast),
+                    description = context.getString(R.string.onboarding_integration_broadcast_desc),
+                    isEnabled = broadcastStatusEnabled,
+                    onToggle = { 
+                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                        onBroadcastChange(it) 
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun IntegrationsInfoCard() {
+    val context = LocalContext.current
+    
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
+        )
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Filled.Info,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = context.getString(R.string.onboarding_integrations_info_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = context.getString(R.string.onboarding_integrations_info_desc),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                lineHeight = 20.sp
+            )
+        }
+    }
+}
+
+// =====================================================
+// RHYTHM STATS ONBOARDING STEP
+// =====================================================
+
+@Composable
+fun EnhancedRhythmStatsContent(
+    onNextStep: () -> Unit,
+    appSettings: AppSettings,
+    isTablet: Boolean = false,
+    backButton: @Composable (() -> Unit)? = null,
+    nextButton: @Composable () -> Unit
+) {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    val scrollState = rememberScrollState()
+
+    // Stats settings
+    val homeShowListeningStats by appSettings.homeShowListeningStats.collectAsState()
+    val enableRatingSystem by appSettings.enableRatingSystem.collectAsState()
+
+    if (isTablet) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+                .padding(vertical = 32.dp),
+            horizontalArrangement = Arrangement.spacedBy(32.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                AnimatedVisibility(visible = true, enter = scaleIn() + fadeIn()) {
+                    Box(
+                        modifier = Modifier
+                            .size(96.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.AutoGraph,
+                            contentDescription = "Rhythm Stats",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                }
+
+                Text(
+                    text = context.getString(R.string.onboarding_stats_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                Text(
+                    text = context.getString(R.string.onboarding_stats_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 32.dp)
+                )
+
+                StatsFeaturesAndInfoCard()
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    backButton?.invoke()
+                    nextButton()
+                }
+            }
+
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                StatsSettingsCard(
+                    showOnHome = homeShowListeningStats,
+                    enableRating = enableRatingSystem,
+                    onShowOnHomeChange = { appSettings.setHomeShowListeningStats(it) },
+                    onEnableRatingChange = { appSettings.setEnableRatingSystem(it) }
+                )
+            }
+        }
+    } else {
+        Column(
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+        ) {
+            AnimatedVisibility(visible = true, enter = scaleIn() + fadeIn()) {
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.AutoGraph,
+                        contentDescription = "Rhythm Stats",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(40.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = context.getString(R.string.onboarding_stats_title),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            Text(
+                text = context.getString(R.string.onboarding_stats_desc),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 24.dp)
+            )
+
+            StatsSettingsCard(
+                showOnHome = homeShowListeningStats,
+                enableRating = enableRatingSystem,
+                onShowOnHomeChange = { appSettings.setHomeShowListeningStats(it) },
+                onEnableRatingChange = { appSettings.setEnableRatingSystem(it) }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            StatsFeaturesAndInfoCard()
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+private fun StatsSettingsCard(
+    showOnHome: Boolean,
+    enableRating: Boolean,
+    onShowOnHomeChange: (Boolean) -> Unit,
+    onEnableRatingChange: (Boolean) -> Unit
+) {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+    ) {
+        Column {
+            OnboardingSettingRow(
+                icon = Icons.Default.Home,
+                title = context.getString(R.string.onboarding_stats_show_home),
+                description = context.getString(R.string.onboarding_stats_show_home_desc),
+                isEnabled = showOnHome,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onShowOnHomeChange(it) 
+                }
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+            )
+            OnboardingSettingRow(
+                icon = Icons.Default.Star,
+                title = context.getString(R.string.onboarding_stats_rating),
+                description = context.getString(R.string.onboarding_stats_rating_desc),
+                isEnabled = enableRating,
+                onToggle = { 
+                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                    onEnableRatingChange(it) 
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun StatsFeaturesAndInfoCard() {
+    val context = LocalContext.current
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+        )
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            // Features section
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Filled.Stars,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = context.getString(R.string.onboarding_stats_features_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OnboardingTipItem(
+                icon = Icons.Default.AccessTime,
+                text = context.getString(R.string.onboarding_stats_feature_1)
+            )
+            OnboardingTipItem(
+                icon = Icons.Default.MusicNote,
+                text = context.getString(R.string.onboarding_stats_feature_2)
+            )
+            OnboardingTipItem(
+                icon = Icons.Default.Person,
+                text = context.getString(R.string.onboarding_stats_feature_3)
+            )
+            OnboardingTipItem(
+                icon = Icons.Default.Album,
+                text = context.getString(R.string.onboarding_stats_feature_4)
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+//            HorizontalDivider(
+//                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f)
+//            )
+//            Spacer(modifier = Modifier.height(16.dp))
+//
+//            // How it works section
+//            Row(verticalAlignment = Alignment.CenterVertically) {
+//                Icon(
+//                    imageVector = Icons.Filled.Info,
+//                    contentDescription = null,
+//                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+//                    modifier = Modifier.size(24.dp)
+//                )
+//                Spacer(modifier = Modifier.width(12.dp))
+//                Text(
+//                    text = context.getString(R.string.onboarding_stats_info_title),
+//                    style = MaterialTheme.typography.titleMedium,
+//                    fontWeight = FontWeight.Bold,
+//                    color = MaterialTheme.colorScheme.onPrimaryContainer
+//                )
+//            }
+//            Spacer(modifier = Modifier.height(12.dp))
+//
+//            Text(
+//                text = context.getString(R.string.onboarding_stats_info_desc),
+//                style = MaterialTheme.typography.bodyMedium,
+//                color = MaterialTheme.colorScheme.onPrimaryContainer,
+//                lineHeight = 20.sp
+//            )
+        }
+    }
+}
+
+// =====================================================
+// SHARED COMPOSABLES
+// =====================================================
+
+@Composable
+fun OnboardingSettingRow(
+    icon: ImageVector,
+    title: String,
+    description: String,
+    isEnabled: Boolean,
+    onToggle: (Boolean) -> Unit
+) {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+
+    // Animation states
+    var isPressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.96f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "onboarding_setting_scale"
+    )
+    
+    val iconBackgroundColor by animateColorAsState(
+        targetValue = when {
+            isEnabled -> MaterialTheme.colorScheme.primaryContainer
+            isPressed -> MaterialTheme.colorScheme.secondaryContainer
+            else -> MaterialTheme.colorScheme.surfaceContainerHighest
+        },
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "onboarding_icon_bg_color"
+    )
+    
+    val iconTintColor by animateColorAsState(
+        targetValue = when {
+            isEnabled -> MaterialTheme.colorScheme.onPrimaryContainer
+            else -> MaterialTheme.colorScheme.onSurfaceVariant
+        },
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "onboarding_icon_tint_color"
+    )
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Icon container with expressive design
+        Surface(
+            modifier = Modifier.size(40.dp),
+            shape = RoundedCornerShape(34.dp),
+            color = iconBackgroundColor,
+            tonalElevation = if (isEnabled) 2.dp else 0.dp
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    modifier = Modifier.size(24.dp),
+                    tint = iconTintColor
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.width(16.dp))
+        
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                lineHeight = MaterialTheme.typography.bodyMedium.lineHeight
+            )
+        }
+        
+        OnboardingAnimatedSwitch(
+            checked = isEnabled,
+            onCheckedChange = { 
+                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                onToggle(it) 
+            }
+        )
+    }
+}
+
+@Composable
+fun OnboardingAnimatedSwitch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val thumbColor by animateColorAsState(
+        targetValue = if (checked) 
+            MaterialTheme.colorScheme.onPrimary
+        else 
+            MaterialTheme.colorScheme.outline,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "onboarding_thumb_color"
+    )
+    
+    val trackColor by animateColorAsState(
+        targetValue = if (checked) 
+            MaterialTheme.colorScheme.primary
+        else 
+            MaterialTheme.colorScheme.surfaceContainerHighest,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "onboarding_track_color"
+    )
+    
+    Switch(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        modifier = modifier,
+        colors = SwitchDefaults.colors(
+            checkedThumbColor = thumbColor,
+            checkedTrackColor = trackColor,
+            checkedBorderColor = Color.Transparent,
+            uncheckedThumbColor = thumbColor,
+            uncheckedTrackColor = trackColor,
+            uncheckedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+        ),
+        thumbContent = {
+            AnimatedVisibility(
+                visible = checked,
+                enter = scaleIn(spring(dampingRatio = Spring.DampingRatioMediumBouncy)) + fadeIn(),
+                exit = scaleOut(spring(dampingRatio = Spring.DampingRatioMediumBouncy)) + fadeOut()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    )
+}
+
+@Composable
+fun OnboardingTipItem(
+    icon: ImageVector,
+    text: String
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 6.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
     }
 }

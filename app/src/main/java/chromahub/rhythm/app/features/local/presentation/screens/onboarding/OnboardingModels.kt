@@ -3,13 +3,18 @@ package chromahub.rhythm.app.features.local.presentation.screens.onboarding
 enum class OnboardingStep {
     WELCOME,
     PERMISSIONS,
-    BACKUP_RESTORE, // New step for backup and restore setup
-    AUDIO_PLAYBACK, // New step for audio and playback settings
+    NOTIFICATIONS, // Step for notification preferences setup
+    BACKUP_RESTORE, // Step for backup and restore setup
+    AUDIO_PLAYBACK, // Step for audio and playback settings
     THEMING,
-    LIBRARY_SETUP, // New step for library organization preferences
-    MEDIA_SCAN, // New step for choosing blacklist/whitelist filtering mode
+    GESTURES, // Step for gesture controls introduction
+    LIBRARY_SETUP, // Step for library organization preferences
+    MEDIA_SCAN, // Step for choosing blacklist/whitelist filtering mode
+    WIDGETS, // Step for home screen widget setup
+    INTEGRATIONS, // Step for API services, scrobbling, Discord presence
+    RHYTHM_STATS, // Step for listening statistics introduction
     UPDATER,
-    SETUP_FINISHED, // New step showing setup completion with finish button
+    SETUP_FINISHED, // Step showing setup completion with finish button
     COMPLETE
 }
 
