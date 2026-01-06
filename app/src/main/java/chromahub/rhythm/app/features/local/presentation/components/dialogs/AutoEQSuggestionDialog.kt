@@ -1,9 +1,5 @@
 package chromahub.rhythm.app.features.local.presentation.components.dialogs
 
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,9 +17,8 @@ import androidx.compose.material.icons.rounded.AutoMode
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.HeadsetMic
+import androidx.compose.material.icons.rounded.NotInterested
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
@@ -32,12 +27,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.Button
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -63,40 +56,14 @@ fun AutoEQSuggestionDialog(
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
     
-    val glowAlpha by animateFloatAsState(
-        targetValue = 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
-        label = "glowAlpha"
-    )
-    
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = {
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .background(
-                        brush = Brush.radialGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f * glowAlpha),
-                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f * glowAlpha),
-                                MaterialTheme.colorScheme.surface
-                            )
-                        ),
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.HeadsetMic,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(32.dp)
-                )
-            }
+            Icon(
+                imageVector = Icons.Rounded.HeadsetMic,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
         },
         title = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -230,8 +197,7 @@ fun AutoEQSuggestionDialog(
                             HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                             onApplyProfile()
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp)
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.GraphicEq,
@@ -248,8 +214,7 @@ fun AutoEQSuggestionDialog(
                         HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                         onConfigureDevice()
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.HeadsetMic,
@@ -264,28 +229,44 @@ fun AutoEQSuggestionDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    TextButton(
+                    OutlinedButton(
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
                             onDontAskAgain()
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(40.dp)
                     ) {
-                        Text("Don't Ask Again", style = MaterialTheme.typography.labelMedium)
+                        Icon(
+                            imageVector = Icons.Rounded.NotInterested,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Don't Ask", style = MaterialTheme.typography.labelMedium)
                     }
                     
-                    TextButton(
+                    OutlinedButton(
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
                             onDismiss()
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(40.dp)
                     ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
                         Text("Not Now", style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }
         },
-        shape = RoundedCornerShape(28.dp)
+        shape = RoundedCornerShape(24.dp)
     )
 }

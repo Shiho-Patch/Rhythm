@@ -510,10 +510,22 @@ fun DeviceConfigurationBottomSheet(
                 deviceForAutoEQ = null
             },
             onProfileSelected = { profile ->
+                // Save profile to device
                 val updatedDevice = deviceForAutoEQ!!.copy(
                     autoEQProfileName = profile.name
                 )
                 musicViewModel.saveUserAudioDevice(updatedDevice)
+                
+                // Apply the profile immediately
+                musicViewModel.applyAutoEQProfile(profile)
+                
+                // Show feedback
+                Toast.makeText(
+                    context,
+                    "Applied ${profile.name} profile",
+                    Toast.LENGTH_SHORT
+                ).show()
+                
                 showAutoEQSelector = false
                 deviceForAutoEQ = null
             }

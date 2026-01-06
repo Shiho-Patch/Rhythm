@@ -695,13 +695,20 @@ fun PlayerScreen(
         if (location != null && location.id != "speaker") {
             // Try to match with saved user devices
             val matchedDevice = musicViewModel.findMatchingUserDevice(location.name)
+            val activeDevice = musicViewModel.getActiveAudioDevice()
             
-            if (matchedDevice != null && 
-                matchedDevice.autoEQProfileName != null &&
-                musicViewModel.shouldShowAutoEQSuggestion(matchedDevice.id)) {
-                // Found a matching device with AutoEQ profile configured
-                detectedDevice = matchedDevice
-                showAutoEQSuggestion = true
+            if (matchedDevice != null && musicViewModel.shouldShowAutoEQSuggestion(matchedDevice.id)) {
+                // Check if this device is already active with profile applied
+                val isAlreadyActive = activeDevice?.id == matchedDevice.id && 
+                                     matchedDevice.autoEQProfileName != null
+                
+                // Show popup only if:
+                // 1. Device has NO preset configured (needs configuration), OR
+                // 2. Device has preset but is NOT currently active (needs to be applied)
+                if (!isAlreadyActive) {
+                    detectedDevice = matchedDevice
+                    showAutoEQSuggestion = true
+                }
             }
         }
     }
