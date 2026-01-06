@@ -3645,8 +3645,44 @@ fun AboutScreen(
                             role = "Lead Developer & Project Architect",
                             githubUsername = "cromaguy",
                             avatarUrl = "https://github.com/cromaguy.png",
+                            supportUrl = "https://ko-fi.com/anjishnunandi",
                             context = context
                         )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Button(
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/anjishnunandi"))
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                context.startActivity(intent)
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF13C3FF),
+                                contentColor = Color.Black
+                            ),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.LocalCafe,
+                                    contentDescription = "Buy Coffee",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Buy Me a Coffee",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
 
                         Spacer(modifier = Modifier.height(12.dp))
 
@@ -4007,7 +4043,7 @@ fun AboutScreen(
                                 modifier = Modifier.padding(vertical = 6.dp)
                             ) {
                                 Icon(
-                                    imageVector = RhythmIcons.Settings,
+                                    imageVector = Icons.Rounded.Language,
                                     contentDescription = null,
                                     modifier = Modifier.size(18.dp)
                                 )
@@ -4039,7 +4075,7 @@ fun AboutScreen(
                                 modifier = Modifier.padding(vertical = 6.dp)
                             ) {
                                 Icon(
-                                    imageVector = RhythmIcons.ArtistFilled,
+                                    imageVector = Icons.Rounded.Code,
                                     contentDescription = null,
                                     modifier = Modifier.size(18.dp)
                                 )
@@ -4071,7 +4107,7 @@ fun AboutScreen(
                                 modifier = Modifier.padding(vertical = 6.dp)
                             ) {
                                 Icon(
-                                    imageVector = RhythmIcons.Edit,
+                                    imageVector = Icons.Rounded.BugReport,
                                     contentDescription = "Report Bug",
                                     modifier = Modifier.size(18.dp)
                                 )
@@ -4085,13 +4121,14 @@ fun AboutScreen(
 
                         Button(
                             onClick = {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/RhythmSupport"))
+                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://discord.gg/XjPyUYPQYc"))
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                 context.startActivity(intent)
                             },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
+                                containerColor = Color(0xFF5865F2),
+                                contentColor = Color.White
                             ),
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(16.dp)
@@ -4102,17 +4139,50 @@ fun AboutScreen(
                                 modifier = Modifier.padding(vertical = 6.dp)
                             ) {
                                 Icon(
-                                    imageVector = RhythmIcons.Telegram,
-                                    contentDescription = "Telegram Support",
+                                    imageVector = Icons.Rounded.Chat,
+                                    contentDescription = "Discord",
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = context.getString(R.string.settings_about_telegram_support),
+                                    text = "Join Discord",
                                     style = MaterialTheme.typography.titleSmall
                                 )
                             }
                         }
+
+                        Button(
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/RhythmSupport"))
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                context.startActivity(intent)
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF0088CC),
+                                contentColor = Color.White
+                            ),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier.padding(vertical = 6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Send,
+                                    contentDescription = "Telegram",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Join Telegram",
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                            }
+                        }
+
                     }
                 }
             }
@@ -4137,6 +4207,7 @@ private fun CommunityMember(
     role: String,
     githubUsername: String,
     avatarUrl: String,
+    supportUrl: String? = null,
     context: android.content.Context
 ) {
     val haptics = LocalHapticFeedback.current
@@ -4191,12 +4262,33 @@ private fun CommunityMember(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Text(
-                text = "@$githubUsername",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Medium
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier.padding(top = 4.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Link,
+                    contentDescription = null,
+                    modifier = Modifier.size(12.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "@$githubUsername",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Medium
+                )
+                if (supportUrl != null) {
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        imageVector = Icons.Rounded.LocalCafe,
+                        contentDescription = "Support",
+                        modifier = Modifier.size(12.dp),
+                        tint = Color(0xFF13C3FF)
+                    )
+                }
+            }
         }
 
         Icon(
