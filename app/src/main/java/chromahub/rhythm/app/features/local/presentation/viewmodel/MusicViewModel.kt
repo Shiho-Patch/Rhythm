@@ -5275,8 +5275,19 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         // Save profile name to settings
         appSettings.setAutoEQProfile(profile.name)
         
+        // Enable equalizer first if it's not already enabled
+        val wasEnabled = appSettings.equalizerEnabled.value
+        if (!wasEnabled) {
+            Log.d(TAG, "Enabling equalizer to apply AutoEQ profile")
+            setEqualizerEnabled(true)
+            // Give it a moment to initialize
+            Thread.sleep(100)
+        }
+        
         // Apply the profile as a preset
         applyEqualizerPreset("AutoEQ: ${profile.name}", levels)
+        
+        Log.d(TAG, "AutoEQ profile applied successfully (equalizer was ${if (wasEnabled) "already enabled" else "enabled automatically"})")
     }
     
     fun getAutoEQRecommendedProfiles(): List<chromahub.rhythm.app.shared.data.model.AutoEQProfile> {
