@@ -67,23 +67,20 @@ fun PermissionHandler(
     var permissionRequestLaunched by remember { mutableStateOf(false) } // New state to track if permission request has been launched
     var showMediaScanLoader by remember { mutableStateOf(false) } // New state for media scan loader
 
-    // For Android 14+, we support partial photo access, Android 13+ needs READ_MEDIA_AUDIO, older versions need READ_EXTERNAL_STORAGE
-    // Note: READ_MEDIA_IMAGES is now optional and only needed for album art - NOT included in required permissions
-    val storagePermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-        // Android 14+ - only require audio, images are optional
-        listOf(
-            Manifest.permission.READ_MEDIA_AUDIO
-        )
-    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        // Android 13 - only require audio, images are optional
-        listOf(
-            Manifest.permission.READ_MEDIA_AUDIO
-        )
-    } else {
-        // Android 12 and below use legacy storage permissions
-        listOf(
-            Manifest.permission.READ_EXTERNAL_STORAGE
-        )
+    // Storage permissions based on Android version:
+    // - Android 13+ (API 33+): READ_MEDIA_AUDIO (granular media permissions)
+    // - Android 12 (API 31-32): READ_EXTERNAL_STORAGE (legacy permission)
+    // - Android 11 and below: READ_EXTERNAL_STORAGE
+    // Note: READ_MEDIA_IMAGES is optional for album art and NOT required
+    val storagePermissions = when {
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> {
+            // Android 13, 14, 15, 16+ (API 33+) - granular media permissions
+            listOf(Manifest.permission.READ_MEDIA_AUDIO)
+        }
+        else -> {
+            // Android 12 and below (API 32 and lower) - legacy storage permission
+            listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
     }
     
     // Notification permissions for Android 13+

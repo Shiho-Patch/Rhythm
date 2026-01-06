@@ -296,11 +296,15 @@ class MusicRepository(context: Context) {
         var filteredByFormat = 0
         var filteredByQuality = 0
         
+        Log.d(TAG, "Starting media scan on Android ${Build.VERSION.SDK_INT} (API ${Build.VERSION.SDK_INT})")
+        
         val collection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
         } else {
             MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
         }
+        
+        Log.d(TAG, "Using MediaStore URI: $collection")
 
         val projection = arrayOf(
             MediaStore.Audio.Media._ID,
@@ -324,6 +328,8 @@ class MusicRepository(context: Context) {
         try {
             _scanProgress.value = ScanProgress(0, 0, "Songs", 0)
             
+            Log.d(TAG, "Querying MediaStore with selection: $selection")
+            
             context.contentResolver.query(
                 collection,
                 projection,
@@ -332,11 +338,15 @@ class MusicRepository(context: Context) {
                 sortOrder
             )?.use { cursor ->
                 val count = cursor.count
-                Log.d(TAG, "Found $count audio files to process")
+                Log.d(TAG, "MediaStore query successful: Found $count audio files to process")
                 _scanProgress.value = ScanProgress(0, count, "Songs", 0)
                 
                 if (count == 0) {
-                    Log.w(TAG, "No audio files found in MediaStore")
+                    Log.w(TAG, "No audio files found in MediaStore - this may indicate a permission or storage access issue on Android ${Build.VERSION.SDK_INT}")
+                    Log.w(TAG, "Please verify:")
+                    Log.w(TAG, "1. Storage permission is granted")
+                    Log.w(TAG, "2. Files are visible in MediaStore (try MediaScanner)")
+                    Log.w(TAG, "3. Files meet criteria: IS_MUSIC=1 AND DURATION>10000ms")
                     return@withContext emptyList()
                 }
 
@@ -362,7 +372,7 @@ class MusicRepository(context: Context) {
                         albumArtist = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ARTIST) // May be -1 on older devices
                     )
                 } catch (e: IllegalArgumentException) {
-                    Log.e(TAG, "Required column not found in MediaStore", e)
+                    Log.e(TAG, "Required column not found in MediaStore on Android ${Build.VERSION.SDK_INT}", e)
                     _scanProgress.value = ScanProgress(0, 0, "Error", 0)
                     return@withContext emptyList()
                 }

@@ -5959,24 +5959,21 @@ fun SingleCardExplorerContent(
 
     // Check storage permission based on Android version
     val hasStoragePermission = remember {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            // Android 13+ - check for media permissions
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.READ_MEDIA_AUDIO
-            ) == PackageManager.PERMISSION_GRANTED
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            // Android 10-12 - scoped storage, check media permissions
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.READ_EXTERNAL_STORAGE
-            ) == PackageManager.PERMISSION_GRANTED
-        } else {
-            // Android 9 and below - full storage access
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.READ_EXTERNAL_STORAGE
-            ) == PackageManager.PERMISSION_GRANTED
+        when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> {
+                // Android 13, 14, 15, 16+ (API 33+) - granular media permissions
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.READ_MEDIA_AUDIO
+                ) == PackageManager.PERMISSION_GRANTED
+            }
+            else -> {
+                // Android 12 and below (API 32 and lower) - legacy READ_EXTERNAL_STORAGE
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                ) == PackageManager.PERMISSION_GRANTED
+            }
         }
     }
 
@@ -6058,20 +6055,23 @@ fun SingleCardExplorerContent(
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
 
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                // Android 13+
-                                ActivityCompat.requestPermissions(
-                                    activity,
-                                    arrayOf(Manifest.permission.READ_MEDIA_AUDIO),
-                                    1001
-                                )
-                            } else {
-                                // Android 12 and below
-                                ActivityCompat.requestPermissions(
-                                    activity,
-                                    arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
-                                    1001
-                                )
+                            when {
+                                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> {
+                                    // Android 13, 14, 15, 16+ (API 33+) - granular media permissions
+                                    ActivityCompat.requestPermissions(
+                                        activity,
+                                        arrayOf(Manifest.permission.READ_MEDIA_AUDIO),
+                                        1001
+                                    )
+                                }
+                                else -> {
+                                    // Android 12 and below (API 32 and lower) - legacy permission
+                                    ActivityCompat.requestPermissions(
+                                        activity,
+                                        arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+                                        1001
+                                    )
+                                }
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -7179,74 +7179,144 @@ fun getStorageRoots(context: android.content.Context): List<ExplorerItem> {
     val items = mutableListOf<ExplorerItem>()
 
     try {
-        // Get internal storage (primary external storage)
-        val internalStorage = Environment.getExternalStorageDirectory()
-        if (internalStorage.exists()) {
-            items.add(ExplorerItem(
-                name = "Internal Storage",
-                path = internalStorage.absolutePath,
-                isDirectory = true,
-                itemCount = 0, // Will be calculated dynamically
-                type = ExplorerItemType.STORAGE,
-                song = null
-            ))
-        }
-
-        // Get external storage directories (SD cards, etc.)
-        // This gives us all removable storage paths
-        val externalDirs = ContextCompat.getExternalFilesDirs(context, null)
-        
-        externalDirs.forEachIndexed { index, dir ->
-            if (dir != null && index > 0) { // Skip index 0 as it's internal storage
-                // Navigate up to get the actual SD card root
-                // From /storage/XXXX-XXXX/Android/data/package/files to /storage/XXXX-XXXX
-                var sdCardRoot = dir
-                var depth = 0
-                while (sdCardRoot.parent != null && depth < 10) {
-                    sdCardRoot = sdCardRoot.parentFile ?: break
-                    depth++
-                    // Stop when we reach /storage/XXXX-XXXX level
-                    if (sdCardRoot.parent == "/storage" || sdCardRoot.parentFile?.name == "storage") {
-                        break
+        // For Android 9/10, use different approach due to storage access restrictions
+        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.P || Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
+            android.util.Log.d("LibraryScreen", "Using Android 9/10 specific storage access method")
+            
+            // Method 1: Try using getExternalFilesDir to get storage roots
+            val externalFilesDirs = ContextCompat.getExternalFilesDirs(context, null)
+            externalFilesDirs.forEachIndexed { index, dir ->
+                if (dir != null) {
+                    try {
+                        // Navigate up to find the storage root
+                        var storageRoot = dir
+                        var depth = 0
+                        while (storageRoot.parent != null && depth < 10) {
+                            val parent = storageRoot.parentFile
+                            if (parent == null || parent.name == "storage" || parent.absolutePath == "/storage") {
+                                break
+                            }
+                            storageRoot = parent
+                            depth++
+                        }
+                        
+                        // Verify we can actually read this storage
+                        val canAccess = try {
+                            storageRoot.exists() && (storageRoot.canRead() || storageRoot.list() != null)
+                        } catch (e: SecurityException) {
+                            android.util.Log.w("LibraryScreen", "Cannot access storage at ${storageRoot.absolutePath}", e)
+                            false
+                        }
+                        
+                        if (canAccess && !items.any { it.path == storageRoot.absolutePath }) {
+                            val storageName = if (index == 0) "Internal Storage" else "SD Card ${if (index > 1) index else ""}".trim()
+                            items.add(ExplorerItem(
+                                name = storageName,
+                                path = storageRoot.absolutePath,
+                                isDirectory = true,
+                                itemCount = 0,
+                                type = ExplorerItemType.STORAGE,
+                                song = null
+                            ))
+                            android.util.Log.d("LibraryScreen", "Added storage root: $storageName at ${storageRoot.absolutePath}")
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.w("LibraryScreen", "Error processing external dir: ${dir.absolutePath}", e)
                     }
                 }
-                
-                if (sdCardRoot.exists() && sdCardRoot.canRead()) {
-                    val storageName = "SD Card ${if (index > 1) index else ""}"
-                    items.add(ExplorerItem(
-                        name = storageName.trim(),
-                        path = sdCardRoot.absolutePath,
-                        isDirectory = true,
-                        itemCount = 0,
-                        type = ExplorerItemType.STORAGE,
-                        song = null
-                    ))
+            }
+            
+            // Method 2: Try to use Environment.getExternalStorageDirectory() as fallback for primary storage
+            // This might still work on Android 9
+            if (items.isEmpty() || Build.VERSION.SDK_INT == Build.VERSION_CODES.P) {
+                try {
+                    @Suppress("DEPRECATION")
+                    val primaryExternal = Environment.getExternalStorageDirectory()
+                    if (primaryExternal.exists() && !items.any { it.path == primaryExternal.absolutePath }) {
+                        items.add(0, ExplorerItem(
+                            name = "Internal Storage",
+                            path = primaryExternal.absolutePath,
+                            isDirectory = true,
+                            itemCount = 0,
+                            type = ExplorerItemType.STORAGE,
+                            song = null
+                        ))
+                        android.util.Log.d("LibraryScreen", "Added primary external storage via Environment API")
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.w("LibraryScreen", "Cannot access primary external storage via Environment API", e)
+                }
+            }
+        } else {
+            // Android 11+ or Android 8 and below - use standard method
+            @Suppress("DEPRECATION")
+            val internalStorage = Environment.getExternalStorageDirectory()
+            if (internalStorage.exists()) {
+                items.add(ExplorerItem(
+                    name = "Internal Storage",
+                    path = internalStorage.absolutePath,
+                    isDirectory = true,
+                    itemCount = 0,
+                    type = ExplorerItemType.STORAGE,
+                    song = null
+                ))
+            }
+
+            // Get external storage directories (SD cards, etc.)
+            val externalDirs = ContextCompat.getExternalFilesDirs(context, null)
+            
+            externalDirs.forEachIndexed { index, dir ->
+                if (dir != null && index > 0) {
+                    // Navigate up to get the actual SD card root
+                    var sdCardRoot = dir
+                    var depth = 0
+                    while (sdCardRoot.parent != null && depth < 10) {
+                        sdCardRoot = sdCardRoot.parentFile ?: break
+                        depth++
+                        if (sdCardRoot.parent == "/storage" || sdCardRoot.parentFile?.name == "storage") {
+                            break
+                        }
+                    }
+                    
+                    if (sdCardRoot.exists() && sdCardRoot.canRead()) {
+                        val storageName = "SD Card ${if (index > 1) index else ""}"
+                        items.add(ExplorerItem(
+                            name = storageName.trim(),
+                            path = sdCardRoot.absolutePath,
+                            isDirectory = true,
+                            itemCount = 0,
+                            type = ExplorerItemType.STORAGE,
+                            song = null
+                        ))
+                    }
+                }
+            }
+            
+            // Alternative method: Check /storage directory directly
+            val storageDir = File("/storage")
+            if (storageDir.exists() && storageDir.isDirectory) {
+                storageDir.listFiles()?.forEach { file ->
+                    if (file.isDirectory && 
+                        file.name != "emulated" && 
+                        file.name != "self" && 
+                        !file.name.startsWith(".") &&
+                        file.canRead() &&
+                        !items.any { it.path == file.absolutePath }) {
+                        
+                        items.add(ExplorerItem(
+                            name = "Removable Storage (${file.name})",
+                            path = file.absolutePath,
+                            isDirectory = true,
+                            itemCount = 0,
+                            type = ExplorerItemType.STORAGE,
+                            song = null
+                        ))
+                    }
                 }
             }
         }
         
-        // Alternative method: Check /storage directory directly
-        val storageDir = File("/storage")
-        if (storageDir.exists() && storageDir.isDirectory) {
-            storageDir.listFiles()?.forEach { file ->
-                if (file.isDirectory && 
-                    file.name != "emulated" && 
-                    file.name != "self" && 
-                    !file.name.startsWith(".") &&
-                    file.canRead() &&
-                    !items.any { it.path == file.absolutePath }) {
-                    
-                    items.add(ExplorerItem(
-                        name = "Removable Storage (${file.name})",
-                        path = file.absolutePath,
-                        isDirectory = true,
-                        itemCount = 0,
-                        type = ExplorerItemType.STORAGE,
-                        song = null
-                    ))
-                }
-            }
-        }
+        android.util.Log.d("LibraryScreen", "Found ${items.size} storage roots")
     } catch (e: Exception) {
         android.util.Log.e("LibraryScreen", "Error getting storage roots", e)
     }
@@ -7361,7 +7431,7 @@ fun getAudioFileCountSongsInDirectory(
 // Fast MediaStore-only implementation - no filesystem operations
 fun getDirectoryContentsOptimized(directoryPath: String, songPathMap: Map<String, Song>, context: android.content.Context): List<ExplorerItem> {
     val startTime = System.currentTimeMillis()
-    android.util.Log.d("LibraryScreen", "Loading directory: $directoryPath")
+    android.util.Log.d("LibraryScreen", "Loading directory: $directoryPath (Android ${Build.VERSION.SDK_INT})")
     
     val items = mutableListOf<ExplorerItem>()
     val normalizedDirPath = directoryPath.replace("//", "/").trimEnd('/')
@@ -7416,12 +7486,16 @@ fun getDirectoryContentsOptimized(directoryPath: String, songPathMap: Map<String
         val files = try {
             directory.listFiles()
         } catch (e: SecurityException) {
-            android.util.Log.d("LibraryScreen", "Cannot list files for $directoryPath due to permissions, using MediaStore fallback")
+            android.util.Log.w("LibraryScreen", "Cannot list files for $directoryPath due to permissions (Android ${Build.VERSION.SDK_INT}), using MediaStore fallback", e)
+            null
+        } catch (e: Exception) {
+            android.util.Log.e("LibraryScreen", "Error listing files for $directoryPath (Android ${Build.VERSION.SDK_INT})", e)
             null
         }
         
         if (files != null) {
             // Normal file system listing succeeded
+            android.util.Log.d("LibraryScreen", "File system listing succeeded, found ${files.size} items")
             files.forEach { file ->
                 try {
                     if (file.isDirectory) {
@@ -7535,8 +7609,8 @@ fun getDirectoryContentsOptimized(directoryPath: String, songPathMap: Map<String
                 }
             }
         } else {
-            // MediaStore fallback for restricted directories (e.g., SD card root)
-            android.util.Log.d("LibraryScreen", "Using MediaStore fallback for $directoryPath")
+            // MediaStore fallback for restricted directories (e.g., SD card root on Android 9/10)
+            android.util.Log.w("LibraryScreen", "Using MediaStore-only fallback for $directoryPath (Android ${Build.VERSION.SDK_INT})")
             
             // Add songs directly in this directory
             songsInCurrentDir.forEach { (path, song) ->
@@ -7567,6 +7641,8 @@ fun getDirectoryContentsOptimized(directoryPath: String, songPathMap: Map<String
                     ))
                 }
             }
+            
+            android.util.Log.d("LibraryScreen", "MediaStore fallback found ${items.filter { !it.isDirectory }.size} songs and ${items.filter { it.isDirectory }.size} folders")
         }
     } catch (e: Exception) {
         android.util.Log.e("LibraryScreen", "Error reading directory: $directoryPath", e)
