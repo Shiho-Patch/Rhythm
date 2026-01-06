@@ -130,6 +130,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -710,31 +711,47 @@ private fun ModernScrollableContent(
             .toList()
     }
     
-    // Featured albums with auto-refresh
+    // Featured albums with auto-refresh - ensure proper count handling
     var currentFeaturedAlbums by remember(featuredContent, discoverItemCount) { 
-        mutableStateOf(featuredContent.ifEmpty { listOf() }) 
+        mutableStateOf(
+            if (featuredContent.isEmpty()) listOf() 
+            else featuredContent.take(discoverItemCount)
+        )
     }
     
-    // Safe carousel state initialization - ensure at least 1 item to prevent crashes
-    // Use a dynamic itemCount that updates when discoverItemCount changes
-    val featuredCarouselState = rememberCarouselState(
-        initialItem = 0,
-        itemCount = { maxOf(1, minOf(currentFeaturedAlbums.size, discoverItemCount)) }
-    )
+    // Calculate safe item count for carousel
+    val carouselItemCount = maxOf(1, minOf(currentFeaturedAlbums.size, discoverItemCount))
+    
+    // Safe carousel state initialization with key to force recreation on count changes
+    val featuredCarouselState = key(carouselItemCount) {
+        rememberCarouselState(
+            initialItem = 0,
+            itemCount = { carouselItemCount }
+        )
+    }
     
     // Reset carousel when item count changes to prevent state restoration crash
     LaunchedEffect(currentFeaturedAlbums.size, discoverItemCount) {
         val newItemCount = maxOf(1, minOf(currentFeaturedAlbums.size, discoverItemCount))
+        // Only scroll if current position is invalid
         if (featuredCarouselState.currentItem >= newItemCount) {
-            featuredCarouselState.scrollToItem(0)
+            try {
+                featuredCarouselState.scrollToItem(0)
+            } catch (e: Exception) {
+                android.util.Log.w("HomeScreen", "Carousel reset error: ${e.message}")
+            }
         }
     }
     
-    // Auto-refresh featured content periodically
+    // Auto-refresh featured content periodically - respect discoverItemCount setting
     LaunchedEffect(albums, discoverItemCount) {
         while (true) {
             delay(45000) // 45 seconds for better user experience
             if (albums.size > discoverItemCount) {
+                // Shuffle and take only the configured count
+                currentFeaturedAlbums = albums.shuffled().take(discoverItemCount)
+            } else if (albums.isNotEmpty()) {
+                // If we have fewer albums than the count, use all available
                 currentFeaturedAlbums = albums.shuffled()
             }
         }
@@ -822,17 +839,17 @@ private fun ModernScrollableContent(
     val updatesEnabled by updaterViewModel.appSettings.updatesEnabled.collectAsState(initial = true)
     
     // Enhanced auto-scroll for featured carousel with smooth animations
-    LaunchedEffect(currentFeaturedAlbums.size, discoverAutoScroll, discoverAutoScrollInterval) {
-        if (discoverAutoScroll && currentFeaturedAlbums.size > 1) {
+    LaunchedEffect(carouselItemCount, discoverAutoScroll, discoverAutoScrollInterval) {
+        if (discoverAutoScroll && carouselItemCount > 1) {
             while (true) {
                 delay(discoverAutoScrollInterval * 1000L) // Use settings interval
                 try {
-                    // Calculate next item safely
+                    // Calculate next item safely within the carousel bounds
                     val currentItem = featuredCarouselState.currentItem
-                    val nextItem = (currentItem + 1) % currentFeaturedAlbums.size
+                    val nextItem = (currentItem + 1) % carouselItemCount
                     
-                    // Only scroll if we have valid items
-                    if (nextItem < currentFeaturedAlbums.size) {
+                    // Only scroll if we have valid items and within bounds
+                    if (nextItem < carouselItemCount && currentItem < carouselItemCount) {
                         featuredCarouselState.animateScrollToItem(nextItem)
                     }
                 } catch (e: Exception) {
@@ -948,7 +965,7 @@ private fun ModernScrollableContent(
                                     Spacer(modifier = Modifier.height(20.dp))
                                     if (currentFeaturedAlbums.isNotEmpty()) {
                                         ModernFeaturedSection(
-                                            albums = currentFeaturedAlbums.take(discoverItemCount),
+                                            albums = currentFeaturedAlbums,
                                             carouselState = featuredCarouselState,
                                             onAlbumClick = onAlbumClick,
                                             showAlbumName = discoverShowAlbumName,
