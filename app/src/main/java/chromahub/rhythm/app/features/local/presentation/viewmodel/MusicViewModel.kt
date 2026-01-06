@@ -2765,7 +2765,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             
             // Remove from Favorites playlist
             _playlists.value = _playlists.value.map { playlist ->
-                if (playlist.id == "1" && playlist.name == "Favorites") {
+                if (playlist.id == "1" && playlist.name == "Liked") {
                     playlist.copy(songs = playlist.songs.filter { it.id != song.id })
                 } else {
                     playlist
@@ -2783,7 +2783,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             
             // Add to Favorites playlist
             _playlists.value = _playlists.value.map { playlist ->
-                if (playlist.id == "1" && playlist.name == "Favorites") {
+                if (playlist.id == "1" && playlist.name == "Liked") {
                     playlist.copy(songs = playlist.songs + song)
                 } else {
                     playlist

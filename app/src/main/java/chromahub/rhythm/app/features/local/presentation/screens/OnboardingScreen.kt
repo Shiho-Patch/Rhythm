@@ -5270,7 +5270,7 @@ fun EnhancedUpdaterContent(
                                 },
                                 modifier = Modifier
                                     .size(48.dp)
-                                    .rotate(if (isDownloading) rotationAngle else 0f)
+//                                    .rotate(if (isDownloading) rotationAngle else 0f)
                                     .scale(
                                         when {
                                             downloadedFile != null -> successScale.value
@@ -5591,7 +5591,7 @@ fun EnhancedUpdaterContent(
                             },
                             modifier = Modifier
                                 .size(40.dp)
-                                .rotate(if (isDownloading) rotationAngle else 0f)
+//                                .rotate(if (isDownloading) rotationAngle else 0f)
                                 .scale(
                                     when {
                                         downloadedFile != null -> successScale.value
@@ -7086,20 +7086,17 @@ fun EnhancedSetupFinishedContent(
                         text = context.getString(R.string.onboarding_next_explore)
                     )
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Reminder text
-                Text(
-                    text = context.getString(R.string.onboarding_settings_change),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                // Let's Go button removed - now handled by bottom navigation bar
             }
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Reminder text
+            Text(
+                text = context.getString(R.string.onboarding_settings_change),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
