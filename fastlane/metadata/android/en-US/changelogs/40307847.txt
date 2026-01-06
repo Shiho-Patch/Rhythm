@@ -1,0 +1,19 @@
+🎵 Rhythm v4.0.307.847 Beta - Major Update
+
+✨ New Features:
+• Rating System: Rate songs and view stats in Rhythm Stats
+• Search in Settings: Quickly find settings options
+• Onboarding Revamp: Improved setup experience with tablet support
+• API Integrations: Refactored API management for better integrations
+
+🎨 Improvements:
+• AutoEQ Enhancements: Better detection and fixes
+• UI Polish: Minor improvements and tablet adaptations
+• Permission Checks: Enhanced for Android 9-16
+• Stability: Critical crash fixes and memory leak resolutions
+
+🐛 Bug Fixes:
+• Carousel Auto Scroll crash
+• LazyColumn key reuse issues
+• Spatializer API compatibility
+• Player header and other UI glitches
