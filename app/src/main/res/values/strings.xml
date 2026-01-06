@@ -2138,4 +2138,10 @@
     <string name="settings_cache_size_64mb">64 MB</string>
     <string name="settings_list_item_prefix">  • %1$s:</string>
     
+    <!-- Settings Search -->
+    <string name="search_settings_hint">Search Rhythm Settings…</string>
+    <string name="clear_search">Clear search</string>
+    <string name="no_results_found">No results found</string>
+    <string name="try_different_search">Try a different search term</string>
+    
 </resources>

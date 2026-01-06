@@ -199,13 +199,25 @@ fun SettingsScreen(
     var showDefaultScreenDialog by remember { mutableStateOf(false) }
     var showLyricsSourceDialog by remember { mutableStateOf(false) }
     var showLanguageSwitcher by remember { mutableStateOf(false) }
+    
+    // Search state
+    var searchQuery by remember { mutableStateOf("") }
+    val searchIndex = remember(context) { buildSettingsSearchIndex(context) }
+    val searchResults = remember(searchQuery, searchIndex) { 
+        searchSettings(searchQuery, searchIndex) 
+    }
+    val isSearchActive = searchQuery.isNotEmpty()
 
     CollapsibleHeaderScreen(
         title = "Settings",
         showBackButton = !isTablet,
         onBackClick = {
-            HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
-            onBackClick()
+            if (isSearchActive) {
+                searchQuery = ""
+            } else {
+                HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.LongPress)
+                onBackClick()
+            }
         }
     ) { modifier ->
         val settingGroups = listOf(
@@ -330,42 +342,69 @@ fun SettingsScreen(
             LazyListState()
         }
         
-        LazyColumn(
-            state = lazyListState,
+        // Main content with search
+        Column(
             modifier = modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background) // Ensure background color for the scrollable content
-                .padding(horizontal = if (isTablet) 32.dp else 24.dp)
+                .background(MaterialTheme.colorScheme.background)
         ) {
-            items(settingGroups, key = { "setting_${it.title}" }) { group ->
-                Spacer(modifier = Modifier.height(28.dp))
-                Text(
-                    text = group.title,
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(start = 4.dp, bottom = 12.dp),
-                    letterSpacing = 0.5.sp
+            // Search Bar
+            SettingsSearchBar(
+                query = searchQuery,
+                onQueryChange = { searchQuery = it },
+                modifier = Modifier
+                    .padding(horizontal = if (isTablet) 32.dp else 24.dp)
+                    .padding(top = 8.dp, bottom = 8.dp)
+            )
+            
+            // Show search results or normal settings
+            if (isSearchActive) {
+                SettingsSearchResults(
+                    results = searchResults,
+                    onResultClick = { result ->
+                        searchQuery = "" // Clear search
+                        if (result.route != null) {
+                            onNavigateTo(result.route)
+                        }
+                    },
+                    modifier = Modifier.padding(horizontal = if (isTablet) 32.dp else 24.dp)
                 )
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                    ),
-                    elevation = CardDefaults.cardElevation(
-                        defaultElevation = 0.dp
-                    )
+            } else {
+                LazyColumn(
+                    state = lazyListState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = if (isTablet) 32.dp else 24.dp)
                 ) {
-                    Column {
-                        group.items.forEachIndexed { index, item ->
-                            SettingRow(item = item)
-                            
-                            if (index < group.items.lastIndex) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(horizontal = 20.dp),
-                                    thickness = 1.dp,
-                                    color = MaterialTheme.colorScheme.surfaceContainerHighest
+                    items(settingGroups, key = { "setting_${it.title}" }) { group ->
+                        Spacer(modifier = Modifier.height(28.dp))
+                        Text(
+                            text = group.title,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(start = 4.dp, bottom = 12.dp),
+                            letterSpacing = 0.5.sp
+                        )
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(24.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                            ),
+                            elevation = CardDefaults.cardElevation(
+                                defaultElevation = 0.dp
+                            )
+                        ) {
+                            Column {
+                                group.items.forEachIndexed { index, item ->
+                                    SettingRow(item = item)
+                                    
+                                    if (index < group.items.lastIndex) {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 20.dp),
+                                            thickness = 1.dp,
+                                            color = MaterialTheme.colorScheme.surfaceContainerHighest
                                 )
                             }
                         }
@@ -423,6 +462,8 @@ fun SettingsScreen(
 //                Spacer(modifier = Modifier.height(24.dp)) // Space at the bottom
             }
         }
+            } // End of else branch for search
+        } // End of Column
         
         // Default screen selection bottom sheet
         if (showDefaultScreenDialog) {
