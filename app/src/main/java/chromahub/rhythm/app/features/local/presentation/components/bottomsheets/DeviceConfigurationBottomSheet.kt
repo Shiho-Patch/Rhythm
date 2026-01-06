@@ -16,6 +16,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,9 +57,11 @@ import androidx.compose.material.icons.filled.Speaker
 import androidx.compose.material.icons.filled.SpeakerGroup
 import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Headphones
 import androidx.compose.material.icons.rounded.HeadsetMic
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
@@ -149,6 +153,7 @@ fun DeviceConfigurationBottomSheet(
     val userDevicesJson by musicViewModel.appSettings.userAudioDevices.collectAsState()
     val activeDeviceId by musicViewModel.appSettings.activeAudioDeviceId.collectAsState()
     val autoEQProfiles by musicViewModel.autoEQProfiles.collectAsState()
+    val currentAutoEQProfile by musicViewModel.appSettings.autoEQProfile.collectAsState()
     
     val userDevices = remember(userDevicesJson) {
         UserAudioDevice.fromJson(userDevicesJson)
@@ -422,7 +427,8 @@ fun DeviceConfigurationBottomSheet(
                         items(userDevices, key = { it.id }) { device ->
                             DeviceCard(
                                 device = device,
-                                isActive = device.id == activeDeviceId,
+                                isActive = device.autoEQProfileName == currentAutoEQProfile && 
+                                    device.autoEQProfileName != null && currentAutoEQProfile.isNotEmpty(),
                                 onSelect = {
                                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                                     musicViewModel.setActiveAudioDevice(device)
@@ -849,26 +855,32 @@ private fun DeviceCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = if (isActive)
-                MaterialTheme.colorScheme.primaryContainer
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
             else
-                MaterialTheme.colorScheme.surface
+                MaterialTheme.colorScheme.surfaceContainerHighest
         ),
         elevation = CardDefaults.cardElevation(
             defaultElevation = if (isActive) 0.dp else 0.dp
         ),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
+//        border = if (isActive) {
+//            androidx.compose.foundation.BorderStroke(
+//                1.dp,
+//                MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+//            )
+//        } else null
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Device Info Section
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.fillMaxWidth()
             ) {
                 // Icon
                 Box(
@@ -894,8 +906,8 @@ private fun DeviceCard(
                     )
                 }
                 
-                // Info
-                Column {
+                // Info with marquee support
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = device.name,
                         style = MaterialTheme.typography.titleMedium,
@@ -903,11 +915,14 @@ private fun DeviceCard(
                         color = if (isActive)
                             MaterialTheme.colorScheme.onPrimaryContainer
                         else
-                            MaterialTheme.colorScheme.onSurface
+                            MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        modifier = Modifier.basicMarquee()
                     )
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
                             text = device.type.displayName,
@@ -926,18 +941,15 @@ private fun DeviceCard(
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Medium,
                                 maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                modifier = Modifier
+                                    .weight(1f, fill = false)
+                                    .basicMarquee()
                             )
                         }
                     }
                 }
-            }
-            
-            // Actions
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+                
+                // Active Indicator
                 if (isActive) {
                     Box(
                         modifier = Modifier
@@ -954,28 +966,77 @@ private fun DeviceCard(
                         )
                     }
                 }
-                
-                IconButton(onClick = onConfigureAutoEQ) {
+            }
+            
+            // Action Buttons - Centered Horizontally
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FilledTonalButton(
+                    onClick = onConfigureAutoEQ,
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 40.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
                     Icon(
                         imageVector = Icons.Rounded.HeadsetMic,
-                        contentDescription = "Configure AutoEQ",
-                        tint = MaterialTheme.colorScheme.primary
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = "AutoEQ",
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
                 
-                IconButton(onClick = onEdit) {
+                OutlinedButton(
+                    onClick = onEdit,
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 40.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
                     Icon(
                         imageVector = Icons.Default.Edit,
-                        contentDescription = "Edit",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = "Edit",
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
                 
-                IconButton(onClick = onDelete) {
+                OutlinedButton(
+                    onClick = onDelete,
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 40.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete",
-                        tint = MaterialTheme.colorScheme.error
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = "Delete",
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
@@ -1115,105 +1176,239 @@ private fun DeviceAutoEQSelector(
     onDismiss: () -> Unit,
     onProfileSelected: (AutoEQProfile) -> Unit
 ) {
+    val context = LocalContext.current
+    val haptics = LocalHapticFeedback.current
     val profiles by musicViewModel.autoEQProfiles.collectAsState()
     var searchQuery by remember { mutableStateOf(device.brand.ifEmpty { device.name }) }
+    var selectedBrand by remember { mutableStateOf<String?>(null) }
+    var selectedType by remember { mutableStateOf<String?>(null) }
     
-    val filteredProfiles = remember(profiles, searchQuery) {
-        if (searchQuery.isBlank()) {
-            profiles
-        } else {
+    // Extract unique brands and types
+    val brands = remember(profiles) {
+        profiles.map { it.brand }.filter { it.isNotEmpty() }.distinct().sorted()
+    }
+    
+    val types = remember(profiles) {
+        profiles.map { it.type }.filter { it.isNotEmpty() }.distinct().sorted()
+    }
+    
+    val filteredProfiles = remember(profiles, searchQuery, selectedBrand, selectedType) {
+        var result = profiles
+        
+        if (searchQuery.isNotBlank()) {
             val query = searchQuery.lowercase()
-            profiles.filter { 
+            result = result.filter { 
                 it.name.lowercase().contains(query) ||
-                it.brand.lowercase().contains(query)
+                it.brand.lowercase().contains(query) ||
+                it.type.lowercase().contains(query)
             }
         }
+        
+        if (selectedBrand != null) {
+            result = result.filter { it.brand == selectedBrand }
+        }
+        
+        if (selectedType != null) {
+            result = result.filter { it.type == selectedType }
+        }
+        
+        result
     }
     
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = {
-            Icon(
-                imageVector = Icons.Rounded.HeadsetMic,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
-            )
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                modifier = Modifier.size(40.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Rounded.HeadsetMic,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
         },
         title = {
-            Text("Select AutoEQ Profile")
+            Column {
+                Text(
+                    text = "Select AutoEQ Profile",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "For ${device.name}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         },
         text = {
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.height(400.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 500.dp)
             ) {
-                Text(
-                    text = "Choose an AutoEQ profile for ${device.name}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                
+                // Enhanced Search Field
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    label = { Text("Search") },
-                    placeholder = { Text("Search headphones...") },
-                    singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
-                )
-                
-                Text(
-                    text = "${filteredProfiles.size} profile(s) found",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    items(filteredProfiles.take(20), key = { it.name }) { profile ->
-                        Card(
-                            onClick = { onProfileSelected(profile) },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = if (device.autoEQProfileName == profile.name)
-                                    MaterialTheme.colorScheme.primaryContainer
-                                else
-                                    MaterialTheme.colorScheme.surface
-                            ),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = profile.name,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                    Text(
-                                        text = "${profile.brand} • ${profile.type}",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                
-                                if (device.autoEQProfileName == profile.name) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = "Selected",
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
+                    placeholder = { Text("Search profiles...") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Rounded.Search,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Close,
+                                    contentDescription = "Clear",
+                                    modifier = Modifier.size(18.dp)
+                                )
                             }
+                        }
+                    },
+                    shape = RoundedCornerShape(18.dp),
+                    singleLine = true
+                )
+                
+                // Filter Chips
+//                if (brands.isNotEmpty() || types.isNotEmpty()) {
+//                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+//                        if (brands.isNotEmpty()) {
+//                            Text(
+//                                text = "Brand",
+//                                style = MaterialTheme.typography.labelSmall,
+//                                color = MaterialTheme.colorScheme.onSurfaceVariant
+//                            )
+//                            LazyRow(
+//                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+//                                modifier = Modifier.fillMaxWidth()
+//                            ) {
+//                                item {
+//                                    FilterChip(
+//                                        selected = selectedBrand == null,
+//                                        onClick = { selectedBrand = null },
+//                                        label = { Text("All") },
+//                                        colors = FilterChipDefaults.filterChipColors(
+//                                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+//                                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+//                                        )
+//                                    )
+//                                }
+//                                items(brands) { brand ->
+//                                    FilterChip(
+//                                        selected = selectedBrand == brand,
+//                                        onClick = { selectedBrand = brand },
+//                                        label = { Text(brand) },
+//                                        colors = FilterChipDefaults.filterChipColors(
+//                                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+//                                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+//                                        )
+//                                    )
+//                                }
+//                            }
+//                        }
+//
+//                        if (types.isNotEmpty()) {
+//                            Text(
+//                                text = "Type",
+//                                style = MaterialTheme.typography.labelSmall,
+//                                color = MaterialTheme.colorScheme.onSurfaceVariant
+//                            )
+//                            LazyRow(
+//                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+//                                modifier = Modifier.fillMaxWidth()
+//                            ) {
+//                                item {
+//                                    FilterChip(
+//                                        selected = selectedType == null,
+//                                        onClick = { selectedType = null },
+//                                        label = { Text("All") },
+//                                        colors = FilterChipDefaults.filterChipColors(
+//                                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+//                                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+//                                        )
+//                                    )
+//                                }
+//                                items(types) { type ->
+//                                    FilterChip(
+//                                        selected = selectedType == type,
+//                                        onClick = { selectedType = type },
+//                                        label = { Text(type) },
+//                                        colors = FilterChipDefaults.filterChipColors(
+//                                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+//                                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+//                                        )
+//                                    )
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+                
+                // Results Count
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "${filteredProfiles.size} profile${if (filteredProfiles.size != 1) "s" else ""} available",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                    )
+                }
+                
+                // Profile List
+                if (filteredProfiles.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.HeadsetMic,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                                modifier = Modifier.size(32.dp)
+                            )
+                            Text(
+                                text = "No profiles found",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        items(filteredProfiles, key = { it.name }) { profile ->
+                            EQProfileCard(
+                                profile = profile,
+                                isSelected = device.autoEQProfileName == profile.name,
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    onProfileSelected(profile)
+                                }
+                            )
                         }
                     }
                 }
@@ -1222,11 +1417,139 @@ private fun DeviceAutoEQSelector(
         confirmButton = {},
         dismissButton = {
             OutlinedButton(onClick = onDismiss) {
+                Icon(Icons.Default.Close, null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
                 Text("Cancel")
             }
         },
         shape = RoundedCornerShape(24.dp)
     )
+}
+
+@Composable
+private fun EQProfileCard(
+    profile: AutoEQProfile,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp)),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected)
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
+            else
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isSelected) 0.dp else 0.dp
+        ),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                // Icon
+                Surface(
+                    shape = CircleShape,
+                    color = if (isSelected)
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                    else
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Rounded.HeadsetMic,
+                            contentDescription = null,
+                            tint = if (isSelected)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+                
+                // Info
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = profile.name,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                        color = if (isSelected)
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        else
+                            MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(top = 4.dp)
+                    ) {
+                        if (profile.brand.isNotEmpty()) {
+                            Text(
+                                text = profile.brand,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (isSelected)
+                                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        if (profile.brand.isNotEmpty() && profile.type.isNotEmpty()) {
+                            Text(
+                                text = "•",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        if (profile.type.isNotEmpty()) {
+                            Text(
+                                text = profile.type,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (isSelected)
+                                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+            
+            // Selection Indicator
+            if (isSelected) {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Check,
+                        contentDescription = "Selected",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+            }
+        }
+    }
 }
 
 private fun getDeviceIcon(type: UserAudioDevice.DeviceType): ImageVector {

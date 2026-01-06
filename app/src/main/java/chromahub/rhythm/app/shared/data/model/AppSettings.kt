@@ -107,6 +107,7 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_ACTIVE_AUDIO_DEVICE_ID = "active_audio_device_id"
         private const val KEY_BASS_BOOST_ENABLED = "bass_boost_enabled"
         private const val KEY_BASS_BOOST_STRENGTH = "bass_boost_strength"
+        private const val KEY_BASS_BOOST_AVAILABLE = "bass_boost_available"
         private const val KEY_VIRTUALIZER_ENABLED = "virtualizer_enabled"
         private const val KEY_VIRTUALIZER_STRENGTH = "virtualizer_strength"
         
@@ -1423,6 +1424,14 @@ class AppSettings private constructor(context: Context) {
     fun setBassBoostStrength(strength: Int) {
         prefs.edit().putInt(KEY_BASS_BOOST_STRENGTH, strength).apply()
         _bassBoostStrength.value = strength
+    }
+    
+    fun setBassBoostAvailable(available: Boolean) {
+        prefs.edit().putBoolean(KEY_BASS_BOOST_AVAILABLE, available).apply()
+    }
+    
+    fun isBassBoostAvailable(): Boolean {
+        return prefs.getBoolean(KEY_BASS_BOOST_AVAILABLE, true)
     }
     
     fun setVirtualizerEnabled(enable: Boolean) {

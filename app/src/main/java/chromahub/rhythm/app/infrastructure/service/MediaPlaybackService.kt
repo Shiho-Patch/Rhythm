@@ -82,6 +82,9 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     private var bassBoost: android.media.audiofx.BassBoost? = null
     private var spatializer: android.media.Spatializer? = null
     private var virtualizerStrength: Short = 0 // Store strength for older devices
+    private var isInitializingAudioEffects: Boolean = false // Prevent concurrent initialization
+    private var audioEffectsInitialized: Boolean = false // Track if effects have been successfully initialized
+    private var isBassBoostAvailable: Boolean = true // Track if device supports bass boost (not alongside EQ)
     
     // Player listener reference for proper cleanup
     private var playerListener: Player.Listener? = null
@@ -173,6 +176,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         const val ACTION_SET_BASS_BOOST = "chromahub.rhythm.app.action.SET_BASS_BOOST"
         const val ACTION_SET_VIRTUALIZER = "chromahub.rhythm.app.action.SET_VIRTUALIZER"
         const val ACTION_APPLY_EQUALIZER_PRESET = "chromahub.rhythm.app.action.APPLY_EQUALIZER_PRESET"
+        const val ACTION_GET_EQUALIZER_DIAGNOSTICS = "chromahub.rhythm.app.action.GET_EQUALIZER_DIAGNOSTICS"
         
         // Widget control actions
         const val ACTION_PLAY_PAUSE = "chromahub.rhythm.app.action.PLAY_PAUSE"
@@ -378,8 +382,15 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
                 if (playbackState == Player.STATE_READY && player.audioSessionId != 0) {
                     // Reinitialize audio effects with valid session ID
-                    Log.d(TAG, "Player ready with session ID ${player.audioSessionId}, reinitializing effects")
-                    initializeAudioEffects()
+                    val previouslyEnabled = equalizer?.enabled ?: false
+                    Log.d(TAG, "Player ready with session ID ${player.audioSessionId}, reinitializing effects (EQ was: $previouslyEnabled)")
+                    initializeAudioEffects()// Verify state was preserved
+                    val currentlyEnabled = equalizer?.enabled ?: false
+                    if (previouslyEnabled != currentlyEnabled && appSettings.equalizerEnabled.value)
+                    {
+                        Log.w(TAG, "Equalizer state changed after reinitialization! Was: $previouslyEnabled, Now: $currentlyEnabled, Expected: ${appSettings.equalizerEnabled.value}") // Force re-apply settings
+                       setEqualizerEnabled(appSettings.equalizerEnabled.value)
+                    }
                 }
             }
             
@@ -991,22 +1002,56 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             }
             ACTION_SET_EQUALIZER_ENABLED -> {
                 val enabled = intent.getBooleanExtra("enabled", false)
+                Log.d(TAG, "Received intent to set equalizer enabled: $enabled")
                 setEqualizerEnabled(enabled)
+                
+                // Broadcast current state back for UI verification
+                val actualState = equalizer?.enabled ?: false
+                if (actualState != enabled) {
+                    Log.w(TAG, "Equalizer state verification failed. Requested: $enabled, Actual: $actualState")
+                }
             }
             ACTION_SET_EQUALIZER_BAND -> {
                 val band = intent.getShortExtra("band", 0)
                 val level = intent.getShortExtra("level", 0)
+                if (equalizer == null) {
+                    Log.e(TAG, "Cannot set band level: equalizer is null")
+                    return START_NOT_STICKY
+                }
                 setEqualizerBandLevel(band, level)
             }
             ACTION_SET_BASS_BOOST -> {
                 val enabled = intent.getBooleanExtra("enabled", false)
                 val strength = intent.getShortExtra("strength", 0)
+                Log.d(TAG, "Received intent to set bass boost - enabled: $enabled, strength: $strength")
+                
+                if (bassBoost == null && player.audioSessionId != 0) {
+                    Log.d(TAG, "Bass boost is null, attempting initialization")
+                    initializeAudioEffects()
+                }
+                
                 setBassBoostEnabled(enabled)
                 if (enabled) setBassBoostStrength(strength)
+                
+                // Verify state
+                val actualState = bassBoost?.enabled ?: false
+                if (actualState != enabled) {
+                    Log.w(TAG, "Bass boost state verification failed. Requested: $enabled, Actual: $actualState")
+                }
             }
             ACTION_SET_VIRTUALIZER -> {
                 val enabled = intent.getBooleanExtra("enabled", false)
                 val strength = intent.getShortExtra("strength", 0)
+                Log.d(TAG, "Received intent to set virtualizer - enabled: $enabled, strength: $strength")
+                
+                // For Android 13+, spatializer is system-controlled
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    if (spatializer == null && player.audioSessionId != 0) {
+                        Log.d(TAG, "Spatializer is null, attempting initialization")
+                        initializeAudioEffects()
+                    }
+                }
+                
                 setVirtualizerEnabled(enabled)
                 if (enabled) setVirtualizerStrength(strength)
             }
@@ -1014,9 +1059,29 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                 val preset = intent.getStringExtra("preset") ?: ""
                 val levels = intent.getFloatArrayExtra("levels")
                 if (levels != null) {
-                    applyEqualizerPreset(levels)
-                    Log.d(TAG, "Applied equalizer preset: $preset with ${levels.size} bands")
+                    if (equalizer == null) {
+                        Log.e(TAG, "Cannot apply preset: equalizer is null")
+                        // Try to initialize if session ID is available
+                        if (player.audioSessionId != 0) {
+                            Log.d(TAG, "Attempting to initialize equalizer before applying preset")
+                            initializeAudioEffects()
+                            // Try applying again after initialization
+                            if (equalizer != null) {
+                                applyEqualizerPreset(levels)
+                                Log.d(TAG, "Applied equalizer preset after initialization: $preset with ${levels.size} bands")
+                            } else {
+                                Log.e(TAG, "Failed to initialize equalizer, cannot apply preset")
+                            }
+                        }
+                    } else {
+                        applyEqualizerPreset(levels)
+                        Log.d(TAG, "Applied equalizer preset: $preset with ${levels.size} bands")
+                    }
                 }
+            }
+            ACTION_GET_EQUALIZER_DIAGNOSTICS -> {
+                val diagnostics = getEqualizerDiagnostics()
+                Log.i(TAG, diagnostics)
             }
             ACTION_PLAY_PAUSE -> {
                 Log.d(TAG, "Widget play/pause action")
@@ -1603,68 +1668,81 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     }
     
     fun initializeAudioEffects() {
+        // Prevent concurrent initialization
+        if (isInitializingAudioEffects) {
+            Log.w(TAG, "Audio effects initialization already in progress, skipping")
+            return
+        }
+        
         try {
+            isInitializingAudioEffects = true
             val audioSessionId = player.audioSessionId
-            Log.d(TAG, "Initializing audio effects with session ID: $audioSessionId")
+            Log.d(TAG, "Initializing audio effects with session ID: $audioSessionId (previously initialized: $audioEffectsInitialized)")
             
             // Skip initialization if session ID is invalid
             if (audioSessionId == 0) {
                 Log.w(TAG, "Invalid audio session ID (0), skipping effects initialization")
+                isInitializingAudioEffects = false
                 return
             }
             
-            // Check if equalizer is available on this device
-            val equalizerAvailable = try {
-                // Try to create a dummy equalizer to check availability
-                val dummy = android.media.audiofx.Equalizer(0, 0)
-                dummy.release()
-                true
-            } catch (e: Exception) {
-                false
-            }
-            
-            if (!equalizerAvailable) {
-                Log.w(TAG, "Equalizer is not available on this device")
+            // CRITICAL: Release ALL existing effects BEFORE creating new ones to prevent AudioFlinger error -38
+            try {
+                equalizer?.release()
                 equalizer = null
-            } else {
-                // Initialize equalizer
-                try {
-                    equalizer?.release()
-                    equalizer = android.media.audiofx.Equalizer(0, audioSessionId).apply {
-                        enabled = false
-                    }
-                    Log.d(TAG, "Equalizer initialized with ${equalizer?.numberOfBands} bands for session $audioSessionId")
-                } catch (e: Exception) {
-                    Log.w(TAG, "Equalizer initialization failed: ${e.message}")
-                    equalizer = null
-                }
-            }
-            
-            // Check if bass boost is available on this device
-            val bassBoostAvailable = try {
-                // Try to create a dummy bass boost to check availability
-                val dummy = android.media.audiofx.BassBoost(0, 0)
-                dummy.release()
-                true
-            } catch (e: Exception) {
-                false
-            }
-            
-            if (!bassBoostAvailable) {
-                Log.w(TAG, "Bass boost is not available on this device")
+                bassBoost?.release()
                 bassBoost = null
-            } else {
-                // Initialize bass boost
-                try {
-                    bassBoost?.release()
-                    bassBoost = android.media.audiofx.BassBoost(0, audioSessionId).apply {
-                        enabled = false
-                    }
-                    Log.d(TAG, "Bass boost initialized")
-                } catch (e: Exception) {
-                    Log.w(TAG, "Bass boost initialization failed: ${e.message}")
-                    bassBoost = null
+                Log.d(TAG, "Released existing audio effects before reinitialization")
+                
+                // Small delay to allow Android AudioFlinger to fully release resources
+                // This prevents error -38 (EBUSY) when creating new effect instances
+                Thread.sleep(50)
+            } catch (e: Exception) {
+                Log.w(TAG, "Error releasing existing effects: ${e.message}")
+            }
+            
+            // Initialize equalizer directly (no dummy checks - they waste effect slots)
+            try {
+                equalizer = android.media.audiofx.Equalizer(0, audioSessionId).apply {
+                    enabled = false
                 }
+                Log.d(TAG, "Equalizer initialized with ${equalizer?.numberOfBands} bands for session $audioSessionId")
+            } catch (e: Exception) {
+                Log.w(TAG, "Equalizer is not available on this device: ${e.message}")
+                equalizer = null
+            }
+            
+            // CRITICAL: Add delay after equalizer creation to let AudioFlinger complete attachment
+            // Without this, bass boost gets error -38 (EBUSY) from AudioFlinger
+            if (equalizer != null) {
+                try {
+                    Thread.sleep(100)  // Longer delay needed for sequential effect creation
+                } catch (e: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                }
+            }
+            
+            // Initialize bass boost directly (no dummy checks - they waste effect slots)
+            try {
+                bassBoost = android.media.audiofx.BassBoost(0, audioSessionId).apply {
+                    enabled = false
+                }
+                isBassBoostAvailable = true
+                appSettings.setBassBoostAvailable(true)
+                Log.d(TAG, "Bass boost initialized for session $audioSessionId")
+            } catch (e: RuntimeException) {
+                // Error -38 means AudioFlinger can't create multiple effects on this device/session
+                if (e.message?.contains("-3") == true || e.message?.contains("-38") == true) {
+                    isBassBoostAvailable = false
+                    appSettings.setBassBoostAvailable(false)
+                    Log.w(TAG, "Bass boost not supported alongside equalizer on this device (AudioFlinger limitation)")
+                } else {
+                    Log.w(TAG, "Bass boost initialization failed: ${e.message}")
+                }
+                bassBoost = null
+            } catch (e: Exception) {
+                Log.w(TAG, "Bass boost initialization failed: ${e.message}")
+                bassBoost = null
             }
             
             // Initialize spatial audio (Android 13+)
@@ -1692,28 +1770,58 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             // Load saved settings and apply them
             loadSavedAudioEffects()
             
+            // Mark as successfully initialized
+            audioEffectsInitialized = true
+            Log.d(TAG, "Audio effects initialization completed successfully")
+            
         } catch (e: Exception) {
             Log.e(TAG, "Error initializing audio effects", e)
+            audioEffectsInitialized = false
+        } finally {
+            isInitializingAudioEffects = false
         }
     }
     
     private fun loadSavedAudioEffects() {
         try {
-            // Load equalizer settings
-            equalizer?.enabled = appSettings.equalizerEnabled.value
+            // Verify equalizer is available before loading settings
+            if (equalizer == null) {
+                Log.w(TAG, "Cannot load saved audio effects: equalizer is null")
+                return
+            }
+            
+            val shouldBeEnabled = appSettings.equalizerEnabled.value
+            Log.d(TAG, "Loading saved effects - EQ should be enabled: $shouldBeEnabled")
             
             // Load band levels (supports both 5-band legacy and 10-band)
             val bandLevelsString = appSettings.equalizerBandLevels.value
             val bandLevels = bandLevelsString.split(",").mapNotNull { it.toFloatOrNull() }
             if (bandLevels.isNotEmpty()) {
+                // Apply band levels first, then enable
                 // Use the same interpolation logic as applyEqualizerPreset
                 applyEqualizerPreset(bandLevels.toFloatArray())
             }
             
+            // Enable equalizer AFTER applying levels to avoid audio glitches
+            equalizer?.enabled = shouldBeEnabled
+            val actualState = equalizer?.enabled ?: false
+            if (actualState != shouldBeEnabled) {
+                Log.e(TAG, "EQ state mismatch after load! Expected: $shouldBeEnabled, Actual: $actualState")
+            }
+            
             // Load bass boost settings
-            bassBoost?.enabled = appSettings.bassBoostEnabled.value
-            if (appSettings.bassBoostEnabled.value) {
-                bassBoost?.setStrength(appSettings.bassBoostStrength.value.toShort())
+            val bassBoostShouldBeEnabled = appSettings.bassBoostEnabled.value
+            if (bassBoost != null) {
+                bassBoost?.enabled = bassBoostShouldBeEnabled
+                if (bassBoostShouldBeEnabled) {
+                    bassBoost?.setStrength(appSettings.bassBoostStrength.value.toShort())
+                }
+                val actualBassState = bassBoost?.enabled ?: false
+                if (actualBassState != bassBoostShouldBeEnabled) {
+                    Log.e(TAG, "Bass boost state mismatch after load! Expected: $bassBoostShouldBeEnabled, Actual: $actualBassState")
+                }
+            } else {
+                Log.w(TAG, "Cannot load bass boost settings: bassBoost is null")
             }
             
             // Load spatial audio settings
@@ -1737,8 +1845,24 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     }
     
     fun setEqualizerEnabled(enabled: Boolean) {
+        if (equalizer == null) {
+            Log.w(TAG, "Attempting to enable equalizer but equalizer is null. Will reinitialize.")
+            // Try to initialize if we have a valid session ID
+            if (player.audioSessionId != 0) {
+                initializeAudioEffects()
+            } else {
+                Log.e(TAG, "Cannot enable equalizer: invalid audio session ID")
+                return
+            }
+        }
+        
         equalizer?.enabled = enabled
-        Log.d(TAG, "Equalizer enabled: $enabled")
+        val actualState = equalizer?.enabled ?: false
+        Log.d(TAG, "Equalizer enabled: $enabled, actual state: $actualState")
+        
+        if (actualState != enabled) {
+            Log.e(TAG, "Equalizer state mismatch! Requested: $enabled, Actual: $actualState")
+        }
     }
     
     fun setEqualizerBandLevel(band: Short, level: Short) {
@@ -1779,8 +1903,64 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         return true
     }
     
+    /**
+     * Get diagnostic information about audio effects state for debugging
+     */
+    fun getEqualizerDiagnostics(): String {
+        return buildString {
+            appendLine("=== Audio Effects Diagnostics ===")
+            appendLine("Audio effects initialized: $audioEffectsInitialized")
+            appendLine("Currently initializing: $isInitializingAudioEffects")
+            appendLine("Audio session ID: ${player.audioSessionId}")
+            appendLine("")
+            appendLine("--- Equalizer ---")
+            appendLine("Equalizer object: ${if (equalizer != null) "initialized" else "null"}")
+            equalizer?.let { eq ->
+                appendLine("Enabled state: ${eq.enabled}")
+                appendLine("Number of bands: ${eq.numberOfBands}")
+                appendLine("Band levels: ${(0 until eq.numberOfBands.toInt()).map { eq.getBandLevel(it.toShort()) }}")
+            }
+            appendLine("Settings - Enabled: ${appSettings.equalizerEnabled.value}")
+            appendLine("Settings - Preset: ${appSettings.equalizerPreset.value}")
+            appendLine("Settings - AutoEQ: ${appSettings.autoEQProfile.value}")
+            appendLine("Settings - Band levels: ${appSettings.equalizerBandLevels.value}")
+            appendLine("")
+            appendLine("--- Bass Boost ---")
+            appendLine("Bass Boost object: ${if (bassBoost != null) "initialized" else "null"}")
+            bassBoost?.let { bb ->
+                appendLine("Enabled state: ${bb.enabled}")
+                appendLine("Strength: ${bb.roundedStrength}")
+            }
+            appendLine("Settings - Enabled: ${appSettings.bassBoostEnabled.value}")
+            appendLine("Settings - Strength: ${appSettings.bassBoostStrength.value}")
+            appendLine("")
+            appendLine("--- Spatial Audio / Virtualizer ---")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                appendLine("Spatializer object: ${if (spatializer != null) "initialized" else "null"}")
+                spatializer?.let { sp ->
+                    appendLine("Available: ${sp.isAvailable}")
+                    appendLine("Enabled (system): ${sp.isEnabled}")
+                }
+            } else {
+                appendLine("Spatializer: Not supported (Android < 13)")
+            }
+            appendLine("Virtualizer strength preference: $virtualizerStrength")
+            appendLine("Settings - Enabled: ${appSettings.virtualizerEnabled.value}")
+            appendLine("Settings - Strength: ${appSettings.virtualizerStrength.value}")
+        }
+    }
+    
+    fun isBassBoostSupported(): Boolean {
+        return isBassBoostAvailable
+    }
+    
     fun applyEqualizerPreset(levels: FloatArray) {
         try {
+            if (equalizer == null) {
+                Log.w(TAG, "Cannot apply preset: equalizer is null")
+                return
+            }
+            
             equalizer?.let { eq ->
                 val numberOfBands = eq.numberOfBands.toInt()
                 val inputBands = levels.size
@@ -1856,14 +2036,35 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     }
     
     fun setBassBoostEnabled(enabled: Boolean) {
+        if (bassBoost == null) {
+            Log.w(TAG, "Attempting to enable bass boost but bassBoost is null. Will reinitialize.")
+            // Try to initialize if we have a valid session ID
+            if (player.audioSessionId != 0) {
+                initializeAudioEffects()
+            } else {
+                Log.e(TAG, "Cannot enable bass boost: invalid audio session ID")
+                return
+            }
+        }
+        
         bassBoost?.enabled = enabled
-        Log.d(TAG, "Bass boost enabled: $enabled")
+        val actualState = bassBoost?.enabled ?: false
+        Log.d(TAG, "Bass boost enabled: $enabled, actual state: $actualState")
+        
+        if (actualState != enabled) {
+            Log.e(TAG, "Bass boost state mismatch! Requested: $enabled, Actual: $actualState")
+        }
     }
     
     fun setBassBoostStrength(strength: Short) {
         try {
+            if (bassBoost == null) {
+                Log.w(TAG, "Cannot set bass boost strength: bassBoost is null")
+                return
+            }
             bassBoost?.setStrength(strength)
-            Log.d(TAG, "Bass boost strength set to $strength")
+            val actualStrength = bassBoost?.roundedStrength ?: 0
+            Log.d(TAG, "Bass boost strength set to $strength, actual: $actualStrength")
         } catch (e: Exception) {
             Log.e(TAG, "Error setting bass boost strength", e)
         }
@@ -1875,6 +2076,12 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     
     fun setVirtualizerEnabled(enabled: Boolean) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // On Android 13+, check if spatializer needs initialization
+            if (spatializer == null && player.audioSessionId != 0) {
+                Log.w(TAG, "Spatializer is null, attempting reinitialization")
+                initializeAudioEffects()
+            }
+            
             if (spatializer?.isAvailable == true) {
                 // Spatializer is system-controlled
                 // The actual spatialization depends on:
@@ -1888,11 +2095,14 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                     Log.w(TAG, "User wants spatial audio but it's disabled in system settings")
                 }
             } else {
-                Log.w(TAG, "Spatial audio requested but not available on this device")
+                Log.w(TAG, "Spatial audio requested but not available on this device (spatializer: ${spatializer != null})")
             }
         } else {
             Log.w(TAG, "Spatial audio requires Android 13+. Current: ${Build.VERSION.SDK_INT}")
         }
+        
+        // Store preference even if not available (for future device compatibility)
+        virtualizerStrength = if (enabled) virtualizerStrength else 0
     }
     
     fun setVirtualizerStrength(strength: Short) {

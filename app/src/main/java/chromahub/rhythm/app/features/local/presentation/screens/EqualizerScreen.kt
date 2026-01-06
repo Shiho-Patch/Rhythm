@@ -422,10 +422,12 @@ fun EqualizerScreen(
     val virtualizerStrengthState by viewModel.virtualizerStrength.collectAsState()
     val spatializationStatus by viewModel.spatializationStatus.collectAsState()
     val isSpatializationAvailable by viewModel.isSpatializationAvailable.collectAsState()
+    val isBassBoostAvailableState by viewModel.isBassBoostAvailable.collectAsState()
     
-    // Update spatialization status when screen is shown
+    // Update spatialization and bass boost availability when screen is shown
     LaunchedEffect(Unit) {
         viewModel.updateSpatializationStatus()
+        viewModel.updateBassBoostAvailability()
     }
 
     // Local mutable states for UI
@@ -1231,9 +1233,16 @@ fun EqualizerScreen(
 
                             // Bass Boost with secondary color
                             val secondaryColor = MaterialTheme.colorScheme.secondary
+                            // Check if device supports bass boost (based on service detection of AudioFlinger error -38)
+                            val bassBoostStatusText = if (isBassBoostAvailableState) {
+                                if (isBassBoostEnabled) "${(bassBoostStrength/10).toInt()}% intensity" else "Enhance low frequencies"
+                            } else {
+                                "Not available on this device"
+                            }
+                            
                             Card(
                                 colors = CardDefaults.cardColors(
-                                    containerColor = if (isBassBoostEnabled)
+                                    containerColor = if (isBassBoostEnabled && isBassBoostAvailableState)
                                         secondaryColor.copy(alpha = 0.15f)
                                     else
                                         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
@@ -1249,7 +1258,7 @@ fun EqualizerScreen(
                                     ) {
                                         Surface(
                                             shape = RoundedCornerShape(12.dp),
-                                            color = if (isBassBoostEnabled)
+                                            color = if (isBassBoostEnabled && isBassBoostAvailableState)
                                                 secondaryColor.copy(alpha = 0.2f)
                                             else
                                                 MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f),
@@ -1259,7 +1268,7 @@ fun EqualizerScreen(
                                                 Icon(
                                                     imageVector = Icons.Rounded.Speaker,
                                                     contentDescription = null,
-                                                    tint = if (isBassBoostEnabled)
+                                                    tint = if (isBassBoostEnabled && isBassBoostAvailableState)
                                                         secondaryColor
                                                     else
                                                         MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1277,24 +1286,26 @@ fun EqualizerScreen(
                                                 fontWeight = FontWeight.SemiBold
                                             )
                                             Text(
-                                                text = if (isBassBoostEnabled) "${(bassBoostStrength/10).toInt()}% intensity" else "Enhance low frequencies",
+                                                text = bassBoostStatusText,
                                                 style = MaterialTheme.typography.bodySmall,
-                                                color = if (isBassBoostEnabled) secondaryColor else MaterialTheme.colorScheme.onSurfaceVariant
+                                                color = if (isBassBoostEnabled && isBassBoostAvailableState) secondaryColor else MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
 
                                         TunerAnimatedSwitch(
-                                            checked = isBassBoostEnabled,
+                                            checked = isBassBoostEnabled && isBassBoostAvailableState,
                                             onCheckedChange = { enabled ->
-                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                                isBassBoostEnabled = enabled
-                                                viewModel.setBassBoost(enabled, bassBoostStrength.toInt().toShort())
+                                                if (isBassBoostAvailableState) {
+                                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                                    isBassBoostEnabled = enabled
+                                                    viewModel.setBassBoost(enabled, bassBoostStrength.toInt().toShort())
+                                                }
                                             }
                                         )
                                     }
 
                                     AnimatedVisibility(
-                                        visible = isBassBoostEnabled,
+                                        visible = isBassBoostEnabled && isBassBoostAvailableState,
                                         enter = fadeIn() + androidx.compose.animation.expandVertically(),
                                         exit = fadeOut() + androidx.compose.animation.shrinkVertically()
                                     ) {
@@ -1326,13 +1337,14 @@ fun EqualizerScreen(
                             // Spatial Audio (Virtualizer) with tertiary color
                             val tertiaryColor = MaterialTheme.colorScheme.tertiary
                             val isAndroid12Plus = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                            val isAndroid13Plus = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
                             val statusText = when {
-                                !isAndroid12Plus -> "Requires Android 12+"
+                                !isAndroid13Plus -> "Requires Android 13+"
                                 !isSpatializationAvailable -> "Not available on this device"
                                 isVirtualizerEnabled -> spatializationStatus
                                 else -> "Spatial audio enhancement"
                             }
-                            val showIntensitySlider = isAndroid12Plus && isSpatializationAvailable && isVirtualizerEnabled
+                            val showIntensitySlider = isAndroid13Plus && isSpatializationAvailable && isVirtualizerEnabled
                             
                             Card(
                                 colors = CardDefaults.cardColors(
@@ -1375,7 +1387,7 @@ fun EqualizerScreen(
 
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(
-                                                text = if (isAndroid12Plus) "Spatial Audio" else context.getString(R.string.virtualizer),
+                                                text = if (isAndroid13Plus) "Spatial Audio" else context.getString(R.string.virtualizer),
                                                 style = MaterialTheme.typography.titleSmall,
                                                 fontWeight = FontWeight.SemiBold
                                             )
@@ -1389,27 +1401,23 @@ fun EqualizerScreen(
                                             )
                                         }
 
-                                        Box(
-                                            modifier = Modifier.alpha(if (isAndroid12Plus) 1f else 0.5f)
-                                        ) {
-                                            TunerAnimatedSwitch(
-                                                checked = isVirtualizerEnabled,
-                                                onCheckedChange = { enabled ->
-                                                    if (isAndroid12Plus) {
-                                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                                        isVirtualizerEnabled = enabled
-                                                        viewModel.setVirtualizer(enabled, virtualizerStrength.toInt().toShort())
-                                                    }
+                                        TunerAnimatedSwitch(
+                                            checked = isVirtualizerEnabled && isSpatializationAvailable,
+                                            onCheckedChange = { enabled ->
+                                                if (isAndroid12Plus && isSpatializationAvailable) {
+                                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                                    isVirtualizerEnabled = enabled
+                                                    viewModel.setVirtualizer(enabled, virtualizerStrength.toInt().toShort())
                                                 }
-                                            )
-                                        }
+                                            }
+                                        )
                                     }
 
-                                    // Info text for Android < 12
-                                    if (!isAndroid12Plus && isVirtualizerEnabled) {
+                                    // Info text for Android < 13
+                                    if (!isAndroid13Plus && isVirtualizerEnabled) {
                                         Spacer(modifier = Modifier.height(8.dp))
                                         Text(
-                                            text = "🔔 This feature requires Android 12 or higher. Please update your device OS.",
+                                            text = "🔔 This feature requires Android 13 or higher. Please update your device OS.",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.padding(horizontal = 4.dp)
@@ -1417,7 +1425,7 @@ fun EqualizerScreen(
                                     }
                                     
                                     // Info text for unavailable spatializer
-                                    if (isAndroid12Plus && !isSpatializationAvailable && isVirtualizerEnabled) {
+                                    if (isAndroid13Plus && !isSpatializationAvailable && isVirtualizerEnabled) {
                                         Spacer(modifier = Modifier.height(8.dp))
                                         Text(
                                             text = "ℹ️ Spatial audio is not supported on this device.",
@@ -1428,7 +1436,7 @@ fun EqualizerScreen(
                                     }
                                     
                                     // Info about system settings
-                                    if (isAndroid12Plus && isSpatializationAvailable && spatializationStatus.contains("system settings") && isVirtualizerEnabled) {
+                                    if (isAndroid13Plus && isSpatializationAvailable && spatializationStatus.contains("system settings") && isVirtualizerEnabled) {
                                         Spacer(modifier = Modifier.height(8.dp))
                                         Text(
                                             text = "⚙️ To use spatial audio, enable it in your device's Sound settings.",

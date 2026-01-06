@@ -1,6 +1,7 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package chromahub.rhythm.app.features.local.presentation.components.dialogs
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -8,6 +9,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,6 +43,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -62,6 +66,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import chromahub.rhythm.app.shared.data.model.AutoEQProfile
 import chromahub.rhythm.app.util.HapticUtils
@@ -204,18 +209,17 @@ fun AutoEQProfileSelector(
             Spacer(modifier = Modifier.height(8.dp))
 
             Column {
-                // Search bar
-                TextField(
+                // Enhanced Search bar
+                OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 5.dp),
-                    placeholder = { Text("Search headphones...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Search profiles, brands...") },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Rounded.Search,
-                            contentDescription = null
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
                         )
                     },
                     trailingIcon = {
@@ -223,17 +227,13 @@ fun AutoEQProfileSelector(
                             IconButton(onClick = { searchQuery = "" }) {
                                 Icon(
                                     imageVector = Icons.Rounded.Close,
-                                    contentDescription = "Clear search"
+                                    contentDescription = "Clear",
+                                    modifier = Modifier.size(18.dp)
                                 )
                             }
                         }
                     },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent
-                    ),
+                    shape = RoundedCornerShape(18.dp),
                     singleLine = true
                 )
 
@@ -378,101 +378,117 @@ private fun ProfileCard(
 ) {
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp)),
         colors = CardDefaults.cardColors(
             containerColor = if (isActive)
-                MaterialTheme.colorScheme.primaryContainer
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
             else
-                MaterialTheme.colorScheme.surface
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isActive) 0.dp else 0.dp
+            defaultElevation = if (isActive) 2.dp else 0.dp
         ),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(14.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f)
             ) {
                 // Icon
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (isActive)
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                            else
-                                MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                    contentAlignment = Alignment.Center
+                Surface(
+                    shape = CircleShape,
+                    color = if (isActive)
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                    else
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                    modifier = Modifier.size(40.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Equalizer,
-                        contentDescription = null,
-                        tint = if (isActive)
-                            MaterialTheme.colorScheme.primary
-                        else
-                            MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(24.dp)
-                    )
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Rounded.Equalizer,
+                            contentDescription = null,
+                            tint = if (isActive)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
                 
                 // Info
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = profile.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Medium,
                         color = if (isActive)
                             MaterialTheme.colorScheme.onPrimaryContainer
                         else
-                            MaterialTheme.colorScheme.onSurface
+                            MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(top = 4.dp)
                     ) {
-                        Text(
-                            text = profile.brand,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "•",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = profile.type,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        if (profile.brand.isNotEmpty()) {
+                            Text(
+                                text = profile.brand,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (isActive)
+                                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        if (profile.brand.isNotEmpty() && profile.type.isNotEmpty()) {
+                            Text(
+                                text = "•",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        if (profile.type.isNotEmpty()) {
+                            Text(
+                                text = profile.type,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (isActive)
+                                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }
             
             // Selection indicator
             if (isActive) {
-                IconButton(
-                    onClick = { onDisable?.invoke() },
+                Box(
                     modifier = Modifier
                         .size(32.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primary),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Close,
-                        contentDescription = "Disable profile",
+                        imageVector = Icons.Rounded.Check,
+                        contentDescription = "Selected",
                         tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(14.dp)
                     )
                 }
             }

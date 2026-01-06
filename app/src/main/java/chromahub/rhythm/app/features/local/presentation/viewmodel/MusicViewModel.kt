@@ -116,6 +116,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     private val _isSpatializationAvailable = MutableStateFlow(false)
     val isSpatializationAvailable: StateFlow<Boolean> = _isSpatializationAvailable.asStateFlow()
     
+    // Bass boost availability (based on device support)
+    private val _isBassBoostAvailable = MutableStateFlow(appSettings.isBassBoostAvailable())
+    val isBassBoostAvailable: StateFlow<Boolean> = _isBassBoostAvailable.asStateFlow()
+    
     // Media scanning progress
     val scanProgress = repository.scanProgress
     val lastScanTimestamp = appSettings.lastScanTimestamp
@@ -5141,8 +5145,29 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         Log.d(TAG, "Set equalizer enabled: $enabled")
     }
     
+    /**
+     * Request diagnostic information from the service to debug equalizer issues
+     */
+    fun logEqualizerDiagnostics() {
+        val context = getApplication<Application>()
+        val intent = Intent(context, MediaPlaybackService::class.java).apply {
+            action = MediaPlaybackService.ACTION_GET_EQUALIZER_DIAGNOSTICS
+        }
+        context.startService(intent)
+        Log.d(TAG, "Requested equalizer diagnostics from service")
+    }
+    
     fun setEqualizerBandLevel(band: Short, level: Short) {
         val context = getApplication<Application>()
+        
+        // Clear AutoEQ profile and set preset to Custom when user manually adjusts bands
+        val currentPreset = appSettings.equalizerPreset.value
+        if (currentPreset.startsWith("AutoEQ:") || currentPreset != "Custom") {
+            appSettings.setEqualizerPreset("Custom")
+            appSettings.setAutoEQProfile("")
+            Log.d(TAG, "Switched to Custom preset as user manually adjusted EQ band")
+        }
+        
         val intent = Intent(context, MediaPlaybackService::class.java).apply {
             action = MediaPlaybackService.ACTION_SET_EQUALIZER_BAND
             putExtra("band", band)
@@ -5166,6 +5191,19 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
         context.startService(intent)
         Log.d(TAG, "Set bass boost enabled: $enabled, strength: $strength")
+    }
+    
+    fun isBassBoostSupported(): Boolean {
+        return _isBassBoostAvailable.value
+    }
+    
+    fun updateBassBoostAvailability() {
+        _isBassBoostAvailable.value = appSettings.isBassBoostAvailable()
+    }
+    
+    fun setBassBoostAvailable(available: Boolean) {
+        _isBassBoostAvailable.value = available
+        appSettings.setBassBoostAvailable(available)
     }
     
     fun setVirtualizer(enabled: Boolean, strength: Short = 500) {
@@ -5197,7 +5235,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 val serviceIntent = Intent(context, MediaPlaybackService::class.java)
                 // We'll need to get the service instance to call methods
                 // For now, just update based on Android version
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
                     val spatializer = audioManager.spatializer
                     _isSpatializationAvailable.value = spatializer?.isAvailable == true
@@ -5209,7 +5247,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 } else {
                     _isSpatializationAvailable.value = false
-                    _spatializationStatus.value = "Requires Android 12+"
+                    _spatializationStatus.value = "Requires Android 13+"
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error updating spatialization status", e)
@@ -5224,6 +5262,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         // Save to settings
         appSettings.setEqualizerPreset(preset)
         appSettings.setEqualizerBandLevels(levels.joinToString(","))
+        
+        // Clear AutoEQ profile when applying a different preset (unless it's an AutoEQ preset)
+        if (!preset.startsWith("AutoEQ:")) {
+            appSettings.setAutoEQProfile("")
+            Log.d(TAG, "Cleared AutoEQ profile as user selected preset: $preset")
+        }
         
         val intent = Intent(context, MediaPlaybackService::class.java).apply {
             action = MediaPlaybackService.ACTION_APPLY_EQUALIZER_PRESET
@@ -5283,7 +5327,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             
             // Wait for equalizer to initialize using coroutine
             viewModelScope.launch {
-                delay(150) // Allow time for service to process the enable request
+                // Increased delay to ensure service has time to initialize equalizer
+                // This is critical because the service needs to:
+                // 1. Process the enable intent
+                // 2. Check if equalizer object exists (may need to reinitialize)
+                // 3. Enable the equalizer
+                delay(300) // Increased from 150ms to 300ms for reliability
+                
                 // Apply the profile as a preset
                 applyEqualizerPreset("AutoEQ: ${profile.name}", levels)
                 Log.d(TAG, "AutoEQ profile applied successfully (equalizer was enabled automatically)")
