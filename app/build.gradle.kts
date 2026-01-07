@@ -16,8 +16,8 @@ android {
         applicationId = "chromahub.rhythm.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 40307847
-        versionName = "4.0.307.847"
+        versionCode = 40308848
+        versionName = "4.0.308.848"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -46,6 +46,16 @@ android {
 //                "proguard-rules.pro"
 //            )
             signingConfig = releaseSigning
+            // Reproducible builds: disable build timestamp
+            if (System.getenv("CI") == "true" || System.getenv("BUILD_REPRODUCIBLE") == "true") {
+                // Use a fixed timestamp for reproducible builds  
+                tasks.configureEach {
+                    // Disable timestamps in bundle reports for reproducible builds
+                    if (name.contains("BundleReport", ignoreCase = true)) {
+                        enabled = false
+                    }
+                }
+            }
         }
         debug {
             applicationIdSuffix = ".debug"

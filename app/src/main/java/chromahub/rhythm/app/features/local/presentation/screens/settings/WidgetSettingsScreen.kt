@@ -27,7 +27,7 @@ import chromahub.rhythm.app.shared.data.model.AppSettings
 import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.widget.MusicWidgetProvider
-import chromahub.rhythm.app.widget.glance.RhythmWidgetReceiver
+import chromahub.rhythm.app.infrastructure.widget.glance.RhythmWidgetReceiver
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

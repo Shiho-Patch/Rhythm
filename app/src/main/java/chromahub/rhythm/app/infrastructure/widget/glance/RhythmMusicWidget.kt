@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.widget.glance
+package chromahub.rhythm.app.infrastructure.widget.glance
 
 import android.content.Context
 import androidx.compose.runtime.Composable
@@ -48,9 +48,13 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
  * 
  * Features:
  * - Material 3 dynamic colors and theming
- * - Expressive rounded corners and spacing
- * - Responsive layouts for different sizes
+ * - Android 16 style rounded icons and buttons
+ * - Expressive rounded corners and spacing  
+ * - Responsive layouts for different sizes (2x1 to 5x5)
+ * - Rounded rectangle play/pause button (Android 16 style)
  * - Smooth interactions with proper touch feedback
+ * - Optimized visual hierarchy and readability
+ * - Adaptive content based on available space
  */
 class RhythmMusicWidget : GlanceAppWidget() {
     
@@ -118,16 +122,16 @@ class RhythmMusicWidget : GlanceAppWidget() {
             Row(
                 modifier = GlanceModifier
                     .fillMaxSize()
-                    .padding(12.dp),
+                    .padding(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalAlignment = Alignment.Start
             ) {
-                // Compact album art
+                // Compact album art with background
                 if (data.showAlbumArt) {
                     Box(
                         modifier = GlanceModifier
-                            .size(40.dp)
-                            .cornerRadius(12.dp),
+                            .size(32.dp)
+                            .cornerRadius(10.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         if (data.artworkUri != null) {
@@ -138,11 +142,18 @@ class RhythmMusicWidget : GlanceAppWidget() {
                                 contentScale = ContentScale.Crop
                             )
                         } else {
-                            Image(
-                                provider = ImageProvider(R.drawable.ic_music_note),
-                                contentDescription = "Music",
-                                modifier = GlanceModifier.size(20.dp)
-                            )
+                            Box(
+                                modifier = GlanceModifier
+                                    .fillMaxSize()
+                                    .background(GlanceTheme.colors.primaryContainer),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Image(
+                                    provider = ImageProvider(R.drawable.ic_music_note),
+                                    contentDescription = "Music",
+                                    modifier = GlanceModifier.size(18.dp)
+                                )
+                            }
                         }
                     }
                     
@@ -156,17 +167,18 @@ class RhythmMusicWidget : GlanceAppWidget() {
                     Text(
                         text = data.songTitle,
                         style = TextStyle(
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = GlanceTheme.colors.onSurface
                         ),
                         maxLines = 1
                     )
                     if (data.showArtist) {
+                        Spacer(modifier = GlanceModifier.height(2.dp))
                         Text(
                             text = data.artistName,
                             style = TextStyle(
-                                fontSize = 9.sp,
+                                fontSize = 10.sp,
                                 color = GlanceTheme.colors.onSurfaceVariant
                             ),
                             maxLines = 1
@@ -174,13 +186,13 @@ class RhythmMusicWidget : GlanceAppWidget() {
                     }
                 }
                 
-                Spacer(modifier = GlanceModifier.width(4.dp))
+                Spacer(modifier = GlanceModifier.width(6.dp))
                 
-                // Play button only
+                // Play button only - Android 16 rounded rectangle
                 Box(
                     modifier = GlanceModifier
-                        .size(36.dp)
-                        .cornerRadius(18.dp)
+                        .size(width = 40.dp, height = 32.dp)
+                        .cornerRadius(16.dp)
                         .background(GlanceTheme.colors.primary)
                         .clickable(actionRunCallback<PlayPauseAction>()),
                     contentAlignment = Alignment.Center
@@ -190,7 +202,7 @@ class RhythmMusicWidget : GlanceAppWidget() {
                             if (data.isPlaying) R.drawable.ic_pause else R.drawable.ic_play_arrow
                         ),
                         contentDescription = if (data.isPlaying) "Pause" else "Play",
-                        modifier = GlanceModifier.size(18.dp)
+                        modifier = GlanceModifier.size(16.dp)
                     )
                 }
             }
@@ -206,20 +218,20 @@ class RhythmMusicWidget : GlanceAppWidget() {
                 .cornerRadius(data.cornerRadius.dp)
                 .clickable(actionStartActivity<MainActivity>())
         ) {
-            // Content with padding
+            // Content with improved padding
             Column(
                 modifier = GlanceModifier
                     .fillMaxSize()
-                    .padding(20.dp),
+                    .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Album art with expressive squircle design
+                // Album art with modern design
                 if (data.showAlbumArt) {
                     Box(
                         modifier = GlanceModifier
-                            .size(64.dp)
-                            .cornerRadius(20.dp),
+                            .size(72.dp)
+                            .cornerRadius(24.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         if (data.artworkUri != null) {
@@ -230,22 +242,30 @@ class RhythmMusicWidget : GlanceAppWidget() {
                                 contentScale = ContentScale.Crop
                             )
                         } else {
-                            Image(
-                                provider = ImageProvider(R.drawable.ic_music_note),
-                                contentDescription = "Default Music Icon",
-                                modifier = GlanceModifier.size(36.dp)
-                            )
+                            // Default background for music icon
+                            Box(
+                                modifier = GlanceModifier
+                                    .fillMaxSize()
+                                    .background(GlanceTheme.colors.primaryContainer),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Image(
+                                    provider = ImageProvider(R.drawable.ic_music_note),
+                                    contentDescription = "Music",
+                                    modifier = GlanceModifier.size(40.dp)
+                                )
+                            }
                         }
                     }
                     
-                    Spacer(modifier = GlanceModifier.height(8.dp))
+                    Spacer(modifier = GlanceModifier.height(10.dp))
                 }
                 
-                // Song info - compact and centered
+                // Song info - improved typography
                 Text(
                     text = data.songTitle,
                     style = TextStyle(
-                        fontSize = 13.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = GlanceTheme.colors.onSurface
                     ),
@@ -253,21 +273,21 @@ class RhythmMusicWidget : GlanceAppWidget() {
                 )
                 
                 if (data.showArtist) {
-                    Spacer(modifier = GlanceModifier.height(2.dp))
+                    Spacer(modifier = GlanceModifier.height(4.dp))
                     
                     Text(
                         text = data.artistName,
                         style = TextStyle(
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             color = GlanceTheme.colors.onSurfaceVariant
                         ),
                         maxLines = 1
                     )
                 }
                 
-                Spacer(modifier = GlanceModifier.height(12.dp))
+                Spacer(modifier = GlanceModifier.height(14.dp))
                 
-                // Playback controls - all three buttons
+                // Playback controls - refined buttons
                 Row(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalAlignment = Alignment.CenterVertically
@@ -275,8 +295,8 @@ class RhythmMusicWidget : GlanceAppWidget() {
                     // Previous button
                     Box(
                         modifier = GlanceModifier
-                            .size(40.dp)
-                            .cornerRadius(20.dp)
+                            .size(44.dp)
+                            .cornerRadius(22.dp)
                             .background(GlanceTheme.colors.secondaryContainer)
                             .clickable(actionRunCallback<SkipPreviousAction>()),
                         contentAlignment = Alignment.Center
@@ -284,17 +304,17 @@ class RhythmMusicWidget : GlanceAppWidget() {
                         Image(
                             provider = ImageProvider(R.drawable.ic_skip_previous),
                             contentDescription = "Previous",
-                            modifier = GlanceModifier.size(20.dp)
+                            modifier = GlanceModifier.size(22.dp)
                         )
                     }
                     
-                    Spacer(modifier = GlanceModifier.width(8.dp))
+                    Spacer(modifier = GlanceModifier.width(10.dp))
                     
-                    // Play/Pause button - prominent
+                    // Play/Pause button - Android 16 rounded rectangle hero
                     Box(
                         modifier = GlanceModifier
-                            .size(52.dp)
-                            .cornerRadius(26.dp)
+                            .size(width = 64.dp, height = 56.dp)
+                            .cornerRadius(20.dp)
                             .background(GlanceTheme.colors.primary)
                             .clickable(actionRunCallback<PlayPauseAction>()),
                         contentAlignment = Alignment.Center
@@ -304,17 +324,17 @@ class RhythmMusicWidget : GlanceAppWidget() {
                                 if (data.isPlaying) R.drawable.ic_pause else R.drawable.ic_play_arrow
                             ),
                             contentDescription = if (data.isPlaying) "Pause" else "Play",
-                            modifier = GlanceModifier.size(26.dp)
+                            modifier = GlanceModifier.size(28.dp)
                         )
                     }
                     
-                    Spacer(modifier = GlanceModifier.width(8.dp))
+                    Spacer(modifier = GlanceModifier.width(10.dp))
                     
                     // Next button
                     Box(
                         modifier = GlanceModifier
-                            .size(40.dp)
-                            .cornerRadius(20.dp)
+                            .size(44.dp)
+                            .cornerRadius(22.dp)
                             .background(GlanceTheme.colors.secondaryContainer)
                             .clickable(actionRunCallback<SkipNextAction>()),
                         contentAlignment = Alignment.Center
@@ -322,7 +342,7 @@ class RhythmMusicWidget : GlanceAppWidget() {
                         Image(
                             provider = ImageProvider(R.drawable.ic_skip_next),
                             contentDescription = "Next",
-                            modifier = GlanceModifier.size(20.dp)
+                            modifier = GlanceModifier.size(22.dp)
                         )
                     }
                 }
@@ -425,11 +445,11 @@ class RhythmMusicWidget : GlanceAppWidget() {
                         
                         Spacer(modifier = GlanceModifier.width(8.dp))
                         
-                        // Play/Pause button - prominent primary circular
+                        // Play/Pause button - Android 16 rounded rectangle
                         Box(
                             modifier = GlanceModifier
-                                .size(56.dp)
-                                .cornerRadius(28.dp) // Circular
+                                .size(width = 64.dp, height = 56.dp)
+                                .cornerRadius(20.dp)
                                 .background(GlanceTheme.colors.primary)
                                 .clickable(actionRunCallback<PlayPauseAction>()),
                             contentAlignment = Alignment.Center
@@ -574,11 +594,11 @@ class RhythmMusicWidget : GlanceAppWidget() {
                     
                     Spacer(modifier = GlanceModifier.width(10.dp))
                     
-                    // Play/Pause button
+                    // Play/Pause button - Android 16 rounded rectangle
                     Box(
                         modifier = GlanceModifier
-                            .size(60.dp)
-                            .cornerRadius(30.dp)
+                            .size(width = 68.dp, height = 60.dp)
+                            .cornerRadius(22.dp)
                             .background(GlanceTheme.colors.primary)
                             .clickable(actionRunCallback<PlayPauseAction>()),
                         contentAlignment = Alignment.Center
@@ -721,11 +741,11 @@ class RhythmMusicWidget : GlanceAppWidget() {
                     
                     Spacer(modifier = GlanceModifier.width(16.dp))
                     
-                    // Play/Pause button - large hero circular primary
+                    // Play/Pause button - Android 16 rounded rectangle hero
                     Box(
                         modifier = GlanceModifier
-                            .size(68.dp)
-                            .cornerRadius(34.dp) // Circular
+                            .size(width = 76.dp, height = 68.dp)
+                            .cornerRadius(24.dp)
                             .background(GlanceTheme.colors.primary)
                             .clickable(actionRunCallback<PlayPauseAction>()),
                         contentAlignment = Alignment.Center
@@ -868,11 +888,11 @@ class RhythmMusicWidget : GlanceAppWidget() {
                     
                     Spacer(modifier = GlanceModifier.width(20.dp))
                     
-                    // Play/Pause button - hero
+                    // Play/Pause button - Android 16 rounded rectangle hero
                     Box(
                         modifier = GlanceModifier
-                            .size(80.dp)
-                            .cornerRadius(40.dp)
+                            .size(width = 84.dp, height = 76.dp)
+                            .cornerRadius(28.dp)
                             .background(GlanceTheme.colors.primary)
                             .clickable(actionRunCallback<PlayPauseAction>()),
                         contentAlignment = Alignment.Center

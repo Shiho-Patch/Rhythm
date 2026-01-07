@@ -3,7 +3,7 @@ package chromahub.rhythm.app.widget
 import android.content.Context
 import android.net.Uri
 import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.widget.glance.GlanceWidgetUpdater
+import chromahub.rhythm.app.infrastructure.widget.glance.GlanceWidgetUpdater
 
 object WidgetUpdater {
     
