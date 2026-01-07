@@ -4036,3 +4036,38 @@ footer {
   z-index: 1001;
   transition: width 0.3s ease;
 }
+
+/* Donation Links */
+.donation-links {
+  margin-top: 20px;
+}
+
+.donation-links h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--on-background);
+  margin-bottom: 12px;
+}
+
+.donation-links a {
+  display: inline-block;
+  margin: 4px 8px 4px 0;
+  padding: 8px 12px;
+  background: var(--surface-variant);
+  color: var(--on-surface-variant);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: var(--transition);
+  text-decoration: none;
+}
+
+.donation-links a:hover {
+  background: var(--primary);
+  color: var(--on-primary);
+  transform: translateY(-2px);
+}
+
+.donation-links a i {
+  margin-right: 6px;
+}

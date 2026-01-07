@@ -258,6 +258,35 @@ const updateData = {
             <p>Thank you for using Rhythm! Report issues on GitHub.</p>
         `
     },
+    update8: {
+        image: "assets/Banner.png",
+        headline: "4.0 Stable Release is here: New Year Groove 2026! 🎊🎵",
+        date: "January 7, 2026",
+        writer: "Anjishnu Nandi",
+        details: `
+            <p>🎊 Happy New Year 2026, Rhythm heroes! As fireworks explode and resolutions are made, we're dropping this stable release to kick off the year with a bang! "Rate your songs like a critic!" shouts the Rating System superhero. View your stats in Rhythm Stats - because who doesn't love data?</p>
+            
+            <p>🔍 "Settings search? Faster than a speeding bullet!" The Search in Settings feature lets you find options quicker than you can say "configuration."</p>
+            
+            <p>📱 Onboarding Revamp: "Tablet support? Check! Improved setup? Double check!" Welcome new users with style.</p>
+            
+            <p>🔗 API Integrations: "Refactored for better integrations - smoother than silk!"</p>
+            
+            <p>🎛️ AutoEQ Enhancements: "Better detection, better fixes - your ears will thank you!"</p>
+            
+            <p>✨ UI Polish and tablet adaptations - minor but mighty!</p>
+            
+            <p>🔒 Permission Checks enhanced for Android 9-16 - security first!</p>
+            
+            <p>🛡️ Stability: Critical crash fixes and memory leak resolutions - no more leaks in your ship!</p>
+            
+            <p>🐛 Bug Fixes: Carousel crashes? Squashed! LazyColumn issues? Fixed! Spatializer compatibility? Improved! UI glitches? Gone!</p>
+            
+            <p>🎉 Here's to a year of amazing music, bug-free grooves, and endless playlists! Happy New Year from the Rhythm team! 🥂🎵</p>
+            
+            <p>Thank you for using Rhythm! Report issues on GitHub.</p>
+        `
+    },
     update6: {
         image: "assets/Banner.png",
         headline: "3.1 Stable Release is here!",
