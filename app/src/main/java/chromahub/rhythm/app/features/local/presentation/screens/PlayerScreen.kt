@@ -378,6 +378,9 @@ fun PlayerScreen(
     val isLargeHeight = configuration.screenHeightDp > 800
     val isTablet = configuration.screenWidthDp >= 600 // Tablet detection
     val isLandscapeTablet = isTablet && configuration.screenWidthDp > configuration.screenHeightDp
+    val isExtraSmallWidth = configuration.screenWidthDp < 360 // Extra small width (< 360dp)
+    val isCompactWidth = configuration.screenWidthDp < 400 // Compact width (< 400dp)
+    val isMidWidth = configuration.screenWidthDp in 400..499 // Mid-range width (400-499dp)
     
     // Bottom sheet states
     var showSleepTimerBottomSheet by remember { mutableStateOf(false) }
@@ -385,7 +388,6 @@ fun PlayerScreen(
     var showPlaybackSpeedDialog by remember { mutableStateOf(false) }
     var showChipOrderBottomSheet by remember { mutableStateOf(false) }
     var showCastBottomSheet by remember { mutableStateOf(false) }
-    val isCompactWidth = configuration.screenWidthDp < 400
     
     // Sleep timer state from ViewModel
     val sleepTimerActive by musicViewModel.sleepTimerActive.collectAsState()
@@ -467,8 +469,15 @@ fun PlayerScreen(
         }
     }
 
-    // Dynamic sizing based on screen dimensions
+    // Dynamic sizing based on screen dimensions - improved for small screens
     val albumArtSize = when {
+        isExtraSmallWidth -> {
+            // Extra small screens: maximize artwork by reducing spacing
+            if (isCompactHeight) 0.60f else 0.65f
+        }
+        isCompactWidth -> {
+            if (isCompactHeight) 0.57f else 0.62f
+        }
         isCompactHeight -> 0.55f
         isLargeHeight -> 0.65f
         else -> 0.6f
@@ -994,8 +1003,16 @@ fun PlayerScreen(
                 Column(
                     horizontalAlignment = Alignment.End,
                     modifier = Modifier
-                        .padding(end = 8.dp)
-                        .width(200.dp) // Fixed width for consistent marquee behavior
+                        .padding(
+                            end = if (isExtraSmallWidth) 4.dp else 8.dp
+                        )
+                        .width(
+                            when {
+                                isExtraSmallWidth -> 120.dp
+                                isCompactWidth -> 140.dp
+                                else -> 200.dp
+                            }
+                        )
                 ) {
                     // Playlist name on top
                     if (songPlaylist != null) {
@@ -1003,7 +1020,8 @@ fun PlayerScreen(
                             text = songPlaylist.name,
                             style = MaterialTheme.typography.labelMedium.copy(
                                 fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontSize = if (isExtraSmallWidth) 10.sp else 11.sp
                             ),
                             gradientEdgeColor = MaterialTheme.colorScheme.surfaceContainer,
                             textAlign = TextAlign.End,
@@ -1016,7 +1034,8 @@ fun PlayerScreen(
                         AutoScrollingTextOnDemand(
                             text = song.album,
                             style = MaterialTheme.typography.labelSmall.copy(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = if (isExtraSmallWidth) 9.sp else 10.sp
                             ),
                             gradientEdgeColor = MaterialTheme.colorScheme.surfaceContainer,
                             textAlign = TextAlign.End,
@@ -1032,7 +1051,9 @@ fun PlayerScreen(
                     HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
                     showSongInfoSheet = true
                 },
-                modifier = Modifier.size(40.dp),
+                modifier = Modifier.size(
+                    if (isExtraSmallWidth) 36.dp else 40.dp
+                ),
                 colors = IconButtonDefaults.filledTonalIconButtonColors(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer
@@ -1192,14 +1213,25 @@ fun PlayerScreen(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 24.dp)
+                            .padding(
+                                horizontal = when {
+                                    isExtraSmallWidth -> 12.dp
+                                    isCompactWidth -> 16.dp
+                                    else -> 24.dp
+                                }
+                            )
                     ) {
                         // Song title
                         Text(
                             text = song.title,
                             style = MaterialTheme.typography.headlineMedium.copy(
                                 fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.15.sp
+                                letterSpacing = 0.15.sp,
+                                fontSize = when {
+                                    isExtraSmallWidth -> 18.sp
+                                    isCompactHeight -> 20.sp
+                                    else -> 28.sp
+                                }
                             ),
                             color = MaterialTheme.colorScheme.onSurface,
                             maxLines = 2,
@@ -1212,14 +1244,19 @@ fun PlayerScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
                         
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(if (isExtraSmallWidth) 4.dp else 8.dp))
                         
                         // Artist name only (clickable)
                         Text(
                             text = song.artist,
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Medium,
-                                letterSpacing = 0.4.sp
+                                letterSpacing = 0.4.sp,
+                                fontSize = when {
+                                    isExtraSmallWidth -> 12.sp
+                                    isCompactHeight -> 13.sp
+                                    else -> 16.sp
+                                }
                             ),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
@@ -1260,8 +1297,19 @@ fun PlayerScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(
-                            horizontal = if (isCompactWidth) 8.dp else 12.dp, // Reduced horizontal padding
-                            vertical = if (!isTablet && isCompactHeight) 8.dp else if (!isTablet) 12.dp else if (isCompactHeight) 2.dp else 4.dp
+                            horizontal = when {
+                                isExtraSmallWidth -> 4.dp // Extra small width: minimal padding
+                                isCompactWidth -> 6.dp     // Compact width: reduced padding
+                                else -> 12.dp              // Normal width: standard padding
+                            },
+                            vertical = when {
+                                isExtraSmallWidth && isCompactHeight -> 4.dp
+                                isCompactWidth && isCompactHeight -> 6.dp
+                                !isTablet && isCompactHeight -> 8.dp
+                                !isTablet -> 12.dp
+                                isCompactHeight -> 2.dp
+                                else -> 4.dp
+                            }
                         ),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = if (isCompactHeight) Arrangement.Center else Arrangement.SpaceEvenly
@@ -1269,9 +1317,10 @@ fun PlayerScreen(
                     // Optimized dynamic spacing - increased for mobile to give better visual separation
                     val contentSpacing = when {
                         isTablet -> if (isCompactHeight) 1.dp else 2.dp
-                        isCompactHeight -> 6.dp   // Better spacing on mobile compact height
-                        isLargeHeight -> 8.dp     // Better spacing on mobile large height  
-                        else -> 8.dp              // Better spacing on mobile regular
+                        isExtraSmallWidth -> 3.dp  // Extra small: minimal spacing
+                        isCompactHeight -> 5.dp    // Compact: reduced spacing
+                        isLargeHeight -> 8.dp      // Better spacing on mobile large height  
+                        else -> 8.dp               // Better spacing on mobile regular
                     }
 
                     // Album artwork or lyrics view with smooth transitions
@@ -1557,8 +1606,12 @@ fun PlayerScreen(
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .padding(
-                                                    horizontal = if (isCompactWidth) 12.dp else 16.dp,
-                                                    vertical = 16.dp // Add padding from the bottom
+                                                    horizontal = when {
+                                                        isExtraSmallWidth -> 8.dp
+                                                        isCompactWidth -> 12.dp
+                                                        else -> 16.dp
+                                                    },
+                                                    vertical = if (isExtraSmallWidth) 12.dp else 16.dp
                                                 )
                                         ) {
                                             // Track title with alignment support
@@ -1575,16 +1628,20 @@ fun PlayerScreen(
                                                     style = MaterialTheme.typography.headlineMedium.copy(
                                                         fontWeight = FontWeight.Bold,
                                                         letterSpacing = 0.15.sp,
-                                                        fontSize = if (isCompactHeight) 22.sp else 28.sp,
+                                                        fontSize = when {
+                                                            isExtraSmallWidth -> 16.sp
+                                                            isCompactHeight -> 20.sp
+                                                            else -> 28.sp
+                                                        },
                                                         color = if (!playerShowGradientOverlay) MaterialTheme.colorScheme.primary else Color.Unspecified
                                                     ),
                                                     gradientEdgeColor = MaterialTheme.colorScheme.background,
-                                                    modifier = Modifier.padding(horizontal = 4.dp),
+                                                    modifier = Modifier.padding(horizontal = 2.dp),
                                                     enabled = true
                                                 )
                                             }
 
-                                            Spacer(modifier = Modifier.height(if (isCompactHeight) 2.dp else 4.dp))
+                                            Spacer(modifier = Modifier.height(if (isExtraSmallWidth) 1.dp else if (isCompactHeight) 2.dp else 4.dp))
 
                                             Box(
                                                 modifier = Modifier.fillMaxWidth(),
@@ -1605,11 +1662,15 @@ fun PlayerScreen(
                                                     style = MaterialTheme.typography.titleMedium.copy(
                                                         fontWeight = FontWeight.Medium,
                                                         letterSpacing = 0.4.sp,
-                                                        fontSize = if (isCompactHeight) 14.sp else 16.sp,
+                                                        fontSize = when {
+                                                            isExtraSmallWidth -> 11.sp
+                                                            isCompactHeight -> 13.sp
+                                                            else -> 16.sp
+                                                        },
                                                         color = if (!playerShowGradientOverlay) MaterialTheme.colorScheme.primary else Color.Unspecified
                                                     ),
                                                     gradientEdgeColor = MaterialTheme.colorScheme.background,
-                                                    modifier = Modifier.padding(horizontal = 4.dp),
+                                                    modifier = Modifier.padding(horizontal = 2.dp),
                                                     enabled = true
                                                 )
                                             }
@@ -1618,7 +1679,7 @@ fun PlayerScreen(
                                             // Rating stars display - only show if rating system is enabled
                                             val currentRating = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context).getSongRating(song.id)
                                             if (enableRatingSystem && currentRating > 0) {
-                                                Spacer(modifier = Modifier.height(if (isCompactHeight) 4.dp else 6.dp))
+                                                Spacer(modifier = Modifier.height(if (isExtraSmallWidth) 2.dp else if (isCompactHeight) 4.dp else 6.dp))
                                                 Box(
                                                     modifier = Modifier.fillMaxWidth(),
                                                     contentAlignment = when (playerTextAlignment) {
@@ -1629,14 +1690,14 @@ fun PlayerScreen(
                                                 ) {
                                                     chromahub.rhythm.app.shared.presentation.components.RatingStarsDisplay(
                                                         rating = currentRating,
-                                                        size = if (isCompactHeight) 14.dp else 16.dp
+                                                        size = if (isExtraSmallWidth) 10.dp else if (isCompactHeight) 14.dp else 16.dp
                                                     )
                                                 }
                                             }
                                             
                                             // Audio quality badges
                                             if (playerShowAudioQualityBadges) {
-                                                Spacer(modifier = Modifier.height(8.dp))
+                                                Spacer(modifier = Modifier.height(if (isExtraSmallWidth) 4.dp else 8.dp))
                                                 AudioQualityBadges(
                                                     song = song,
                                                     modifier = Modifier.fillMaxWidth()
@@ -2023,7 +2084,7 @@ fun PlayerScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 24.dp)
+                                .padding(horizontal = 20.dp)
                         ) {
                             // Song title
                             AutoScrollingTextOnDemand(
@@ -2031,6 +2092,7 @@ fun PlayerScreen(
                                 style = MaterialTheme.typography.headlineMedium.copy(
                                     fontWeight = FontWeight.Bold,
                                     letterSpacing = 0.15.sp,
+                                    fontSize = 24.sp,
                                     color = MaterialTheme.colorScheme.onSurface
                                 ),
                                 gradientEdgeColor = MaterialTheme.colorScheme.background,
@@ -2038,7 +2100,7 @@ fun PlayerScreen(
                                 enabled = true
                             )
                             
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(6.dp))
                             
                             // Artist name (clickable)
                             AutoScrollingTextOnDemand(
@@ -2052,6 +2114,7 @@ fun PlayerScreen(
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Medium,
                                     letterSpacing = 0.4.sp,
+                                    fontSize = 14.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 ),
                                 gradientEdgeColor = MaterialTheme.colorScheme.background,
@@ -2072,7 +2135,7 @@ fun PlayerScreen(
                             // Rating stars display - only show if rating system is enabled
                             val currentRating = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context).getSongRating(song.id)
                             if (enableRatingSystem && currentRating > 0) {
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(6.dp))
                                 Box(
                                     modifier = Modifier.fillMaxWidth(),
                                     contentAlignment = when (playerTextAlignment) {
@@ -2083,14 +2146,14 @@ fun PlayerScreen(
                                 ) {
                                     chromahub.rhythm.app.shared.presentation.components.RatingStarsDisplay(
                                         rating = currentRating,
-                                        size = 16.dp
+                                        size = 14.dp
                                     )
                                 }
                             }
                             
                             // Audio quality badges for tablets
                             if (playerShowAudioQualityBadges) {
-                                Spacer(modifier = Modifier.height(12.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
                                 AudioQualityBadges(
                                     song = song,
                                     modifier = Modifier.fillMaxWidth()
@@ -2131,7 +2194,14 @@ fun PlayerScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = if (isTablet) 20.dp else 16.dp),
+                                .padding(
+                                    horizontal = when {
+                                        isExtraSmallWidth -> 8.dp
+                                        isCompactWidth -> 12.dp
+                                        isTablet -> 20.dp
+                                        else -> 16.dp
+                                    }
+                                ),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
@@ -2148,13 +2218,16 @@ fun PlayerScreen(
                                     text = if (isScrubbing && enhancedSeekingEnabled) scrubTimeFormatted else currentTimeFormatted,
                                     style = MaterialTheme.typography.labelSmall.copy(
                                         fontWeight = if (isScrubbing && enhancedSeekingEnabled) FontWeight.Bold else FontWeight.Medium,
-                                        fontSize = 12.sp
+                                        fontSize = if (isExtraSmallWidth) 10.sp else 12.sp
                                     ),
                                     color = if (isScrubbing && enhancedSeekingEnabled)
                                         MaterialTheme.colorScheme.onSecondary
                                     else
                                         MaterialTheme.colorScheme.onPrimaryContainer,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    modifier = Modifier.padding(
+                                        horizontal = if (isExtraSmallWidth) 6.dp else 8.dp, 
+                                        vertical = if (isExtraSmallWidth) 2.dp else 4.dp
+                                    )
                                 )
                             }
 
@@ -2281,10 +2354,13 @@ fun PlayerScreen(
                                     text = totalTimeFormatted,
                                     style = MaterialTheme.typography.labelSmall.copy(
                                         fontWeight = FontWeight.Medium,
-                                        fontSize = 12.sp
+                                        fontSize = if (isExtraSmallWidth) 10.sp else 12.sp
                                     ),
                                     color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    modifier = Modifier.padding(
+                                        horizontal = if (isExtraSmallWidth) 6.dp else 8.dp, 
+                                        vertical = if (isExtraSmallWidth) 2.dp else 4.dp
+                                    )
                                 )
                             }
                         }
@@ -2307,14 +2383,26 @@ fun PlayerScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = if (isTablet) 32.dp else 20.dp),
+                                .padding(
+                                    horizontal = when {
+                                        isExtraSmallWidth -> 10.dp
+                                        isCompactWidth -> 16.dp
+                                        isTablet -> 32.dp
+                                        else -> 20.dp
+                                    }
+                                ),
                             horizontalArrangement = if (isPlaying) Arrangement.SpaceEvenly else Arrangement.spacedBy(
-                                8.dp,
+                                if (isExtraSmallWidth) 4.dp else 8.dp,
                                 Alignment.CenterHorizontally
-                            ), // Adjust spacing based on play state
+                            ),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             // Previous button - Circular like in reference image
+                            val prevButtonSize = when {
+                                isExtraSmallWidth -> 40.dp
+                                isCompactWidth -> 44.dp
+                                else -> 48.dp
+                            }
                             Surface(
                                 onClick = {
                                     HapticUtils.performHapticFeedback(
@@ -2324,7 +2412,7 @@ fun PlayerScreen(
                                     )
                                     onSkipPrevious()
                                 },
-                                modifier = Modifier.size(48.dp),
+                                modifier = Modifier.size(prevButtonSize),
                                 shape = CircleShape,
                                 color = MaterialTheme.colorScheme.tertiary,
                                 tonalElevation = 0.dp,
@@ -2337,7 +2425,7 @@ fun PlayerScreen(
                                     Icon(
                                         imageVector = RhythmIcons.SkipPrevious,
                                         contentDescription = "Previous track",
-                                        modifier = Modifier.size(24.dp),
+                                        modifier = Modifier.size(if (isExtraSmallWidth) 18.dp else 24.dp),
                                         tint = MaterialTheme.colorScheme.onTertiary
                                     )
                                 }
@@ -2371,6 +2459,11 @@ fun PlayerScreen(
                                             )
                                         )
                             ) {
+                                val seekBackButtonSize = when {
+                                    isExtraSmallWidth -> 44.dp
+                                    isCompactWidth -> 48.dp
+                                    else -> 56.dp
+                                }
                                 Surface(
                                     onClick = {
                                         HapticUtils.performHapticFeedback(
@@ -2383,8 +2476,8 @@ fun PlayerScreen(
                                                 .toFloat() / totalTimeMs
                                         )
                                     },
-                                    modifier = Modifier.size(56.dp),
-                                    shape = RoundedCornerShape(24.dp), // Squircle shape
+                                    modifier = Modifier.size(seekBackButtonSize),
+                                    shape = RoundedCornerShape(20.dp), // Squircle shape
                                     color = MaterialTheme.colorScheme.primaryContainer,
                                     tonalElevation = 0.dp,
                                     shadowElevation = 0.dp
@@ -2396,7 +2489,7 @@ fun PlayerScreen(
                                         Icon(
                                             imageVector = RhythmIcons.Replay10,
                                             contentDescription = "Seek 10 seconds back",
-                                            modifier = Modifier.size(24.dp),
+                                            modifier = Modifier.size(if (isExtraSmallWidth) 18.dp else 24.dp),
                                             tint = MaterialTheme.colorScheme.onPrimaryContainer
                                         )
                                     }
@@ -2405,7 +2498,11 @@ fun PlayerScreen(
 
                             // Play/Pause button - Large Oval/Pill shaped exactly like in reference image
                             val playPauseButtonWidth by animateDpAsState(
-                                targetValue = if (isPlaying) 60.dp else 140.dp, // Expand when inactive
+                                targetValue = when {
+                                    isExtraSmallWidth -> if (isPlaying) 50.dp else 120.dp
+                                    isCompactWidth -> if (isPlaying) 54.dp else 130.dp
+                                    else -> if (isPlaying) 60.dp else 140.dp
+                                },
                                 animationSpec = spring(
                                     dampingRatio = Spring.DampingRatioMediumBouncy,
                                     stiffness = Spring.StiffnessLow,
@@ -2414,7 +2511,11 @@ fun PlayerScreen(
                                 label = "playPauseButtonWidth"
                             )
                             val playPauseButtonHeight by animateDpAsState(
-                                targetValue = if (isPlaying) 60.dp else 60.dp, // Keep height consistent
+                                targetValue = when {
+                                    isExtraSmallWidth -> 50.dp
+                                    isCompactWidth -> 54.dp
+                                    else -> 60.dp
+                                },
                                 animationSpec = spring(
                                     dampingRatio = Spring.DampingRatioMediumBouncy,
                                     stiffness = Spring.StiffnessLow,
@@ -2447,7 +2548,7 @@ fun PlayerScreen(
                                 ) {
                                     if (showLoaderInPlayPauseButton) {
                                         M3CircularLoader(
-                                            modifier = Modifier.size(24.dp), // Adjust size to fit
+                                            modifier = Modifier.size(if (isExtraSmallWidth) 18.dp else 24.dp), // Adjust size to fit
                                             color = MaterialTheme.colorScheme.onPrimary,
                                             isExpressive = true
                                         )
@@ -2455,7 +2556,7 @@ fun PlayerScreen(
                                         Icon(
                                             imageVector = if (isPlaying) RhythmIcons.Pause else RhythmIcons.Play,
                                             contentDescription = if (isPlaying) "Pause" else "Play",
-                                            modifier = Modifier.size(24.dp),
+                                            modifier = Modifier.size(if (isExtraSmallWidth) 18.dp else 24.dp),
                                             tint = MaterialTheme.colorScheme.onPrimary
                                         )
                                         AnimatedVisibility(
@@ -2486,12 +2587,13 @@ fun PlayerScreen(
                                                     )
                                         ) {
                                             Row {
-                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Spacer(modifier = Modifier.width(if (isExtraSmallWidth) 4.dp else 8.dp))
                                                 Text(
                                                     text = if (isPlaying) "PAUSE" else "PLAY",
                                                     style = MaterialTheme.typography.titleMedium.copy(
                                                         fontWeight = FontWeight.Bold,
-                                                        letterSpacing = 1.2.sp
+                                                        letterSpacing = if (isExtraSmallWidth) 0.8.sp else 1.2.sp,
+                                                        fontSize = if (isExtraSmallWidth) 11.sp else 14.sp
                                                     ),
                                                     color = MaterialTheme.colorScheme.onPrimary
                                                 )
@@ -2529,6 +2631,11 @@ fun PlayerScreen(
                                             )
                                         )
                             ) {
+                                val seekForwardButtonSize = when {
+                                    isExtraSmallWidth -> 44.dp
+                                    isCompactWidth -> 48.dp
+                                    else -> 56.dp
+                                }
                                 Surface(
                                     onClick = {
                                         HapticUtils.performHapticFeedback(
@@ -2541,8 +2648,8 @@ fun PlayerScreen(
                                                 .toFloat() / totalTimeMs
                                         )
                                     },
-                                    modifier = Modifier.size(56.dp),
-                                    shape = RoundedCornerShape(24.dp), // Squircle shape
+                                    modifier = Modifier.size(seekForwardButtonSize),
+                                    shape = RoundedCornerShape(20.dp), // Squircle shape
                                     color = MaterialTheme.colorScheme.primaryContainer,
                                     tonalElevation = 0.dp,
                                     shadowElevation = 0.dp
@@ -2554,7 +2661,7 @@ fun PlayerScreen(
                                         Icon(
                                             imageVector = RhythmIcons.Forward10,
                                             contentDescription = "Seek 10 seconds forward",
-                                            modifier = Modifier.size(24.dp),
+                                            modifier = Modifier.size(if (isExtraSmallWidth) 18.dp else 24.dp),
                                             tint = MaterialTheme.colorScheme.onPrimaryContainer
                                         )
                                     }
@@ -2562,6 +2669,11 @@ fun PlayerScreen(
                             }
 
                             // Next button - Circular like in reference image
+                            val nextButtonSize = when {
+                                isExtraSmallWidth -> 40.dp
+                                isCompactWidth -> 44.dp
+                                else -> 48.dp
+                            }
                             Surface(
                                 onClick = {
                                     HapticUtils.performHapticFeedback(
@@ -2571,7 +2683,7 @@ fun PlayerScreen(
                                     )
                                     onSkipNext()
                                 },
-                                modifier = Modifier.size(48.dp),
+                                modifier = Modifier.size(nextButtonSize),
                                 shape = CircleShape,
                                 color = MaterialTheme.colorScheme.tertiary,
                                 tonalElevation = 0.dp,
@@ -2584,20 +2696,27 @@ fun PlayerScreen(
                                     Icon(
                                         imageVector = RhythmIcons.SkipNext,
                                         contentDescription = "Next track",
-                                        modifier = Modifier.size(24.dp),
+                                        modifier = Modifier.size(if (isExtraSmallWidth) 18.dp else 24.dp),
                                         tint = MaterialTheme.colorScheme.onTertiary
                                     )
                                 }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(if (isTablet) 32.dp else 36.dp))
+                        Spacer(modifier = Modifier.height(if (isTablet) 28.dp else if (isExtraSmallWidth) 20.dp else 28.dp))
 
                         // Secondary action buttons row - compact design
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = if (isTablet) 32.dp else 20.dp),
+                                .padding(
+                                    horizontal = when {
+                                        isExtraSmallWidth -> 10.dp
+                                        isCompactWidth -> 16.dp
+                                        isTablet -> 32.dp
+                                        else -> 20.dp
+                                    }
+                                ),
                             horizontalArrangement = Arrangement.SpaceEvenly,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -2827,13 +2946,19 @@ fun PlayerScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(if (isExtraSmallWidth) 12.dp else 20.dp))
 
                         // Arrow button to show chips or chips themselves
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 24.dp),
+                                .padding(
+                                    horizontal = when {
+                                        isExtraSmallWidth -> 12.dp
+                                        isCompactWidth -> 16.dp
+                                        else -> 24.dp
+                                    }
+                                ),
                             contentAlignment = Alignment.Center
                         ) {
                             // Up arrow button (shown when chips are hidden)
@@ -2861,11 +2986,14 @@ fun PlayerScreen(
                                         showChips = true
                                     },
                                     modifier = Modifier
-                                        .width(226.dp)
+                                        .width(when {
+                                            isExtraSmallWidth -> 160.dp
+                                            isCompactWidth -> 190.dp
+                                            else -> 226.dp
+                                        })
                                         .height(26.dp)
                                         .background(
                                             color = BottomSheetDefaults.ContainerColor,
-//                                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
                                             shape = RoundedCornerShape(20.dp)
                                         )
                                 ) {
@@ -2873,7 +3001,7 @@ fun PlayerScreen(
                                         imageVector = Icons.Default.KeyboardArrowUp,
                                         contentDescription = "Show actions",
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(32.dp)
+                                        modifier = Modifier.size(24.dp)
                                     )
                                 }
                             }
@@ -2892,8 +3020,12 @@ fun PlayerScreen(
                             ) {
                                 LazyRow(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    contentPadding = PaddingValues(horizontal = 8.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(
+                                        if (isExtraSmallWidth) 4.dp else 8.dp
+                                    ),
+                                    contentPadding = PaddingValues(
+                                        horizontal = if (isExtraSmallWidth) 4.dp else 8.dp
+                                    )
                                 ) {
                                     // Add to Playlist chip (always first, not reorderable)
                                     item {
@@ -2918,18 +3050,20 @@ fun PlayerScreen(
                                             label = {
                                                 Text(
                                                     "Add to",
-                                                    style = MaterialTheme.typography.labelLarge
+                                                    style = MaterialTheme.typography.labelLarge.copy(
+                                                        fontSize = if (isExtraSmallWidth) 11.sp else 12.sp
+                                                    )
                                                 )
                                             },
                                             leadingIcon = {
                                                 Icon(
                                                     imageVector = RhythmIcons.AddToPlaylist,
                                                     contentDescription = "Add to playlist",
-                                                    modifier = Modifier.size(18.dp)
+                                                    modifier = Modifier.size(if (isExtraSmallWidth) 14.dp else 18.dp)
                                                 )
                                             },
                                             modifier = Modifier
-                                                .height(32.dp) // Reduced height
+                                                .height(if (isExtraSmallWidth) 28.dp else 32.dp)
                                                 .graphicsLayer {
                                                     scaleX = scale
                                                     scaleY = scale
@@ -2946,7 +3080,7 @@ fun PlayerScreen(
                                                         }
                                                     )
                                                 },
-                                            shape = RoundedCornerShape(16.dp), // Adjusted shape for smaller size
+                                            shape = RoundedCornerShape(if (isExtraSmallWidth) 12.dp else 16.dp),
                                             colors = AssistChipDefaults.assistChipColors(
                                                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
                                                 labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -3009,23 +3143,25 @@ fun PlayerScreen(
                                                     label = {
                                                         Text(
                                                             "Like",
-                                                            style = MaterialTheme.typography.labelLarge
+                                                            style = MaterialTheme.typography.labelLarge.copy(
+                                                                fontSize = if (isExtraSmallWidth) 11.sp else 12.sp
+                                                            )
                                                         )
                                                     },
                                                     leadingIcon = {
                                                         Icon(
                                                             imageVector = if (isFavorite) RhythmIcons.FavoriteFilled else RhythmIcons.Favorite,
                                                             contentDescription = "Toggle favorite",
-                                                            modifier = Modifier.size(16.dp) // Reduced icon size
+                                                            modifier = Modifier.size(if (isExtraSmallWidth) 14.dp else 16.dp)
                                                         )
                                                     },
                                                     modifier = Modifier
-                                                        .height(32.dp) // Reduced height
+                                                        .height(if (isExtraSmallWidth) 28.dp else 32.dp)
                                                         .graphicsLayer {
                                                             scaleX = scale
                                                             scaleY = scale
                                                         },
-                                                    shape = RoundedCornerShape(16.dp), // Adjusted shape for smaller size
+                                                    shape = RoundedCornerShape(if (isExtraSmallWidth) 12.dp else 16.dp),
                                                     colors = FilterChipDefaults.filterChipColors(
                                                         containerColor = containerColor,
                                                         labelColor = labelColor,
@@ -3034,7 +3170,7 @@ fun PlayerScreen(
                                                         selectedLabelColor = labelColor,
                                                         selectedLeadingIconColor = iconColor
                                                     ),
-                                                    border = null // Removed border
+                                                    border = null
                                                 )
                                             }
                                             "SPEED" -> {
@@ -3087,18 +3223,20 @@ fun PlayerScreen(
                                                                 "${String.format("%.2f", playbackSpeed)}x"
                                                             else
                                                                 "Speed",
-                                                            style = MaterialTheme.typography.labelLarge
+                                                            style = MaterialTheme.typography.labelLarge.copy(
+                                                                fontSize = if (isExtraSmallWidth) 11.sp else 12.sp
+                                                            )
                                                         )
                                                     },
                                                     leadingIcon = {
                                                         Icon(
                                                             imageVector = Icons.Filled.Speed,
                                                             contentDescription = "Playback speed",
-                                                            modifier = Modifier.size(16.dp)
+                                                            modifier = Modifier.size(if (isExtraSmallWidth) 14.dp else 16.dp)
                                                         )
                                                     },
-                                                    modifier = Modifier.height(32.dp),
-                                                    shape = RoundedCornerShape(16.dp),
+                                                    modifier = Modifier.height(if (isExtraSmallWidth) 28.dp else 32.dp),
+                                                    shape = RoundedCornerShape(if (isExtraSmallWidth) 12.dp else 16.dp),
                                                     colors = AssistChipDefaults.assistChipColors(
                                                         containerColor = containerColor,
                                                         labelColor = labelColor,
@@ -3129,7 +3267,9 @@ fun PlayerScreen(
                                                     label = {
                                                         Text(
                                                             if (equalizerEnabled) "EQ ON" else "EQ OFF",
-                                                            style = MaterialTheme.typography.labelLarge,
+                                                            style = MaterialTheme.typography.labelLarge.copy(
+                                                                fontSize = if (isExtraSmallWidth) 11.sp else 12.sp
+                                                            ),
                                                             fontWeight = if (equalizerEnabled) FontWeight.SemiBold else FontWeight.Normal
                                                         )
                                                     },
@@ -3137,7 +3277,7 @@ fun PlayerScreen(
                                                         Icon(
                                                             imageVector = if (equalizerEnabled) Icons.Default.GraphicEq else Icons.Default.GraphicEq,
                                                             contentDescription = if (equalizerEnabled) "Equalizer enabled" else "Equalizer disabled",
-                                                            modifier = Modifier.size(16.dp),
+                                                            modifier = Modifier.size(if (isExtraSmallWidth) 14.dp else 16.dp),
                                                             tint = if (equalizerEnabled)
                                                                 MaterialTheme.colorScheme.primary
                                                             else
@@ -3163,7 +3303,7 @@ fun PlayerScreen(
                                                             )
                                                     ),
                                                     modifier = Modifier
-                                                        .height(32.dp)
+                                                        .height(if (isExtraSmallWidth) 28.dp else 32.dp)
                                                         .graphicsLayer {
                                                             scaleX = scale
                                                             scaleY = scale
@@ -3180,7 +3320,7 @@ fun PlayerScreen(
                                                                 }
                                                             )
                                                         },
-                                                    shape = RoundedCornerShape(16.dp),
+                                                    shape = RoundedCornerShape(if (isExtraSmallWidth) 12.dp else 16.dp),
                                                     border = null
                                                 )
                                             }
@@ -3231,18 +3371,20 @@ fun PlayerScreen(
                                                     label = {
                                                         Text(
                                                             text = timerText,
-                                                            style = MaterialTheme.typography.labelLarge
+                                                            style = MaterialTheme.typography.labelLarge.copy(
+                                                                fontSize = if (isExtraSmallWidth) 11.sp else 12.sp
+                                                            )
                                                         )
                                                     },
                                                     leadingIcon = {
                                                         Icon(
                                                             imageVector = if (sleepTimerActive) Icons.Rounded.AccessTime else Icons.Default.AccessTime,
                                                             contentDescription = if (sleepTimerActive) "Active sleep timer" else "Set sleep timer",
-                                                            modifier = Modifier.size(16.dp)
+                                                            modifier = Modifier.size(if (isExtraSmallWidth) 14.dp else 16.dp)
                                                         )
                                                     },
                                                     modifier = Modifier
-                                                        .height(32.dp)
+                                                        .height(if (isExtraSmallWidth) 28.dp else 32.dp)
                                                         .graphicsLayer {
                                                             scaleX = scale
                                                             scaleY = scale
@@ -3259,7 +3401,7 @@ fun PlayerScreen(
                                                                 }
                                                             )
                                                         },
-                                                    shape = RoundedCornerShape(16.dp),
+                                                    shape = RoundedCornerShape(if (isExtraSmallWidth) 12.dp else 16.dp),
                                                     colors = chipColors,
                                                     border = null
                                                 )
@@ -3296,18 +3438,20 @@ fun PlayerScreen(
                                                     label = {
                                                         Text(
                                                             text = if (hasLyrics) "Edit Lyrics" else "Add Lyrics",
-                                                            style = MaterialTheme.typography.labelLarge
+                                                            style = MaterialTheme.typography.labelLarge.copy(
+                                                                fontSize = if (isExtraSmallWidth) 11.sp else 12.sp
+                                                            )
                                                         )
                                                     },
                                                     leadingIcon = {
                                                         Icon(
                                                             imageVector = if (hasLyrics) Icons.Rounded.Edit else Icons.Rounded.Lyrics,
                                                             contentDescription = if (hasLyrics) "Edit lyrics" else "Add lyrics",
-                                                            modifier = Modifier.size(16.dp)
+                                                            modifier = Modifier.size(if (isExtraSmallWidth) 14.dp else 16.dp)
                                                         )
                                                     },
                                                     modifier = Modifier
-                                                        .height(32.dp)
+                                                        .height(if (isExtraSmallWidth) 28.dp else 32.dp)
                                                         .graphicsLayer {
                                                             scaleX = scale
                                                             scaleY = scale
@@ -3324,7 +3468,7 @@ fun PlayerScreen(
                                                                 }
                                                             )
                                                         },
-                                                    shape = RoundedCornerShape(16.dp),
+                                                    shape = RoundedCornerShape(if (isExtraSmallWidth) 12.dp else 16.dp),
                                                     colors = chipColors,
                                                     border = null
                                                 )
@@ -3359,18 +3503,20 @@ fun PlayerScreen(
                                                     label = {
                                                         Text(
                                                             "Album",
-                                                            style = MaterialTheme.typography.labelLarge
+                                                            style = MaterialTheme.typography.labelLarge.copy(
+                                                                fontSize = if (isExtraSmallWidth) 11.sp else 12.sp
+                                                            )
                                                         )
                                                     },
                                                     leadingIcon = {
                                                         Icon(
                                                             imageVector = RhythmIcons.Music.Album,
                                                             contentDescription = "Show album",
-                                                            modifier = Modifier.size(16.dp) // Reduced icon size
+                                                            modifier = Modifier.size(if (isExtraSmallWidth) 14.dp else 16.dp)
                                                         )
                                                     },
                                                     modifier = Modifier
-                                                        .height(32.dp) // Reduced height
+                                                        .height(if (isExtraSmallWidth) 28.dp else 32.dp)
                                                         .graphicsLayer {
                                                             scaleX = scale
                                                             scaleY = scale
@@ -3387,13 +3533,13 @@ fun PlayerScreen(
                                                                 }
                                                             )
                                                         },
-                                                    shape = RoundedCornerShape(16.dp), // Adjusted shape for smaller size
+                                                    shape = RoundedCornerShape(if (isExtraSmallWidth) 12.dp else 16.dp),
                                                     colors = AssistChipDefaults.assistChipColors(
                                                         containerColor = MaterialTheme.colorScheme.surfaceVariant,
                                                         labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                                                         leadingIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                                                     ),
-                                                    border = null // Removed border
+                                                    border = null
                                                 )
                                             }
                                             "ARTIST" -> {
@@ -3436,18 +3582,20 @@ fun PlayerScreen(
                                                     label = {
                                                         Text(
                                                             "Artist",
-                                                            style = MaterialTheme.typography.labelLarge
+                                                            style = MaterialTheme.typography.labelLarge.copy(
+                                                                fontSize = if (isExtraSmallWidth) 11.sp else 12.sp
+                                                            )
                                                         )
                                                     },
                                                     leadingIcon = {
                                                         Icon(
                                                             imageVector = RhythmIcons.Music.Artist,
                                                             contentDescription = "Show artist",
-                                                            modifier = Modifier.size(16.dp) // Reduced icon size
+                                                            modifier = Modifier.size(if (isExtraSmallWidth) 14.dp else 16.dp)
                                                         )
                                                     },
                                                     modifier = Modifier
-                                                        .height(32.dp) // Reduced height
+                                                        .height(if (isExtraSmallWidth) 28.dp else 32.dp)
                                                         .graphicsLayer {
                                                             scaleX = scale
                                                             scaleY = scale
@@ -3464,13 +3612,13 @@ fun PlayerScreen(
                                                                 }
                                                             )
                                                         },
-                                                    shape = RoundedCornerShape(16.dp), // Adjusted shape for smaller size
+                                                    shape = RoundedCornerShape(if (isExtraSmallWidth) 12.dp else 16.dp),
                                                     colors = AssistChipDefaults.assistChipColors(
                                                         containerColor = MaterialTheme.colorScheme.surfaceVariant,
                                                         labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                                                         leadingIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                                                     ),
-                                                    border = null // Removed border
+                                                    border = null
                                                 )
                                             }
                                             "CAST" -> {
@@ -3495,18 +3643,20 @@ fun PlayerScreen(
                                                     label = {
                                                         Text(
                                                             "Cast",
-                                                            style = MaterialTheme.typography.labelLarge
+                                                            style = MaterialTheme.typography.labelLarge.copy(
+                                                                fontSize = if (isExtraSmallWidth) 11.sp else 12.sp
+                                                            )
                                                         )
                                                     },
                                                     leadingIcon = {
                                                         Icon(
                                                             imageVector = RhythmIcons.Cast,
                                                             contentDescription = "Cast to device",
-                                                            modifier = Modifier.size(16.dp)
+                                                            modifier = Modifier.size(if (isExtraSmallWidth) 14.dp else 16.dp)
                                                         )
                                                     },
                                                     modifier = Modifier
-                                                        .height(32.dp)
+                                                        .height(if (isExtraSmallWidth) 28.dp else 32.dp)
                                                         .graphicsLayer {
                                                             scaleX = scale
                                                             scaleY = scale
@@ -3523,7 +3673,7 @@ fun PlayerScreen(
                                                                 }
                                                             )
                                                         },
-                                                    shape = RoundedCornerShape(16.dp),
+                                                    shape = RoundedCornerShape(if (isExtraSmallWidth) 12.dp else 16.dp),
                                                     colors = AssistChipDefaults.assistChipColors(
                                                         containerColor = MaterialTheme.colorScheme.surfaceVariant,
                                                         labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -3558,18 +3708,20 @@ fun PlayerScreen(
                                             label = {
                                                 Text(
                                                     "Edit",
-                                                    style = MaterialTheme.typography.labelLarge
+                                                    style = MaterialTheme.typography.labelLarge.copy(
+                                                        fontSize = if (isExtraSmallWidth) 11.sp else 12.sp
+                                                    )
                                                 )
                                             },
                                             leadingIcon = {
                                                 Icon(
                                                     imageVector = Icons.Rounded.Edit,
                                                     contentDescription = "Reorder chips",
-                                                    modifier = Modifier.size(16.dp)
+                                                    modifier = Modifier.size(if (isExtraSmallWidth) 14.dp else 16.dp)
                                                 )
                                             },
                                             modifier = Modifier
-                                                .height(32.dp)
+                                                .height(if (isExtraSmallWidth) 28.dp else 32.dp)
                                                 .graphicsLayer {
                                                     scaleX = scale
                                                     scaleY = scale
@@ -3586,7 +3738,7 @@ fun PlayerScreen(
                                                         }
                                                     )
                                                 },
-                                            shape = RoundedCornerShape(16.dp),
+                                            shape = RoundedCornerShape(if (isExtraSmallWidth) 12.dp else 16.dp),
                                             colors = AssistChipDefaults.assistChipColors(
                                                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                                 labelColor = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -3616,11 +3768,15 @@ fun PlayerScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(
-                                    horizontal = if (isCompactWidth) 8.dp else 12.dp,   // Reduced padding
-                                    vertical = if (isTablet) 8.dp else if (isCompactHeight) 2.dp else 0.dp    // Minimal padding on phone
+                                    horizontal = when {
+                                        isExtraSmallWidth -> 4.dp
+                                        isCompactWidth -> 8.dp
+                                        else -> 12.dp
+                                    },
+                                    vertical = if (isTablet) 8.dp else if (isCompactHeight) 2.dp else 0.dp
                                 ),
                             horizontalArrangement = Arrangement.spacedBy(
-                                if (isCompactWidth) 6.dp else 8.dp // Reduced spacing
+                                if (isExtraSmallWidth) 4.dp else if (isCompactWidth) 6.dp else 8.dp
                             )
                         ) {
                         // Device Output button with rounded pill shape - optimized padding
@@ -3643,8 +3799,12 @@ fun PlayerScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(
-                                        vertical = if (isCompactHeight) 8.dp else 10.dp,    // Reduced padding
-                                        horizontal = if (isCompactWidth) 8.dp else 12.dp    // Reduced padding
+                                        vertical = if (isExtraSmallWidth) 6.dp else if (isCompactHeight) 8.dp else 10.dp,
+                                        horizontal = when {
+                                            isExtraSmallWidth -> 6.dp
+                                            isCompactWidth -> 8.dp
+                                            else -> 12.dp
+                                        }
                                     ),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.Center
@@ -3661,16 +3821,16 @@ fun PlayerScreen(
                                     imageVector = icon,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    modifier = Modifier.size(if (isCompactHeight) 20.dp else 24.dp)
+                                    modifier = Modifier.size(if (isExtraSmallWidth) 16.dp else if (isCompactHeight) 20.dp else 24.dp)
                                 )
 
                                 if (!isCompactWidth) {
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Spacer(modifier = Modifier.width(if (isExtraSmallWidth) 4.dp else 8.dp))
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         Text(
                                             text = location?.name ?: "Device Output",
                                             style = MaterialTheme.typography.labelLarge.copy(
-                                                fontSize = if (isCompactHeight) 12.sp else 14.sp
+                                                fontSize = if (isExtraSmallWidth) 10.sp else if (isCompactHeight) 12.sp else 14.sp
                                             ),
                                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                                             maxLines = 1,
@@ -3683,7 +3843,7 @@ fun PlayerScreen(
                                         Text(
                                             text = "${(displayVolume * 100).toInt()}% $volumeText",
                                             style = MaterialTheme.typography.labelSmall.copy(
-                                                fontSize = if (isCompactHeight) 10.sp else 12.sp
+                                                fontSize = if (isExtraSmallWidth) 8.sp else if (isCompactHeight) 10.sp else 12.sp
                                             ),
                                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
                                                 alpha = 0.7f
