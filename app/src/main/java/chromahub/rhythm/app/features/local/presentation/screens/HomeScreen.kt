@@ -886,8 +886,8 @@ private fun ModernScrollableContent(
                 .fillMaxSize()
                 .padding(horizontal = when (widthSizeClass) {
                     WindowWidthSizeClass.Compact -> 20.dp
-                    WindowWidthSizeClass.Medium -> 32.dp
-                    WindowWidthSizeClass.Expanded -> 32.dp
+                    WindowWidthSizeClass.Medium -> 48.dp  // Increased for tablets
+                    WindowWidthSizeClass.Expanded -> 64.dp  // More padding for large tablets
                     else -> 20.dp
                 }),
             verticalArrangement = Arrangement.spacedBy(when (widthSizeClass) {
@@ -896,12 +896,12 @@ private fun ModernScrollableContent(
                     else -> 40.dp // Portrait phone
                 }
                 WindowWidthSizeClass.Medium -> when (heightSizeClass) {
-                    WindowHeightSizeClass.Compact -> 40.dp // Landscape tablet
-                    else -> 48.dp // Portrait tablet
+                    WindowHeightSizeClass.Compact -> 48.dp // Landscape tablet - more spacing
+                    else -> 56.dp // Portrait tablet - more spacing
                 }
                 WindowWidthSizeClass.Expanded -> when (heightSizeClass) {
-                    WindowHeightSizeClass.Compact -> 40.dp // Landscape tablet
-                    else -> 48.dp // Portrait tablet
+                    WindowHeightSizeClass.Compact -> 52.dp // Landscape large tablet
+                    else -> 64.dp // Portrait large tablet - generous spacing
                 }
                 else -> 40.dp
             }),
@@ -964,6 +964,12 @@ private fun ModernScrollableContent(
                                     )
                                     Spacer(modifier = Modifier.height(20.dp))
                                     if (currentFeaturedAlbums.isNotEmpty()) {
+                                        // Use larger carousel for tablets
+                                        val tabletCarouselHeight = when (widthSizeClass) {
+                                            WindowWidthSizeClass.Medium -> carouselHeight + 60  // +60dp for medium tablets
+                                            WindowWidthSizeClass.Expanded -> carouselHeight + 100  // +100dp for large tablets
+                                            else -> carouselHeight
+                                        }
                                         ModernFeaturedSection(
                                             albums = currentFeaturedAlbums,
                                             carouselState = featuredCarouselState,
@@ -973,7 +979,7 @@ private fun ModernScrollableContent(
                                             showYear = discoverShowYear,
                                             showPlayButton = discoverShowPlayButton,
                                             showGradient = discoverShowGradient,
-                                            carouselHeight = carouselHeight,
+                                            carouselHeight = tabletCarouselHeight,
                                             carouselStyle = discoverCarouselStyle,
                                             widthSizeClass = widthSizeClass,
                                             heightSizeClass = heightSizeClass
@@ -1051,24 +1057,65 @@ private fun ModernScrollableContent(
                                     )
                                     Spacer(modifier = Modifier.height(20.dp))
                                     if (newReleases.isNotEmpty()) {
-                                        // Remember lazy row state for scroll position preservation (Compose 1.10)
-                                        val newReleasesListState = rememberLazyListState()
-                                        LazyRow(
-                                            state = newReleasesListState,
-                                            contentPadding = PaddingValues(horizontal = 8.dp),
-                                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                                        ) {
-                                            items(
-                                                items = newReleases.take(newReleasesCount),
-                                                key = { "newrelease_${it.id}" },
-                                                contentType = { "album" }
-                                            ) { album ->
-                                                ModernAlbumCard(
-                                                    album = album,
-                                                    onClick = { onAlbumClick(album) },
-                                                    widthSizeClass = widthSizeClass,
-                                                    heightSizeClass = heightSizeClass
-                                                )
+                                        val isTablet = widthSizeClass != WindowWidthSizeClass.Compact
+                                        if (isTablet) {
+                                            // Enhanced grid layout for tablets with better column distribution
+                                            val gridColumns = when (widthSizeClass) {
+                                                WindowWidthSizeClass.Medium -> 3  // 3 columns for medium tablets
+                                                WindowWidthSizeClass.Expanded -> 4  // 4 columns for large tablets
+                                                else -> 2
+                                            }
+                                            val gridState = rememberLazyGridState()
+                                            // Calculate dynamic height based on content and columns
+                                            val estimatedRows = (newReleases.take(newReleasesCount).size + gridColumns - 1) / gridColumns
+                                            val cardHeight = when (widthSizeClass) {
+                                                WindowWidthSizeClass.Medium -> 300.dp
+                                                WindowWidthSizeClass.Expanded -> 330.dp
+                                                else -> 240.dp
+                                            }
+                                            val gridHeight = (cardHeight.value * minOf(estimatedRows, 2) + 20f * (minOf(estimatedRows, 2) - 1)).dp
+
+                                            LazyVerticalGrid(
+                                                columns = GridCells.Fixed(gridColumns),
+                                                state = gridState,
+                                                horizontalArrangement = Arrangement.spacedBy(24.dp), // More spacing for tablets
+                                                verticalArrangement = Arrangement.spacedBy(24.dp),   // More spacing for tablets
+                                                modifier = Modifier.height(gridHeight),
+                                                contentPadding = PaddingValues(horizontal = 8.dp)
+                                            ) {
+                                                items(
+                                                    items = newReleases.take(newReleasesCount),
+                                                    key = { "newrelease_${it.id}" },
+                                                    contentType = { "album" }
+                                                ) { album ->
+                                                    ModernAlbumCard(
+                                                        album = album,
+                                                        onClick = { onAlbumClick(album) },
+                                                        widthSizeClass = widthSizeClass,
+                                                        heightSizeClass = heightSizeClass
+                                                    )
+                                                }
+                                            }
+                                        } else {
+                                            // Horizontal scroll for phones
+                                            val newReleasesListState = rememberLazyListState()
+                                            LazyRow(
+                                                state = newReleasesListState,
+                                                contentPadding = PaddingValues(horizontal = 8.dp),
+                                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                            ) {
+                                                items(
+                                                    items = newReleases.take(newReleasesCount),
+                                                    key = { "newrelease_${it.id}" },
+                                                    contentType = { "album" }
+                                                ) { album ->
+                                                    ModernAlbumCard(
+                                                        album = album,
+                                                        onClick = { onAlbumClick(album) },
+                                                        widthSizeClass = widthSizeClass,
+                                                        heightSizeClass = heightSizeClass
+                                                    )
+                                                }
                                             }
                                         }
                                     } else {
@@ -1117,24 +1164,65 @@ private fun ModernScrollableContent(
                                     )
                                     Spacer(modifier = Modifier.height(20.dp))
                                     if (recentlyAddedAlbums.isNotEmpty()) {
-                                        // Remember lazy row state for scroll position preservation (Compose 1.10)
-                                        val recentlyAddedListState = rememberLazyListState()
-                                        LazyRow(
-                                            state = recentlyAddedListState,
-                                            contentPadding = PaddingValues(horizontal = 8.dp),
-                                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                                        ) {
-                                            items(
-                                                items = recentlyAddedAlbums.take(recentlyAddedCount),
-                                                key = { "recentalbum_${it.id}" },
-                                                contentType = { "album" }
-                                            ) { album ->
-                                                ModernAlbumCard(
-                                                    album = album,
-                                                    onClick = { onAlbumClick(album) },
-                                                    widthSizeClass = widthSizeClass,
-                                                    heightSizeClass = heightSizeClass
-                                                )
+                                        val isTablet = widthSizeClass != WindowWidthSizeClass.Compact
+                                        if (isTablet) {
+                                            // Enhanced grid layout for tablets with better column distribution
+                                            val gridColumns = when (widthSizeClass) {
+                                                WindowWidthSizeClass.Medium -> 3  // 3 columns for medium tablets
+                                                WindowWidthSizeClass.Expanded -> 4  // 4 columns for large tablets
+                                                else -> 2
+                                            }
+                                            val gridState = rememberLazyGridState()
+                                            // Calculate dynamic height based on content and columns
+                                            val estimatedRows = (recentlyAddedAlbums.take(recentlyAddedCount).size + gridColumns - 1) / gridColumns
+                                            val cardHeight = when (widthSizeClass) {
+                                                WindowWidthSizeClass.Medium -> 300.dp
+                                                WindowWidthSizeClass.Expanded -> 330.dp
+                                                else -> 240.dp
+                                            }
+                                            val gridHeight = (cardHeight.value * minOf(estimatedRows, 2) + 24f * (minOf(estimatedRows, 2) - 1)).dp
+
+                                            LazyVerticalGrid(
+                                                columns = GridCells.Fixed(gridColumns),
+                                                state = gridState,
+                                                horizontalArrangement = Arrangement.spacedBy(24.dp), // More spacing for tablets
+                                                verticalArrangement = Arrangement.spacedBy(24.dp),   // More spacing for tablets
+                                                modifier = Modifier.height(gridHeight),
+                                                contentPadding = PaddingValues(horizontal = 8.dp)
+                                            ) {
+                                                items(
+                                                    items = recentlyAddedAlbums.take(recentlyAddedCount),
+                                                    key = { "recentalbum_${it.id}" },
+                                                    contentType = { "album" }
+                                                ) { album ->
+                                                    ModernAlbumCard(
+                                                        album = album,
+                                                        onClick = { onAlbumClick(album) },
+                                                        widthSizeClass = widthSizeClass,
+                                                        heightSizeClass = heightSizeClass
+                                                    )
+                                                }
+                                            }
+                                        } else {
+                                            // Horizontal scroll for phones
+                                            val recentlyAddedListState = rememberLazyListState()
+                                            LazyRow(
+                                                state = recentlyAddedListState,
+                                                contentPadding = PaddingValues(horizontal = 8.dp),
+                                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                            ) {
+                                                items(
+                                                    items = recentlyAddedAlbums.take(recentlyAddedCount),
+                                                    key = { "recentalbum_${it.id}" },
+                                                    contentType = { "album" }
+                                                ) { album ->
+                                                    ModernAlbumCard(
+                                                        album = album,
+                                                        onClick = { onAlbumClick(album) },
+                                                        widthSizeClass = widthSizeClass,
+                                                        heightSizeClass = heightSizeClass
+                                                    )
+                                                }
                                             }
                                         }
                                     } else {
@@ -1487,24 +1575,55 @@ private fun ModernRecentlyPlayedSection(
         Spacer(modifier = Modifier.height(20.dp))
         
         if (recentlyPlayed.isNotEmpty()) {
-            // Remember lazy row state for scroll position preservation (Compose 1.10)
-            val recentlyPlayedListState = rememberLazyListState()
-            LazyRow(
-                state = recentlyPlayedListState,
-                contentPadding = PaddingValues(horizontal = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp) // More spacing between items
-            ) {
-                items(
-                    items = recentlyPlayed,
-                    key = { "recentplay_${it.id}" },
-                    contentType = { "song" }
-                ) { song ->
-                    ModernRecentSongCard(
-                        song = song,
-                        onClick = { onSongClick(song) },
-                        widthSizeClass = widthSizeClass,
-                        heightSizeClass = heightSizeClass
-                    )
+            val isTablet = widthSizeClass != WindowWidthSizeClass.Compact
+            if (isTablet) {
+                // Grid layout for tablets - better use of space
+                val gridColumns = when (widthSizeClass) {
+                    WindowWidthSizeClass.Medium -> 2  // 2 columns for medium tablets
+                    WindowWidthSizeClass.Expanded -> 3  // 3 columns for large tablets
+                    else -> 2
+                }
+                val gridState = rememberLazyGridState()
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(gridColumns),
+                    state = gridState,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.height(300.dp)  // Fixed height for grid
+                ) {
+                    items(
+                        items = recentlyPlayed,
+                        key = { "recentplay_${it.id}" },
+                        contentType = { "song" }
+                    ) { song ->
+                        ModernRecentSongCard(
+                            song = song,
+                            onClick = { onSongClick(song) },
+                            widthSizeClass = widthSizeClass,
+                            heightSizeClass = heightSizeClass
+                        )
+                    }
+                }
+            } else {
+                // Horizontal scroll for phones
+                val recentlyPlayedListState = rememberLazyListState()
+                LazyRow(
+                    state = recentlyPlayedListState,
+                    contentPadding = PaddingValues(horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(
+                        items = recentlyPlayed,
+                        key = { "recentplay_${it.id}" },
+                        contentType = { "song" }
+                    ) { song ->
+                        ModernRecentSongCard(
+                            song = song,
+                            onClick = { onSongClick(song) },
+                            widthSizeClass = widthSizeClass,
+                            heightSizeClass = heightSizeClass
+                        )
+                    }
                 }
             }
         } else {
@@ -1535,14 +1654,26 @@ private fun ModernRecentSongCard(
             else -> 180.dp to 80.dp // Portrait phone
         }
         WindowWidthSizeClass.Medium -> when (heightSizeClass) {
-            WindowHeightSizeClass.Compact -> 150.dp to 65.dp // Landscape tablet
-            else -> 160.dp to 70.dp // Portrait tablet
+            WindowHeightSizeClass.Compact -> Dp.Unspecified to 90.dp // Full width for grid
+            else -> Dp.Unspecified to 95.dp // Full width for grid
         }
         WindowWidthSizeClass.Expanded -> when (heightSizeClass) {
-            WindowHeightSizeClass.Compact -> 150.dp to 65.dp // Landscape tablet
-            else -> 160.dp to 70.dp // Portrait tablet
+            WindowHeightSizeClass.Compact -> Dp.Unspecified to 100.dp // Full width for grid
+            else -> Dp.Unspecified to 100.dp // Full width for grid
         }
         else -> 180.dp to 80.dp
+    }
+    
+    val cardModifier = if (cardWidth == Dp.Unspecified) {
+        // Full width for grid layout on tablets
+        Modifier
+            .fillMaxWidth()
+            .height(cardHeight)
+    } else {
+        // Fixed width for horizontal scroll on phones
+        Modifier
+            .width(cardWidth)
+            .height(cardHeight)
     }
 
     Card(
@@ -1550,9 +1681,7 @@ private fun ModernRecentSongCard(
             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
             onClick()
         },
-        modifier = Modifier
-            .width(cardWidth)
-            .height(cardHeight)
+        modifier = cardModifier
             .shadow(
                 elevation = 4.dp,
                 shape = RoundedCornerShape(20.dp),
@@ -2158,25 +2287,57 @@ private fun ModernArtistsSection(
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // Remember lazy row state for scroll position preservation (Compose 1.10)
-        val artistsListState = rememberLazyListState()
-        LazyRow(
-            state = artistsListState,
-            contentPadding = PaddingValues(horizontal = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(
-                items = artists,
-                key = { "artist_${it.id}" },
-                contentType = { "artist" }
-            ) { artist ->
-                ModernArtistCard(
-                    artist = artist,
-                    songs = songs,
-                    onClick = { onArtistClick(artist) },
-                    widthSizeClass = widthSizeClass,
-                    heightSizeClass = heightSizeClass
-                )
+        val isTablet = widthSizeClass != WindowWidthSizeClass.Compact
+        if (isTablet) {
+            // Grid layout for tablets - better display of artists
+            val gridColumns = when (widthSizeClass) {
+                WindowWidthSizeClass.Medium -> 4  // 4 columns for medium tablets
+                WindowWidthSizeClass.Expanded -> 6  // 6 columns for large tablets
+                else -> 3
+            }
+            val gridState = rememberLazyGridState()
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(gridColumns),
+                state = gridState,
+                horizontalArrangement = Arrangement.spacedBy(20.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+                modifier = Modifier.height(320.dp)  // Fixed height for artist grid
+            ) {
+                items(
+                    items = artists,
+                    key = { "artist_${it.id}" },
+                    contentType = { "artist" }
+                ) { artist ->
+                    ModernArtistCard(
+                        artist = artist,
+                        songs = songs,
+                        onClick = { onArtistClick(artist) },
+                        widthSizeClass = widthSizeClass,
+                        heightSizeClass = heightSizeClass
+                    )
+                }
+            }
+        } else {
+            // Horizontal scroll for phones
+            val artistsListState = rememberLazyListState()
+            LazyRow(
+                state = artistsListState,
+                contentPadding = PaddingValues(horizontal = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(
+                    items = artists,
+                    key = { "artist_${it.id}" },
+                    contentType = { "artist" }
+                ) { artist ->
+                    ModernArtistCard(
+                        artist = artist,
+                        songs = songs,
+                        onClick = { onArtistClick(artist) },
+                        widthSizeClass = widthSizeClass,
+                        heightSizeClass = heightSizeClass
+                    )
+                }
             }
         }
     }
@@ -2200,23 +2361,37 @@ private fun ModernArtistCard(
             else -> 120.dp // Portrait phone
         }
         WindowWidthSizeClass.Medium -> when (heightSizeClass) {
-            WindowHeightSizeClass.Compact -> 90.dp // Landscape tablet
-            else -> 100.dp // Portrait tablet
+            WindowHeightSizeClass.Compact -> 110.dp // Landscape tablet - larger for grid
+            else -> 120.dp // Portrait tablet - larger for grid
         }
         WindowWidthSizeClass.Expanded -> when (heightSizeClass) {
-            WindowHeightSizeClass.Compact -> 90.dp // Landscape tablet
-            else -> 100.dp // Portrait tablet
+            WindowHeightSizeClass.Compact -> 115.dp // Landscape large tablet
+            else -> 125.dp // Portrait large tablet
         }
         else -> 120.dp
     }
-
-    Column(
-        modifier = Modifier
+    
+    val isTablet = widthSizeClass != WindowWidthSizeClass.Compact
+    val columnModifier = if (isTablet) {
+        // Full width for grid layout on tablets
+        Modifier
+            .fillMaxWidth()
+            .clickable { 
+                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                onClick() 
+            }
+    } else {
+        // Fixed width for horizontal scroll on phones
+        Modifier
             .width(cardSize)
             .clickable { 
                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                 onClick() 
-            },
+            }
+    }
+
+    Column(
+        modifier = columnModifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(modifier = Modifier.size(cardSize)) {
@@ -2313,12 +2488,12 @@ private fun ModernAlbumCard(
             else -> 160.dp to 240.dp // Portrait phone
         }
         WindowWidthSizeClass.Medium -> when (heightSizeClass) {
-            WindowHeightSizeClass.Compact -> 130.dp to 195.dp // Landscape tablet
-            else -> 140.dp to 210.dp // Portrait tablet
+            WindowHeightSizeClass.Compact -> 180.dp to 270.dp // Landscape tablet - larger cards
+            else -> 200.dp to 300.dp // Portrait tablet - larger cards
         }
         WindowWidthSizeClass.Expanded -> when (heightSizeClass) {
-            WindowHeightSizeClass.Compact -> 130.dp to 195.dp // Landscape tablet
-            else -> 140.dp to 210.dp // Portrait tablet
+            WindowHeightSizeClass.Compact -> 200.dp to 300.dp // Landscape large tablet - even larger
+            else -> 220.dp to 330.dp // Portrait large tablet - even larger
         }
         else -> 160.dp to 240.dp
     }
@@ -2342,7 +2517,14 @@ private fun ModernAlbumCard(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         )
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(
+            when (widthSizeClass) {
+                WindowWidthSizeClass.Compact -> 12.dp
+                WindowWidthSizeClass.Medium -> 16.dp  // More padding for tablets
+                WindowWidthSizeClass.Expanded -> 20.dp // Even more padding for large tablets
+                else -> 12.dp
+            }
+        )) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -2366,14 +2548,28 @@ private fun ModernAlbumCard(
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(12.dp)
+                        .padding(
+                            when (widthSizeClass) {
+                                WindowWidthSizeClass.Compact -> 12.dp
+                                WindowWidthSizeClass.Medium -> 16.dp  // More padding for tablets
+                                WindowWidthSizeClass.Expanded -> 20.dp // Even more padding for large tablets
+                                else -> 12.dp
+                            }
+                        )
                 ) {
                     FilledIconButton(
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
                             viewModel.playAlbum(album)
                         },
-                        modifier = Modifier.size(40.dp),
+                        modifier = Modifier.size(
+                            when (widthSizeClass) {
+                                WindowWidthSizeClass.Compact -> 40.dp
+                                WindowWidthSizeClass.Medium -> 48.dp  // Larger button for tablets
+                                WindowWidthSizeClass.Expanded -> 52.dp // Even larger button for large tablets
+                                else -> 40.dp
+                            }
+                        ),
                         colors = IconButtonDefaults.filledIconButtonColors(
                             containerColor = MaterialTheme.colorScheme.primaryContainer,
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -2382,7 +2578,14 @@ private fun ModernAlbumCard(
                         Icon(
                             imageVector = Icons.Rounded.PlayArrow,
                             contentDescription = context.getString(R.string.cd_play_album),
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(
+                                when (widthSizeClass) {
+                                    WindowWidthSizeClass.Compact -> 20.dp
+                                    WindowWidthSizeClass.Medium -> 24.dp  // Larger icon for tablets
+                                    WindowWidthSizeClass.Expanded -> 26.dp // Even larger icon for large tablets
+                                    else -> 20.dp
+                                }
+                            )
                         )
                     }
                 }
@@ -2392,22 +2595,51 @@ private fun ModernAlbumCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f) // Take remaining space
-                    .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                    .padding(
+                        when (widthSizeClass) {
+                            WindowWidthSizeClass.Compact -> 12.dp
+                            WindowWidthSizeClass.Medium -> 16.dp  // More padding for tablets
+                            WindowWidthSizeClass.Expanded -> 20.dp // Even more padding for large tablets
+                            else -> 12.dp
+                        }
+                    ),
+                verticalArrangement = Arrangement.spacedBy(
+                    when (widthSizeClass) {
+                        WindowWidthSizeClass.Compact -> 4.dp
+                        WindowWidthSizeClass.Medium -> 6.dp  // More spacing for tablets
+                        WindowWidthSizeClass.Expanded -> 8.dp // Even more spacing for large tablets
+                        else -> 4.dp
+                    }
+                )
             ) {
                 Text(
                     text = album.title,
-                    style = MaterialTheme.typography.titleSmall, // Smaller text to prevent overflow
+                    style = when (widthSizeClass) {
+                        WindowWidthSizeClass.Compact -> MaterialTheme.typography.titleSmall
+                        WindowWidthSizeClass.Medium -> MaterialTheme.typography.titleMedium  // Larger text for tablets
+                        WindowWidthSizeClass.Expanded -> MaterialTheme.typography.titleMedium // Larger text for large tablets
+                        else -> MaterialTheme.typography.titleSmall
+                    },
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     color = MaterialTheme.colorScheme.onSurface,
-                    lineHeight = 18.sp // Better line height
+                    lineHeight = when (widthSizeClass) {
+                        WindowWidthSizeClass.Compact -> 18.sp
+                        WindowWidthSizeClass.Medium -> 22.sp  // Better line height for tablets
+                        WindowWidthSizeClass.Expanded -> 24.sp // Better line height for large tablets
+                        else -> 18.sp
+                    }
                 )
                 
                 Text(
                     text = album.artist,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = when (widthSizeClass) {
+                        WindowWidthSizeClass.Compact -> MaterialTheme.typography.bodySmall
+                        WindowWidthSizeClass.Medium -> MaterialTheme.typography.bodyMedium  // Larger text for tablets
+                        WindowWidthSizeClass.Expanded -> MaterialTheme.typography.bodyMedium // Larger text for large tablets
+                        else -> MaterialTheme.typography.bodySmall
+                    },
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
