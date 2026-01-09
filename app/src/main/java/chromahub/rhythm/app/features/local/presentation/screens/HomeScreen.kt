@@ -1219,6 +1219,28 @@ private fun ModernWelcomeSection(
     val recentlyPlayed by viewModel.recentlyPlayed.collectAsState()
     val haptic = LocalHapticFeedback.current
     
+    // Responsive font sizes
+    val configuration = LocalConfiguration.current
+    val screenWidthDp = configuration.screenWidthDp
+    val isCompactWidth = screenWidthDp < 400
+    val isTablet = screenWidthDp >= 600
+    
+    val greetingFontSize = when {
+        isCompactWidth -> 28.sp
+        isTablet -> 36.sp
+        else -> 32.sp
+    }
+    val messageFontSize = when {
+        isCompactWidth -> 12.sp
+        isTablet -> 16.sp
+        else -> 14.sp
+    }
+    val quoteFontSize = when {
+        isCompactWidth -> 11.sp
+        isTablet -> 14.sp
+        else -> 12.sp
+    }
+    
     // Enhanced time-based quotes with proper time ranges
     val timeBasedQuote = remember {
         val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)

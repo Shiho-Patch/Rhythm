@@ -40,6 +40,8 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 
@@ -63,12 +65,34 @@ fun AlphabetBar(
     var draggedLetter by remember { mutableStateOf<String?>(null) }
     val activeLetter = draggedLetter ?: selectedLetter
     
+    // Responsive sizing based on screen width
+    val configuration = LocalConfiguration.current
+    val screenWidthDp = configuration.screenWidthDp
+    val isCompactWidth = screenWidthDp < 400
+    val isTablet = screenWidthDp >= 600
+    
+    val barWidth = when {
+        isCompactWidth -> 36.dp
+        isTablet -> 48.dp
+        else -> 40.dp
+    }
+    val itemSize = when {
+        isCompactWidth -> 28.dp
+        isTablet -> 36.dp
+        else -> 32.dp
+    }
+    val fontSize = when {
+        isCompactWidth -> 9.sp
+        isTablet -> 12.sp
+        else -> 11.sp
+    }
+    
     Surface(
         modifier = modifier
-            .width(40.dp)
+            .width(barWidth)
             .fillMaxHeight()
             .padding(vertical = 8.dp),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(barWidth / 2),
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
         shadowElevation = 2.dp
     ) {
@@ -108,6 +132,8 @@ fun AlphabetBar(
                 AlphabetBarItem(
                     letter = letter,
                     isSelected = letter == activeLetter,
+                    itemSize = itemSize,
+                    fontSize = fontSize,
                     onClick = {
                         onLetterSelected(letter)
                         haptics?.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -125,6 +151,8 @@ fun AlphabetBar(
 private fun AlphabetBarItem(
     letter: String,
     isSelected: Boolean,
+    itemSize: Dp = 32.dp,
+    fontSize: androidx.compose.ui.unit.TextUnit = 11.sp,
     onClick: () -> Unit
 ) {
     val scale by animateFloatAsState(
@@ -147,7 +175,7 @@ private fun AlphabetBarItem(
     
     Box(
         modifier = Modifier
-            .size(32.dp)
+            .size(itemSize)
             .scale(scale)
             .alpha(alpha)
             .pointerInput(letter) {
@@ -161,7 +189,7 @@ private fun AlphabetBarItem(
         // Background circle for selected letter
         if (isSelected) {
             Surface(
-                modifier = Modifier.size(28.dp),
+                modifier = Modifier.size(itemSize * 0.85f),
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.primary
             ) {}
@@ -169,7 +197,7 @@ private fun AlphabetBarItem(
         
         Text(
             text = letter,
-            fontSize = 11.sp,
+            fontSize = fontSize,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
             color = if (isSelected) 
                 MaterialTheme.colorScheme.onPrimary 
@@ -194,6 +222,23 @@ fun ScrollToTopButton(
     modifier: Modifier = Modifier,
     haptics: HapticFeedback? = null
 ) {
+    // Responsive sizing based on screen size
+    val configuration = LocalConfiguration.current
+    val screenWidthDp = configuration.screenWidthDp
+    val isCompactWidth = screenWidthDp < 400
+    val isTablet = screenWidthDp >= 600
+    
+    val fabSize = when {
+        isCompactWidth -> 48.dp
+        isTablet -> 60.dp
+        else -> 56.dp
+    }
+    val iconSize = when {
+        isCompactWidth -> 20.dp
+        isTablet -> 28.dp
+        else -> 24.dp
+    }
+    
     AnimatedVisibility(
         visible = visible,
         enter = fadeIn(
@@ -236,12 +281,13 @@ fun ScrollToTopButton(
             },
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            shape = CircleShape
+            shape = CircleShape,
+            modifier = Modifier.size(fabSize)
         ) {
             Icon(
                 imageVector = RhythmIcons.ArrowUpward,
                 contentDescription = "Scroll to top",
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(iconSize)
             )
         }
     }

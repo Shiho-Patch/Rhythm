@@ -131,6 +131,8 @@ fun MiniPlayer(
     val useHoursFormat by appSettings.useHoursInTimeFormat.collectAsState()
     val configuration = LocalConfiguration.current
     val isTablet = configuration.screenWidthDp >= 600
+    val isCompactHeight = configuration.screenHeightDp < 500
+    val isLargeHeight = configuration.screenHeightDp >= 700
     val alwaysShowTabletLayout by appSettings.miniPlayerAlwaysShowTablet.collectAsState()
     
     // Use tablet layout if device is tablet OR if always-tablet setting is enabled
@@ -529,8 +531,8 @@ fun MiniPlayer(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                        .padding(if (isLargeHeight) 16.dp else 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(if (isLargeHeight) 14.dp else 12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     // Customizable album art - larger for right sidebar with optional circular progress
@@ -543,7 +545,7 @@ fun MiniPlayer(
                                 CircularStyledProgressBar(
                                     progress = animatedProgress,
                                     style = try { ProgressStyle.valueOf(miniPlayerProgressStyle) } catch (e: Exception) { ProgressStyle.NORMAL },
-                                    modifier = Modifier.size(132.dp),
+                                    modifier = Modifier.size(if (isLargeHeight) 152.dp else 132.dp),
                                     progressColor = MaterialTheme.colorScheme.primary,
                                     trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
                                     strokeWidth = 3.dp,
@@ -552,7 +554,7 @@ fun MiniPlayer(
                                 ) {
                                     // Artwork inside the progress ring
                                     Surface(
-                                        modifier = Modifier.size(120.dp),
+                                        modifier = Modifier.size(if (isLargeHeight) 140.dp else 120.dp),
                                         shape = RoundedCornerShape(miniPlayerCornerRadius.dp),
                                         shadowElevation = 0.dp,
                                         tonalElevation = 2.dp,
@@ -574,7 +576,7 @@ fun MiniPlayer(
                             } else {
                                 // Regular artwork without circular progress
                                 Surface(
-                                    modifier = Modifier.size(120.dp),
+                                    modifier = Modifier.size(if (isLargeHeight) 140.dp else 120.dp),
                                     shape = RoundedCornerShape(miniPlayerCornerRadius.dp),
                                     shadowElevation = 0.dp,
                                     tonalElevation = 2.dp,
@@ -628,7 +630,8 @@ fun MiniPlayer(
                             AutoScrollingTextOnDemand(
                                 text = song.title,
                                 style = MaterialTheme.typography.labelLarge.copy(
-                                    fontWeight = FontWeight.SemiBold
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = if (isLargeHeight) 14.sp else 12.sp
                                 ),
                                 gradientEdgeColor = MaterialTheme.colorScheme.surfaceContainer,
                                 enabled = true,
@@ -636,11 +639,13 @@ fun MiniPlayer(
                                 modifier = Modifier.fillMaxWidth()
                             )
                             
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(if (isLargeHeight) 5.dp else 4.dp))
                             
                             Text(
                                 text = song.artist,
-                                style = MaterialTheme.typography.labelSmall,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = if (isLargeHeight) 11.sp else 10.sp
+                                ),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
@@ -720,12 +725,12 @@ fun MiniPlayer(
                                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
                                 onSkipPrevious()
                             },
-                            modifier = Modifier.size(40.dp)
+                            modifier = Modifier.size(if (isLargeHeight) 48.dp else 40.dp)
                         ) {
                             Icon(
                                 imageVector = RhythmIcons.SkipPrevious,
                                 contentDescription = null,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(if (isLargeHeight) 22.dp else 20.dp)
                             )
                         }
 
@@ -734,7 +739,7 @@ fun MiniPlayer(
                                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
                                 onPlayPause()
                             },
-                            modifier = Modifier.size(48.dp),
+                            modifier = Modifier.size(if (isLargeHeight) 56.dp else 48.dp),
                             colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
                                 containerColor = MaterialTheme.colorScheme.primary
                             )
@@ -742,7 +747,7 @@ fun MiniPlayer(
                             Icon(
                                 imageVector = if (isPlaying) RhythmIcons.Pause else RhythmIcons.Play,
                                 contentDescription = null,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(if (isLargeHeight) 28.dp else 24.dp)
                             )
                         }
 
@@ -751,12 +756,12 @@ fun MiniPlayer(
                                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
                                 onSkipNext()
                             },
-                            modifier = Modifier.size(40.dp)
+                            modifier = Modifier.size(if (isLargeHeight) 48.dp else 40.dp)
                         ) {
                             Icon(
                                 imageVector = RhythmIcons.SkipNext,
                                 contentDescription = null,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(if (isLargeHeight) 22.dp else 20.dp)
                             )
                         }
                     }
@@ -766,9 +771,12 @@ fun MiniPlayer(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                    .padding(
+                        horizontal = if (isCompactHeight) 12.dp else 20.dp,
+                        vertical = if (isCompactHeight) 8.dp else 16.dp
+                    ),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = spacedBy(16.dp)
+                horizontalArrangement = spacedBy(if (isCompactHeight) 8.dp else 16.dp)
             ) {
                 // Customizable album art with settings-driven size and corner radius
                 if (miniPlayerShowArtwork) {
@@ -839,13 +847,14 @@ fun MiniPlayer(
                 // Enhanced song info with better typography and spacing
                 Column(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = spacedBy(2.dp) // Tighter spacing
+                    verticalArrangement = spacedBy(if (isCompactHeight) 0.dp else 2.dp)
                 ) {
                     if (song != null) {
                         AutoScrollingTextOnDemand(
                             text = song.title,
                             style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.SemiBold
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = if (isCompactHeight) 13.sp else 16.sp
                             ),
                             gradientEdgeColor = MaterialTheme.colorScheme.surfaceContainer,
                             enabled = true
@@ -854,7 +863,8 @@ fun MiniPlayer(
                         Text(
                             text = context.getString(R.string.miniplayer_no_song),
                             style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.SemiBold
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = if (isCompactHeight) 13.sp else 16.sp
                             ),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
@@ -864,14 +874,15 @@ fun MiniPlayer(
                     
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = spacedBy(6.dp)
+                        horizontalArrangement = spacedBy(if (isCompactHeight) 3.dp else 6.dp)
                     ) {
                         // Artist info with auto-scrolling
                         if (song != null) {
                             AutoScrollingTextOnDemand(
                                 text = song.artist,
                                 style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.Medium
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = if (isCompactHeight) 11.sp else 13.sp
                                 ),
                                 gradientEdgeColor = MaterialTheme.colorScheme.surfaceContainer,
                                 modifier = Modifier.weight(1f, fill = false),
@@ -881,7 +892,8 @@ fun MiniPlayer(
                             Text(
                                 text = "",
                                 style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.Medium
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = if (isCompactHeight) 11.sp else 13.sp
                                 ),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 1,
@@ -899,10 +911,11 @@ fun MiniPlayer(
                                 Text(
                                     text = "${formatDuration((progress * song.duration).toLong(), useHoursFormat)}/${formatDuration(song.duration, useHoursFormat)}",
                                     style = MaterialTheme.typography.labelSmall.copy(
-                                        fontWeight = FontWeight.Medium
+                                        fontWeight = FontWeight.Medium,
+                                        fontSize = if (isCompactHeight) 8.sp else 10.sp
                                     ),
                                     color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    modifier = Modifier.padding(horizontal = if (isCompactHeight) 4.dp else 6.dp, vertical = if (isCompactHeight) 1.dp else 2.dp)
                                 )
                             }
                         }
@@ -911,7 +924,7 @@ fun MiniPlayer(
                 
                 // Enhanced controls with better visual hierarchy and spacing
                 Row(
-                    horizontalArrangement = spacedBy(10.dp), // Increased spacing
+                    horizontalArrangement = spacedBy(if (isCompactHeight) 4.dp else 10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Play/pause button with optional circular progress border
@@ -921,10 +934,10 @@ fun MiniPlayer(
                         CircularStyledProgressBar(
                             progress = animatedProgress,
                             style = try { ProgressStyle.valueOf(miniPlayerProgressStyle) } catch (e: Exception) { ProgressStyle.NORMAL },
-                            modifier = Modifier.size(52.dp),
+                            modifier = Modifier.size(if (isCompactHeight) 44.dp else 52.dp),
                             progressColor = MaterialTheme.colorScheme.primary,
                             trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                            strokeWidth = 3.dp,
+                            strokeWidth = if (isCompactHeight) 2.dp else 3.dp,
                             isPlaying = isPlaying,
                             cornerRadius = if (isPlaying) 20.dp else 50.dp // Adapt to button shape
                         ) {
@@ -933,7 +946,7 @@ fun MiniPlayer(
                                     HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
                                     onPlayPause()
                                 },
-                                modifier = Modifier.size(44.dp),
+                                modifier = Modifier.size(if (isCompactHeight) 36.dp else 44.dp),
                                 shape = if (isPlaying) RoundedCornerShape(18.dp) else CircleShape,
                                 colors = IconButtonDefaults.filledIconButtonColors(
                                     containerColor = MaterialTheme.colorScheme.primary,
@@ -943,7 +956,7 @@ fun MiniPlayer(
                                 Icon(
                                     imageVector = if (isPlaying) RhythmIcons.Pause else RhythmIcons.Play,
                                     contentDescription = if (isPlaying) "Pause" else "Play",
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(if (isCompactHeight) 16.dp else 20.dp)
                                 )
                             }
                         }
@@ -954,7 +967,7 @@ fun MiniPlayer(
                                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
                                 onPlayPause()
                             },
-                            modifier = Modifier.size(44.dp),
+                            modifier = Modifier.size(if (isCompactHeight) 36.dp else 44.dp),
                             shape = if (isPlaying) RoundedCornerShape(18.dp) else CircleShape,
                             colors = IconButtonDefaults.filledIconButtonColors(
                                 containerColor = MaterialTheme.colorScheme.primary,
@@ -964,7 +977,7 @@ fun MiniPlayer(
                             Icon(
                                 imageVector = if (isPlaying) RhythmIcons.Pause else RhythmIcons.Play,
                                 contentDescription = if (isPlaying) "Pause" else "Play",
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(if (isCompactHeight) 16.dp else 20.dp)
                             )
                         }
                     }
@@ -976,7 +989,7 @@ fun MiniPlayer(
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                             onSkipNext()
                         },
-                        modifier = Modifier.size(36.dp), // Smaller secondary button
+                        modifier = Modifier.size(if (isCompactHeight) 32.dp else 36.dp),
                         colors = IconButtonDefaults.filledTonalIconButtonColors(
                             containerColor = MaterialTheme.colorScheme.secondaryContainer,
                             contentColor = MaterialTheme.colorScheme.onSecondaryContainer
@@ -985,7 +998,7 @@ fun MiniPlayer(
                         Icon(
                             imageVector = RhythmIcons.SkipNext,
                             contentDescription = "Next track",
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(if (isCompactHeight) 14.dp else 18.dp)
                         )
                     }
                 }
