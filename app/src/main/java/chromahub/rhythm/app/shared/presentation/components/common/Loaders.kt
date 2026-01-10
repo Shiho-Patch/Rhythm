@@ -70,7 +70,7 @@ fun M3LinearLoader(
             progress = progress,
             modifier = modifier,
             primaryColor = color,
-            trackColor = trackColor,
+//            trackColor = trackColor,
             fourColor = fourColor
         )
     } else {
@@ -104,7 +104,7 @@ fun M3CircularLoader(
             progress = progress,
             modifier = modifier,
             primaryColor = color,
-            trackColor = trackColor,
+//            trackColor = trackColor,
             baseStrokeWidth = strokeWidth,
             fourColor = fourColor
         )
@@ -122,7 +122,7 @@ fun M3CircularLoader(
             } else {
                 listOf(color, color)
             },
-            trackColor = trackColor,
+//            trackColor = trackColor,
             strokeWidth = strokeWidth
         )
     }
@@ -137,7 +137,7 @@ fun M3ExpressiveLinearIndicator(
     progress: Float? = null,
     modifier: Modifier = Modifier,
     primaryColor: Color = MaterialTheme.colorScheme.primary,
-    trackColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
+//    trackColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
     fourColor: Boolean = false
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "expressiveLinearAnimation")
@@ -205,7 +205,7 @@ fun M3ExpressiveLinearIndicator(
                     scaleY = breathingScale
                 }
             },
-        color = trackColor,
+//        color = trackColor,
         shadowElevation = if (isIndeterminate) 2.dp else 0.dp
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -301,7 +301,7 @@ fun M3ExpressiveCircularIndicator(
     progress: Float? = null,
     modifier: Modifier = Modifier,
     primaryColor: Color = MaterialTheme.colorScheme.primary,
-    trackColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
+//    trackColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
     baseStrokeWidth: Float = 4f,
     fourColor: Boolean = false
 ) {
@@ -389,12 +389,12 @@ fun M3ExpressiveCircularIndicator(
             val center = Offset(size.width / 2, size.height / 2)
             
             // Draw track
-            drawCircle(
-                color = trackColor,
-                radius = radius,
-                center = center,
-                style = Stroke(width = strokeWidth * 0.6f, cap = StrokeCap.Round)
-            )
+//            drawCircle(
+//                color = trackColor,
+//                radius = radius,
+//                center = center,
+//                style = Stroke(width = strokeWidth * 0.6f, cap = StrokeCap.Round)
+//            )
             
             if (isIndeterminate) {
                 // Indeterminate mode
@@ -461,7 +461,7 @@ fun M3FourColorCircularLoader(
             progress = null, // Indeterminate
             modifier = modifier,
             primaryColor = MaterialTheme.colorScheme.primary,
-            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+//            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
             baseStrokeWidth = strokeWidth,
             fourColor = true
         )
@@ -495,7 +495,7 @@ fun M3FourColorLinearLoader(
             progress = null, // Indeterminate
             modifier = modifier,
             primaryColor = MaterialTheme.colorScheme.primary,
-            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+//            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
             fourColor = true
         )
     } else {

@@ -377,6 +377,14 @@
     <string name="library_loading_albums">Loading albums…</string>
     <string name="library_loading_artists">Loading artists…</string>
     <string name="library_tracks_count">%1$d of %2$d tracks</string>
+    
+    <!-- Background Processing States -->
+    <string name="scanning_media">Scanning media library…</string>
+    <string name="detecting_genres">Detecting genres…</string>
+    <string name="fetching_artwork">Fetching artwork…</string>
+    <string name="extracting_metadata">Extracting audio metadata…</string>
+    <string name="processing_library">Processing library…</string>
+    
     <string name="library_no_songs">No songs yet</string>
     <string name="library_no_artists">No artists found</string>
     <string name="library_no_artists_desc">Add some music to see your artists here</string>

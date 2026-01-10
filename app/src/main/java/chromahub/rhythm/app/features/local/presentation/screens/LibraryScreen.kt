@@ -43,6 +43,10 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.*
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -1261,6 +1265,104 @@ fun LibraryScreen(
                             haptics = haptics
                         )
                     }
+                }
+            }
+            
+            // Background Processing Loader - shown between tabs and content
+            val isBackgroundProcessing by musicViewModel.isBackgroundProcessing.collectAsState()
+            val isMediaScanning by musicViewModel.isMediaScanning.collectAsState()
+            val isGenreDetectionRunning by musicViewModel.isGenreDetectionComplete.collectAsState()
+            val isFetchingArtwork by musicViewModel.isFetchingArtwork.collectAsState()
+            val isExtractingMetadata by musicViewModel.isExtractingMetadata.collectAsState()
+            
+            AnimatedVisibility(
+                visible = isBackgroundProcessing,
+                enter = expandVertically(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
+                ) + fadeIn(),
+                exit = shrinkVertically(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
+                ) + fadeOut()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp)
+                        .padding(bottom = 8.dp)
+                ) {
+                    // Expressive wavy animated progress indicator with four-color mode
+                    chromahub.rhythm.app.shared.presentation.components.common.M3ExpressiveLinearIndicator(
+                        progress = null, // Indeterminate mode for ongoing background tasks
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(6.dp)
+                            .clip(RoundedCornerShape(3.dp)),
+                        primaryColor = MaterialTheme.colorScheme.primary,
+//                        trackColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.4f),
+                        fourColor = true // Enable cycling through primary, secondary, tertiary, and error colors
+                    )
+                    
+//                    Spacer(modifier = Modifier.height(8.dp))
+//
+//                    // Processing status text with animated icon
+//                    Row(
+//                        verticalAlignment = Alignment.CenterVertically,
+//                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+//                        modifier = Modifier.padding(start = 4.dp)
+//                    ) {
+//                        // Animated status icon
+//                        val infiniteTransition = rememberInfiniteTransition(label = "statusIconAnimation")
+//                        val iconRotation by infiniteTransition.animateFloat(
+//                            initialValue = 0f,
+//                            targetValue = 360f,
+//                            animationSpec = infiniteRepeatable(
+//                                animation = tween(2000, easing = LinearEasing),
+//                                repeatMode = RepeatMode.Restart
+//                            ),
+//                            label = "iconRotation"
+//                        )
+//
+//                        Icon(
+//                            imageVector = when {
+//                                isMediaScanning -> Icons.Default.Refresh
+//                                isExtractingMetadata -> Icons.Default.Analytics
+//                                isFetchingArtwork -> Icons.Default.Image
+//                                !isGenreDetectionRunning -> Icons.Default.Category
+//                                else -> Icons.Default.Sync
+//                            },
+//                            contentDescription = null,
+//                            tint = MaterialTheme.colorScheme.primary,
+//                            modifier = Modifier
+//                                .size(16.dp)
+//                                .graphicsLayer {
+//                                    rotationZ = iconRotation
+//                                }
+//                        )
+//
+//                        val statusText = remember(isMediaScanning, isGenreDetectionRunning, isFetchingArtwork, isExtractingMetadata) {
+//                            when {
+//                                isMediaScanning -> context.getString(R.string.scanning_media)
+//                                isExtractingMetadata -> context.getString(R.string.extracting_metadata)
+//                                isFetchingArtwork -> context.getString(R.string.fetching_artwork)
+//                                !isGenreDetectionRunning -> context.getString(R.string.detecting_genres)
+//                                else -> context.getString(R.string.processing_library)
+//                            }
+//                        }
+//
+//                        Text(
+//                            text = statusText,
+//                            style = MaterialTheme.typography.bodySmall.copy(
+//                                fontWeight = FontWeight.Medium
+//                            ),
+//                            color = MaterialTheme.colorScheme.onSurfaceVariant
+//                        )
+//                    }
                 }
             }
             

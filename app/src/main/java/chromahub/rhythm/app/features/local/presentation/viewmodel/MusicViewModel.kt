@@ -484,6 +484,28 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     private val _isGenreDetectionComplete = MutableStateFlow(false)
     val isGenreDetectionComplete: StateFlow<Boolean> = _isGenreDetectionComplete.asStateFlow()
     private val _isGenreDetectionRunning = MutableStateFlow(false)
+    
+    // Artwork fetching state
+    private val _isFetchingArtwork = MutableStateFlow(false)
+    val isFetchingArtwork: StateFlow<Boolean> = _isFetchingArtwork.asStateFlow()
+    
+    // Audio metadata extraction state
+    private val _isExtractingMetadata = MutableStateFlow(false)
+    val isExtractingMetadata: StateFlow<Boolean> = _isExtractingMetadata.asStateFlow()
+    
+    // Combined background processing state - true if ANY background task is running
+    val isBackgroundProcessing: StateFlow<Boolean> = combine(
+        isMediaScanning,
+        _isGenreDetectionRunning,
+        _isFetchingArtwork,
+        _isExtractingMetadata
+    ) { mediaScanning, genreDetection, artworkFetching, metadataExtraction ->
+        mediaScanning || genreDetection || artworkFetching || metadataExtraction
+    }.stateIn(
+        scope = viewModelScope,
+        started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
 
     // Queue operation state
     private val _queueOperationError = MutableStateFlow<String?>(null)
@@ -776,9 +798,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         // Start artwork fetching in background without blocking initialization
         viewModelScope.launch {
             try {
+                _isFetchingArtwork.value = true
                 fetchArtworkFromInternet()
             } catch (e: Exception) {
                 Log.e(TAG, "Error fetching artwork from internet", e)
+            } finally {
+                _isFetchingArtwork.value = false
             }
         }
 
@@ -812,9 +837,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             try {
                 delay(3000) // Wait 3 seconds after app load before starting metadata extraction
+                _isExtractingMetadata.value = true
                 extractAudioMetadataInBackground()
             } catch (e: Exception) {
                 Log.e(TAG, "Error starting background audio metadata extraction", e)
+            } finally {
+                _isExtractingMetadata.value = false
             }
         }
     }
@@ -1001,9 +1029,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 launch {
                     try {
                         delay(3000) // Wait 3 seconds before starting metadata extraction
+                        _isExtractingMetadata.value = true
                         extractAudioMetadataInBackground()
                     } catch (e: Exception) {
                         Log.e(TAG, "Error restarting background audio metadata extraction", e)
+                    } finally {
+                        _isExtractingMetadata.value = false
                     }
                 }
 

@@ -304,7 +304,7 @@ fun MediaScanLoader(
                             progress = animatedProgress,
                             modifier = Modifier.fillMaxWidth(),
                             primaryColor = MaterialTheme.colorScheme.primary,
-                            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+//                            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
                         )
                         
                         Spacer(modifier = Modifier.height(16.dp))
