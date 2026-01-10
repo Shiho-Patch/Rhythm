@@ -1057,9 +1057,9 @@ fun PlaylistDetailScreen(
                         .weight(0.35f)
                         .fillMaxHeight()
                         .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 24.dp, vertical = 24.dp),
+                        .padding(horizontal = 48.dp, vertical = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.Center
                 ) {
                     val context = LocalContext.current
 
@@ -1213,7 +1213,7 @@ fun PlaylistDetailScreen(
                                     containerColor = if (showSearchBar)
                                         MaterialTheme.colorScheme.primaryContainer
                                     else
-                                        MaterialTheme.colorScheme.surfaceContainerLowest,
+                                        MaterialTheme.colorScheme.surfaceContainer,
                                     contentColor = if (showSearchBar)
                                         MaterialTheme.colorScheme.onPrimaryContainer
                                     else
@@ -1241,7 +1241,7 @@ fun PlaylistDetailScreen(
                         .weight(0.65f)
                         .fillMaxHeight()
                         .background(MaterialTheme.colorScheme.surface)
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .padding(horizontal = 32.dp, vertical = 12.dp)
                 ) {
                     val filteredSongs = remember(playlist.songs, searchQuery) {
                         if (searchQuery.isBlank()) {
@@ -1548,9 +1548,11 @@ fun PlaylistDetailScreen(
                             if (playlist.songs.isNotEmpty()) {
                                 // Main action row with improved spacing
                                 Row(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                                     verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp)
                                 ) {
                                     // Play All button - primary action, more prominent
                                     Button(
@@ -1558,21 +1560,21 @@ fun PlaylistDetailScreen(
                                             HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                                             onPlayAll()
                                         },
-                                        shape = RoundedCornerShape(16.dp),
+                                        shape = RoundedCornerShape(24.dp),
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = MaterialTheme.colorScheme.primary,
                                             contentColor = MaterialTheme.colorScheme.onPrimary
                                         ),
                                         contentPadding = PaddingValues(
                                             horizontal = when {
-                                                isExtraSmallWidth -> 12.dp
-                                                isCompactWidth -> 16.dp
-                                                else -> 20.dp
+                                                isExtraSmallWidth -> 14.dp
+                                                isCompactWidth -> 18.dp
+                                                else -> 22.dp
                                             },
-                                            vertical = 12.dp
+                                            vertical = 14.dp
                                         ),
                                         modifier = Modifier
-                                            .weight(1f)
+                                            .weight(0.7f)
                                             .height(when {
                                                 isExtraSmallWidth -> 44.dp
                                                 isCompactWidth -> 48.dp
@@ -1611,12 +1613,12 @@ fun PlaylistDetailScreen(
                                             HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                                             onShufflePlay()
                                         },
-                                        shape = RoundedCornerShape(16.dp),
+                                        shape = RoundedCornerShape(24.dp),
                                         colors = ButtonDefaults.filledTonalButtonColors(
                                             containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                             contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                                         ),
-                                        contentPadding = PaddingValues(0.dp),
+                                        contentPadding = PaddingValues(12.dp),
                                         modifier = Modifier.size(when {
                                             isExtraSmallWidth -> 44.dp
                                             isCompactWidth -> 48.dp
