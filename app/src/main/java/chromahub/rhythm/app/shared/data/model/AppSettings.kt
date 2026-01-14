@@ -763,16 +763,16 @@ class AppSettings private constructor(context: Context) {
     val lastPlayedTimestamp: StateFlow<Long> = _lastPlayedTimestamp.asStateFlow()
     
     // API Enable/Disable States
-    private val _deezerApiEnabled = MutableStateFlow(prefs.getBoolean(KEY_DEEZER_API_ENABLED, true))
+    private val _deezerApiEnabled = MutableStateFlow(prefs.getBoolean(KEY_DEEZER_API_ENABLED, false))
     val deezerApiEnabled: StateFlow<Boolean> = _deezerApiEnabled.asStateFlow()
     
-    private val _canvasApiEnabled = MutableStateFlow(prefs.getBoolean(KEY_CANVAS_API_ENABLED, true))
+    private val _canvasApiEnabled = MutableStateFlow(prefs.getBoolean(KEY_CANVAS_API_ENABLED, false))
     val canvasApiEnabled: StateFlow<Boolean> = _canvasApiEnabled.asStateFlow()
     
-    private val _lrclibApiEnabled = MutableStateFlow(prefs.getBoolean(KEY_LRCLIB_API_ENABLED, true))
+    private val _lrclibApiEnabled = MutableStateFlow(prefs.getBoolean(KEY_LRCLIB_API_ENABLED, false))
     val lrclibApiEnabled: StateFlow<Boolean> = _lrclibApiEnabled.asStateFlow()
     
-    private val _ytMusicApiEnabled = MutableStateFlow(prefs.getBoolean(KEY_YTMUSIC_API_ENABLED, true))
+    private val _ytMusicApiEnabled = MutableStateFlow(prefs.getBoolean(KEY_YTMUSIC_API_ENABLED, false))
     val ytMusicApiEnabled: StateFlow<Boolean> = _ytMusicApiEnabled.asStateFlow()
     
     private val _spotifyApiEnabled = MutableStateFlow(prefs.getBoolean(KEY_SPOTIFY_API_ENABLED, false))
@@ -878,19 +878,19 @@ class AppSettings private constructor(context: Context) {
     val genreDetectionCompleted: StateFlow<Boolean> = _genreDetectionCompleted.asStateFlow()
 
     // App Updater Settings
-    private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CHECK_FOR_UPDATES, true))
+    private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CHECK_FOR_UPDATES, false))
     val autoCheckForUpdates: StateFlow<Boolean> = _autoCheckForUpdates.asStateFlow()
 
     private val _updateChannel = MutableStateFlow(prefs.getString(KEY_UPDATE_CHANNEL, "stable") ?: "stable")
     val updateChannel: StateFlow<String> = _updateChannel.asStateFlow()
 
-    private val _updatesEnabled = MutableStateFlow(prefs.getBoolean(KEY_UPDATES_ENABLED, true))
+    private val _updatesEnabled = MutableStateFlow(prefs.getBoolean(KEY_UPDATES_ENABLED, false))
     val updatesEnabled: StateFlow<Boolean> = _updatesEnabled.asStateFlow()
 
-    private val _updateNotificationsEnabled = MutableStateFlow(prefs.getBoolean(KEY_UPDATE_NOTIFICATIONS_ENABLED, true))
+    private val _updateNotificationsEnabled = MutableStateFlow(prefs.getBoolean(KEY_UPDATE_NOTIFICATIONS_ENABLED, false))
     val updateNotificationsEnabled: StateFlow<Boolean> = _updateNotificationsEnabled.asStateFlow()
 
-    private val _useSmartUpdatePolling = MutableStateFlow(prefs.getBoolean(KEY_USE_SMART_UPDATE_POLLING, true))
+    private val _useSmartUpdatePolling = MutableStateFlow(prefs.getBoolean(KEY_USE_SMART_UPDATE_POLLING, false))
     val useSmartUpdatePolling: StateFlow<Boolean> = _useSmartUpdatePolling.asStateFlow()
 
     // Media Scan Mode
@@ -1115,9 +1115,9 @@ class AppSettings private constructor(context: Context) {
         }
         
         // Schedule update notification worker if enabled
-        if (prefs.getBoolean(KEY_UPDATES_ENABLED, true) &&
-            prefs.getBoolean(KEY_UPDATE_NOTIFICATIONS_ENABLED, true) &&
-            prefs.getBoolean(KEY_USE_SMART_UPDATE_POLLING, true)) {
+        if (prefs.getBoolean(KEY_UPDATES_ENABLED, false) &&
+            prefs.getBoolean(KEY_UPDATE_NOTIFICATIONS_ENABLED, false) &&
+            prefs.getBoolean(KEY_USE_SMART_UPDATE_POLLING, false)) {
             scheduleUpdateNotificationWorker()
         }
     }
@@ -2797,10 +2797,10 @@ class AppSettings private constructor(context: Context) {
         _lastPlayedTimestamp.value = safeLong(KEY_LAST_PLAYED_TIMESTAMP, 0L)
         
         // API Enable/Disable States
-        _deezerApiEnabled.value = prefs.getBoolean(KEY_DEEZER_API_ENABLED, true)
-        _canvasApiEnabled.value = prefs.getBoolean(KEY_CANVAS_API_ENABLED, true)
-        _lrclibApiEnabled.value = prefs.getBoolean(KEY_LRCLIB_API_ENABLED, true)
-        _ytMusicApiEnabled.value = prefs.getBoolean(KEY_YTMUSIC_API_ENABLED, true)
+        _deezerApiEnabled.value = prefs.getBoolean(KEY_DEEZER_API_ENABLED, false)
+        _canvasApiEnabled.value = prefs.getBoolean(KEY_CANVAS_API_ENABLED, false)
+        _lrclibApiEnabled.value = prefs.getBoolean(KEY_LRCLIB_API_ENABLED, false)
+        _ytMusicApiEnabled.value = prefs.getBoolean(KEY_YTMUSIC_API_ENABLED, false)
         _spotifyApiEnabled.value = prefs.getBoolean(KEY_SPOTIFY_API_ENABLED, false)
         _spotifyClientId.value = prefs.getString(KEY_SPOTIFY_CLIENT_ID, "") ?: ""
         _spotifyClientSecret.value = prefs.getString(KEY_SPOTIFY_CLIENT_SECRET, "") ?: ""
@@ -2815,11 +2815,11 @@ class AppSettings private constructor(context: Context) {
         _broadcastStatusEnabled.value = prefs.getBoolean(KEY_BROADCAST_STATUS_ENABLED, false)
         
         // App Updates
-        _autoCheckForUpdates.value = prefs.getBoolean(KEY_AUTO_CHECK_FOR_UPDATES, true)
+        _autoCheckForUpdates.value = prefs.getBoolean(KEY_AUTO_CHECK_FOR_UPDATES, false)
         _updateChannel.value = prefs.getString(KEY_UPDATE_CHANNEL, "stable") ?: "stable"
-        _updatesEnabled.value = prefs.getBoolean(KEY_UPDATES_ENABLED, true)
-        _updateNotificationsEnabled.value = prefs.getBoolean(KEY_UPDATE_NOTIFICATIONS_ENABLED, true)
-        _useSmartUpdatePolling.value = prefs.getBoolean(KEY_USE_SMART_UPDATE_POLLING, true)
+        _updatesEnabled.value = prefs.getBoolean(KEY_UPDATES_ENABLED, false)
+        _updateNotificationsEnabled.value = prefs.getBoolean(KEY_UPDATE_NOTIFICATIONS_ENABLED, false)
+        _useSmartUpdatePolling.value = prefs.getBoolean(KEY_USE_SMART_UPDATE_POLLING, false)
         _mediaScanMode.value = prefs.getString(KEY_MEDIA_SCAN_MODE, "blacklist") ?: "blacklist"
         _updateCheckIntervalHours.value = prefs.getInt(KEY_UPDATE_CHECK_INTERVAL_HOURS, 24)
         

@@ -836,7 +836,7 @@ private fun ModernScrollableContent(
     val updateAvailable by updaterViewModel.updateAvailable.collectAsState()
     val latestVersion by updaterViewModel.latestVersion.collectAsState()
     val error by updaterViewModel.error.collectAsState()
-    val updatesEnabled by updaterViewModel.appSettings.updatesEnabled.collectAsState(initial = true)
+    val updatesEnabled by updaterViewModel.appSettings.updatesEnabled.collectAsState(initial = false)
     
     // Enhanced auto-scroll for featured carousel with smooth animations
     LaunchedEffect(carouselItemCount, discoverAutoScroll, discoverAutoScrollInterval) {

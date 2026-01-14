@@ -228,10 +228,10 @@ object NetworkClient {
         .build()
     
     // Helper methods to check if APIs are enabled
-    fun isDeezerApiEnabled(): Boolean = appSettings?.deezerApiEnabled?.value ?: true
-    fun isCanvasApiEnabled(): Boolean = appSettings?.canvasApiEnabled?.value ?: true
-    fun isLrcLibApiEnabled(): Boolean = appSettings?.lrclibApiEnabled?.value ?: true
-    fun isYTMusicApiEnabled(): Boolean = appSettings?.ytMusicApiEnabled?.value ?: true
+    fun isDeezerApiEnabled(): Boolean = appSettings?.deezerApiEnabled?.value ?: false
+    fun isCanvasApiEnabled(): Boolean = appSettings?.canvasApiEnabled?.value ?: false
+    fun isLrcLibApiEnabled(): Boolean = appSettings?.lrclibApiEnabled?.value ?: false
+    fun isYTMusicApiEnabled(): Boolean = appSettings?.ytMusicApiEnabled?.value ?: false
     fun isSpotifyApiEnabled(): Boolean = appSettings?.spotifyApiEnabled?.value ?: false
     
     // Get Spotify API credentials
