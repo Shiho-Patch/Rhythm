@@ -77,7 +77,7 @@ Types:
 
 ## Code of Conduct
 
-This project follows a code of conduct to ensure a welcoming environment for all contributors. See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for details.
+This project follows a code of conduct to ensure a welcoming environment for all contributors. See [CODE_OF_CONDUCT.md](https://github.com/cromaguy/Rhythm/blob/main/docs/CODE_OF_CONDUCT.md) for details.
 
 ## License
 

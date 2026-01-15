@@ -74,7 +74,7 @@ Before diving into specific issues, try these general fixes:
 
 **Solutions:**
 1. **Check audio format:**
-   - See [Audio Formats Guide](Audio-Formats.md)
+   - See [Audio Formats Guide](https://github.com/cromaguy/Rhythm/wiki/Audio-Formats)
    - Unsupported formats won't play
    - Convert to FLAC or MP3
 
@@ -497,4 +497,4 @@ When asking for help, provide:
 
 ---
 
-**Pro tip:** Check [FAQ](FAQ.md) for quick answers to common questions!
+**Pro tip:** Check [FAQ](https://github.com/cromaguy/Rhythm/wiki/FAQ) for quick answers to common questions!

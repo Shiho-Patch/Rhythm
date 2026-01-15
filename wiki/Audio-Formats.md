@@ -233,4 +233,4 @@ done
 
 ---
 
-**Questions?** Ask in our [Telegram Community](https://t.me/RhythmSupport) or check the [FAQ](FAQ.md).
+**Questions?** Ask in our [Telegram Community](https://t.me/RhythmSupport) or check the [FAQ](https://github.com/cromaguy/Rhythm/wiki/FAQ).

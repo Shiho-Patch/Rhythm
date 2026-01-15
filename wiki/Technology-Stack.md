@@ -413,4 +413,4 @@ class PlayerViewModelTest {
 
 ---
 
-**Want to contribute?** Check the [Contributing Guide](../docs/CONTRIBUTING.md)!
+**Want to contribute?** Check the [Contributing Guide](https://github.com/cromaguy/Rhythm/wiki/Contributing)!

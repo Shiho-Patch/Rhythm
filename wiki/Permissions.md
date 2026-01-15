@@ -316,10 +316,10 @@ To detect when you connect Bluetooth headphones/speakers and auto-resume playbac
 
 ## 🔗 Related Documentation
 
-- [Installation Guide](Installation-Guide.md)
-- [Getting Started](Getting-Started.md)
-- [Troubleshooting](Troubleshooting.md)
-- [Security Policy](../docs/SECURITY.md)
+- [Installation Guide](https://github.com/cromaguy/Rhythm/wiki/Installation-Guide)
+- [Getting Started](https://github.com/cromaguy/Rhythm/wiki/Getting-Started)
+- [Troubleshooting](https://github.com/cromaguy/Rhythm/wiki/Troubleshooting)
+- [Security Policy](https://github.com/cromaguy/Rhythm/blob/main/docs/SECURITY.md)
 
 ---
 

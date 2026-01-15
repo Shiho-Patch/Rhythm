@@ -207,8 +207,8 @@ Browse by:
 5. Resize as needed (2x1 to 5x5)
 
 ### Widget Types
-- **Legacy Widget**: RemoteViews with 7 sizes
-- **Glance Widget**: Modern Material 3 with 9 layouts
+- **Legacy Widget**: RemoteViews with 7 responsive layouts
+- **Glance Widget**: Modern Material 3 with 6 responsive layouts
 - **Stats Widget**: Real-time playback statistics
 
 ### Widget Features
@@ -287,7 +287,7 @@ Access comprehensive statistics:
 ### Documentation
 - [Official Website](https://rhythmweb.vercel.app/)
 - [Wiki](https://github.com/cromaguy/Rhythm/wiki)
-- [FAQ](FAQ.md)
+- [FAQ](https://github.com/cromaguy/Rhythm/wiki/FAQ)
 
 ---
 
@@ -304,4 +304,4 @@ Access comprehensive statistics:
 
 ---
 
-**Ready to dive deeper?** Check out the [Features Overview](Features.md) for complete capabilities!
+**Ready to dive deeper?** Check out the [Features Overview](https://github.com/cromaguy/Rhythm/wiki/Features) for complete capabilities!

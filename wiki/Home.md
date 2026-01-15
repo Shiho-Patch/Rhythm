@@ -4,16 +4,16 @@ Welcome to the official Rhythm Music Player documentation!
 
 ## 📚 Quick Links
 
-- [Installation Guide](Installation-Guide.md) - How to download and install Rhythm
-- [Getting Started](Getting-Started.md) - First-time setup and basic usage
-- [Features Overview](Features.md) - Complete feature list and capabilities
-- [Audio Formats](Audio-Formats.md) - Supported formats and technical details
-- [Permissions Guide](Permissions.md) - Understanding app permissions
-- [Widgets](Widgets.md) - Home screen widget setup and customization
-- [Technology Stack](Technology-Stack.md) - Technical architecture and libraries
-- [Troubleshooting](Troubleshooting.md) - Common issues and solutions
-- [Contributing](Contributing.md) - How to contribute to the project
-- [FAQ](FAQ.md) - Frequently asked questions
+- [Installation Guide](https://github.com/cromaguy/Rhythm/wiki/Installation-Guide) - How to download and install Rhythm
+- [Getting Started](https://github.com/cromaguy/Rhythm/wiki/Getting-Started) - First-time setup and basic usage
+- [Features Overview](https://github.com/cromaguy/Rhythm/wiki/Features) - Complete feature list and capabilities
+- [Audio Formats](https://github.com/cromaguy/Rhythm/wiki/Audio-Formats) - Supported formats and technical details
+- [Permissions Guide](https://github.com/cromaguy/Rhythm/wiki/Permissions) - Understanding app permissions
+- [Widgets](https://github.com/cromaguy/Rhythm/wiki/Widgets) - Home screen widget setup and customization
+- [Technology Stack](https://github.com/cromaguy/Rhythm/wiki/Technology-Stack) - Technical architecture and libraries
+- [Troubleshooting](https://github.com/cromaguy/Rhythm/wiki/Troubleshooting) - Common issues and solutions
+- [Contributing](https://github.com/cromaguy/Rhythm/wiki/Contributing) - How to contribute to the project
+- [FAQ](https://github.com/cromaguy/Rhythm/wiki/FAQ) - Frequently asked questions
 
 ## 🎵 About Rhythm
 
@@ -35,9 +35,9 @@ Rhythm is a modern, open-source music player for Android with Material 3 design,
 
 ## 📖 For Developers
 
-- [Architecture Guide](Architecture.md) - App structure and design patterns
-- [Build Instructions](Build-Instructions.md) - How to build from source
-- [API Documentation](API-Documentation.md) - Internal APIs and interfaces
+- [Architecture Guide](https://github.com/cromaguy/Rhythm/wiki/Architecture) - App structure and design patterns
+- [Build Instructions](https://github.com/cromaguy/Rhythm/wiki/Build-Instructions) - How to build from source
+- [API Documentation](https://github.com/cromaguy/Rhythm/wiki/API-Documentation) - Internal APIs and interfaces
 
 ---
 

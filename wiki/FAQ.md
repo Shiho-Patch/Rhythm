@@ -44,7 +44,7 @@ If you get "App not installed" error:
 **Not supported:**
 - APE, DSD/DSF, MQA, AIFF, WMA Lossless
 
-📖 **Full details:** [Audio Formats Guide](Audio-Formats.md)
+📖 **Full details:** [Audio Formats Guide](https://github.com/cromaguy/Rhythm/wiki/Audio-Formats)
 
 ### Why won't my music files play?
 
@@ -172,11 +172,11 @@ Planned for future release.
 ### Is there a widget?
 
 Yes! Multiple widgets available:
-- **9 responsive layouts** (2x1 to 5x5)
-- **Modern Glance widgets** (Material 3)
-- **Legacy RemoteViews widgets**
+- **Glance widgets**: 6 responsive Material 3 layouts (2x1 to 4x4)
+- **Legacy widgets**: 7 RemoteViews layouts (2x1 to 5x5)
 - **Real-time updates**
 - **Playback controls**
+- **Customizable appearance**
 
 ### Can I customize the theme?
 
@@ -280,7 +280,7 @@ Always install updates over existing app (don't uninstall first).
 - Help translate
 - Join [Telegram community](https://t.me/RhythmSupport)
 
-See [Contributing Guide](../docs/CONTRIBUTING.md) for details.
+See [Contributing Guide](https://github.com/cromaguy/Rhythm/wiki/Contributing) for details.
 
 ### Is the source code available?
 
@@ -322,7 +322,7 @@ Yes, Rhythm works in split-screen/multi-window mode.
 - **[Telegram Community](https://t.me/RhythmSupport)** - Live help
 - **[GitHub Discussions](https://github.com/cromaguy/Rhythm/discussions)** - Q&A forum
 - **[GitHub Issues](https://github.com/cromaguy/Rhythm/issues)** - Bug reports
-- **[Wiki](Home.md)** - Documentation
+- **[Wiki](https://github.com/cromaguy/Rhythm/wiki)** - Documentation
 
 ### How do I report a bug?
 

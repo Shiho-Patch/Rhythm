@@ -24,7 +24,7 @@
 
 ---
 
-### 🌐 [Website](https://rhythmweb.vercel.app/) | 📥 [Download](https://github.com/cromaguy/Rhythm/releases/latest) | 💬 [Telegram](https://t.me/RhythmSupport) | 📖 [Wiki](wiki/Home.md)
+### 🌐 [Website](https://rhythmweb.vercel.app/) | 📥 [Download](https://github.com/cromaguy/Rhythm/releases/latest) | 💬 [Telegram](https://t.me/RhythmSupport) | 📖 [Wiki](https://github.com/cromaguy/Rhythm/wiki)
 
 </div>
 
@@ -41,7 +41,7 @@ Rhythm is a modern, open-source music player for Android built with Material 3 d
 - 🎤 **Synced Lyrics** - LRCLib integration with word-by-word highlighting
 - 🎛️ **10-Band EQ** - Professional equalizer with 6032+ AutoEQ device presets
 - 📊 **Playback Stats** - Comprehensive listening statistics and insights
-- 📱 **Modern Widgets** - 9 responsive layouts with Material 3 design
+- 📱 **Modern Widgets** - Multiple responsive layouts with Material 3 design
 - 🎯 **Format Support** - FLAC, ALAC, MP3, AAC, Opus, WAV, and more
 - 🔒 **Privacy First** - 100% FOSS, no tracking, offline-capable
 
@@ -111,19 +111,19 @@ Rhythm is a modern, open-source music player for Android built with Material 3 d
 - **[IzzyOnDroid](https://apt.izzysoft.de/fdroid/index/apk/chromahub.rhythm.app)** - F-Droid repository for privacy-focused users
 - **[Obtainium](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/cromaguy/Rhythm/)** - Auto-updates from GitHub
 
-📖 **Detailed installation guide:** See the [Installation Wiki](wiki/Installation-Guide.md)
+📖 **Detailed installation guide:** See the [Installation Wiki](https://github.com/cromaguy/Rhythm/wiki/Installation-Guide)
 
 ---
 
 ## � Documentation
 
-Complete documentation is available in our [**Wiki**](wiki/Home.md):
+Complete documentation is available in our [**Wiki**](https://github.com/cromaguy/Rhythm/wiki):
 
-- **[Getting Started](wiki/Getting-Started.md)** - First-time setup and basic usage
-- **[Installation Guide](wiki/Installation-Guide.md)** - Detailed installation instructions
-- **[Audio Formats](wiki/Audio-Formats.md)** - Supported formats and conversion guide
-- **[Permissions Guide](wiki/Permissions.md)** - Understanding app permissions
-- **[Troubleshooting](wiki/Troubleshooting.md)** - Common issues and solutions
+- **[Getting Started](https://github.com/cromaguy/Rhythm/wiki/Getting-Started)** - First-time setup and basic usage
+- **[Installation Guide](https://github.com/cromaguy/Rhythm/wiki/Installation-Guide)** - Detailed installation instructions
+- **[Audio Formats](https://github.com/cromaguy/Rhythm/wiki/Audio-Formats)** - Supported formats and conversion guide
+- **[Permissions Guide](https://github.com/cromaguy/Rhythm/wiki/Permissions)** - Understanding app permissions
+- **[Troubleshooting](https://github.com/cromaguy/Rhythm/wiki/Troubleshooting)** - Common issues and solutions
 
 ---
 
@@ -140,13 +140,13 @@ Complete documentation is available in our [**Wiki**](wiki/Home.md):
 | **Networking** | Retrofit + OkHttp |
 | **Image Loading** | Coil |
 
-📖 **Full tech stack:** See [Technology Stack](wiki/Technology-Stack.md) in the wiki
+📖 **Full tech stack:** See [Technology Stack](https://github.com/cromaguy/Rhythm/wiki/Technology-Stack) in the wiki
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions! See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines.
+We welcome contributions! See [CONTRIBUTING.md](https://github.com/cromaguy/Rhythm/blob/main/docs/CONTRIBUTING.md) for guidelines.
 
 **Quick ways to contribute:**
 - 🐛 [Report bugs](https://github.com/cromaguy/Rhythm/issues)

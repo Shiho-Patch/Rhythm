@@ -94,7 +94,7 @@ After installation:
    - Optional: Bluetooth for wireless audio
 
 2. **Complete Onboarding**
-   - Follow the 9-step setup wizard
+   - Follow the 14-step setup wizard
    - Configure your preferences
    - Allow initial media scan
 
