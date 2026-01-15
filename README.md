@@ -1,96 +1,239 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/icon.png">
-  <source media="(prefers-color-scheme: light)" srcset="assets/icon.png">
-  <img src="assets/icon_full.png" alt="Rhythm Music Player" width="180" style="border-radius: 24px; margin: 20px 0;">
-</picture>
+<!-- Hero Section -->
+<img src="assets/icon_full.png" alt="Rhythm Music Player" width="180" style="border-radius: 24px; margin: 20px 0;">
 
-### **Project Rhythm**
+# 🎵 **Rhythm Music Player**
 
-*Your Music, Your Rhythm*
+### *Your Music, Your Rhythm*
 
----
+<br>
 
-[![Platform](https://img.shields.io/badge/Platform-Android-34A853?style=for-the-badge&logo=android&logoColor=white&labelColor=1a73e8)](https://android.com)
-[![API Level](https://img.shields.io/badge/API-26%2B-4285f4?style=for-the-badge&logo=android&logoColor=white)](https://android-arsenal.com/api?level=26)
+<!-- Platform Badges -->
+[![Platform](https://img.shields.io/badge/Platform-Android_8.0+-34A853?style=for-the-badge&logo=android&logoColor=white)](https://android.com)
+[![API Level](https://img.shields.io/badge/API-26_to_36-4285f4?style=for-the-badge&logo=android&logoColor=white)](https://android-arsenal.com/api?level=26)
 [![Kotlin](https://img.shields.io/badge/Kotlin-100%25-7c4dff?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org/)
-[![License](https://img.shields.io/badge/License-GPL%20v3-4285f4?style=for-the-badge)](docs/LICENSE)
+[![License](https://img.shields.io/badge/License-GPL_v3-1e88e5?style=for-the-badge&logo=opensourceinitiative&logoColor=white)](docs/LICENSE)
 
-[![Release](https://img.shields.io/github/v/release/cromaguy/Rhythm?style=for-the-badge&logo=github&color=673ab7&logoColor=white)](https://github.com/cromaguy/Rhythm/releases/latest)
+<!-- Stats Badges -->
+[![Release](https://img.shields.io/github/v/release/cromaguy/Rhythm?style=for-the-badge&logo=github&color=673ab7&logoColor=white&label=Latest)](https://github.com/cromaguy/Rhythm/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/cromaguy/Rhythm/total?style=for-the-badge&logo=download&color=00bcd4&logoColor=white)](https://github.com/cromaguy/Rhythm/releases)
 [![Stars](https://img.shields.io/github/stars/cromaguy/Rhythm?style=for-the-badge&logo=star&color=ffc107&logoColor=white)](https://github.com/cromaguy/Rhythm/stargazers)
-[<img src="https://shields.rbtlog.dev/simple/chromahub.rhythm.app?style=for-the-badge" alt="RB shield">](https://shields.rbtlog.dev/chromahub.rhythm.app)
+[![Contributors](https://img.shields.io/github/contributors/cromaguy/Rhythm?style=for-the-badge&logo=github&color=43a047&logoColor=white)](https://github.com/cromaguy/Rhythm/graphs/contributors)
+
+<br>
+
+<!-- Quick Links -->
+<table>
+<tr>
+<td align="center">
+<a href="https://rhythmweb.vercel.app/">
+<img src="https://img.shields.io/badge/🌐_Website-Visit-673ab7?style=for-the-badge" alt="Website">
+</a>
+</td>
+<td align="center">
+<a href="https://github.com/cromaguy/Rhythm/releases/latest">
+<img src="https://img.shields.io/badge/📥_Download-Latest_APK-4caf50?style=for-the-badge" alt="Download">
+</a>
+</td>
+<td align="center">
+<a href="https://t.me/RhythmSupport">
+<img src="https://img.shields.io/badge/💬_Telegram-Join_Community-0088cc?style=for-the-badge" alt="Telegram">
+</a>
+</td>
+<td align="center">
+<a href="https://github.com/cromaguy/Rhythm/wiki">
+<img src="https://img.shields.io/badge/📖_Wiki-Documentation-ff9800?style=for-the-badge" alt="Wiki">
+</a>
+</td>
+</tr>
+</table>
+
+<br>
 
 ---
-
-### 🌐 [Website](https://rhythmweb.vercel.app/) | 📥 [Download](https://github.com/cromaguy/Rhythm/releases/latest) | 💬 [Telegram](https://t.me/RhythmSupport) | 📖 [Wiki](https://github.com/cromaguy/Rhythm/wiki)
 
 </div>
 
 ---
 
-## 🎵 About Rhythm
+<br>
 
-Rhythm is a modern, open-source music player for Android built with Material 3 design and powered by Media3 ExoPlayer. Experience professional-grade audio playback with beautiful UI, intelligent features, and complete privacy.
-
-### ✨ Key Features
-
-- 🎨 **Material You** - Dynamic theming with wallpaper colors (Android 12+)
-- 🎵 **Professional Audio** - Media3 ExoPlayer 1.9.0 with gapless playback
-- 🎤 **Synced Lyrics** - LRCLib integration with word-by-word highlighting
-- 🎛️ **10-Band EQ** - Professional equalizer with 6032+ AutoEQ device presets
-- 📊 **Playback Stats** - Comprehensive listening statistics and insights
-- 📱 **Modern Widgets** - Multiple responsive layouts with Material 3 design
-- 🎯 **Format Support** - FLAC, ALAC, MP3, AAC, Opus, WAV, and more
-- 🔒 **Privacy First** - 100% FOSS, no tracking, offline-capable
-
-**System Requirements:** Android 8.0+ (API 26) • 2GB RAM • 50MB Storage
-
----
-
-## 📱 Screenshots
+## 🎨 About Rhythm
 
 <div align="center">
 <table>
 <tr>
-<td align="center" width="25%">
-<img src="assets/ScreenShots/Home.png" alt="Home" width="180" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"/>
-<br/><b>🏠 Smart Home</b>
-</td>
-<td align="center" width="25%">
-<img src="assets/ScreenShots/Player.png" alt="Player" width="180" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"/>
-<br/><b>▶️ Beautiful Player</b>
-</td>
-<td align="center" width="25%">
-<img src="assets/ScreenShots/Player_Lyrics.png" alt="Lyrics" width="180" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"/>
-<br/><b>🎤 Synced Lyrics</b>
-</td>
-<td align="center" width="25%">
-<img src="assets/ScreenShots/Library_Songs.png" alt="Library" width="180" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"/>
-<br/><b>📚 Rich Library</b>
-</td>
-</tr>
-<tr>
-<td align="center">
-<img src="assets/ScreenShots/Queue.png" alt="Queue" width="180" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"/>
-<br/><b>📋 Smart Queue</b>
-</td>
-<td align="center">
-<img src="assets/ScreenShots/Search.png" alt="Search" width="180" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"/>
-<br/><b>🔍 Instant Search</b>
-</td>
-<td align="center">
-<img src="assets/ScreenShots/Settings.png" alt="Settings" width="180" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"/>
-<br/><b>⚙️ Deep Settings</b>
-</td>
-<td align="center">
-<img src="assets/ScreenShots/Artist.png" alt="Artist" width="180" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"/>
-<br/><b>🎤 Artist Pages</b>
+<td>
+
+Rhythm is a **modern, open-source music player** for Android, meticulously crafted with **Material 3 design** and powered by the industry-leading **Media3 ExoPlayer**. Experience professional-grade audio playback wrapped in a stunning, adaptive interface that respects your privacy.
+
 </td>
 </tr>
 </table>
 </div>
+
+<br>
+
+### ✨ **Flagship Features**
+
+<table>
+<tr>
+<td width="50%">
+
+#### 🎨 **Material You Design**
+- Dynamic wallpaper-based theming
+- Adaptive color palettes
+- Smooth animations & transitions
+- Modern edge-to-edge layout
+
+#### 🎵 **Professional Audio Engine**
+- Media3 ExoPlayer 1.9.0
+- Gapless playback
+- Hi-Res audio support (192kHz/24-bit)
+- Seamless device switching
+
+#### 🎤 **Synchronized Lyrics**
+- LRCLib integration
+- Word-by-word highlighting
+- Auto-scrolling with smooth animations
+- Offline lyrics support
+
+</td>
+<td width="50%">
+
+#### 🎛️ **Advanced Equalizer**
+- Professional 10-band EQ
+- 6032+ AutoEQ device presets
+- Bass boost & virtualizer
+- Custom presets with cloud sync
+
+#### 📊 **Comprehensive Statistics**
+- Detailed playback history
+- Top tracks & artists insights
+- Listening time analytics
+- Beautiful data visualizations
+
+#### 📱 **Next-Gen Widgets**
+- 6 Glance-based layouts
+- 7 Legacy RemoteViews widgets
+- Material 3 theming
+- Responsive sizing (2x1 to 4x4)
+
+</td>
+</tr>
+</table>
+
+<br>
+
+<div align="center">
+
+### 🎯 **Format Support**
+
+`FLAC` • `ALAC` • `WAV` • `MP3` • `AAC` • `Opus` • `Vorbis` • `WMA` • `M4A` • `OGG` • `AIFF`
+
+### 📐 **System Requirements**
+
+| Component | Minimum | Recommended |
+|:---:|:---:|:---:|
+| **Android Version** | 8.0 (API 26) | 12.0+ (API 31) |
+| **RAM** | 2 GB | 4 GB+ |
+| **Storage** | 50 MB | 100 MB+ |
+| **CPU** | Quad-core | Octa-core |
+
+### 🔒 **Privacy & Security**
+
+✅ **100% FOSS** • ✅ **No Tracking** • ✅ **No Ads** • ✅ **Offline-Capable** • ✅ **GPL v3.0 Licensed**
+
+</div>
+
+<br>
+
+---
+
+## 📱 **Visual Showcase**
+
+<div align="center">
+
+<table>
+<tr>
+<td align="center" width="25%">
+<img src="assets/ScreenShots/Home.png" alt="Home" width="200" style="border-radius: 16px; box-shadow: 0 8px 24px rgba(103, 58, 183, 0.3);"/>
+<br/>
+<br/>
+<b>🏠 Smart Home Feed</b>
+<br/>
+<sub>Dynamic suggestions & quick access</sub>
+</td>
+<td align="center" width="25%">
+<img src="assets/ScreenShots/Player.png" alt="Player" width="200" style="border-radius: 16px; box-shadow: 0 8px 24px rgba(103, 58, 183, 0.3);"/>
+<br/>
+<br/>
+<b>▶️ Immersive Player</b>
+<br/>
+<sub>Material You adaptive colors</sub>
+</td>
+<td align="center" width="25%">
+<img src="assets/ScreenShots/Player_Lyrics.png" alt="Lyrics" width="200" style="border-radius: 16px; box-shadow: 0 8px 24px rgba(103, 58, 183, 0.3);"/>
+<br/>
+<br/>
+<b>🎤 Synced Lyrics</b>
+<br/>
+<sub>Word-by-word highlighting</sub>
+</td>
+<td align="center" width="25%">
+<img src="assets/ScreenShots/Library_Songs.png" alt="Library" width="200" style="border-radius: 16px; box-shadow: 0 8px 24px rgba(103, 58, 183, 0.3);"/>
+<br/>
+<br/>
+<b>📚 Organized Library</b>
+<br/>
+<sub>Songs, albums, artists, playlists</sub>
+</td>
+</tr>
+</table>
+
+<br>
+
+<table>
+<tr>
+<td align="center" width="25%">
+<img src="assets/ScreenShots/Queue.png" alt="Queue" width="200" style="border-radius: 16px; box-shadow: 0 8px 24px rgba(76, 175, 80, 0.3);"/>
+<br/>
+<br/>
+<b>📋 Smart Queue</b>
+<br/>
+<sub>Drag & drop reordering</sub>
+</td>
+<td align="center" width="25%">
+<img src="assets/ScreenShots/Search.png" alt="Search" width="200" style="border-radius: 16px; box-shadow: 0 8px 24px rgba(76, 175, 80, 0.3);"/>
+<br/>
+<br/>
+<b>🔍 Instant Search</b>
+<br/>
+<sub>Lightning-fast results</sub>
+</td>
+<td align="center" width="25%">
+<img src="assets/ScreenShots/Settings.png" alt="Settings" width="200" style="border-radius: 16px; box-shadow: 0 8px 24px rgba(76, 175, 80, 0.3);"/>
+<br/>
+<br/>
+<b>⚙️ Deep Customization</b>
+<br/>
+<sub>Every detail configurable</sub>
+</td>
+<td align="center" width="25%">
+<img src="assets/ScreenShots/Artist.png" alt="Artist" width="200" style="border-radius: 16px; box-shadow: 0 8px 24px rgba(76, 175, 80, 0.3);"/>
+<br/>
+<br/>
+<b>🎤 Artist Profiles</b>
+<br/>
+<sub>Rich metadata & artwork</sub>
+</td>
+</tr>
+</table>
+
+</div>
+
+<br>
 
 ---
 
