@@ -206,8 +206,10 @@ class AppUpdaterViewModel(application: Application) : AndroidViewModel(applicati
         viewModelScope.launch {
             _appSettings.updateChannel.collectLatest { channel ->
                 _updateChannel.value = channel
-                // Re-check for updates if channel changes
-                checkForUpdates(force = true)
+                // Re-check for updates if channel changes, but only if updates are enabled
+                if (_appSettings.updatesEnabled.first()) {
+                    checkForUpdates(force = true)
+                }
             }
         }
         
@@ -332,8 +334,8 @@ class AppUpdaterViewModel(application: Application) : AndroidViewModel(applicati
             val autoCheckEnabled = _appSettings.autoCheckForUpdates.first()
             val currentChannel = _appSettings.updateChannel.first()
 
-            // Master check: if updates are completely disabled, don't check unless forced
-            if (!force && !updatesEnabled) {
+            // Master check: if updates are completely disabled, don't check at all
+            if (!updatesEnabled) {
                 Log.d(TAG, "Skipping update check - updates are completely disabled.")
                 _isCheckingForUpdates.value = false
                 return@launch
