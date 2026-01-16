@@ -485,6 +485,8 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
     val showQueueDialog by appSettings.showQueueDialog.collectAsState()
     val repeatModePersistence by appSettings.repeatModePersistence.collectAsState()
     val shuffleModePersistence by appSettings.shuffleModePersistence.collectAsState()
+    val queuePersistenceEnabled by appSettings.queuePersistenceEnabled.collectAsState()
+    val useSystemVolume by appSettings.useSystemVolume.collectAsState()
     val playlistClickBehavior by appSettings.playlistClickBehavior.collectAsState(initial = "ask")
     val useHoursInTimeFormat by appSettings.useHoursInTimeFormat.collectAsState()
     val crossfadeEnabled by appSettings.crossfade.collectAsState()
@@ -558,6 +560,13 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                         context.getString(R.string.settings_remember_shuffle_mode_desc),
                         toggleState = shuffleModePersistence,
                         onToggleChange = { appSettings.setShuffleModePersistence(it) }
+                    ),
+                    SettingItem(
+                        RhythmIcons.Queue,
+                        "Remember Queue",
+                        "Save and restore queue when restarting app",
+                        toggleState = queuePersistenceEnabled,
+                        onToggleChange = { appSettings.setQueuePersistenceEnabled(it) }
                     ),
                     SettingItem(
                         androidx.compose.material.icons.Icons.Default.Stop,

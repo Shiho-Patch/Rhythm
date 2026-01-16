@@ -15,6 +15,8 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
@@ -125,6 +127,7 @@ fun PlaybackBottomSheet(
     val repeatModePersistence by appSettings.repeatModePersistence.collectAsState()
     val lyricsSourcePreference by appSettings.lyricsSourcePreference.collectAsState()
     val clearQueueOnNewSong by appSettings.clearQueueOnNewSong.collectAsState()
+    val queuePersistenceEnabled by appSettings.queuePersistenceEnabled.collectAsState()
     val useSystemVolume by appSettings.useSystemVolume.collectAsState()
     
     val contentAlpha by animateFloatAsState(
@@ -274,6 +277,7 @@ fun PlaybackBottomSheet(
                             repeatModePersistence = repeatModePersistence,
                             lyricsSourcePreference = lyricsSourcePreference,
                             useSystemVolume = useSystemVolume,
+                            queuePersistenceEnabled = queuePersistenceEnabled,
                             onGaplessPlaybackChange = {
                                 musicViewModel.setGaplessPlayback(it)
                             },
@@ -284,6 +288,7 @@ fun PlaybackBottomSheet(
                             onRepeatModePersistenceChange = { appSettings.setRepeatModePersistence(it) },
                             onLyricsSourcePreferenceChange = { appSettings.setLyricsSourcePreference(it) },
                             onUseSystemVolumeChange = { appSettings.setUseSystemVolume(it) },
+                            onQueuePersistenceEnabledChange = { appSettings.setQueuePersistenceEnabled(it) },
                             haptics = haptics,
                             context = context
                         )
@@ -1007,6 +1012,7 @@ private fun PlaybackSettingsCard(
     repeatModePersistence: Boolean,
     lyricsSourcePreference: LyricsSourcePreference,
     useSystemVolume: Boolean,
+    queuePersistenceEnabled: Boolean,
     onGaplessPlaybackChange: (Boolean) -> Unit,
     onShuffleUsesExoplayerChange: (Boolean) -> Unit,
     onAutoAddToQueueChange: (Boolean) -> Unit,
@@ -1015,6 +1021,7 @@ private fun PlaybackSettingsCard(
     onRepeatModePersistenceChange: (Boolean) -> Unit,
     onLyricsSourcePreferenceChange: (LyricsSourcePreference) -> Unit,
     onUseSystemVolumeChange: (Boolean) -> Unit,
+    onQueuePersistenceEnabledChange: (Boolean) -> Unit,
     haptics: androidx.compose.ui.hapticfeedback.HapticFeedback,
     context: Context,
     modifier: Modifier = Modifier
@@ -1157,6 +1164,19 @@ private fun PlaybackSettingsCard(
                 }
             )
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Remember Queue
+            AudioSettingRow(
+                title = "Remember Queue",
+                description = "Save and restore queue when restarting app",
+                enabled = queuePersistenceEnabled,
+                onToggle = {
+                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                    onQueuePersistenceEnabledChange(it)
+                }
+            )
+
             Spacer(modifier = Modifier.height(20.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
             Spacer(modifier = Modifier.height(20.dp))
@@ -1255,15 +1275,67 @@ private fun AudioSettingRow(
             )
         }
         
-        Switch(
+        AnimatedAudioSwitch(
             checked = enabled,
-            onCheckedChange = onToggle,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = MaterialTheme.colorScheme.primary,
-                checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
-            )
+            onCheckedChange = onToggle
         )
     }
+}
+
+@Composable
+private fun AnimatedAudioSwitch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val thumbColor by animateColorAsState(
+        targetValue = if (checked) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "thumbColor"
+    )
+    
+    val trackColor by animateColorAsState(
+        targetValue = if (checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "trackColor"
+    )
+    
+    Switch(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        modifier = modifier,
+        colors = SwitchDefaults.colors(
+            checkedThumbColor = thumbColor,
+            checkedTrackColor = trackColor,
+            uncheckedThumbColor = thumbColor,
+            uncheckedTrackColor = trackColor
+        ),
+        thumbContent = {
+            AnimatedVisibility(
+                visible = checked,
+                enter = scaleIn(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                ) + fadeIn(),
+                exit = scaleOut() + fadeOut()
+            ) {
+                Icon(
+                    imageVector = RhythmIcons.Check,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+    )
 }
 
 

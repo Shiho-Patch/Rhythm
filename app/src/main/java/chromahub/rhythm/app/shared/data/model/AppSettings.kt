@@ -281,6 +281,10 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_PLAYBACK_SPEED = "playback_speed"
         private const val KEY_USE_HOURS_IN_TIME_FORMAT = "use_hours_in_time_format"
         private const val KEY_STOP_PLAYBACK_ON_APP_CLOSE = "stop_playback_on_app_close"
+        private const val KEY_QUEUE_PERSISTENCE_ENABLED = "queue_persistence_enabled" // Enable/disable queue persistence
+        private const val KEY_SAVED_QUEUE = "saved_queue" // Queue persistence - list of song IDs
+        private const val KEY_SAVED_QUEUE_INDEX = "saved_queue_index" // Current position in queue
+        private const val KEY_SAVED_PLAYBACK_POSITION = "saved_playback_position" // Current playback position in ms
         
         // Widget Settings
         private const val KEY_WIDGET_SHOW_ALBUM_ART = "widget_show_album_art"
@@ -665,6 +669,30 @@ class AppSettings private constructor(context: Context) {
     // Stop Playback on App Close
     private val _stopPlaybackOnAppClose = MutableStateFlow(prefs.getBoolean(KEY_STOP_PLAYBACK_ON_APP_CLOSE, false))
     val stopPlaybackOnAppClose: StateFlow<Boolean> = _stopPlaybackOnAppClose.asStateFlow()
+    
+    // Queue Persistence
+    private val _queuePersistenceEnabled = MutableStateFlow(prefs.getBoolean(KEY_QUEUE_PERSISTENCE_ENABLED, true))
+    val queuePersistenceEnabled: StateFlow<Boolean> = _queuePersistenceEnabled.asStateFlow()
+    
+    private val _savedQueue = MutableStateFlow<List<String>>(
+        try {
+            val json = prefs.getString(KEY_SAVED_QUEUE, null)
+            if (json != null) {
+                Gson().fromJson(json, object : TypeToken<List<String>>() {}.type)
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    )
+    val savedQueue: StateFlow<List<String>> = _savedQueue.asStateFlow()
+    
+    private val _savedQueueIndex = MutableStateFlow(prefs.getInt(KEY_SAVED_QUEUE_INDEX, -1))
+    val savedQueueIndex: StateFlow<Int> = _savedQueueIndex.asStateFlow()
+    
+    private val _savedPlaybackPosition = MutableStateFlow(prefs.getLong(KEY_SAVED_PLAYBACK_POSITION, 0L))
+    val savedPlaybackPosition: StateFlow<Long> = _savedPlaybackPosition.asStateFlow()
     
     // Cache Settings
     private val _maxCacheSize = MutableStateFlow(safeLong(KEY_MAX_CACHE_SIZE, 1024L * 1024L * 512L)) // 512MB default
@@ -1516,6 +1544,42 @@ class AppSettings private constructor(context: Context) {
     fun setStopPlaybackOnAppClose(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_STOP_PLAYBACK_ON_APP_CLOSE, enabled).apply()
         _stopPlaybackOnAppClose.value = enabled
+    }
+    
+    // Queue Persistence Methods
+    fun setQueuePersistenceEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_QUEUE_PERSISTENCE_ENABLED, enabled).apply()
+        _queuePersistenceEnabled.value = enabled
+        
+        // Clear saved queue if persistence is disabled
+        if (!enabled) {
+            clearSavedQueue()
+        }
+    }
+    
+    fun setSavedQueue(songIds: List<String>) {
+        val json = Gson().toJson(songIds)
+        prefs.edit().putString(KEY_SAVED_QUEUE, json).apply()
+        _savedQueue.value = songIds
+    }
+    
+    fun setSavedQueueIndex(index: Int) {
+        prefs.edit().putInt(KEY_SAVED_QUEUE_INDEX, index).apply()
+        _savedQueueIndex.value = index
+    }
+    
+    fun setSavedPlaybackPosition(position: Long) {
+        prefs.edit().putLong(KEY_SAVED_PLAYBACK_POSITION, position).apply()
+        _savedPlaybackPosition.value = position
+    }
+    
+    fun clearSavedQueue() {
+        prefs.edit().remove(KEY_SAVED_QUEUE).apply()
+        prefs.edit().remove(KEY_SAVED_QUEUE_INDEX).apply()
+        prefs.edit().remove(KEY_SAVED_PLAYBACK_POSITION).apply()
+        _savedQueue.value = emptyList()
+        _savedQueueIndex.value = -1
+        _savedPlaybackPosition.value = 0L
     }
     
     // Cache Settings Methods

@@ -781,13 +781,155 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     
     private fun initializeQueueState() {
         try {
+            // Queue will be restored after MediaController is ready
+            // Just initialize with empty state for now
             if (_currentQueue.value.songs.isEmpty()) {
-                Log.d(TAG, "Queue is empty, initializing with empty state")
+                Log.d(TAG, "Initializing queue with empty state (will restore after controller is ready)")
                 _currentQueue.value = Queue(emptyList(), -1)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error initializing queue state", e)
             _currentQueue.value = Queue(emptyList(), -1)
+        }
+    }
+    
+    /**
+     * Restore the saved queue from persistence
+     */
+    private fun restoreSavedQueue(songIds: List<String>, savedIndex: Int) {
+        viewModelScope.launch {
+            try {
+                // Map saved song IDs to actual song objects
+                val allSongs = _songs.value
+                val restoredSongs = songIds.mapNotNull { songId ->
+                    allSongs.find { it.id == songId }
+                }
+                
+                // Remove songs that no longer exist from the queue
+                if (restoredSongs.size != songIds.size) {
+                    val missingCount = songIds.size - restoredSongs.size
+                    Log.w(TAG, "Queue restoration: $missingCount song(s) no longer available and were removed from queue")
+                }
+                
+                if (restoredSongs.isNotEmpty()) {
+                    // Validate the saved index
+                    val validIndex = savedIndex.coerceIn(0, restoredSongs.size - 1)
+                    val savedPosition = appSettings.savedPlaybackPosition.value
+                    
+                    Log.d(TAG, "Successfully restored queue with ${restoredSongs.size} songs at index $validIndex, position: ${savedPosition}ms")
+                    
+                    // Restore the queue to MediaController
+                    withContext(Dispatchers.Main) {
+                        mediaController?.let { controller ->
+                            // Clear existing queue
+                            controller.clearMediaItems()
+                            
+                            // Add all restored songs to MediaController
+                            val mediaItems = restoredSongs.map { song -> song.toMediaItem() }
+                            controller.addMediaItems(mediaItems)
+                            
+                            // Prepare the player first
+                            controller.prepare()
+                            
+                            // Set the queue in view model
+                            _currentQueue.value = Queue(restoredSongs, validIndex)
+                            
+                            // Seek to the saved position in the queue
+                            controller.seekTo(validIndex, savedPosition)
+                            
+                            // Update current song and UI state
+                            val currentSong = restoredSongs.getOrNull(validIndex)
+                            _currentSong.value = currentSong
+                            _isFavorite.value = currentSong?.let { song -> 
+                                _favoriteSongs.value.contains(song.id) 
+                            } ?: false
+                            
+                            // Update progress immediately to reflect restored position
+                            controller.seekTo(savedPosition)
+                            if (controller.duration > 0) {
+                                _progress.value = savedPosition.toFloat() / controller.duration.toFloat()
+                            }
+                            
+                            Log.d(TAG, "Queue restored successfully, ready to continue playback from ${savedPosition}ms")
+                        } ?: run {
+                            Log.w(TAG, "MediaController not available yet, queue will be restored when controller is ready")
+                            // Store for later restoration when controller becomes available
+                            _currentQueue.value = Queue(restoredSongs, validIndex)
+                        }
+                    }
+                } else {
+                    Log.w(TAG, "No valid songs found in saved queue, starting with empty queue")
+                    _currentQueue.value = Queue(emptyList(), -1)
+                    appSettings.clearSavedQueue()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error restoring saved queue", e)
+                _currentQueue.value = Queue(emptyList(), -1)
+            }
+        }
+    }
+    
+    /**
+     * Restore queue after MediaController is ready
+     * Called from connectToMediaService() after controller is initialized
+     */
+    private fun restoreQueueAfterControllerReady() {
+        try {
+            // Check if queue persistence is enabled
+            if (!appSettings.queuePersistenceEnabled.value) {
+                Log.d(TAG, "Queue persistence is disabled, skipping restoration")
+                return
+            }
+            
+            // Check if we already have a queue (might have been restored elsewhere)
+            if (_currentQueue.value.songs.isNotEmpty()) {
+                Log.d(TAG, "Queue already populated, skipping restoration")
+                return
+            }
+            
+            // Try to restore saved queue from persistence
+            val savedQueueIds = appSettings.savedQueue.value
+            val savedIndex = appSettings.savedQueueIndex.value
+            
+            if (savedQueueIds.isNotEmpty() && savedIndex >= 0) {
+                Log.d(TAG, "Restoring saved queue after controller ready: ${savedQueueIds.size} songs, index: $savedIndex")
+                restoreSavedQueue(savedQueueIds, savedIndex)
+            } else {
+                Log.d(TAG, "No saved queue to restore")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in restoreQueueAfterControllerReady", e)
+        }
+    }
+    
+    /**
+     * Save the current queue to persistence
+     */
+    private fun saveQueueToPersistence() {
+        try {
+            // Check if queue persistence is enabled
+            if (!appSettings.queuePersistenceEnabled.value) {
+                return
+            }
+            
+            val currentQueue = _currentQueue.value
+            if (currentQueue.songs.isNotEmpty()) {
+                val songIds = currentQueue.songs.map { it.id }
+                appSettings.setSavedQueue(songIds)
+                appSettings.setSavedQueueIndex(currentQueue.currentIndex)
+                
+                // Save current playback position
+                val currentPosition = mediaController?.currentPosition ?: 0L
+                appSettings.setSavedPlaybackPosition(currentPosition)
+                
+                Log.d(TAG, "Saved queue: ${songIds.size} songs, index: ${currentQueue.currentIndex}, position: ${currentPosition}ms")
+            } else {
+                // Clear saved queue if current queue is empty
+                appSettings.clearSavedQueue()
+                Log.d(TAG, "Cleared saved queue (current queue is empty)")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error saving queue to persistence", e)
         }
     }
     
@@ -1684,6 +1826,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 // Check if we have a current song after initializing controller
                 updateCurrentSong()
                 
+                // Restore queue if persistence is enabled and queue exists
+                restoreQueueAfterControllerReady()
+                
                 // Debug the queue state after initialization
                 debugQueueState()
                 
@@ -1794,6 +1939,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                         // Only update if the index actually changed
                         Log.d(TAG, "Updating queue index from ${currentQueue.currentIndex} to $newIndex")
                         _currentQueue.value = currentQueue.copy(currentIndex = newIndex)
+                        
+                        // Save queue to persistence when position changes
+                        saveQueueToPersistence()
                     } else if (newIndex == -1) {
                         // Song not found in current queue - sync with MediaController
                         Log.d(TAG, "Song not in queue, syncing queue from MediaController for: ${song.title}")
@@ -1808,6 +1956,10 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                             if (mediaItemSongs.isNotEmpty()) {
                                 val currentMediaIndex = controller.currentMediaItemIndex
                                 _currentQueue.value = Queue(mediaItemSongs, currentMediaIndex.coerceAtLeast(0))
+                                
+                                // Save queue after sync
+                                saveQueueToPersistence()
+                                
                                 Log.d(TAG, "Synced queue with MediaController: ${mediaItemSongs.size} songs, index: $currentMediaIndex")
                             }
                         }
@@ -2536,6 +2688,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                         
                         // Set the queue in the view model with the correct starting index
                         _currentQueue.value = Queue(songs, validStartIndex)
+                        
+                        // Save queue to persistence
+                        saveQueueToPersistence()
                         
                         // Start playback from the specified index
                         controller.seekToDefaultPosition(validStartIndex)
@@ -4139,6 +4294,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 
                 _currentQueue.value = Queue(currentQueueSongs, currentIndex)
                 
+                // Save queue to persistence
+                saveQueueToPersistence()
+                
                 Log.d(TAG, "Successfully added '${song.title}' to queue. Queue now has ${currentQueueSongs.size} songs, current index: $currentIndex")
                 
                 Log.d(TAG, "Successfully added '${song.title}'. Queue now has ${currentQueueSongs.size} songs, current index: $currentIndex")
@@ -4272,6 +4430,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 
                 _currentQueue.value = Queue(updatedSongs, newIndex)
                 
+                // Save queue to persistence
+                saveQueueToPersistence()
+                
                 Log.d(TAG, "Successfully removed '${song.title}'. Queue now has ${updatedSongs.size} songs, current index: $newIndex")
                 
                 // Verify sync with MediaController
@@ -4341,6 +4502,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             
             // Update local state optimistically
             _currentQueue.value = Queue(songs, newCurrentIndex)
+            
+            // Save queue to persistence
+            saveQueueToPersistence()
             
             // Also move it in the MediaController with proper error handling
             mediaController?.let { controller ->
@@ -4444,6 +4608,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                     
                     _currentQueue.value = Queue(currentQueueSongs, currentIndex)
                     
+                    // Save queue to persistence
+                    saveQueueToPersistence()
+                    
                     Log.d(TAG, "Successfully added ${songs.size} songs. Queue now has ${currentQueueSongs.size} songs, current index: $currentIndex")
                     
                     // Verify sync
@@ -4510,6 +4677,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 
                 _currentQueue.value = Queue(newQueue, if (newQueue.isNotEmpty()) 0 else -1)
+                
+                // Save queue to persistence
+                saveQueueToPersistence()
                 
                 Log.d(TAG, "Successfully cleared queue. Kept current song: ${currentSong?.title}")
             } catch (e: Exception) {
@@ -5614,6 +5784,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     override fun onCleared() {
         super.onCleared()
         Log.d(TAG, "ViewModel clearing, cleaning up resources")
+        
+        // Save current queue state before cleanup
+        saveQueueToPersistence()
         
         // Finalize any ongoing playback tracking before cleanup
         finalizePlaybackTracking()
