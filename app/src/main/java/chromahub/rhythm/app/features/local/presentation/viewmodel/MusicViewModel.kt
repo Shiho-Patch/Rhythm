@@ -155,6 +155,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     // Scan job for cancellation support
     private var scanJob: Job? = null
 
+    // Playback session tracking for accurate stats
+    private var currentPlaybackStartTime: Long = 0L
+    private var currentPlaybackAccumulatedTime: Long = 0L
+    private var currentPlaybackSongId: String? = null
+    private var isCurrentlyPlaying: Boolean = false
+
     // Main music data
     private val _songs = MutableStateFlow<List<Song>>(emptyList())
     val songs: StateFlow<List<Song>> = _songs.asStateFlow()
@@ -1757,6 +1763,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             Log.d(TAG, "Media item transition: ${mediaItem?.mediaId}, reason: $reason")
             
+            // Finalize stats for the previous song before switching
+            finalizePlaybackTracking()
+            
             // Reset progress to 0 for immediate UI feedback
             _progress.value = 0f
             
@@ -1767,6 +1776,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 
                 if (song != null) {
                     _currentSong.value = song
+                    
+                    // Start tracking the new song
+                    startPlaybackTracking(songId)
                     
                     // Update recently played
                     updateRecentlyPlayed(song)
@@ -1824,10 +1836,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 _isPlaying.value = isPlaying
             }
             
-            // Start or stop progress updates based on playback state
+            // Track play/pause for accurate stats
             if (isPlaying) {
+                resumePlaybackTracking()
                 startProgressUpdates()
             } else {
+                pausePlaybackTracking()
                 progressUpdateJob?.cancel()
             }
         }
@@ -1964,7 +1978,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             
             // Track song play for statistics
             updateRecentlyPlayed(song)
-            trackSongPlay(song)
+            updateListeningStats(song)
         }
     }
 
@@ -1978,7 +1992,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         _currentLyrics.value = null
 
         updateRecentlyPlayed(song)
-        trackSongPlay(song)
+        updateListeningStats(song)
 
         val shouldClearQueue = clearQueueOnNewSong.value
         val shouldAutoAddToQueue = autoAddToQueue.value
@@ -2192,6 +2206,89 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         addSongsToQueue(songsToAdd)
     }
 
+    /**
+     * Calculate actual playback time for the current song
+     * Returns the accumulated listening time in milliseconds
+     */
+    private fun calculateActualPlaybackTime(): Long {
+        if (!isCurrentlyPlaying || currentPlaybackStartTime == 0L) {
+            return currentPlaybackAccumulatedTime
+        }
+        
+        // Add time since last play started
+        val currentTime = System.currentTimeMillis()
+        val additionalTime = currentTime - currentPlaybackStartTime
+        return currentPlaybackAccumulatedTime + additionalTime
+    }
+    
+    /**
+     * Start tracking playback time for a new song
+     */
+    private fun startPlaybackTracking(songId: String) {
+        val now = System.currentTimeMillis()
+        currentPlaybackSongId = songId
+        currentPlaybackStartTime = now
+        currentPlaybackAccumulatedTime = 0L
+        isCurrentlyPlaying = true
+        Log.d(TAG, "Started playback tracking for song: $songId at $now")
+    }
+    
+    /**
+     * Resume playback tracking (after pause)
+     */
+    private fun resumePlaybackTracking() {
+        if (currentPlaybackSongId != null && !isCurrentlyPlaying) {
+            currentPlaybackStartTime = System.currentTimeMillis()
+            isCurrentlyPlaying = true
+            Log.d(TAG, "Resumed playback tracking at ${currentPlaybackStartTime}")
+        }
+    }
+    
+    /**
+     * Pause playback tracking
+     */
+    private fun pausePlaybackTracking() {
+        if (isCurrentlyPlaying && currentPlaybackStartTime > 0) {
+            val now = System.currentTimeMillis()
+            val sessionDuration = now - currentPlaybackStartTime
+            currentPlaybackAccumulatedTime += sessionDuration
+            isCurrentlyPlaying = false
+            Log.d(TAG, "Paused playback tracking. Session duration: ${sessionDuration}ms, Total accumulated: ${currentPlaybackAccumulatedTime}ms")
+        }
+    }
+    
+    /**
+     * Finalize playback tracking and record stats for the previous song
+     */
+    private fun finalizePlaybackTracking() {
+        val songId = currentPlaybackSongId
+        if (songId != null) {
+            val actualDuration = calculateActualPlaybackTime()
+            
+            // Only record if meaningful playback occurred (more than 3 seconds)
+            if (actualDuration >= 3000) {
+                val song = _songs.value.find { it.id == songId }
+                if (song != null) {
+                    Log.d(TAG, "Finalizing playback for '${song.title}': ${actualDuration}ms actual listening time")
+                    playbackStatsRepository.recordPlayback(
+                        song = song,
+                        durationMs = actualDuration
+                    )
+                } else {
+                    Log.d(TAG, "Song not found for finalization: $songId")
+                }
+            } else {
+                Log.d(TAG, "Skipping playback record for short duration: ${actualDuration}ms")
+            }
+            
+            // Reset tracking
+            currentPlaybackSongId = null
+            currentPlaybackStartTime = 0L
+            currentPlaybackAccumulatedTime = 0L
+            isCurrentlyPlaying = false
+        }
+    }
+
     private fun updateRecentlyPlayed(song: Song) {
         viewModelScope.launch {
             try {
@@ -2210,7 +2307,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 // Log the update
                 Log.d(TAG, "Updated recently played: ${currentList.size} songs, latest: ${song.title}")
                 
-                // Update other stats
+                // Update various stats (but not playback time stats - those are tracked separately now)
+                updateDailyStats(song)
                 updateListeningStats(song)
             } catch (e: Exception) {
                 Log.e(TAG, "Error updating recently played", e)
@@ -2271,7 +2369,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun updateListeningStats(song: Song) {
+    private fun updateDailyStats(song: Song) {
         viewModelScope.launch {
             try {
                 // Update daily listening stats
@@ -2451,7 +2549,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                         // Add starting song to recently played and track play
                         startingSong?.let { 
                             updateRecentlyPlayed(it)
-                            trackSongPlay(it)
+                            updateListeningStats(it)
                         }
                         
                         // Update favorite status
@@ -4726,7 +4824,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // Enhanced play tracking with user preferences
-    private fun trackSongPlay(song: Song) {
+    private fun updateListeningStats(song: Song) {
         viewModelScope.launch {
             // Update songs played count
             val newCount = _songsPlayed.value + 1
@@ -4766,11 +4864,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             _timeBasedPreferences.value = currentTimePrefs
             appSettings.setTimeBasedPreferences(currentTimePrefs)
             
-            // Record to enhanced playback stats repository (for detailed history)
-            playbackStatsRepository.recordPlayback(
-                song = song,
-                durationMs = song.duration
-            )
+            // Note: Actual playback time recording is now handled by the playback tracking system
+            // in onMediaItemTransition and onIsPlayingChanged listeners
         }
     }
 
@@ -5519,6 +5614,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     override fun onCleared() {
         super.onCleared()
         Log.d(TAG, "ViewModel clearing, cleaning up resources")
+        
+        // Finalize any ongoing playback tracking before cleanup
+        finalizePlaybackTracking()
         
         // Unregister ContentObserver
         repository.unregisterMediaStoreObserver()
