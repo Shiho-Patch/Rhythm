@@ -45,12 +45,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.yield
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.time.Duration
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -63,6 +66,9 @@ import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository // Im
 class MusicViewModel(application: Application) : AndroidViewModel(application) {
     private val TAG = "MusicViewModel"
     private val repository = MusicRepository(application)
+    
+    // Track if MediaStore observer is registered to prevent duplicates
+    private var isMediaStoreObserverRegistered = false
     
     // Playback stats repository for enhanced tracking
     private val playbackStatsRepository = PlaybackStatsRepository.getInstance(application)
@@ -144,6 +150,12 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     // Track lyrics adjustment offset
     private val _lyricsTimeOffset = MutableStateFlow(0)
     val lyricsTimeOffset: StateFlow<Int> = _lyricsTimeOffset.asStateFlow()
+    
+    // Mutex to prevent concurrent library refreshes (prevents race conditions)
+    private val refreshMutex = Mutex()
+    
+    // Mutex to prevent concurrent playlist save operations
+    private val playlistSaveMutex = Mutex()
 
     // New helper methods
     private val _serviceConnected = MutableStateFlow(false)
@@ -494,6 +506,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     // Artwork fetching state
     private val _isFetchingArtwork = MutableStateFlow(false)
     val isFetchingArtwork: StateFlow<Boolean> = _isFetchingArtwork.asStateFlow()
+    // hasArtworkFetchAttempted moved to companion object
     
     // Audio metadata extraction state
     private val _isExtractingMetadata = MutableStateFlow(false)
@@ -591,11 +604,20 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     enum class SleepAction {
         PAUSE, STOP, FADE_OUT
     }
+    
+    // hasInitializationStarted moved to companion object
 
     init {
         Log.d(TAG, "Initializing MusicViewModel")
         
         viewModelScope.launch {
+            // Prevent multiple initializations if ViewModel is recreated
+            if (hasInitializationStarted) {
+                Log.d(TAG, "Initialization already started, skipping duplicate init")
+                return@launch
+            }
+            hasInitializationStarted = true
+            
             try {
                 initializeViewModelSafely()
             } catch (e: Exception) {
@@ -682,21 +704,130 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     
     private suspend fun initializeCoreData(): InitializationResult {
         return try {
-            val songs = repository.loadSongs(
-                allowedFormats = allowedFormats.value,
-                minimumBitrate = minimumBitrate.value,
-                minimumDuration = minimumDuration.value
-            )
-            val albums = repository.loadAlbums()
-            val artists = repository.loadArtists()
+            val context = getApplication<Application>().applicationContext
+            val db = chromahub.rhythm.app.features.local.data.db.MusicLibraryDatabase.getInstance(context)
             
-            if (songs.isEmpty() && albums.isEmpty() && artists.isEmpty()) {
-                Log.w(TAG, "No media found, but this might be normal on first run")
+            // Step 1: Try to load from Room database first (fastest, with favorite/play count data)
+            try {
+                val dbStats = withContext(Dispatchers.IO) {
+                    chromahub.rhythm.app.features.local.data.db.MusicLibraryDatabase.getDatabaseStats(context)
+                }
+                
+                if (dbStats.songCount > 0) {
+                    Log.d(TAG, "Loading library from Room database: ${dbStats.songCount} songs")
+                    
+                    // Load all data from database on IO thread
+                    val (songs, albums, artists, favoriteSongIds, songPlayCounts) = withContext(Dispatchers.IO) {
+                        // Load songs from database with their metadata
+                        val songEntities = db.songDao().getAllSongs()
+                        
+                        // Extract favorites and play counts efficiently (no extra queries!)
+                        val favoriteSongIds = mutableSetOf<String>()
+                        val songPlayCounts = mutableMapOf<String, Int>()
+                        
+                        val songs = songEntities.map { entity ->
+                            if (entity.isFavorite) {
+                                favoriteSongIds.add(entity.id)
+                            }
+                            if (entity.playCount > 0) {
+                                songPlayCounts[entity.id] = entity.playCount
+                            }
+                            entity.toSong()
+                        }
+                        
+                        // Load albums and artists from database
+                        val albumEntities = db.albumDao().getAllAlbums()
+                        val albums = albumEntities.map { entity ->
+                            entity.toAlbum()
+                        }
+                        
+                        val artistEntities = db.artistDao().getAllArtists()
+                        val artists = artistEntities.map { entity ->
+                            entity.toArtist()
+                        }
+                        
+                        Quintuple(songs, albums, artists, favoriteSongIds, songPlayCounts)
+                    }
+                    
+                    // Update UI state on main thread - all at once
+                    _songs.value = songs
+                    _albums.value = albums
+                    _artists.value = artists
+                    _favoriteSongs.value = favoriteSongIds
+                    _songPlayCounts.value = songPlayCounts
+                    
+                    Log.d(TAG, "Successfully loaded library from Room database")
+                    
+                    // MediaStore observer will be registered later in startBackgroundTasks()
+                    // Don't register it here to avoid duplicates
+                    
+                    return InitializationResult(true)
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Error loading from Room database, trying JSON cache", e)
             }
             
-            _songs.value = songs
-            _albums.value = albums
-            _artists.value = artists
+            // Step 2: Try to load from JSON cache
+            val cachedLibrary = withContext(Dispatchers.IO) {
+                chromahub.rhythm.app.features.local.data.cache.LibraryCache.loadLibrary(context)
+            }
+            
+            if (cachedLibrary != null) {
+                val (cachedSongs, cachedAlbums, cachedArtists) = cachedLibrary
+                Log.d(TAG, "Loaded library from JSON cache: ${cachedSongs.size} songs")
+                
+                // Immediately populate UI with cached data
+                _songs.value = cachedSongs
+                _albums.value = cachedAlbums
+                _artists.value = cachedArtists
+                
+                // Sync to Room database in background (without MediaStore scan)
+                viewModelScope.launch(Dispatchers.IO) {
+                    try {
+                        syncLibraryToDatabase()
+                        Log.d(TAG, "Synced JSON cache to Room database")
+                        
+                        // MediaStore observer will be registered in startBackgroundTasks()
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error syncing to Room database", e)
+                    }
+                }
+            } else {
+                // Step 3: No cache available, load from MediaStore (first run scenario)
+                Log.d(TAG, "No cache available, loading library from MediaStore...")
+                val songs = repository.loadSongs(
+                    allowedFormats = allowedFormats.value,
+                    minimumBitrate = minimumBitrate.value,
+                    minimumDuration = minimumDuration.value
+                )
+                val albums = repository.loadAlbums()
+                val artists = repository.loadArtists()
+                
+                if (songs.isEmpty() && albums.isEmpty() && artists.isEmpty()) {
+                    Log.w(TAG, "No media found, but this might be normal on first run")
+                }
+                
+                _songs.value = songs
+                _albums.value = albums
+                _artists.value = artists
+                
+                // Save to both JSON cache and Room database
+                withContext(Dispatchers.IO) {
+                    chromahub.rhythm.app.features.local.data.cache.LibraryCache.saveLibrary(
+                        context, songs, albums, artists
+                    )
+                }
+                
+                // Sync to Room database in background
+                viewModelScope.launch(Dispatchers.IO) {
+                    try {
+                        syncLibraryToDatabase()
+                        Log.d(TAG, "Initial library synced to Room database")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error syncing initial library to Room database", e)
+                    }
+                }
+            }
             
             InitializationResult(true)
         } catch (e: Exception) {
@@ -765,6 +896,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             Log.d(TAG, "Default playlists are disabled, skipping population")
             return
         }
+        
+        // Wait for filteredSongs to emit at least once to ensure it's properly initialized
+        // This prevents playlists from appearing empty on initial load
+        val initialFilteredSongs = filteredSongs.first()
+        Log.d(TAG, "FilteredSongs ready with ${initialFilteredSongs.size} songs, populating default playlists")
         
         try {
             populateRecentlyAddedPlaylist()
@@ -934,18 +1070,51 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     private suspend fun startBackgroundTasks() {
-        // Register ContentObserver for automatic MediaStore updates
-        repository.registerMediaStoreObserver {
-            Log.d(TAG, "MediaStore changed, scheduling incremental scan")
-            viewModelScope.launch {
-                delay(2000) // Debounce - wait for changes to settle
-                performIncrementalScan()
+        // Register ContentObserver for automatic MediaStore updates (only once)
+        if (!isMediaStoreObserverRegistered) {
+            // Debounce timestamp to prevent immediate scans on startup
+            var lastMediaStoreChange = System.currentTimeMillis()
+            
+            repository.registerMediaStoreObserver {
+                val now = System.currentTimeMillis()
+                val timeSinceLastChange = now - lastMediaStoreChange
+                
+                // Ignore changes within first 10 seconds of app startup to avoid
+                // triggering scan when Room data is already loaded
+                if (timeSinceLastChange < 10000) {
+                    Log.d(TAG, "MediaStore changed but ignoring (within startup window: ${timeSinceLastChange}ms)")
+                    return@registerMediaStoreObserver
+                }
+                
+                lastMediaStoreChange = now
+                Log.d(TAG, "MediaStore changed, scheduling incremental scan")
+                viewModelScope.launch {
+                    delay(3000) // Increased debounce - wait for changes to settle
+                    performIncrementalScan()
+                }
             }
+            isMediaStoreObserverRegistered = true
+            Log.d(TAG, "MediaStore observer registered")
+        } else {
+            Log.d(TAG, "MediaStore observer already registered, skipping")
         }
         
         // Start artwork fetching in background without blocking initialization
         viewModelScope.launch {
             try {
+                // Prevent multiple simultaneous artwork fetches
+                if (_isFetchingArtwork.value) {
+                    Log.d(TAG, "Artwork fetching already in progress, skipping duplicate start")
+                    return@launch
+                }
+                
+                // Skip if already attempted (unless user manually requests refresh)
+                if (hasArtworkFetchAttempted) {
+                    Log.d(TAG, "Artwork fetching already attempted this session, skipping")
+                    return@launch
+                }
+                
+                hasArtworkFetchAttempted = true
                 _isFetchingArtwork.value = true
                 fetchArtworkFromInternet()
             } catch (e: Exception) {
@@ -960,18 +1129,23 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 delay(2000) // Wait 2 seconds after app load before starting genre detection
                 
-                // Check if songs actually have genres, not just if detection completed before
-                val songsWithGenres = songs.value.count { 
-                    !it.genre.isNullOrBlank() && it.genre.lowercase() != "unknown" 
+                // Prevent starting if already running or completed
+                if (_isGenreDetectionRunning.value) {
+                    Log.d(TAG, "Genre detection already running, skipping duplicate start")
+                    return@launch
                 }
-                val hasGenresInSongs = songsWithGenres > 0
                 
-                if (!appSettings.genreDetectionCompleted.value || !hasGenresInSongs) {
-                    // Run detection if never completed OR if songs don't have genres
-                    Log.d(TAG, "Starting genre detection (completed: ${appSettings.genreDetectionCompleted.value}, songsWithGenres: $songsWithGenres/${songs.value.size})")
+                if (_isGenreDetectionComplete.value) {
+                    Log.d(TAG, "Genre detection already completed, skipping")
+                    return@launch
+                }
+                
+                // Only start if not already completed
+                if (!appSettings.genreDetectionCompleted.value) {
+                    Log.d(TAG, "Starting genre detection for ${songs.value.size} songs")
                     detectGenresInBackground()
                 } else {
-                    Log.d(TAG, "Genre detection already completed and songs have genres ($songsWithGenres/${songs.value.size}), skipping")
+                    Log.d(TAG, "Genre detection already completed (from settings), skipping")
                     _isGenreDetectionComplete.value = true
                 }
             } catch (e: Exception) {
@@ -985,21 +1159,48 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             try {
                 delay(3000) // Wait 3 seconds after app load before starting metadata extraction
+                
+                // Prevent starting if already running (use static flag for cross-instance protection)
+                synchronized(MusicViewModel::class.java) {
+                    if (isMetadataExtractionRunning) {
+                        Log.d(TAG, "Metadata extraction already running (another instance), skipping")
+                        return@launch
+                    }
+                    isMetadataExtractionRunning = true
+                }
+                
                 _isExtractingMetadata.value = true
                 extractAudioMetadataInBackground()
             } catch (e: Exception) {
                 Log.e(TAG, "Error starting background audio metadata extraction", e)
             } finally {
                 _isExtractingMetadata.value = false
+                synchronized(MusicViewModel::class.java) {
+                    isMetadataExtractionRunning = false
+                }
             }
         }
     }
+    
+    // Track the last incremental scan to prevent rapid successive scans
+    private var lastIncrementalScanTime = 0L
+    private val INCREMENTAL_SCAN_COOLDOWN = 30000L // 30 seconds between scans
     
     /**
      * Perform incremental scan for newly added songs
      */
     private suspend fun performIncrementalScan() {
+        // Prevent rapid successive scans
+        val now = System.currentTimeMillis()
+        val timeSinceLastScan = now - lastIncrementalScanTime
+        
+        if (timeSinceLastScan < INCREMENTAL_SCAN_COOLDOWN) {
+            Log.d(TAG, "Skipping incremental scan (cooldown period, ${timeSinceLastScan}ms since last scan)")
+            return
+        }
+        
         Log.d(TAG, "Performing incremental scan...")
+        lastIncrementalScanTime = now
         val lastScanTime = appSettings.lastScanTimestamp.value
         
         try {
@@ -1017,6 +1218,16 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 
                 // Update last scan time
                 appSettings.setLastScanTimestamp(System.currentTimeMillis())
+                
+                // Auto-sync incremental changes to Room database
+                viewModelScope.launch(Dispatchers.IO) {
+                    try {
+                        syncLibraryToDatabase()
+                        Log.d(TAG, "Auto-synced incremental changes to Room database")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error auto-syncing incremental changes", e)
+                    }
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error during incremental scan", e)
@@ -1173,22 +1384,52 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 
                 // Note: Genre detection is handled by the initial load, no need to restart here
                 
-                // Restart background audio metadata extraction
+                // Restart background audio metadata extraction (manual refresh allows restart)
                 launch {
                     try {
                         delay(3000) // Wait 3 seconds before starting metadata extraction
+                        
+                        // For manual refresh, we allow restarting even if already running
+                        // but still check to avoid duplicates from multiple refresh calls
+                        synchronized(MusicViewModel::class.java) {
+                            if (isMetadataExtractionRunning) {
+                                Log.d(TAG, "Metadata extraction already running, skipping restart")
+                                return@launch
+                            }
+                            isMetadataExtractionRunning = true
+                        }
+                        
                         _isExtractingMetadata.value = true
                         extractAudioMetadataInBackground()
                     } catch (e: Exception) {
                         Log.e(TAG, "Error restarting background audio metadata extraction", e)
                     } finally {
                         _isExtractingMetadata.value = false
+                        synchronized(MusicViewModel::class.java) {
+                            isMetadataExtractionRunning = false
+                        }
                     }
                 }
 
                 val duration = System.currentTimeMillis() - startTime
                 appSettings.setLastScanTimestamp(System.currentTimeMillis())
                 appSettings.setLastScanDuration(duration)
+                
+                // Save refreshed library to persistent caches (both JSON and Room)
+                val context = getApplication<Application>().applicationContext
+                chromahub.rhythm.app.features.local.data.cache.LibraryCache.saveLibrary(
+                    context, _songs.value, _albums.value, _artists.value
+                )
+                
+                // Auto-sync to Room database after successful scan
+                launch(Dispatchers.IO) {
+                    try {
+                        syncLibraryToDatabase()
+                        Log.d(TAG, "Auto-synced library to Room database after refresh")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error auto-syncing to Room database", e)
+                    }
+                }
                 
                 Log.d(TAG, "Library refresh complete. Loaded ${_songs.value.size} songs, ${_albums.value.size} albums, ${_artists.value.size} artists in ${duration}ms")
             } catch (e: kotlinx.coroutines.CancellationException) {
@@ -1562,9 +1803,62 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
-    private fun loadSavedPlaylists() {
+    private suspend fun loadSavedPlaylists() {
         try {
-            // Load playlists
+            val context = getApplication<Application>().applicationContext
+            val db = chromahub.rhythm.app.features.local.data.db.MusicLibraryDatabase.getInstance(context)
+            
+            // Load playlists from Room database on IO thread
+            withContext(Dispatchers.IO) {
+                try {
+                    val playlistEntities = db.playlistDao().getAllPlaylists()
+                    if (playlistEntities.isNotEmpty()) {
+                        // Convert entities to playlists with songs
+                        // Note: _songs.value should already be populated by initializeCoreData
+                        val playlists = playlistEntities.map { entity ->
+                            val songIds = entity.getSongIdsList()
+                            val songs = _songs.value.filter { song -> songIds.contains(song.id) }
+                            entity.toPlaylist(songs)
+                        }
+                        
+                        // Update playlists on main thread
+                        _playlists.value = playlists
+                        Log.d(TAG, "Loaded ${playlists.size} playlists from Room database")
+                        
+                        // Favorite songs already loaded in initializeCoreData, just load ratings
+                        _songRatings.value = appSettings.getAllRatedSongs()
+                        Log.d(TAG, "Loaded ${_songRatings.value.size} song ratings")
+                        return@withContext
+                    } else {
+                        Log.d(TAG, "No playlists in Room database, initializing defaults and checking SharedPreferences")
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Error loading playlists from Room database, falling back to SharedPreferences", e)
+                }
+                
+                // Fallback to SharedPreferences if Room is empty or fails
+                loadPlaylistsFromPreferences()
+                
+                // Save the loaded/initialized playlists to Room database
+                try {
+                    val playlistEntities = _playlists.value.map { playlist ->
+                        chromahub.rhythm.app.features.local.data.db.entity.PlaylistEntity.fromPlaylist(playlist)
+                    }
+                    db.playlistDao().insertPlaylists(playlistEntities)
+                    Log.d(TAG, "Initialized ${_playlists.value.size} playlists in Room database")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error saving initial playlists to Room database", e)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error loading saved playlists", e)
+            loadPlaylistsFromPreferences()
+        }
+    }
+    
+    private fun loadPlaylistsFromPreferences() {
+        try {
+            // Load playlists from SharedPreferences
             val playlistsJson = appSettings.playlists.value
             val playlists = if (playlistsJson != null) {
                 val type = object : TypeToken<List<Playlist>>() {}.type
@@ -1596,9 +1890,9 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             
             // Load song ratings
             _songRatings.value = appSettings.getAllRatedSongs()
-            Log.d(TAG, "Loaded ${_songRatings.value.size} song ratings")
+            Log.d(TAG, "Loaded ${_songRatings.value.size} song ratings from SharedPreferences")
         } catch (e: Exception) {
-            Log.e(TAG, "Error loading saved playlists", e)
+            Log.e(TAG, "Error loading playlists from SharedPreferences", e)
             // Initialize with default playlists on error based on setting
             val defaultPlaylistsEnabled = appSettings.defaultPlaylistsEnabled.value
             _playlists.value = if (defaultPlaylistsEnabled) {
@@ -1617,19 +1911,59 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun savePlaylists() {
-        try {
-            val playlistsJson = GsonUtils.gson.toJson(_playlists.value)
-            appSettings.setPlaylists(playlistsJson)
-            Log.d(TAG, "Saved ${_playlists.value.size} playlists")
-        } catch (e: Exception) {
-            Log.e(TAG, "Error saving playlists", e)
+        viewModelScope.launch(Dispatchers.IO) {
+            playlistSaveMutex.withLock {
+                try {
+                    val playlistsToSave = _playlists.value
+                    
+                    // Save to SharedPreferences for backward compatibility
+                    val playlistsJson = GsonUtils.gson.toJson(playlistsToSave)
+                    appSettings.setPlaylists(playlistsJson)
+                    
+                    // Also save to Room database
+                    try {
+                        val context = getApplication<Application>().applicationContext
+                        val db = chromahub.rhythm.app.features.local.data.db.MusicLibraryDatabase.getInstance(context)
+                        val playlistEntities = playlistsToSave.map { playlist ->
+                            chromahub.rhythm.app.features.local.data.db.entity.PlaylistEntity.fromPlaylist(playlist)
+                        }
+                        db.playlistDao().insertPlaylists(playlistEntities)
+                        Log.d(TAG, "Saved ${playlistsToSave.size} playlists to both storage systems")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error saving playlists to Room database", e)
+                        // Room failed but SharedPreferences succeeded - log but don't throw
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error saving playlists", e)
+                }
+            }
         }
     }
 
     private fun saveFavoriteSongs() {
         try {
+            // Save to SharedPreferences for backward compatibility
             val favoriteSongsJson = GsonUtils.gson.toJson(_favoriteSongs.value)
             appSettings.setFavoriteSongs(favoriteSongsJson)
+            
+            // Also update favorite status in Room database
+            viewModelScope.launch(Dispatchers.IO) {
+                try {
+                    val context = getApplication<Application>().applicationContext
+                    val db = chromahub.rhythm.app.features.local.data.db.MusicLibraryDatabase.getInstance(context)
+                    
+                    // Update favorite status for all songs
+                    _songs.value.forEach { song ->
+                        val isFavorite = _favoriteSongs.value.contains(song.id)
+                        db.songDao().updateFavoriteStatus(song.id, isFavorite)
+                    }
+                    
+                    Log.d(TAG, "Updated favorite status in Room database for ${_favoriteSongs.value.size} songs")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error updating favorite status in Room database", e)
+                }
+            }
+            
             Log.d(TAG, "Saved ${_favoriteSongs.value.size} favorite songs")
         } catch (e: Exception) {
             Log.e(TAG, "Error saving favorite songs", e)
@@ -1642,6 +1976,17 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     private fun fetchArtworkFromInternet() {
         viewModelScope.launch {
             try {
+                // Check network connectivity before attempting to fetch artwork
+                val context = getApplication<Application>().applicationContext
+                val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+                val activeNetwork = connectivityManager.activeNetworkInfo
+                val isConnected = activeNetwork?.isConnectedOrConnecting == true
+                
+                if (!isConnected) {
+                    Log.d(TAG, "No network connection available, skipping artwork fetch")
+                    return@launch
+                }
+                
                 Log.d(TAG, "Fetching artist images from internet")
                 val missingArtists = _artists.value.filter { it.artworkUri == null }
                 Log.d(TAG, "Found ${missingArtists.size} artists without images out of ${_artists.value.size} total artists")
@@ -3333,10 +3678,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                     _albums.value.sortedByDescending { it.year }.take(4)
                 }
 
+            // Use album.songs which are already loaded from Room database
+            // This avoids triggering a MediaStore scan via repository.getSongsForAlbumLocal
             val songsToAdd = mutableSetOf<Song>()
             currentYearAlbums.forEach { album ->
-                val albumSongs = repository.getSongsForAlbumLocal(album.id)
-                songsToAdd.addAll(albumSongs)
+                songsToAdd.addAll(album.songs)
             }
 
             // Filter songs using the same blacklist/whitelist logic as filteredSongs
@@ -3732,11 +4078,17 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                     onSuccess = { importedPlaylist ->
                         Log.d(TAG, "Successfully imported playlist from utility: ${importedPlaylist.name}")
                         
-                        // Check if playlist with same name already exists
-                        val existingPlaylist = _playlists.value.find { it.name == importedPlaylist.name }
-                        val finalPlaylist = if (existingPlaylist != null) {
-                            // Add suffix to avoid name conflict
-                            importedPlaylist.copy(name = "${importedPlaylist.name} (Imported)")
+                        // Handle name collision with intelligent counter instead of repeated (Imported) suffixes
+                        val finalPlaylist = if (_playlists.value.any { it.name == importedPlaylist.name }) {
+                            var counter = 1
+                            var newName: String
+                            do {
+                                newName = "${importedPlaylist.name} ($counter)"
+                                counter++
+                            } while (_playlists.value.any { it.name == newName })
+                            
+                            Log.d(TAG, "Playlist name collision: '${importedPlaylist.name}' renamed to '$newName'")
+                            importedPlaylist.copy(name = newName)
                         } else {
                             importedPlaylist
                         }
@@ -5765,6 +6117,136 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     
     // Sleep timer now uses direct ViewModel state management instead of broadcast receivers
     
+    /**
+     * Syncs current library data to Room database
+     */
+    suspend fun syncLibraryToDatabase() {
+        val context = getApplication<Application>().applicationContext
+        val db = chromahub.rhythm.app.features.local.data.db.MusicLibraryDatabase.getInstance(context)
+        
+        try {
+            Log.d(TAG, "Starting library sync to Room database...")
+            
+            // Check library size to determine processing strategy
+            val totalItems = _songs.value.size + _albums.value.size + _artists.value.size + _playlists.value.size
+            val LARGE_LIBRARY_THRESHOLD = 10000
+            
+            if (totalItems > LARGE_LIBRARY_THRESHOLD) {
+                Log.w(TAG, "Large library detected ($totalItems items) - using chunked processing")
+                syncLibraryToDatabase_Chunked(db)
+            } else {
+                syncLibraryToDatabase_Normal(db)
+            }
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error syncing library to Room database", e)
+            throw e
+        }
+    }
+    
+    /**
+     * Normal sync for smaller libraries - processes all at once
+     */
+    private suspend fun syncLibraryToDatabase_Normal(db: chromahub.rhythm.app.features.local.data.db.MusicLibraryDatabase) {
+        // Convert songs to entities with favorite and play count info
+        val songEntities = _songs.value.map { song ->
+            val isFavorite = _favoriteSongs.value.contains(song.id)
+            val playCount = _songPlayCounts.value[song.id] ?: 0
+            val lastPlayed = if (_recentlyPlayed.value.isNotEmpty() && _recentlyPlayed.value.first().id == song.id) {
+                System.currentTimeMillis()
+            } else {
+                0L
+            }
+            chromahub.rhythm.app.features.local.data.db.entity.SongEntity.fromSong(
+                song, isFavorite, playCount, lastPlayed
+            )
+        }
+        
+        // Convert albums to entities
+        val albumEntities = _albums.value.map { album ->
+            chromahub.rhythm.app.features.local.data.db.entity.AlbumEntity.fromAlbum(album)
+        }
+        
+        // Convert artists to entities
+        val artistEntities = _artists.value.map { artist ->
+            chromahub.rhythm.app.features.local.data.db.entity.ArtistEntity.fromArtist(artist)
+        }
+        
+        // Convert playlists to entities
+        val playlistEntities = _playlists.value.map { playlist ->
+            chromahub.rhythm.app.features.local.data.db.entity.PlaylistEntity.fromPlaylist(playlist)
+        }
+        
+        // Insert all data into database within IO context for atomicity
+        withContext(Dispatchers.IO) {
+            db.songDao().replaceAllSongs(songEntities)
+            db.albumDao().replaceAllAlbums(albumEntities)
+            db.artistDao().replaceAllArtists(artistEntities)
+            db.playlistDao().replaceAllPlaylists(playlistEntities)
+        }
+        
+        Log.d(TAG, "Successfully synced library to Room database: " +
+                  "${songEntities.size} songs, ${albumEntities.size} albums, " +
+                  "${artistEntities.size} artists, ${playlistEntities.size} playlists")
+    }
+    
+    /**
+     * Chunked sync for large libraries - processes in batches to avoid OOM
+     */
+    private suspend fun syncLibraryToDatabase_Chunked(db: chromahub.rhythm.app.features.local.data.db.MusicLibraryDatabase) = withContext(Dispatchers.IO) {
+        val CHUNK_SIZE = 500
+        
+        // Clear existing data first
+        db.songDao().deleteAllSongs()
+        db.albumDao().deleteAllAlbums()
+        db.artistDao().deleteAllArtists()
+        db.playlistDao().deleteAllPlaylists()
+        
+        // Process songs in chunks
+        _songs.value.chunked(CHUNK_SIZE).forEachIndexed { index, chunk ->
+            val songEntities = chunk.map { song ->
+                val isFavorite = _favoriteSongs.value.contains(song.id)
+                val playCount = _songPlayCounts.value[song.id] ?: 0
+                val lastPlayed = if (_recentlyPlayed.value.isNotEmpty() && _recentlyPlayed.value.first().id == song.id) {
+                    System.currentTimeMillis()
+                } else {
+                    0L
+                }
+                chromahub.rhythm.app.features.local.data.db.entity.SongEntity.fromSong(
+                    song, isFavorite, playCount, lastPlayed
+                )
+            }
+            db.songDao().insertSongs(songEntities)
+            Log.d(TAG, "Synced song chunk ${index + 1}/${(_songs.value.size + CHUNK_SIZE - 1) / CHUNK_SIZE}")
+        }
+        
+        // Process albums in chunks
+        _albums.value.chunked(CHUNK_SIZE).forEach { chunk ->
+            val albumEntities = chunk.map { album ->
+                chromahub.rhythm.app.features.local.data.db.entity.AlbumEntity.fromAlbum(album)
+            }
+            db.albumDao().insertAlbums(albumEntities)
+        }
+        
+        // Process artists in chunks
+        _artists.value.chunked(CHUNK_SIZE).forEach { chunk ->
+            val artistEntities = chunk.map { artist ->
+                chromahub.rhythm.app.features.local.data.db.entity.ArtistEntity.fromArtist(artist)
+            }
+            db.artistDao().insertArtists(artistEntities)
+        }
+        
+        // Process playlists (usually small, no need to chunk)
+        val playlistEntities = _playlists.value.map { playlist ->
+            chromahub.rhythm.app.features.local.data.db.entity.PlaylistEntity.fromPlaylist(playlist)
+        }
+        db.playlistDao().insertPlaylists(playlistEntities)
+        
+        Log.d(TAG, "Successfully synced large library using chunked processing: " +
+                  "${_songs.value.size} songs, ${_albums.value.size} albums, " +
+                  "${_artists.value.size} artists, ${_playlists.value.size} playlists")
+    }
+    
     companion object {
         // SharedPreferences keys
         private const val PREF_HIGH_QUALITY_AUDIO = "high_quality_audio"
@@ -5779,6 +6261,23 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         
         // Player control constants
         private const val REWIND_THRESHOLD_MS = 3000L // 3 seconds
+        
+        // Static flags shared across all ViewModel instances to prevent duplicate operations
+        @Volatile
+        private var hasInitializationStarted = false
+        
+        @Volatile
+        private var hasArtworkFetchAttempted = false
+        
+        @Volatile
+        private var isMetadataExtractionRunning = false
+        
+        // Reset method for testing or manual refresh (if needed)
+        fun resetBackgroundTaskFlags() {
+            hasInitializationStarted = false
+            hasArtworkFetchAttempted = false
+            isMetadataExtractionRunning = false
+        }
     }
     
     override fun onCleared() {
@@ -5810,5 +6309,16 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             MediaController.releaseFuture(future)
         }
     }
-    
 }
+
+/**
+ * Data class to hold five values (like Triple but for 5 items)
+ */
+private data class Quintuple<A, B, C, D, E>(
+    val first: A,
+    val second: B,
+    val third: C,
+    val fourth: D,
+    val fifth: E
+)
+

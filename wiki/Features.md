@@ -95,6 +95,13 @@ Complete guide to all features and capabilities in Rhythm Music Player.
 - **Genres**: Genre-based categorization
 - **Folders**: File system browser
 
+### Persistent Library Cache (Room Database)
+- **Instant Loading**: Library appears immediately on app launch
+- **Background Sync**: Automatic MediaStore synchronization
+- **Efficient Storage**: Optimized database for fast queries
+- **Manual Controls**: Clear or rebuild database from settings
+- **Statistics**: View cached songs, albums, and artists count
+
 ### Search & Discovery
 - **Instant Search**: Real-time results across all categories
 - **Fuzzy Matching**: Find songs with approximate spelling

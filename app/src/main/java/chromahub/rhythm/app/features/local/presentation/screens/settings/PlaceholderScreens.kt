@@ -123,6 +123,8 @@ import chromahub.rhythm.app.features.local.presentation.components.dialogs.Playl
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.AppRestartDialog
 import chromahub.rhythm.app.features.local.presentation.components.player.PlayerChipOrderBottomSheet
 import chromahub.rhythm.app.features.local.presentation.components.settings.HomeSectionOrderBottomSheet
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun TunerSettingRow(item: SettingItem) {
@@ -6764,6 +6766,285 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
                 }
             }
 
+            // Database Management Section
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Database Management",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+                
+                var dbStats by remember { mutableStateOf<chromahub.rhythm.app.features.local.data.db.DatabaseStats?>(null) }
+                var isLoadingStats by remember { mutableStateOf(false) }
+                var isClearingDatabase by remember { mutableStateOf(false) }
+                
+                LaunchedEffect(Unit) {
+                    isLoadingStats = true
+                    try {
+                        dbStats = chromahub.rhythm.app.features.local.data.db.MusicLibraryDatabase.getDatabaseStats(context)
+                    } catch (e: Exception) {
+                        Log.e("DatabaseManagement", "Error loading database stats", e)
+                    } finally {
+                        isLoadingStats = false
+                    }
+                }
+                
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    shape = RoundedCornerShape(18.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column {
+                        // Database Statistics
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Storage,
+                                contentDescription = "Database Stats",
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(50))
+                                    .padding(8.dp),
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Library Database Statistics",
+                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                if (isLoadingStats) {
+                                    Text(
+                                        text = "Loading...",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                } else if (dbStats != null) {
+                                    Text(
+                                        text = "${dbStats!!.songCount} songs • ${dbStats!!.albumCount} albums • ${dbStats!!.artistCount} artists • ${dbStats!!.playlistCount} playlists • ${dbStats!!.favoriteCount} favorites",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                } else {
+                                    Text(
+                                        text = "Database not initialized",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                        
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        
+                        // Rebuild Database
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(enabled = !isClearingDatabase) {
+                                    scope.launch {
+                                        try {
+                                            isClearingDatabase = true
+                                            // First refresh the library from MediaStore
+                                            musicViewModel.refreshLibrary()
+                                            // Wait for refresh to complete
+                                            delay(2000)
+                                            // Then sync to Room database
+                                            musicViewModel.syncLibraryToDatabase()
+                                            // Reload stats
+                                            dbStats = chromahub.rhythm.app.features.local.data.db.MusicLibraryDatabase.getDatabaseStats(context)
+                                            Toast.makeText(context, "Database rebuilt successfully", Toast.LENGTH_SHORT).show()
+                                        } catch (e: Exception) {
+                                            Log.e("DatabaseManagement", "Error rebuilding database", e)
+                                            Toast.makeText(context, "Failed to rebuild database: ${e.message}", Toast.LENGTH_LONG).show()
+                                        } finally {
+                                            isClearingDatabase = false
+                                        }
+                                    }
+                                }
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Refresh,
+                                contentDescription = "Rebuild Database",
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(50))
+                                    .padding(8.dp),
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Rebuild Library Database",
+                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "Rescan all media and rebuild the database",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            if (isClearingDatabase) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                                    contentDescription = "Rebuild",
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        
+                        // Sync to Database (quick sync without rescan)
+                        var isSyncing by remember { mutableStateOf(false) }
+                        
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(enabled = !isSyncing) {
+                                    scope.launch {
+                                        try {
+                                            isSyncing = true
+                                            musicViewModel.syncLibraryToDatabase()
+                                            delay(500)
+                                            dbStats = chromahub.rhythm.app.features.local.data.db.MusicLibraryDatabase.getDatabaseStats(context)
+                                            Toast.makeText(context, "Library synced to database", Toast.LENGTH_SHORT).show()
+                                        } catch (e: Exception) {
+                                            Log.e("DatabaseManagement", "Error syncing to database", e)
+                                            Toast.makeText(context, "Sync failed: ${e.message}", Toast.LENGTH_LONG).show()
+                                        } finally {
+                                            isSyncing = false
+                                        }
+                                    }
+                                }
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.CloudSync,
+                                contentDescription = "Sync to Database",
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(50))
+                                    .padding(8.dp),
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Sync Library to Database",
+                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "Sync current library data to database (fast)",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            if (isSyncing) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                                    contentDescription = "Sync",
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        
+                        // Clear Database
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    scope.launch(Dispatchers.IO) {
+                                        try {
+                                            chromahub.rhythm.app.features.local.data.db.MusicLibraryDatabase.clearDatabase(context)
+                                            delay(500)
+                                            val stats = chromahub.rhythm.app.features.local.data.db.MusicLibraryDatabase.getDatabaseStats(context)
+                                            withContext(Dispatchers.Main) {
+                                                dbStats = stats
+                                                Toast.makeText(context, "Database cleared successfully", Toast.LENGTH_SHORT).show()
+                                            }
+                                        } catch (e: Exception) {
+                                            Log.e("DatabaseManagement", "Error clearing database", e)
+                                            withContext(Dispatchers.Main) {
+                                                Toast.makeText(context, "Failed to clear database: ${e.message}", Toast.LENGTH_LONG).show()
+                                            }
+                                        }
+                                    }
+                                }
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Delete,
+                                contentDescription = "Clear Database",
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(50))
+                                    .padding(8.dp),
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Clear Library Database",
+                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                                Text(
+                                    text = "Remove all library data from database",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                                contentDescription = "Clear",
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
             // Cache Actions
             item {
                 Spacer(modifier = Modifier.height(24.dp))
@@ -6814,10 +7095,11 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
                                             isClearingCache = true
                                             chromahub.rhythm.app.util.CacheManager.clearAllCache(context, null, canvasRepository)
                                             musicViewModel.getMusicRepository().clearInMemoryCaches()
+                                            chromahub.rhythm.app.features.local.data.cache.LibraryCache.clearCache(context)
                                             currentCacheSize = chromahub.rhythm.app.util.CacheManager.getCacheSize(context, canvasRepository)
                                             cacheDetails = chromahub.rhythm.app.util.CacheManager.getDetailedCacheSize(context, canvasRepository)
                                             showClearCacheSuccess = true
-                                            Toast.makeText(context, "All cache cleared", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, "All cache cleared (including library cache)", Toast.LENGTH_SHORT).show()
                                         } catch (e: Exception) {
                                             Log.e("CacheManagement", "Error clearing cache", e)
                                             Toast.makeText(context, "Failed to clear cache", Toast.LENGTH_SHORT).show()

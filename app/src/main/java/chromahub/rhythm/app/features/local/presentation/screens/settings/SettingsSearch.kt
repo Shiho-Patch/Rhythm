@@ -38,10 +38,14 @@ import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Celebration
 import androidx.compose.material.icons.filled.ChangeCircle
+import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Folder
@@ -65,6 +69,7 @@ import androidx.compose.material.icons.filled.PlayCircleFilled
 import androidx.compose.material.icons.filled.PlaylistAddCheckCircle
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.QueueMusic
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Reorder
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.RoundedCorner
@@ -841,6 +846,62 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
             icon = Icons.Default.Notifications,
             route = SettingsRoutes.NOTIFICATIONS,
             parentScreen = "Notifications"
+        ))
+        
+        // ======================== CACHE MANAGEMENT SCREEN ========================
+        add(SearchableSettingItem(
+            id = "library_database_stats",
+            title = "Database Statistics",
+            description = "View library database statistics",
+            keywords = listOf("database", "stats", "statistics", "library", "room", "cache", "songs count", "albums count", "artists count"),
+            icon = Icons.Default.Storage,
+            route = SettingsRoutes.CACHE_MANAGEMENT,
+            parentScreen = "Cache Management"
+        ))
+        add(SearchableSettingItem(
+            id = "clear_library_database",
+            title = "Clear Library Database",
+            description = "Remove cached library data from database",
+            keywords = listOf("clear", "database", "library", "cache", "delete", "remove", "room", "reset", "songs", "albums", "artists"),
+            icon = Icons.Default.CleaningServices,
+            route = SettingsRoutes.CACHE_MANAGEMENT,
+            parentScreen = "Cache Management"
+        ))
+        add(SearchableSettingItem(
+            id = "rebuild_library_database",
+            title = "Rebuild Library Database",
+            description = "Rescan and rebuild library cache from MediaStore",
+            keywords = listOf("rebuild", "database", "library", "rescan", "refresh", "reload", "mediastore", "songs", "albums", "artists", "fix", "repair"),
+            icon = Icons.Default.Refresh,
+            route = SettingsRoutes.CACHE_MANAGEMENT,
+            parentScreen = "Cache Management"
+        ))
+        add(SearchableSettingItem(
+            id = "sync_library_database",
+            title = "Sync Library to Database",
+            description = "Sync current library data to Room database",
+            keywords = listOf("sync", "database", "library", "room", "update", "save", "persist", "backup"),
+            icon = Icons.Default.CloudSync,
+            route = SettingsRoutes.CACHE_MANAGEMENT,
+            parentScreen = "Cache Management"
+        ))
+        add(SearchableSettingItem(
+            id = "clear_lyrics_cache",
+            title = "Clear Lyrics Cache",
+            description = "Remove cached lyrics data",
+            keywords = listOf("clear", "lyrics", "cache", "delete", "remove", "synced lyrics", "lrc"),
+            icon = Icons.Default.Lyrics,
+            route = SettingsRoutes.CACHE_MANAGEMENT,
+            parentScreen = "Cache Management"
+        ))
+        add(SearchableSettingItem(
+            id = "clear_all_cache",
+            title = "Clear All Cache",
+            description = "Clear all cached data including images, lyrics, and library database",
+            keywords = listOf("clear", "all", "cache", "delete", "remove", "images", "lyrics", "database", "album art", "reset"),
+            icon = Icons.Default.DeleteForever,
+            route = SettingsRoutes.CACHE_MANAGEMENT,
+            parentScreen = "Cache Management"
         ))
     }
 }

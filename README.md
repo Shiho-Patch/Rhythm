@@ -43,7 +43,8 @@ Rhythm is a modern, open-source music player for Android built with Material 3 d
 - 📊 **Playback Stats** - Comprehensive listening statistics and insights
 - 📱 **Modern Widgets** - Multiple responsive layouts with Material 3 design
 - 🎯 **Format Support** - FLAC, ALAC, MP3, AAC, Opus, WAV, and more
-- 🔒 **Privacy First** - 100% FOSS, no tracking, offline-capable
+- � **Smart Caching** - Room database for instant library loading
+- �🔒 **Privacy First** - 100% FOSS, no tracking, offline-capable
 
 **System Requirements:** Android 8.0+ (API 26) • 2GB RAM • 50MB Storage
 

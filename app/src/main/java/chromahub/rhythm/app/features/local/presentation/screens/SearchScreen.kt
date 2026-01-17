@@ -281,16 +281,34 @@ fun SearchScreen(
             if (searchQuery.isBlank()) emptyList()
             else {
                 val query = searchQuery.lowercase()
-                playlists.filter { playlist ->
-                    playlist.name.contains(query, ignoreCase = true)
-                }.sortedWith(compareBy<Playlist> { playlist ->
-                    // Prioritize exact matches and starts with
-                    when {
-                        playlist.name.lowercase() == query -> 0
-                        playlist.name.lowercase().startsWith(query) -> 1
-                        else -> 2
+                playlists.mapNotNull { playlist ->
+                    // Check playlist name
+                    val nameMatch = playlist.name.lowercase().contains(query)
+                    
+                    // Check songs in playlist for content-aware search
+                    val songMatches = playlist.songs.filter { song ->
+                        song.title.lowercase().contains(query) ||
+                        song.artist.lowercase().contains(query) ||
+                        song.album.lowercase().contains(query)
                     }
-                }.thenBy { it.name })
+                    
+                    if (nameMatch || songMatches.isNotEmpty()) {
+                        // Calculate relevance score for better ranking
+                        val relevance = when {
+                            playlist.name.lowercase() == query -> 100 // Exact match
+                            playlist.name.lowercase().startsWith(query) -> 90 // Starts with
+                            nameMatch -> 80 // Contains in name
+                            songMatches.size >= 5 -> 70 // Many songs match
+                            songMatches.size >= 2 -> 60 // Multiple songs match
+                            songMatches.size == 1 -> 50 // Single song match
+                            else -> 40
+                        }
+                        playlist to relevance
+                    } else {
+                        null
+                    }
+                }.sortedByDescending { it.second }
+                 .map { it.first }
             }
         }
     }

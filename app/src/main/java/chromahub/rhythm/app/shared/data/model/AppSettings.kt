@@ -2562,11 +2562,55 @@ class AppSettings private constructor(context: Context) {
     }
     
     /**
+     * Validates backup data before restoration
+     */
+    private fun validateBackupData(backupJson: String): Pair<Boolean, String?> {
+        try {
+            // Check JSON is valid
+            val backupData = Gson().fromJson(backupJson, Map::class.java) as? Map<String, Any?>
+                ?: return false to "Invalid JSON format"
+            
+            // Check required fields
+            if (!backupData.containsKey("preferences")) {
+                return false to "Missing preferences data"
+            }
+            
+            // Check backup isn't corrupted (has reasonable size)
+            if (backupJson.length < 100) {
+                return false to "Backup data too small, possibly corrupted"
+            }
+            
+            if (backupJson.length > 50_000_000) { // 50MB limit
+                return false to "Backup data too large, possibly corrupted"
+            }
+            
+            // Check version compatibility
+            val backupVersion = (backupData["backup_version"] as? Double)?.toInt() ?: 1
+            if (backupVersion > 2) {
+                return false to "Backup version $backupVersion not supported (app may need update)"
+            }
+            
+            Log.d("AppSettings", "Backup validation passed (version $backupVersion, ${backupJson.length} bytes)")
+            return true to null
+        } catch (e: Exception) {
+            return false to "Validation error: ${e.message}"
+        }
+    }
+    
+    /**
      * Restores app data from a backup JSON string
      */
     fun restoreFromBackup(backupJson: String): Boolean {
         return try {
             Log.d("AppSettings", "Attempting to restore from backup...")
+            
+            // Validate backup first
+            val (isValid, validationError) = validateBackupData(backupJson)
+            if (!isValid) {
+                Log.e("AppSettings", "Backup validation failed: $validationError")
+                return false
+            }
+            
             val backupData = Gson().fromJson(backupJson, Map::class.java) as Map<String, Any?>
             val preferences = backupData["preferences"] as? Map<String, Any?> ?: return false
             val preferencesTypes = backupData["preferences_types"] as? Map<String, String> ?: emptyMap()
@@ -2585,8 +2629,20 @@ class AppSettings private constructor(context: Context) {
                     is Float -> {
                         // Check if this should be a Long or Int based on original type
                         when (originalType) {
-                            "Long" -> editor.putLong(key, value.toLong())
-                            "Int" -> editor.putInt(key, value.toInt())
+                            "Long" -> {
+                                val longValue = value.toLong()
+                                editor.putLong(key, longValue)
+                            }
+                            "Int" -> {
+                                // Check for overflow
+                                val intValue = value.toInt()
+                                if (intValue.toFloat() != value && Math.abs(value) > Int.MAX_VALUE) {
+                                    Log.w("AppSettings", "Int overflow for key $key, using max value")
+                                    editor.putInt(key, if (value > 0) Int.MAX_VALUE else Int.MIN_VALUE)
+                                } else {
+                                    editor.putInt(key, intValue)
+                                }
+                            }
                             else -> editor.putFloat(key, value)
                         }
                     }
@@ -2594,11 +2650,34 @@ class AppSettings private constructor(context: Context) {
                     is Long -> editor.putLong(key, value)
                     is String -> editor.putString(key, value)
                     is Double -> {
-                        // JSON deserializes numbers as Double, convert based on original type
+                        // JSON deserializes numbers as Double, convert based on original type with safety checks
                         when (originalType) {
-                            "Float" -> editor.putFloat(key, value.toFloat())
-                            "Long" -> editor.putLong(key, value.toLong())
-                            "Int" -> editor.putInt(key, value.toInt())
+                            "Float" -> {
+                                val floatValue = value.toFloat()
+                                // Check for precision loss
+                                if (floatValue.isInfinite() && value.isFinite()) {
+                                    Log.w("AppSettings", "Float overflow for key $key, using max value")
+                                    editor.putFloat(key, if (value > 0) Float.MAX_VALUE else -Float.MAX_VALUE)
+                                } else {
+                                    editor.putFloat(key, floatValue)
+                                }
+                            }
+                            "Long" -> {
+                                val longValue = value.toLong()
+                                editor.putLong(key, longValue)
+                            }
+                            "Int" -> {
+                                // Check for overflow
+                                if (value > Int.MAX_VALUE) {
+                                    Log.w("AppSettings", "Int overflow for key $key, using max value")
+                                    editor.putInt(key, Int.MAX_VALUE)
+                                } else if (value < Int.MIN_VALUE) {
+                                    Log.w("AppSettings", "Int underflow for key $key, using min value")
+                                    editor.putInt(key, Int.MIN_VALUE)
+                                } else {
+                                    editor.putInt(key, value.toInt())
+                                }
+                            }
                             else -> editor.putFloat(key, value.toFloat()) // Default fallback
                         }
                     }

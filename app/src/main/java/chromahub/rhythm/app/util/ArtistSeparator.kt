@@ -1,6 +1,7 @@
 package chromahub.rhythm.app.util
 
 import android.util.Log
+import android.util.LruCache
 
 /**
  * Utility object for parsing multiple artists from a single artist string.
@@ -16,6 +17,11 @@ import android.util.Log
 object ArtistSeparator {
     private const val TAG = "ArtistSeparator"
     private const val ESCAPE_CHAR = '\\'
+    
+    // Cache for parsed artist strings to avoid repeated parsing
+    // Key: "artistString|delimiters|enabled", Value: List of artists
+    private val splitCache = LruCache<String, List<String>>(500) // Cache up to 500 artist strings
+    private val primaryCache = LruCache<String, String>(500) // Cache primary artists
     
     /**
      * Split an artist string into multiple artists using the provided delimiters.
@@ -38,6 +44,12 @@ object ArtistSeparator {
         // If splitting is disabled, return original string as single artist
         if (!enabled || delimiters.isEmpty()) {
             return listOf(artistString.trim())
+        }
+        
+        // Check cache first
+        val cacheKey = "$artistString|$delimiters|$enabled"
+        splitCache.get(cacheKey)?.let { cached ->
+            return cached
         }
         
         val artists = mutableListOf<String>()
@@ -79,12 +91,17 @@ object ArtistSeparator {
         }
         
         // If no artists were found, return original string
-        if (artists.isEmpty()) {
-            return listOf(artistString.trim())
+        val result = if (artists.isEmpty()) {
+            listOf(artistString.trim())
+        } else {
+            artists
         }
         
-        Log.d(TAG, "Split '$artistString' into ${artists.size} artists: $artists")
-        return artists
+        // Cache the result
+        splitCache.put(cacheKey, result)
+        
+        Log.d(TAG, "Split '$artistString' into ${result.size} artists: $result")
+        return result
     }
     
     /**
@@ -101,8 +118,23 @@ object ArtistSeparator {
         delimiters: String = "/;,+&",
         enabled: Boolean = true
     ): String {
+        if (artistString.isNullOrBlank()) {
+            return "Unknown Artist"
+        }
+        
+        // Check cache first
+        val cacheKey = "$artistString|$delimiters|$enabled"
+        primaryCache.get(cacheKey)?.let { cached ->
+            return cached
+        }
+        
         val artists = splitArtists(artistString, delimiters, enabled)
-        return artists.firstOrNull() ?: artistString?.trim() ?: "Unknown Artist"
+        val result = artists.firstOrNull() ?: artistString.trim()
+        
+        // Cache the result
+        primaryCache.put(cacheKey, result)
+        
+        return result
     }
     
     /**

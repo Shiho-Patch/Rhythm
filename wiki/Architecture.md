@@ -45,6 +45,7 @@ Rhythm follows **Clean Architecture** principles with **MVVM (Model-View-ViewMod
 │  ┌──────────────────────────────────────┐  │
 │  │   Data Sources                       │  │
 │  │   - MediaStore, APIs, Local Storage │  │
+│  │   - Room Database (Library Cache)    │  │
 │  └──────────────────────────────────────┘  │
 └─────────────────────────────────────────────┘
 ```
@@ -252,6 +253,42 @@ class AppSettings(context: Context) {
         set(value) = prefs.edit().putString("theme", value).apply()
 }
 ```
+
+#### Room Database (Library Cache)
+
+Persistent storage for music library to enable instant loading.
+
+```kotlin
+@Database(
+    entities = [SongEntity::class, AlbumEntity::class, ArtistEntity::class],
+    version = 1
+)
+abstract class LibraryDatabase : RoomDatabase() {
+    abstract fun songDao(): SongDao
+    abstract fun albumDao(): AlbumDao
+    abstract fun artistDao(): ArtistDao
+}
+
+// Usage
+object LibraryCache {
+    suspend fun saveLibrary(context: Context, songs: List<Song>, ...) {
+        val db = LibraryDatabase.getInstance(context)
+        db.songDao().insertSongs(songs.map { SongEntity.fromSong(it) })
+    }
+    
+    suspend fun loadLibrary(context: Context): Triple<...>? {
+        val db = LibraryDatabase.getInstance(context)
+        val songs = db.songDao().getAllSongs().map { it.toSong() }
+        return Triple(songs, albums, artists)
+    }
+}
+```
+
+**Benefits:**
+- Instant library loading on app launch
+- Background MediaStore sync
+- Efficient querying and filtering
+- Proper Android architecture
 
 ---
 

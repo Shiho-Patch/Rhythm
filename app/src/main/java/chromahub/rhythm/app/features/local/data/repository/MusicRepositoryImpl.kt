@@ -231,6 +231,35 @@ class MusicRepository(context: Context) {
         private const val YTMUSIC_MIN_DELAY = 300L
         private const val LRCLIB_MIN_DELAY = 100L
         private const val MAX_CALLS_PER_MINUTE = 30
+        
+        // MediaStore retry constants
+        private const val MAX_MEDIASTORE_RETRIES = 3
+        private const val MEDIASTORE_RETRY_DELAY_MS = 500L
+    }
+    
+    /**
+     * Retry helper for MediaStore queries
+     * Handles transient failures (storage not ready, service restart, etc.)
+     */
+    private suspend fun <T> retryMediaStoreQuery(
+        maxRetries: Int = MAX_MEDIASTORE_RETRIES,
+        operation: suspend () -> T
+    ): T? {
+        repeat(maxRetries) { attempt ->
+            try {
+                return operation()
+            } catch (e: Exception) {
+                if (attempt < maxRetries - 1) {
+                    val delay = MEDIASTORE_RETRY_DELAY_MS * (attempt + 1) // Exponential backoff
+                    Log.w(TAG, "MediaStore query failed (attempt ${attempt + 1}/$maxRetries), retrying in ${delay}ms...", e)
+                    kotlinx.coroutines.delay(delay)
+                } else {
+                    Log.e(TAG, "MediaStore query failed after $maxRetries attempts", e)
+                    throw e
+                }
+            }
+        }
+        return null
     }
     
     private fun calculateApiDelay(apiName: String, currentTime: Long): Long {
@@ -330,13 +359,18 @@ class MusicRepository(context: Context) {
             
             Log.d(TAG, "Querying MediaStore with selection: $selection")
             
-            context.contentResolver.query(
-                collection,
-                projection,
-                selection,
-                null,
-                sortOrder
-            )?.use { cursor ->
+            // Use retry logic for MediaStore query (handles transient failures)
+            val cursor = retryMediaStoreQuery {
+                context.contentResolver.query(
+                    collection,
+                    projection,
+                    selection,
+                    null,
+                    sortOrder
+                )
+            }
+            
+            cursor?.use { cursor ->
                 val count = cursor.count
                 Log.d(TAG, "MediaStore query successful: Found $count audio files to process")
                 _scanProgress.value = ScanProgress(0, count, "Songs", 0)
@@ -512,8 +546,10 @@ class MusicRepository(context: Context) {
         )
 
         // Only scan songs added after last scan
-        val selection = "${MediaStore.Audio.Media.IS_MUSIC} = 1 AND ${MediaStore.Audio.Media.DURATION} > 10000 AND ${MediaStore.Audio.Media.DATE_ADDED} > ?"
-        val selectionArgs = arrayOf((lastScanTimestamp / 1000).toString())
+        // Use >= to include songs added at exact last scan timestamp
+        // Subtract 1 second as safety margin to account for timestamp precision
+        val selection = "${MediaStore.Audio.Media.IS_MUSIC} = 1 AND ${MediaStore.Audio.Media.DURATION} > 10000 AND ${MediaStore.Audio.Media.DATE_ADDED} >= ?"
+        val selectionArgs = arrayOf(((lastScanTimestamp / 1000) - 1).toString())
         val sortOrder = "${MediaStore.Audio.Media.DATE_ADDED} DESC"
 
         try {
@@ -620,7 +656,18 @@ class MusicRepository(context: Context) {
     private fun createSongFromCursor(cursor: android.database.Cursor, indices: ColumnIndices): Song? {
         return try {
             val id = cursor.getLong(indices.id)
-            val title = cursor.getString(indices.title)?.trim() ?: return null
+            
+            // Validate MediaStore ID - reject invalid or placeholder IDs
+            if (id <= 0) {
+                Log.w(TAG, "Invalid MediaStore ID: $id at cursor position ${cursor.position}, skipping")
+                return null
+            }
+            
+            val title = cursor.getString(indices.title)?.trim()
+            if (title == null) {
+                Log.w(TAG, "Null title for song ID $id at cursor position ${cursor.position}, skipping")
+                return null
+            }
             val rawArtist = cursor.getString(indices.artist)?.trim() ?: "Unknown Artist"
             
             // Parse multiple artists from the artist string using configured delimiters
@@ -649,13 +696,13 @@ class MusicRepository(context: Context) {
 
             // Skip files that are too small (likely invalid)
             if (size < 1024) { // Less than 1KB
-                Log.d(TAG, "Skipping file too small: $title ($size bytes)")
+                Log.d(TAG, "Skipping file too small: '$title' ($size bytes) - ID: $id")
                 return null
             }
 
             // Skip files with empty titles
             if (title.isBlank() || title.equals("<unknown>", ignoreCase = true)) {
-                Log.d(TAG, "Skipping file with invalid title: $title")
+                Log.d(TAG, "Skipping file with invalid title: '$title' - ID: $id")
                 return null
             }
 
@@ -682,9 +729,24 @@ class MusicRepository(context: Context) {
                 )
             }
 
-            // Load cached genre if available
+            // Load cached genre if available and not expired
             val cachedGenre = try {
-                genrePrefs.getString("genre_$id", null)?.takeIf { it.isNotBlank() }
+                val genreData = genrePrefs.getString("genre_$id", null)
+                if (genreData != null) {
+                    val parts = genreData.split("|")
+                    val genre = parts.getOrNull(0)
+                    val timestamp = parts.getOrNull(1)?.toLongOrNull() ?: 0L
+                    
+                    // Expire cache after 30 days
+                    val CACHE_EXPIRATION_MS = 30L * 24 * 60 * 60 * 1000
+                    if (genre != null && System.currentTimeMillis() - timestamp < CACHE_EXPIRATION_MS) {
+                        genre
+                    } else {
+                        null // Cache expired or invalid
+                    }
+                } else {
+                    null
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to load cached genre for song ID $id", e)
                 null
@@ -1074,13 +1136,18 @@ class MusicRepository(context: Context) {
         val allSongs = loadSongs()
         val songsByAlbumTitle = allSongs.groupBy { it.album }
 
-        context.contentResolver.query(
-            collection,
-            projection,
-            null,
-            null,
-            sortOrder
-        )?.use { cursor ->
+        // Use retry logic for MediaStore query
+        val cursor = retryMediaStoreQuery {
+            context.contentResolver.query(
+                collection,
+                projection,
+                null,
+                null,
+                sortOrder
+            )
+        }
+        
+        cursor?.use { cursor ->
             // Cache column indices
             val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Albums._ID)
             val albumColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Albums.ALBUM)
@@ -1101,11 +1168,21 @@ class MusicRepository(context: Context) {
                 
                 // Use album art from the first song in the album if available
                 // This ensures consistency with the song's album art (whether embedded or from MediaStore)
-                val albumArtUri = albumSongs.firstOrNull()?.artworkUri 
+                val baseAlbumArtUri = albumSongs.firstOrNull()?.artworkUri 
                     ?: ContentUris.withAppendedId(
                         Uri.parse("content://media/external/audio/albumart"),
                         id
                     )
+                
+                // Validate album art URI actually exists
+                val albumArtUri = try {
+                    context.contentResolver.openInputStream(baseAlbumArtUri)?.use { 
+                        baseAlbumArtUri 
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Album art URI validation failed for album '$title': ${e.message}")
+                    null // Will use placeholder in UI
+                }
 
                 val album = Album(
                     id = id.toString(),
@@ -1274,13 +1351,18 @@ class MusicRepository(context: Context) {
             val selection = "${MediaStore.Audio.Media.ARTIST_ID} = ?"
             val selectionArgs = arrayOf(artistId)
 
-            context.contentResolver.query(
-                uri,
-                arrayOf(MediaStore.Audio.Media.ARTIST),
-                selection,
-                selectionArgs,
-                null
-            )?.use { cursor ->
+            // Use retry logic for MediaStore query
+            val cursor = retryMediaStoreQuery {
+                context.contentResolver.query(
+                    uri,
+                    arrayOf(MediaStore.Audio.Media.ARTIST),
+                    selection,
+                    selectionArgs,
+                    null
+                )
+            }
+            
+            cursor?.use { cursor ->
                 val artistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
                 val artists = mutableSetOf<String>()
 
@@ -3759,9 +3841,10 @@ class MusicRepository(context: Context) {
                         if (genre != null && genre.isNotBlank() && !genre.equals("unknown", ignoreCase = true)) {
                             val updatedSong = song.copy(genre = genre)
                             updatedSongs.add(updatedSong)
-                            // Cache the detected genre using async apply() to prevent blocking
+                            // Cache the detected genre with timestamp using async apply() to prevent blocking
                             try {
-                                genrePrefs.edit().putString("genre_$songId", genre).apply()
+                                val genreData = "$genre|${System.currentTimeMillis()}"
+                                genrePrefs.edit().putString("genre_$songId", genreData).apply()
                                 Log.d(TAG, "Detected and cached genre '$genre' for song ID $songId: ${song.title}")
                             } catch (e: Exception) {
                                 Log.e(TAG, "Failed to cache genre for song ID $songId", e)

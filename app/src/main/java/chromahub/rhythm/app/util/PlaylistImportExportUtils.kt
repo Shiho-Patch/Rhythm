@@ -19,6 +19,34 @@ import java.util.*
 object PlaylistImportExportUtils {
     private const val TAG = "PlaylistImportExport"
     
+    // Cache for path resolution to speed up large imports
+    private val pathResolutionCache = mutableMapOf<String, Song?>()
+    
+    /**
+     * Clears the path resolution cache (call between imports to prevent memory leaks)
+     */
+    fun clearCache() {
+        pathResolutionCache.clear()
+        Log.d(TAG, "Cleared path resolution cache")
+    }
+    
+    /**
+     * Normalizes a song key for duplicate detection
+     * Handles: whitespace, special chars, featured artists, unicode
+     */
+    private fun normalizeSongKey(title: String, artist: String): String {
+        fun normalize(text: String): String {
+            return text.trim()
+                .lowercase()
+                .replace(Regex("\\s+"), " ") // Collapse multiple whitespace
+                .replace(Regex("[^a-z0-9\\s]"), "") // Remove special chars
+                .replace(Regex("\\s*(feat|ft|featuring|with|&).*", RegexOption.IGNORE_CASE), "") // Remove featured artists
+                .trim()
+        }
+        
+        return "${normalize(title)}_${normalize(artist)}"
+    }
+    
     /**
      * Builds a map of file paths to songs by querying MediaStore.
      * This is essential for M3U/PLS import since content URIs don't contain file paths.
@@ -214,6 +242,9 @@ object PlaylistImportExportUtils {
         availableSongs: List<Song>
     ): Result<Playlist> {
         return try {
+            // Clear cache before import to free memory
+            clearCache()
+            
             val inputStream = context.contentResolver.openInputStream(uri)
                 ?: return Result.failure(IllegalArgumentException("Cannot open file"))
             
@@ -225,6 +256,7 @@ object PlaylistImportExportUtils {
             val m3uDirectory = getM3uDirectoryPath(context, uri)
             
             Log.d(TAG, "Importing playlist: $fileName, M3U directory: $m3uDirectory")
+            Log.d(TAG, "Available songs for matching: ${availableSongs.size}")
             
             val playlist = when {
                 fileName.endsWith(".json", true) -> importFromJson(content, availableSongs)
@@ -234,9 +266,21 @@ object PlaylistImportExportUtils {
                 else -> return Result.failure(IllegalArgumentException("Unsupported file format"))
             }
             
-            Log.d(TAG, "Successfully imported playlist '${playlist.name}' with ${playlist.songs.size} songs")
+            // Log availability statistics
+            val matchedCount = playlist.songs.size
+            Log.d(TAG, "Successfully imported playlist '${playlist.name}' with $matchedCount songs")
+            
+            if (matchedCount == 0) {
+                Log.w(TAG, "WARNING: Imported playlist has no songs - all songs may be unavailable on this device")
+            }
+            
+            // Clear cache after successful import to free memory
+            clearCache()
+            
             Result.success(playlist)
         } catch (e: Exception) {
+            // Clear cache on error too
+            clearCache()
             Log.e(TAG, "Error importing playlist from $uri", e)
             Result.failure(e)
         }
@@ -263,37 +307,86 @@ object PlaylistImportExportUtils {
         )
         
         val json = Gson().toJson(exportData)
-        outputFile.writeText(json)
+        
+        // Use atomic write: write to temp file first, then rename
+        val tempFile = File(outputFile.parent, "${outputFile.name}.tmp")
+        try {
+            tempFile.writeText(json)
+            // Verify file was written
+            if (tempFile.length() == 0L) {
+                throw IOException("Exported file is empty")
+            }
+            // Atomic rename
+            if (!tempFile.renameTo(outputFile)) {
+                throw IOException("Failed to rename temp file to final file")
+            }
+        } catch (e: Exception) {
+            // Clean up temp file on failure
+            tempFile.delete()
+            throw e
+        }
     }
     
     private fun exportToM3u(playlist: Playlist, outputFile: File, extended: Boolean) {
-        outputFile.bufferedWriter().use { writer ->
-            if (extended) {
-                writer.write("#EXTM3U\n")
-            }
-            
-            playlist.songs.forEach { song ->
+        // Use atomic write: write to temp file first, then rename
+        val tempFile = File(outputFile.parent, "${outputFile.name}.tmp")
+        try {
+            tempFile.bufferedWriter().use { writer ->
                 if (extended) {
-                    writer.write("#EXTINF:${song.duration / 1000},${song.artist} - ${song.title}\n")
+                    writer.write("#EXTM3U\n")
                 }
-                writer.write("${song.uri}\n")
+                
+                playlist.songs.forEach { song ->
+                    if (extended) {
+                        writer.write("#EXTINF:${song.duration / 1000},${song.artist} - ${song.title}\n")
+                    }
+                    writer.write("${song.uri}\n")
+                }
             }
+            // Verify file was written
+            if (tempFile.length() == 0L) {
+                throw IOException("Exported M3U file is empty")
+            }
+            // Atomic rename
+            if (!tempFile.renameTo(outputFile)) {
+                throw IOException("Failed to rename temp file to final file")
+            }
+        } catch (e: Exception) {
+            // Clean up temp file on failure
+            tempFile.delete()
+            throw e
         }
     }
     
     private fun exportToPls(playlist: Playlist, outputFile: File) {
-        outputFile.bufferedWriter().use { writer ->
-            writer.write("[playlist]\n")
-            
-            playlist.songs.forEachIndexed { index, song ->
-                val num = index + 1
-                writer.write("File$num=${song.uri}\n")
-                writer.write("Title$num=${song.artist} - ${song.title}\n")
-                writer.write("Length$num=${song.duration / 1000}\n")
+        // Use atomic write: write to temp file first, then rename
+        val tempFile = File(outputFile.parent, "${outputFile.name}.tmp")
+        try {
+            tempFile.bufferedWriter().use { writer ->
+                writer.write("[playlist]\n")
+                
+                playlist.songs.forEachIndexed { index, song ->
+                    val num = index + 1
+                    writer.write("File$num=${song.uri}\n")
+                    writer.write("Title$num=${song.artist} - ${song.title}\n")
+                    writer.write("Length$num=${song.duration / 1000}\n")
+                }
+                
+                writer.write("NumberOfEntries=${playlist.songs.size}\n")
+                writer.write("Version=2\n")
             }
-            
-            writer.write("NumberOfEntries=${playlist.songs.size}\n")
-            writer.write("Version=2\n")
+            // Verify file was written
+            if (tempFile.length() == 0L) {
+                throw IOException("Exported PLS file is empty")
+            }
+            // Atomic rename
+            if (!tempFile.renameTo(outputFile)) {
+                throw IOException("Failed to rename temp file to final file")
+            }
+        } catch (e: Exception) {
+            // Clean up temp file on failure
+            tempFile.delete()
+            throw e
         }
     }
     
@@ -304,10 +397,10 @@ object PlaylistImportExportUtils {
         val addedSongKeys = mutableSetOf<String>()
         
         val matchedSongs = exportData.songs.mapNotNull { entry ->
-            // Create a key for duplicate detection (title + artist, normalized)
-            val songKey = "${entry.title.trim().lowercase()}_${entry.artist.trim().lowercase()}"
+            // Create a normalized key for duplicate detection (handles special chars, whitespace, featured artists)
+            val songKey = normalizeSongKey(entry.title, entry.artist)
             
-            // Skip if already added by URI or by title+artist combination
+            // Skip if already added by URI or by normalized title+artist combination
             if (addedSongUris.contains(entry.uri) || addedSongKeys.contains(songKey)) {
                 Log.d(TAG, "Skipping duplicate song: ${entry.title} by ${entry.artist}")
                 return@mapNotNull null
@@ -322,7 +415,7 @@ object PlaylistImportExportUtils {
             
             matchedSong?.let {
                 addedSongUris.add(it.uri.toString())
-                addedSongKeys.add("${it.title.trim().lowercase()}_${it.artist.trim().lowercase()}")
+                addedSongKeys.add(normalizeSongKey(it.title, it.artist))
             }
             
             matchedSong
@@ -368,7 +461,7 @@ object PlaylistImportExportUtils {
                     if (trimmedLine.isNotEmpty()) {
                         val song = findSongByPathOrTitle(trimmedLine, currentTitle, availableSongs, filePathMap, m3uDirectory)
                         if (song != null) {
-                            val songKey = "${song.title.trim().lowercase()}_${song.artist.trim().lowercase()}"
+                            val songKey = normalizeSongKey(song.title, song.artist)
                             val songUri = song.uri.toString()
                             
                             // Check for duplicates
@@ -445,7 +538,7 @@ object PlaylistImportExportUtils {
             if (filePath != null) {
                 val song = findSongByPathOrTitle(filePath, title ?: "", availableSongs, filePathMap, m3uDirectory)
                 song?.let { 
-                    val songKey = "${it.title.trim().lowercase()}_${it.artist.trim().lowercase()}"
+                    val songKey = normalizeSongKey(it.title, it.artist)
                     val songUri = it.uri.toString()
                     
                     // Check for duplicates
@@ -476,9 +569,16 @@ object PlaylistImportExportUtils {
         filePathMap: Map<String, Song>,
         m3uDirectory: String?
     ): Song? {
+        // Check cache first for performance
+        pathResolutionCache[path]?.let { 
+            Log.d(TAG, "Cache hit for path: $path")
+            return it 
+        }
+        
         // Try exact URI match first (for content:// URIs exported by Rhythm)
         availableSongs.find { it.uri.toString() == path }?.let { 
             Log.d(TAG, "Found song by exact URI match: $path")
+            pathResolutionCache[path] = it
             return it 
         }
         
@@ -659,7 +759,55 @@ object PlaylistImportExportUtils {
     }
     
     private fun sanitizeFileName(fileName: String): String {
-        return fileName.replace(Regex("[^a-zA-Z0-9._-]"), "_")
+        // Reserved names on Windows (also good to avoid on all platforms)
+        val reservedNames = setOf("CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", 
+                                   "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", 
+                                   "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9")
+        
+        var sanitized = fileName
+            // Replace filesystem-unsafe characters but preserve Unicode
+            .replace(Regex("[<>:\"/\\\\|?*\\x00-\\x1F]"), "_")
+            // Collapse multiple consecutive underscores
+            .replace(Regex("_+"), "_")
+            // Remove leading/trailing dots and spaces
+            .trim('.', ' ', '_')
+        
+        // Check for reserved names (case-insensitive)
+        val nameWithoutExt = sanitized.substringBeforeLast(".")
+        if (nameWithoutExt.uppercase() in reservedNames) {
+            sanitized = "_$sanitized"
+        }
+        
+        // Limit to 255 bytes (common filesystem limit), accounting for UTF-8 encoding
+        val maxBytes = 255
+        var bytes = sanitized.toByteArray(Charsets.UTF_8)
+        
+        // Extract extension before truncation
+        val extension = if (sanitized.contains(".")) {
+            "." + sanitized.substringAfterLast(".")
+        } else {
+            ""
+        }
+        
+        if (bytes.size > maxBytes) {
+            // Truncate while preserving extension
+            val extensionBytes = extension.toByteArray(Charsets.UTF_8).size
+            val availableBytes = maxBytes - extensionBytes - 3 // Reserve 3 bytes for "..."
+            
+            // Binary search for valid truncation point (avoid splitting multi-byte chars)
+            var truncated = sanitized.substringBeforeLast(".")
+            while (truncated.toByteArray(Charsets.UTF_8).size > availableBytes && truncated.isNotEmpty()) {
+                truncated = truncated.dropLast(1)
+            }
+            sanitized = truncated + "..." + extension
+        }
+        
+        // Ensure we have a valid filename
+        if (sanitized.isEmpty() || sanitized == extension) {
+            sanitized = "playlist_${System.currentTimeMillis()}$extension"
+        }
+        
+        return sanitized
     }
     
     private fun getFileName(context: Context, uri: Uri): String {
