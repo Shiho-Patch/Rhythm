@@ -108,10 +108,13 @@ Rhythm is a modern, open-source music player for Android built with Material 3 d
 
 ### Installation Options
 
-- **[F-Droid](https://f-droid.org/packages/chromahub.rhythm.app)** - Official F-Droid repository
-- **[IzzyOnDroid](https://apt.izzysoft.de/fdroid/index/apk/chromahub.rhythm.app)** - F-Droid repository for privacy-focused users
-- **[GitHub Releases](https://github.com/cromaguy/Rhythm/releases/latest)** - Direct APK download
-- **[Obtainium](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/cromaguy/Rhythm/)** - Auto-updates from GitHub
+- **[F-Droid](https://f-droid.org/packages/chromahub.rhythm.app)** - Official F-Droid repository (full features)
+- **[IzzyOnDroid](https://apt.izzysoft.de/fdroid/index/apk/chromahub.rhythm.app)** - F-Droid repository for privacy-focused users (full features)
+- **[GitHub Releases](https://github.com/cromaguy/Rhythm/releases/latest)** - Direct APK download (full features)
+- **[Obtainium](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/cromaguy/Rhythm/)** - Auto-updates from GitHub (full features)
+- **Google Play Store** - *Coming soon!* (policy-compliant version with Deezer, LRCLib, and Spotify Search)
+
+> **Note:** F-Droid, IzzyOnDroid, and GitHub releases include all features. The Google Play version excludes unofficial APIs for policy compliance. See [Build Variants](docs/BUILD_VARIANTS.md) for details.
 
 📖 **Detailed installation guide:** See the [Installation Wiki](https://github.com/cromaguy/Rhythm/wiki/Installation-Guide)
 

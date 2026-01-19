@@ -161,6 +161,8 @@ class MusicRepository(context: Context) {
     private val ytmusicApiService = NetworkClient.ytmusicApiService
     // Apple Music API service removed - can be re-added in future
     private val genericHttpClient = NetworkClient.genericHttpClient
+    
+    // Note: API services can be null if disabled via BuildConfig (e.g., Google Play variant)
 
     /**
      * Register ContentObserver to monitor MediaStore changes
@@ -1469,7 +1471,7 @@ class MusicRepository(context: Context) {
                     }
 
                     // Only try online fetch if network is available and Deezer API is enabled
-                    if (isNetworkAvailable() && NetworkClient.isDeezerApiEnabled()) {
+                    if (isNetworkAvailable() && NetworkClient.isDeezerApiEnabled() && deezerApiService != null) {
                         Log.d(TAG, "Searching for artist on Deezer: ${artist.name}")
                         
                         // Intelligent delay based on API and previous request timing
@@ -1547,7 +1549,7 @@ class MusicRepository(context: Context) {
                     }
 
                     // -------- YouTube Music fallback (right after Deezer fails) --------
-                    if (NetworkClient.isYTMusicApiEnabled()) {
+                    if (NetworkClient.isYTMusicApiEnabled() && ytmusicApiService != null) {
                         try {
                             Log.d(TAG, "Trying YTMusic for artist: ${artist.name}")
                             
@@ -2834,7 +2836,7 @@ class MusicRepository(context: Context) {
         var wordByWordLyrics: String? = null
 
             // ---- LRCLib (Enhanced search with multiple strategies - line-by-line synced) ----
-            if (NetworkClient.isLrcLibApiEnabled()) {
+            if (NetworkClient.isLrcLibApiEnabled() && lrclibApiService != null) {
                 try {
                     // Strategy 1: Search by track name and artist name
                     var results =
@@ -3153,7 +3155,7 @@ class MusicRepository(context: Context) {
                 Log.d(TAG, "Searching for album: ${album.title} by ${album.artist}")
 
                 // Search for the album on Deezer (only if enabled)
-                if (NetworkClient.isDeezerApiEnabled()) {
+                if (NetworkClient.isDeezerApiEnabled() && deezerApiService != null) {
                     // Add delay to avoid rate limiting
                     delay(300)
                     
@@ -3196,7 +3198,7 @@ class MusicRepository(context: Context) {
 
                 // -------- YTMusic fallback (only when local album art is absent) --------
                 // Check if we should use YTMusic fallback for albums
-                if (NetworkClient.isYTMusicApiEnabled()) {
+                if (NetworkClient.isYTMusicApiEnabled() && ytmusicApiService != null) {
                     var foundAlbumArt = false
                     try {
                         Log.d(TAG, "Trying YTMusic for album: ${album.title} by ${album.artist}")
@@ -3328,8 +3330,8 @@ class MusicRepository(context: Context) {
                     continue
                 }
 
-                if (!NetworkClient.isYTMusicApiEnabled()) {
-                    Log.d(TAG, "YTMusic API is disabled, skipping track artwork for: ${song.title}")
+                if (!NetworkClient.isYTMusicApiEnabled() || ytmusicApiService == null) {
+                    Log.d(TAG, "YTMusic API is disabled or unavailable, skipping track artwork for: ${song.title}")
                     updatedSongs.add(song)
                     continue
                 }

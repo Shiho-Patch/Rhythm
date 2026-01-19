@@ -138,7 +138,13 @@ class SpotifyService(private val appSettings: AppSettings) {
             val query = "artist:\"$artist\" track:\"$title\""
             Log.d(TAG, "Searching Spotify for: $query")
             
-            val response = NetworkClient.spotifySearchApiService.searchTracks(
+            // Check if Spotify Search API is available
+            if (NetworkClient.spotifySearchApiService == null) {
+                Log.w(TAG, "Spotify Search API is not available in this variant")
+                return@withContext null
+            }
+            
+            val response = NetworkClient.spotifySearchApiService!!.searchTracks(
                 query = query,
                 authorization = "Bearer $accessToken",
                 limit = 5 // Get a few results to find best match
@@ -227,8 +233,13 @@ class SpotifyService(private val appSettings: AppSettings) {
             
             val accessToken = getAccessToken()
             if (accessToken != null) {
+                // Check if Spotify Search API is available
+                if (NetworkClient.spotifySearchApiService == null) {
+                    return@withContext Pair(false, "Spotify Search API is not available in this variant")
+                }
+                
                 // Test with a simple search
-                val response = NetworkClient.spotifySearchApiService.searchTracks(
+                val response = NetworkClient.spotifySearchApiService!!.searchTracks(
                     query = "test",
                     authorization = "Bearer $accessToken",
                     limit = 1

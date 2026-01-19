@@ -215,11 +215,25 @@ object NetworkClient {
         .addConverterFactory(GsonConverterFactory.create())
         .build()
     
-    val deezerApiService: DeezerApiService = deezerRetrofit.create(DeezerApiService::class.java)
-    val canvasApiService: SpotifyCanvasApiService = canvasRetrofit.create(SpotifyCanvasApiService::class.java)
-    val lrclibApiService: LRCLibApiService = lrclibRetrofit.create(LRCLibApiService::class.java)
-    val ytmusicApiService: YTMusicApiService = ytmusicRetrofit.create(YTMusicApiService::class.java)
-    val spotifySearchApiService: SpotifySearchApiService = spotifyRetrofit.create(SpotifySearchApiService::class.java)
+    val deezerApiService: DeezerApiService? = if (BuildConfig.ENABLE_DEEZER) {
+        deezerRetrofit.create(DeezerApiService::class.java)
+    } else null
+    
+    val canvasApiService: SpotifyCanvasApiService? = if (BuildConfig.ENABLE_SPOTIFY_CANVAS) {
+        canvasRetrofit.create(SpotifyCanvasApiService::class.java)
+    } else null
+    
+    val lrclibApiService: LRCLibApiService? = if (BuildConfig.ENABLE_LRCLIB) {
+        lrclibRetrofit.create(LRCLibApiService::class.java)
+    } else null
+    
+    val ytmusicApiService: YTMusicApiService? = if (BuildConfig.ENABLE_YOUTUBE_MUSIC) {
+        ytmusicRetrofit.create(YTMusicApiService::class.java)
+    } else null
+    
+    val spotifySearchApiService: SpotifySearchApiService? = if (BuildConfig.ENABLE_SPOTIFY_SEARCH) {
+        spotifyRetrofit.create(SpotifySearchApiService::class.java)
+    } else null
     
     // Generic OkHttp client for one-off requests (e.g., Wikidata JSON). Reuses header interceptor.
     val genericHttpClient: OkHttpClient = OkHttpClient.Builder()
@@ -227,12 +241,12 @@ object NetworkClient {
         .addInterceptor(loggingInterceptor)
         .build()
     
-    // Helper methods to check if APIs are enabled
-    fun isDeezerApiEnabled(): Boolean = appSettings?.deezerApiEnabled?.value ?: false
-    fun isCanvasApiEnabled(): Boolean = appSettings?.canvasApiEnabled?.value ?: false
-    fun isLrcLibApiEnabled(): Boolean = appSettings?.lrclibApiEnabled?.value ?: false
-    fun isYTMusicApiEnabled(): Boolean = appSettings?.ytMusicApiEnabled?.value ?: false
-    fun isSpotifyApiEnabled(): Boolean = appSettings?.spotifyApiEnabled?.value ?: false
+    // Helper methods to check if APIs are enabled (respects both BuildConfig AND runtime settings)
+    fun isDeezerApiEnabled(): Boolean = BuildConfig.ENABLE_DEEZER && (appSettings?.deezerApiEnabled?.value ?: false)
+    fun isCanvasApiEnabled(): Boolean = BuildConfig.ENABLE_SPOTIFY_CANVAS && (appSettings?.canvasApiEnabled?.value ?: false)
+    fun isLrcLibApiEnabled(): Boolean = BuildConfig.ENABLE_LRCLIB && (appSettings?.lrclibApiEnabled?.value ?: false)
+    fun isYTMusicApiEnabled(): Boolean = BuildConfig.ENABLE_YOUTUBE_MUSIC && (appSettings?.ytMusicApiEnabled?.value ?: false)
+    fun isSpotifyApiEnabled(): Boolean = BuildConfig.ENABLE_SPOTIFY_SEARCH && (appSettings?.spotifyApiEnabled?.value ?: false)
     
     // Get Spotify API credentials
     fun getSpotifyClientId(): String = appSettings?.spotifyClientId?.value ?: ""

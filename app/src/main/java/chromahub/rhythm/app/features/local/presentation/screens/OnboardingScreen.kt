@@ -8480,58 +8480,86 @@ private fun IntegrationsSettingsCards(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
         ) {
             Column {
-                OnboardingSettingRow(
-                    icon = Icons.Default.Public,
-                    title = context.getString(R.string.onboarding_integration_deezer),
-                    description = context.getString(R.string.onboarding_integration_deezer_desc),
-                    isEnabled = deezerApiEnabled,
-                    onToggle = { 
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                        onDeezerChange(it) 
+                // Deezer API - Only show if enabled in BuildConfig
+                if (chromahub.rhythm.app.BuildConfig.ENABLE_DEEZER) {
+                    OnboardingSettingRow(
+                        icon = Icons.Default.Public,
+                        title = context.getString(R.string.onboarding_integration_deezer),
+                        description = context.getString(R.string.onboarding_integration_deezer_desc),
+                        isEnabled = deezerApiEnabled,
+                        onToggle = { 
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            onDeezerChange(it) 
+                        }
+                    )
+                    
+                    // Show divider only if there are more items below
+                    if (chromahub.rhythm.app.BuildConfig.ENABLE_SPOTIFY_CANVAS || 
+                        chromahub.rhythm.app.BuildConfig.ENABLE_LRCLIB || 
+                        chromahub.rhythm.app.BuildConfig.ENABLE_YOUTUBE_MUSIC) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
                     }
-                )
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 20.dp),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                )
-                OnboardingSettingRow(
-                    icon = Icons.Default.Brush,
-                    title = context.getString(R.string.onboarding_integration_canvas),
-                    description = context.getString(R.string.onboarding_integration_canvas_desc),
-                    isEnabled = canvasApiEnabled,
-                    onToggle = { 
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                        onCanvasChange(it) 
+                }
+                
+                // Spotify Canvas API - Only show if enabled in BuildConfig
+                if (chromahub.rhythm.app.BuildConfig.ENABLE_SPOTIFY_CANVAS) {
+                    OnboardingSettingRow(
+                        icon = Icons.Default.Brush,
+                        title = context.getString(R.string.onboarding_integration_canvas),
+                        description = context.getString(R.string.onboarding_integration_canvas_desc),
+                        isEnabled = canvasApiEnabled,
+                        onToggle = { 
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            onCanvasChange(it) 
+                        }
+                    )
+                    
+                    if (chromahub.rhythm.app.BuildConfig.ENABLE_LRCLIB || 
+                        chromahub.rhythm.app.BuildConfig.ENABLE_YOUTUBE_MUSIC) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
                     }
-                )
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 20.dp),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                )
-                OnboardingSettingRow(
-                    icon = Icons.Default.Lyrics,
-                    title = context.getString(R.string.onboarding_integration_lrclib),
-                    description = context.getString(R.string.onboarding_integration_lrclib_desc),
-                    isEnabled = lrclibApiEnabled,
-                    onToggle = { 
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                        onLrcLibChange(it) 
+                }
+                
+                // LRCLib API - Only show if enabled in BuildConfig
+                if (chromahub.rhythm.app.BuildConfig.ENABLE_LRCLIB) {
+                    OnboardingSettingRow(
+                        icon = Icons.Default.Lyrics,
+                        title = context.getString(R.string.onboarding_integration_lrclib),
+                        description = context.getString(R.string.onboarding_integration_lrclib_desc),
+                        isEnabled = lrclibApiEnabled,
+                        onToggle = { 
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            onLrcLibChange(it) 
+                        }
+                    )
+                    
+                    if (chromahub.rhythm.app.BuildConfig.ENABLE_YOUTUBE_MUSIC) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
                     }
-                )
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 20.dp),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                )
-                OnboardingSettingRow(
-                    icon = Icons.Default.MusicVideo,
-                    title = context.getString(R.string.onboarding_integration_ytmusic),
-                    description = context.getString(R.string.onboarding_integration_ytmusic_desc),
-                    isEnabled = ytMusicApiEnabled,
-                    onToggle = { 
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                        onYtMusicChange(it) 
-                    }
-                )
+                }
+                
+                // YouTube Music API - Only show if enabled in BuildConfig
+                if (chromahub.rhythm.app.BuildConfig.ENABLE_YOUTUBE_MUSIC) {
+                    OnboardingSettingRow(
+                        icon = Icons.Default.MusicVideo,
+                        title = context.getString(R.string.onboarding_integration_ytmusic),
+                        description = context.getString(R.string.onboarding_integration_ytmusic_desc),
+                        isEnabled = ytMusicApiEnabled,
+                        onToggle = { 
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            onYtMusicChange(it) 
+                        }
+                    )
+                }
             }
         }
 

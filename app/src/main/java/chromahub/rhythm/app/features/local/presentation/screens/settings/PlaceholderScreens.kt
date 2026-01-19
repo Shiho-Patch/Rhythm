@@ -8658,21 +8658,29 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             toggleState = showLyrics,
                             onToggleChange = { appSettings.setShowLyrics(it) }
                         )
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 20.dp),
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                        )
-                        SettingRow(
-                            icon = Icons.Default.VideoLibrary,
-                            title = "Canvas Backgrounds",
-                            description = "Show animated backgrounds for supported songs",
-                            toggleState = canvasApiEnabled,
-                            onToggleChange = { appSettings.setCanvasApiEnabled(it) }
-                        )
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 20.dp),
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                        )
+                        // Canvas Backgrounds - Only show if Spotify Canvas is enabled in BuildConfig
+                        if (chromahub.rhythm.app.BuildConfig.ENABLE_SPOTIFY_CANVAS) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 20.dp),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                            )
+                            SettingRow(
+                                icon = Icons.Default.VideoLibrary,
+                                title = "Canvas Backgrounds",
+                                description = "Show animated backgrounds for supported songs",
+                                toggleState = canvasApiEnabled,
+                                onToggleChange = { appSettings.setCanvasApiEnabled(it) }
+                            )
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 20.dp),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                            )
+                        } else {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 20.dp),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                            )
+                        }
                         SettingRow(
                             icon = Icons.Default.Gradient,
                             title = "Gradient Overlay",
@@ -12001,97 +12009,120 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Column {
-                        // Deezer API
-                        ApiServiceRow(
-                            title = "Deezer",
-                            description = "Free artist images and album artwork - no setup needed",
-                            status = "Ready",
-                            isConfigured = true,
-                            isEnabled = deezerApiEnabled,
-                            icon = Icons.Default.Public,
-                            showToggle = true,
-                            onToggle = { enabled -> appSettings.setDeezerApiEnabled(enabled) },
-                            onClick = { /* No configuration needed */ }
-                        )
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 20.dp),
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                        )
+                        // Deezer API - Only show if enabled in BuildConfig
+                        if (chromahub.rhythm.app.BuildConfig.ENABLE_DEEZER) {
+                            ApiServiceRow(
+                                title = "Deezer",
+                                description = "Free artist images and album artwork - no setup needed",
+                                status = "Ready",
+                                isConfigured = true,
+                                isEnabled = deezerApiEnabled,
+                                icon = Icons.Default.Public,
+                                showToggle = true,
+                                onToggle = { enabled -> appSettings.setDeezerApiEnabled(enabled) },
+                                onClick = { /* No configuration needed */ }
+                            )
+                            
+                            // Show divider only if there are more items below
+                            if (chromahub.rhythm.app.BuildConfig.ENABLE_SPOTIFY_CANVAS || 
+                                chromahub.rhythm.app.BuildConfig.ENABLE_LRCLIB || 
+                                chromahub.rhythm.app.BuildConfig.ENABLE_YOUTUBE_MUSIC) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                            }
+                        }
 
-                        // Spotify Canvas API
-                        ApiServiceRow(
-                            title = "Spotify Canvas",
-                            description = if (spotifyClientId.isNotEmpty() && spotifyClientSecret.isNotEmpty()) {
-                                "Spotify integration for Canvas videos (High Data Usage)"
-                            } else {
-                                "Canvas videos from Spotify (Please use your own key!)"
-                            },
-                            status = if (spotifyClientId.isNotEmpty() && spotifyClientSecret.isNotEmpty()) {
-                                "Active"
-                            } else {
-                                "Need Setup"
-                            },
-                            isConfigured = true,
-                            isEnabled = canvasApiEnabled && (spotifyApiEnabled || true),
-                            icon = RhythmIcons.Song,
-                            showToggle = true,
-                            onToggle = { enabled ->
-                                appSettings.setCanvasApiEnabled(enabled)
-                                // Auto-clear canvas cache when disabled
-                                if (!enabled) {
-                                    scope.launch {
-                                        try {
-                                            val canvasRepository = chromahub.rhythm.app.shared.data.repository.CanvasRepository(context, appSettings)
-                                            canvasRepository.clearCache()
-                                            Log.d("ApiManagement", "Canvas cache cleared due to API being disabled")
-                                        } catch (e: Exception) {
-                                            Log.e("ApiManagement", "Error clearing canvas cache", e)
+                        // Spotify Canvas API - Only show if enabled in BuildConfig
+                        if (chromahub.rhythm.app.BuildConfig.ENABLE_SPOTIFY_CANVAS) {
+                            ApiServiceRow(
+                                title = "Spotify Canvas",
+                                description = if (spotifyClientId.isNotEmpty() && spotifyClientSecret.isNotEmpty()) {
+                                    "Spotify integration for Canvas videos (High Data Usage)"
+                                } else {
+                                    "Canvas videos from Spotify (Please use your own key!)"
+                                },
+                                status = if (spotifyClientId.isNotEmpty() && spotifyClientSecret.isNotEmpty()) {
+                                    "Active"
+                                } else {
+                                    "Need Setup"
+                                },
+                                isConfigured = true,
+                                isEnabled = canvasApiEnabled && (spotifyApiEnabled || true),
+                                icon = RhythmIcons.Song,
+                                showToggle = true,
+                                onToggle = { enabled ->
+                                    appSettings.setCanvasApiEnabled(enabled)
+                                    // Auto-clear canvas cache when disabled
+                                    if (!enabled) {
+                                        scope.launch {
+                                            try {
+                                                val canvasRepository = chromahub.rhythm.app.shared.data.repository.CanvasRepository(context, appSettings)
+                                                canvasRepository.clearCache()
+                                                Log.d("ApiManagement", "Canvas cache cleared due to API being disabled")
+                                            } catch (e: Exception) {
+                                                Log.e("ApiManagement", "Error clearing canvas cache", e)
+                                            }
                                         }
                                     }
+                                },
+                                onClick = {
+                                    showSpotifyConfigDialog = true
                                 }
-                            },
-                            onClick = {
-                                showSpotifyConfigDialog = true
+                            )
+                            
+                            if (chromahub.rhythm.app.BuildConfig.ENABLE_LRCLIB || 
+                                chromahub.rhythm.app.BuildConfig.ENABLE_YOUTUBE_MUSIC) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
                             }
-                        )
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 20.dp),
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                        )
+                        }
 
-                        // LRCLib API
-                        ApiServiceRow(
-                            title = "LRCLib",
-                            description = "Free line-by-line synced lyrics (Fallback)",
-                            status = "Ready",
-                            isConfigured = true,
-                            isEnabled = lrclibApiEnabled,
-                            icon = RhythmIcons.Queue,
-                            showToggle = true,
-                            onToggle = { enabled -> appSettings.setLrcLibApiEnabled(enabled) },
-                            onClick = { /* No configuration needed */ }
-                        )
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 20.dp),
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                        )
+                        // LRCLib API - Only show if enabled in BuildConfig
+                        if (chromahub.rhythm.app.BuildConfig.ENABLE_LRCLIB) {
+                            ApiServiceRow(
+                                title = "LRCLib",
+                                description = "Free line-by-line synced lyrics (Fallback)",
+                                status = "Ready",
+                                isConfigured = true,
+                                isEnabled = lrclibApiEnabled,
+                                icon = RhythmIcons.Queue,
+                                showToggle = true,
+                                onToggle = { enabled -> appSettings.setLrcLibApiEnabled(enabled) },
+                                onClick = { /* No configuration needed */ }
+                            )
+                            
+                            if (chromahub.rhythm.app.BuildConfig.ENABLE_YOUTUBE_MUSIC) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                            }
+                        }
 
-                        // YouTube Music API
-                        ApiServiceRow(
-                            title = "YouTube Music",
-                            description = "Fallback for artist images and album artwork",
-                            status = "Ready",
-                            isConfigured = true,
-                            isEnabled = ytMusicApiEnabled,
-                            icon = RhythmIcons.Album,
-                            showToggle = true,
-                            onToggle = { enabled -> appSettings.setYTMusicApiEnabled(enabled) },
-                            onClick = { /* No configuration needed */ }
-                        )
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 20.dp),
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                        )
+                        // YouTube Music API - Only show if enabled in BuildConfig
+                        if (chromahub.rhythm.app.BuildConfig.ENABLE_YOUTUBE_MUSIC) {
+                            ApiServiceRow(
+                                title = "YouTube Music",
+                                description = "Fallback for artist images and album artwork",
+                                status = "Ready",
+                                isConfigured = true,
+                                isEnabled = ytMusicApiEnabled,
+                                icon = RhythmIcons.Album,
+                                showToggle = true,
+                                onToggle = { enabled -> appSettings.setYTMusicApiEnabled(enabled) },
+                                onClick = { /* No configuration needed */ }
+                            )
+                            
+                            // Always show divider before GitHub (which is always present)
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 20.dp),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                            )
+                        }
 
                         // GitHub API
                         ApiServiceRow(
