@@ -7,6 +7,7 @@ Common questions about Rhythm Music Player.
 ### Where can I download Rhythm?
 
 Download from:
+- **[F-Droid](https://f-droid.org/packages/chromahub.rhythm.app)** (official F-Droid repository)
 - **[GitHub Releases](https://github.com/cromaguy/Rhythm/releases/latest)** (direct APK)
 - **[IzzyOnDroid F-Droid Repo](https://apt.izzysoft.de/fdroid/index/apk/chromahub.rhythm.app)**
 - **[Obtainium](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/cromaguy/Rhythm/)**
@@ -17,8 +18,9 @@ No, Rhythm is distributed through GitHub and alternative app stores. This keeps 
 
 ### How do I update Rhythm?
 
-- **Obtainium**: Automatic notifications and one-tap updates
 - **F-Droid**: Automatic updates through the F-Droid app
+- **Obtainium**: Automatic notifications and one-tap updates
+- **F-Droid (IzzyOnDroid)**: Automatic updates through the F-Droid app
 - **Manual**: Download new APK from GitHub Releases and install over existing app
 
 ### Why can't I install the update?

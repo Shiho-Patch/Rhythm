@@ -98,8 +98,9 @@ Rhythm is a modern, open-source music player for Android built with Material 3 d
 
 <div align="center">
 
-[<img src="assets/badge-github.png" alt="Download APK" height="28">](https://github.com/cromaguy/Rhythm/releases/latest)
+[<img src="assets/badge-fdroid.png" alt="F-Droid" height="28">](https://f-droid.org/packages/chromahub.rhythm.app)
 [<img src="assets/badge-izzyondroid.png" alt="IzzyOnDroid" height="28">](https://apt.izzysoft.de/fdroid/index/apk/chromahub.rhythm.app)
+[<img src="assets/badge-github.png" alt="Download APK" height="28">](https://github.com/cromaguy/Rhythm/releases/latest)
 [<img src="assets/badge-openapk.png" alt="OpenAPK" height="28">](https://www.openapk.net/rhythm/chromahub.rhythm.app/)
 [<img src="assets/badge-obtainium.png" alt="Obtainium" height="28">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/cromaguy/Rhythm/)
 
@@ -107,8 +108,9 @@ Rhythm is a modern, open-source music player for Android built with Material 3 d
 
 ### Installation Options
 
-- **[GitHub Releases](https://github.com/cromaguy/Rhythm/releases/latest)** - Direct APK download
+- **[F-Droid](https://f-droid.org/packages/chromahub.rhythm.app)** - Official F-Droid repository
 - **[IzzyOnDroid](https://apt.izzysoft.de/fdroid/index/apk/chromahub.rhythm.app)** - F-Droid repository for privacy-focused users
+- **[GitHub Releases](https://github.com/cromaguy/Rhythm/releases/latest)** - Direct APK download
 - **[Obtainium](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/cromaguy/Rhythm/)** - Auto-updates from GitHub
 
 📖 **Detailed installation guide:** See the [Installation Wiki](https://github.com/cromaguy/Rhythm/wiki/Installation-Guide)

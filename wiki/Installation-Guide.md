@@ -13,7 +13,24 @@ This guide covers all methods to download and install Rhythm Music Player on you
 
 ## 📥 Installation Methods
 
-### Method 1: Direct APK Installation (Recommended)
+### Method 1: F-Droid (Recommended)
+
+[F-Droid](https://f-droid.org/) is the official app store for free and open-source Android apps.
+
+1. **Install F-Droid**
+   - Download from [f-droid.org](https://f-droid.org/)
+   - Enable "Install unknown apps" for F-Droid if needed
+
+2. **Install Rhythm**
+   - Open F-Droid and search for "Rhythm"
+   - Tap "Install"
+   - Updates will be automatic
+
+> **Best for:** Users who prefer official FOSS app stores with automatic updates
+
+---
+
+### Method 2: Direct APK Installation
 
 1. **Download APK**
    - Visit the [Releases page](https://github.com/cromaguy/Rhythm/releases/latest)
@@ -33,7 +50,7 @@ This guide covers all methods to download and install Rhythm Music Player on you
 
 ---
 
-### Method 2: Obtainium (Auto-Updates)
+### Method 3: Obtainium (Auto-Updates)
 
 [Obtainium](https://github.com/ImranR98/Obtainium) is a universal app manager that provides automatic updates directly from GitHub.
 
@@ -54,7 +71,7 @@ This guide covers all methods to download and install Rhythm Music Player on you
 
 ---
 
-### Method 3: F-Droid (IzzyOnDroid)
+### Method 4: F-Droid (IzzyOnDroid)
 
 [IzzyOnDroid](https://apt.izzysoft.de/) is a trusted F-Droid repository for open-source apps.
 
@@ -76,7 +93,7 @@ This guide covers all methods to download and install Rhythm Music Player on you
 
 ---
 
-### Method 4: OpenAPK
+### Method 5: OpenAPK
 
 1. Visit [OpenAPK Rhythm page](https://www.openapk.net/rhythm/chromahub.rhythm.app/)
 2. Download the latest version
@@ -107,11 +124,15 @@ After installation:
 
 ## 🔄 Updating Rhythm
 
+### Via F-Droid
+- Automatic updates through the F-Droid app
+- Typically updated within 24-48 hours of release
+
 ### Via Obtainium
 - Automatic notifications for new releases
 - One-tap update installation
 
-### Via F-Droid
+### Via F-Droid (IzzyOnDroid)
 - Automatic updates through F-Droid app
 - Typically updated within 24-48 hours of release
 
