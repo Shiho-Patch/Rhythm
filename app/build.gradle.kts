@@ -76,7 +76,7 @@ android {
         }
     }
 
-    val signingProperties = getProperties("config/signing/keystore.properties")
+    val signingProperties = getProperties(".config/keystore.properties")
     val releaseSigning = if (signingProperties != null) {
         signingConfigs.create("release") {
             keyAlias = signingProperties.property("key_alias")
@@ -100,6 +100,9 @@ android {
 //                "proguard-rules.pro"
 //            )
             signingConfig = releaseSigning
+            ndk {
+                debugSymbolLevel = "SYMBOL_TABLE"
+            }
             // Reproducible builds: disable build timestamp
             if (System.getenv("CI") == "true" || System.getenv("BUILD_REPRODUCIBLE") == "true") {
                 // Use a fixed timestamp for reproducible builds  
