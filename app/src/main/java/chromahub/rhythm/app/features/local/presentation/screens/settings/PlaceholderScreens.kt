@@ -12116,13 +12116,13 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
                                 onToggle = { enabled -> appSettings.setYTMusicApiEnabled(enabled) },
                                 onClick = { /* No configuration needed */ }
                             )
-                            
-                            // Always show divider before GitHub (which is always present)
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 20.dp),
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                            )
                         }
+
+                        // Always show divider before GitHub (which is always present)
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
 
                         // GitHub API
                         ApiServiceRow(
