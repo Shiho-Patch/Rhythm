@@ -100,9 +100,9 @@ android {
 //                "proguard-rules.pro"
 //            )
             signingConfig = releaseSigning
-            ndk {
-                debugSymbolLevel = "SYMBOL_TABLE"
-            }
+//            ndk {
+//                debugSymbolLevel = "SYMBOL_TABLE"
+//            }
             // Reproducible builds: disable build timestamp
             if (System.getenv("CI") == "true" || System.getenv("BUILD_REPRODUCIBLE") == "true") {
                 // Use a fixed timestamp for reproducible builds  
