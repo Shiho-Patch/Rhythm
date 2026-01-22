@@ -54,8 +54,8 @@ jobs:
           touch ./private.properties
         fi
 
-    - name: Build with Gradle
-      run: ./gradlew assemble
+    - name: Build with Gradle (GitHub flavor only)
+      run: ./gradlew assembleGithub
 
     - name: Generate build info
       if: github.event_name == 'pull_request'
@@ -70,7 +70,7 @@ jobs:
       with:
         name: rhythm-pr-${{ github.event.pull_request.number }}
         path: |
-          app/build/outputs/apk/release/Rhythm-*-release.apk
-          app/build/outputs/apk/debug/Rhythm-*-debug.apk
+          app/build/outputs/apk/githubRelease/Rhythm-*-githubRelease.apk
+          app/build/outputs/apk/githubDebug/Rhythm-*-githubDebug.apk
           build_info.txt
         retention-days: 14
