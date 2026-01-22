@@ -75,12 +75,14 @@ class RhythmMusicWidget : GlanceAppWidget() {
     // Responsive sizing - adapts to different widget sizes
     override val sizeMode = SizeMode.Responsive(
         setOf(
-            WidgetSize.ExtraSmall,  // 2x1 cells - minimal
-            WidgetSize.Small,       // 2x2 cells - compact with controls
-            WidgetSize.Medium,      // 3x2 cells - horizontal layout
+            WidgetSize.ExtraSmall,  // 2x1 cells - minimal horizontal
+            WidgetSize.Small,       // 2x2 cells - compact square
+            WidgetSize.Medium,      // 3x2 cells - standard horizontal  
             WidgetSize.Wide,        // 4x2 cells - extended horizontal
-            WidgetSize.Large,       // 3x3 cells - vertical with full info
-            WidgetSize.ExtraLarge   // 4x4 cells - maximum detail
+            WidgetSize.Large,       // 3x3 cells - large square
+            WidgetSize.ExtraLarge,  // 4x4 cells - maximum size
+            WidgetSize.Tall,        // 2x3 cells - vertical layout
+            WidgetSize.ExtraTall    // 2x4 cells - extra tall vertical
         )
     )
     
@@ -98,13 +100,28 @@ class RhythmMusicWidget : GlanceAppWidget() {
     @Composable
     private fun ResponsiveWidgetContent(data: WidgetData) {
         val size = androidx.glance.LocalSize.current
+        val aspectRatio = size.height / size.width
         
         when {
-            size.width >= WidgetSize.ExtraLarge.width -> ExtraLargeWidgetLayout(data)
-            size.width >= WidgetSize.Wide.width -> WideWidgetLayout(data)
-            size.width >= WidgetSize.Large.width && size.height >= WidgetSize.Large.height -> LargeWidgetLayout(data)
-            size.width >= WidgetSize.Medium.width -> MediumWidgetLayout(data)
-            size.height >= WidgetSize.Small.height -> SmallWidgetLayout(data)
+            // Extra large layouts (4x4+)
+            size.width >= WidgetSize.ExtraLarge.width && size.height >= WidgetSize.ExtraLarge.height -> ExtraLargeWidgetLayout(data)
+            
+            // Wide layouts (4x2)
+            size.width >= WidgetSize.Wide.width && aspectRatio < 1.5f -> WideWidgetLayout(data)
+            
+            // Large square layouts (3x3)
+            size.width >= WidgetSize.Large.width && size.height >= WidgetSize.Large.height && aspectRatio >= 0.8f && aspectRatio <= 1.2f -> LargeWidgetLayout(data)
+            
+            // Tall vertical layouts (2x3, 2x4)
+            size.height >= WidgetSize.Tall.height && aspectRatio > 1.5f -> TallWidgetLayout(data)
+            
+            // Medium horizontal layouts (3x2)
+            size.width >= WidgetSize.Medium.width && aspectRatio < 1.2f -> MediumWidgetLayout(data)
+            
+            // Small layouts (2x2)
+            size.width >= WidgetSize.Small.width && size.height >= WidgetSize.Small.height -> SmallWidgetLayout(data)
+            
+            // Extra small fallback (2x1)
             else -> ExtraSmallWidgetLayout(data)
         }
     }
@@ -635,6 +652,155 @@ class RhythmMusicWidget : GlanceAppWidget() {
     }
     
     @Composable
+    private fun TallWidgetLayout(data: WidgetData) {
+        Box(
+            modifier = GlanceModifier
+                .fillMaxSize()
+                .background(GlanceTheme.colors.widgetBackground)
+                .cornerRadius(data.cornerRadius.dp)
+                .clickable(actionStartActivity<MainActivity>())
+        ) {
+            // Content with padding - vertical layout
+            Column(
+                modifier = GlanceModifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Album art - prominent circular/squircle
+                Box(
+                    modifier = GlanceModifier
+                        .size(100.dp)
+                        .cornerRadius(25.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (data.artworkUri != null) {
+                        Image(
+                            provider = AppWidgetImageProvider(data.artworkUri),
+                            contentDescription = "Album Art",
+                            modifier = GlanceModifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Image(
+                            provider = ImageProvider(R.drawable.ic_music_note),
+                            contentDescription = "Default Music Icon",
+                            modifier = GlanceModifier.size(50.dp)
+                        )
+                    }
+                }
+                
+                Spacer(modifier = GlanceModifier.height(16.dp))
+                
+                // Song info - centered text
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Song title
+                    Text(
+                        text = data.songTitle,
+                        style = TextStyle(
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = GlanceTheme.colors.onSurface
+                        ),
+                        maxLines = 2
+                    )
+                    
+                    Spacer(modifier = GlanceModifier.height(6.dp))
+                    
+                    // Artist name
+                    Text(
+                        text = data.artistName,
+                        style = TextStyle(
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = GlanceTheme.colors.onSurfaceVariant
+                        ),
+                        maxLines = 1
+                    )
+                    
+                    // Album name if enabled
+                    if (data.showAlbum && data.albumName.isNotEmpty()) {
+                        Spacer(modifier = GlanceModifier.height(4.dp))
+                        Text(
+                            text = data.albumName,
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Normal,
+                                color = GlanceTheme.colors.onSurfaceVariant
+                            ),
+                            maxLines = 1
+                        )
+                    }
+                }
+                
+                Spacer(modifier = GlanceModifier.height(20.dp))
+                
+                // Playback controls - vertical stack
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Previous button
+                    Box(
+                        modifier = GlanceModifier
+                            .size(48.dp)
+                            .cornerRadius(24.dp)
+                            .background(GlanceTheme.colors.secondaryContainer)
+                            .clickable(actionRunCallback<SkipPreviousAction>()),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            provider = ImageProvider(R.drawable.ic_skip_previous),
+                            contentDescription = "Previous",
+                            modifier = GlanceModifier.size(24.dp)
+                        )
+                    }
+                    
+                    Spacer(modifier = GlanceModifier.height(12.dp))
+                    
+                    // Play/Pause button - Android 16 rounded rectangle
+                    Box(
+                        modifier = GlanceModifier
+                            .size(width = 64.dp, height = 56.dp)
+                            .cornerRadius(20.dp)
+                            .background(GlanceTheme.colors.primary)
+                            .clickable(actionRunCallback<PlayPauseAction>()),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            provider = ImageProvider(
+                                if (data.isPlaying) R.drawable.ic_pause else R.drawable.ic_play_arrow
+                            ),
+                            contentDescription = if (data.isPlaying) "Pause" else "Play",
+                            modifier = GlanceModifier.size(28.dp)
+                        )
+                    }
+                    
+                    Spacer(modifier = GlanceModifier.height(12.dp))
+                    
+                    // Next button
+                    Box(
+                        modifier = GlanceModifier
+                            .size(48.dp)
+                            .cornerRadius(24.dp)
+                            .background(GlanceTheme.colors.secondaryContainer)
+                            .clickable(actionRunCallback<SkipNextAction>()),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            provider = ImageProvider(R.drawable.ic_skip_next),
+                            contentDescription = "Next",
+                            modifier = GlanceModifier.size(24.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+    
+    @Composable
     private fun LargeWidgetLayout(data: WidgetData) {
         Box(
             modifier = GlanceModifier
@@ -973,4 +1139,6 @@ object WidgetSize {
     val Wide = DpSize(320.dp, 120.dp)        // 4x2 cells - extended horizontal
     val Large = DpSize(250.dp, 250.dp)       // 3x3 cells - large square
     val ExtraLarge = DpSize(320.dp, 320.dp)  // 4x4 cells - maximum size
+    val Tall = DpSize(120.dp, 200.dp)        // 2x3 cells - vertical layout
+    val ExtraTall = DpSize(120.dp, 280.dp)   // 2x4 cells - extra tall vertical
 }

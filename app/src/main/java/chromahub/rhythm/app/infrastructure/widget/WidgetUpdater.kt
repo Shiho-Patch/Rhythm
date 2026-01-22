@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.widget
+package chromahub.rhythm.app.infrastructure.widget
 
 import android.content.Context
 import android.net.Uri

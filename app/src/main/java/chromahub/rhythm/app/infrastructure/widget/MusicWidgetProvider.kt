@@ -1,4 +1,4 @@
-package chromahub.rhythm.app.widget
+package chromahub.rhythm.app.infrastructure.widget
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -28,9 +28,9 @@ class MusicWidgetProvider : AppWidgetProvider() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     companion object {
-        const val ACTION_PLAY_PAUSE = "chromahub.rhythm.app.widget.PLAY_PAUSE"
-        const val ACTION_SKIP_NEXT = "chromahub.rhythm.app.widget.SKIP_NEXT"
-        const val ACTION_SKIP_PREVIOUS = "chromahub.rhythm.app.widget.SKIP_PREVIOUS"
+        const val ACTION_PLAY_PAUSE = "chromahub.rhythm.app.infrastructure.widget.PLAY_PAUSE"
+        const val ACTION_SKIP_NEXT = "chromahub.rhythm.app.infrastructure.widget.SKIP_NEXT"
+        const val ACTION_SKIP_PREVIOUS = "chromahub.rhythm.app.infrastructure.widget.SKIP_PREVIOUS"
         
         fun updateWidgets(context: Context) {
             val intent = Intent(context, MusicWidgetProvider::class.java).apply {
@@ -87,33 +87,40 @@ class MusicWidgetProvider : AppWidgetProvider() {
         val minHeight = widgetOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT)
         
         // Determine widget layout based on size - comprehensive grid support
-        // Android home screen grid: ~70dp per cell
+        // Android home screen grid: ~70dp per cell, but we use more granular detection
+        val aspectRatio = minHeight.toFloat() / minWidth.toFloat()
         val layoutId = when {
-            // 5x5+ (400+ width x 400+ height): Premium largest size
-            minWidth >= 380 && minHeight >= 380 -> R.layout.widget_music_5x5
+            // 5x5+ (350+ width x 350+ height): Premium largest size - enable for larger screens
+            minWidth >= 350 && minHeight >= 350 -> R.layout.widget_music_5x5
             
-            // 5x4 (400+ width x 320+ height): Tall wide layout
-            minWidth >= 380 && minHeight >= 300 -> R.layout.widget_music_extra_large
+            // 5x4 or 4x5 (350+ width x 280+ height): Tall wide layout
+            minWidth >= 350 && minHeight >= 280 -> R.layout.widget_music_extra_large
             
-            // 4x4+ (320+ width x 320+ height): Extra large square
-            minWidth >= 300 && minHeight >= 280 -> R.layout.widget_music_extra_large
+            // 4x4+ (280+ width x 280+ height): Extra large square
+            minWidth >= 280 && minHeight >= 280 -> R.layout.widget_music_extra_large
             
-            // 5x3 or 4x3 (300+ width x 250+ height): Large horizontal
-            minWidth >= 300 && minHeight >= 230 -> R.layout.widget_music_large
+            // 5x3 or 4x3 (300+ width x 210+ height): Large horizontal
+            minWidth >= 300 && minHeight >= 210 -> R.layout.widget_music_large
             
-            // 3x3 (250+ width x 250+ height): Large square
-            minWidth >= 200 && minHeight >= 200 -> R.layout.widget_music_large
+            // 3x4 or 4x3 (210+ width x 300+ height): Large vertical
+            minWidth >= 210 && minHeight >= 300 -> R.layout.widget_music_large
             
-            // 5x2 or 4x2 (320+ width x 120-230dp height): Wide horizontal
-            minWidth >= 300 && minHeight < 230 -> R.layout.widget_music_wide
+            // 3x3 (210+ width x 210+ height): Large square
+            minWidth >= 210 && minHeight >= 210 -> R.layout.widget_music_large
             
-            // 3x2 (180-300dp width x 120-200dp height): Medium horizontal
-            minWidth >= 180 && minHeight >= 100 && minHeight < 200 -> R.layout.widget_music_medium
+            // 5x2 or 4x2 (320+ width x 140+ height): Wide horizontal
+            minWidth >= 320 && minHeight < 210 -> R.layout.widget_music_wide
             
-            // 2x2 (120-180dp width x 120-180dp height): Small square
+            // 3x2 (180-320dp width x 100-210dp height): Medium horizontal
+            minWidth >= 180 && minHeight >= 100 && minHeight < 210 && aspectRatio < 1.2f -> R.layout.widget_music_medium
+            
+            // 2x3 (100-180dp width x 210+ height): Medium vertical - use vertical layout
+            minWidth >= 100 && minWidth < 180 && minHeight >= 210 && aspectRatio > 1.5f -> R.layout.widget_music_vertical
+            
+            // 2x2 (100-180dp width x 100-210dp height): Small square
             minWidth >= 100 && minWidth < 180 && minHeight >= 100 -> R.layout.widget_music_small
             
-            // 3x1 or 2x1 (110-300dp width x 48-100dp height): Extra small horizontal strip
+            // 3x1 or 2x1 (110-320dp width x 40-100dp height): Extra small horizontal strip
             minHeight < 100 -> R.layout.widget_music_extra_small
             
             // Default fallback: Medium for any unmatched sizes
@@ -152,7 +159,8 @@ class MusicWidgetProvider : AppWidgetProvider() {
             if (layoutId == R.layout.widget_music_large || 
                 layoutId == R.layout.widget_music_medium ||
                 layoutId == R.layout.widget_music_wide ||
-                layoutId == R.layout.widget_music_extra_large) {
+                layoutId == R.layout.widget_music_extra_large ||
+                layoutId == R.layout.widget_music_5x5) {
                 if (showAlbum) {
                     views.setTextViewText(R.id.widget_album_name, albumName)
                     views.setViewVisibility(R.id.widget_album_name, android.view.View.VISIBLE)

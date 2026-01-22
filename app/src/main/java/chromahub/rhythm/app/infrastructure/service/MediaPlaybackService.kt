@@ -31,7 +31,7 @@ import androidx.media3.session.DefaultMediaNotificationProvider
 import chromahub.rhythm.app.activities.MainActivity
 import chromahub.rhythm.app.shared.data.model.AppSettings
 import chromahub.rhythm.app.shared.data.model.Song
-import chromahub.rhythm.app.widget.WidgetUpdater
+import chromahub.rhythm.app.infrastructure.widget.WidgetUpdater
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
