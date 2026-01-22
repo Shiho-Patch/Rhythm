@@ -380,6 +380,49 @@ const updateData = {
             <p><strong>🎉 Thank you for being part of this incredible journey! Grab 3.1, crank up the volume, and let's make some noise! Happy listening, Rhythm fam! 🎵✨</strong></p>
         `
     },
+    update9: {
+        image: "assets/Banner.png",
+        headline: "Rhythm is Coming to Google Play Store! 📱🎉",
+        date: "January 22, 2026",
+        writer: "Anjishnu Nandi",
+        details: `
+            <p>🎊 Exciting news, Rhythm community! We're thrilled to announce that Rhythm will soon be available on the Google Play Store! This is a major milestone in our journey to bring professional music playback to Android users worldwide.</p>
+            
+            <h3>🚀 What's Coming to Google Play:</h3>
+            <ul>
+                <li>📱 <strong>Easy Installation</strong> - One-tap install from the Play Store</li>
+                <li>🔄 <strong>Automatic Updates</strong> - Seamless updates through Google Play</li>
+                <li>🌍 <strong>Global Availability</strong> - Available in all countries where Google Play operates</li>
+                <li>🛡️ <strong>Enhanced Security</strong> - Additional security layers through Play Store verification</li>
+                <li>📊 <strong>Usage Insights</strong> - Better analytics to improve the app (privacy-focused, of course!)</li>
+            </ul>
+            
+            <h3>🔒 Privacy & Security First:</h3>
+            <p>Your privacy remains our top priority. Rhythm has always been designed with privacy in mind, and our Google Play version maintains the same commitment:</p>
+            <ul>
+                <li>🚫 <strong>No Data Collection</strong> - We don't collect or share personal information</li>
+                <li>🔐 <strong>Local Music Only</strong> - All your music stays on your device</li>
+                <li>📋 <strong>Minimal Permissions</strong> - Only necessary permissions for music playback</li>
+                <li>🛡️ <strong>Open Source</strong> - Full transparency with our GPL v3 license</li>
+            </ul>
+            
+            <h3>⏰ Timeline:</h3>
+            <p>We're currently in the final stages of Play Store preparation, including:</p>
+            <ul>
+                <li>✅ App review and compliance checks</li>
+                <li>✅ Store listing optimization</li>
+                <li>✅ Beta testing through Play Store</li>
+                <li>🔄 Final approvals and publishing</li>
+            </ul>
+            
+            <p><strong>Stay tuned for the official launch announcement!</strong> We'll keep you updated on our progress through our website and GitHub repository.</p>
+            
+            <h3>📥 Current Download Options:</h3>
+            <p>While we prepare for Google Play, you can still download Rhythm from our GitHub releases for the latest features and updates. Our GitHub version will continue to receive updates alongside the Play Store version.</p>
+            
+            <p><strong>Thank you for your patience and continued support! 🎵✨</strong></p>
+        `
+    },
 };
 
 // Function to check if an image exists
