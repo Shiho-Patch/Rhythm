@@ -612,7 +612,10 @@ fun LibraryScreen(
             artist = selectedArtist!!,
             onDismiss = { showArtistBottomSheet = false },
             onSongClick = onSongClick,
-            onAlbumClick = onAlbumClick,
+            onAlbumClick = { album ->
+                selectedAlbum = album
+                showAlbumBottomSheet = true
+            },
             onPlayAll = { songs ->
                 if (songs.isNotEmpty()) {
                     onPlayQueue(songs)

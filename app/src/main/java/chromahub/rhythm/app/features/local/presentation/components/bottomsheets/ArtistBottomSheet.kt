@@ -474,7 +474,16 @@ fun ArtistBottomSheet(
                                                                         haptics,
                                                                         HapticFeedbackType.TextHandleMove
                                                                     )
+                                                                    // Show album bottom sheet
                                                                     onAlbumClick(album)
+                                                                },
+                                                                onPlay = {
+                                                                    HapticUtils.performHapticFeedback(
+                                                                        context,
+                                                                        haptics,
+                                                                        HapticFeedbackType.LongPress
+                                                                    )
+                                                                    viewModel.playAlbum(album)
                                                                 },
                                                                 haptics = haptics
                                                             )
@@ -845,7 +854,12 @@ fun ArtistBottomSheet(
                                         album = album,
                                         onClick = {
                                             HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                            // Show album bottom sheet
                                             onAlbumClick(album)
+                                        },
+                                        onPlay = {
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            viewModel.playAlbum(album)
                                         },
                                         haptics = haptics
                                     )
@@ -972,6 +986,7 @@ fun ArtistBottomSheet(
 private fun ArtistAlbumCard(
     album: Album,
     onClick: () -> Unit,
+    onPlay: () -> Unit,
     haptics: androidx.compose.ui.hapticfeedback.HapticFeedback
 ) {
     val context = LocalContext.current
@@ -1020,7 +1035,7 @@ private fun ArtistAlbumCard(
                     FilledIconButton(
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                            onClick()
+                            onPlay()
                         },
                         modifier = Modifier.size(40.dp), // Slightly larger button
                         colors = IconButtonDefaults.filledIconButtonColors(

@@ -9740,6 +9740,7 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
     // Theme states
     val useSystemTheme by appSettings.useSystemTheme.collectAsState()
     val darkMode by appSettings.darkMode.collectAsState()
+    val amoledTheme by appSettings.amoledTheme.collectAsState()
     val useDynamicColors by appSettings.useDynamicColors.collectAsState()
     val customColorScheme by appSettings.customColorScheme.collectAsState()
     val colorSource by appSettings.colorSource.collectAsState()
@@ -9984,6 +9985,13 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                         if (useSystemTheme) "Managed by system settings" else "Enable dark theme manually",
                         toggleState = darkMode,
                         onToggleChange = { appSettings.setDarkMode(it) }
+                    ),
+                    SettingItem(
+                        Icons.Default.Brightness2,
+                        "AMOLED Theme",
+                        if (darkMode || useSystemTheme) "Pure black theme for OLED displays" else "Available only in dark mode",
+                        toggleState = amoledTheme,
+                        onToggleChange = { appSettings.setAmoledTheme(it) }
                     )
                 )
             ),
@@ -10116,6 +10124,21 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                                         )
                                         TunerSettingRow(item = group.items[1])
+                                    }
+                                }
+
+                                // Third item: AMOLED Theme with AnimatedVisibility
+                                AnimatedVisibility(
+                                    visible = darkMode || useSystemTheme,
+                                    enter = fadeIn(animationSpec = tween(300)) + expandVertically(animationSpec = tween(300)),
+                                    exit = fadeOut(animationSpec = tween(200)) + shrinkVertically(animationSpec = tween(200))
+                                ) {
+                                    Column {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 20.dp),
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                        )
+                                        TunerSettingRow(item = group.items[2])
                                     }
                                 }
                             }

@@ -70,6 +70,7 @@ class AppSettings private constructor(context: Context) {
         // Theme Settings
         private const val KEY_USE_SYSTEM_THEME = "use_system_theme"
         private const val KEY_DARK_MODE = "dark_mode"
+        private const val KEY_AMOLED_THEME = "amoled_theme"
         private const val KEY_USE_DYNAMIC_COLORS = "use_dynamic_colors"
         private const val KEY_CUSTOM_COLOR_SCHEME = "custom_color_scheme"
         private const val KEY_CUSTOM_FONT = "custom_font"
@@ -433,6 +434,9 @@ class AppSettings private constructor(context: Context) {
     
     private val _darkMode = MutableStateFlow(prefs.getBoolean(KEY_DARK_MODE, true))
     val darkMode: StateFlow<Boolean> = _darkMode.asStateFlow()
+    
+    private val _amoledTheme = MutableStateFlow(prefs.getBoolean(KEY_AMOLED_THEME, false))
+    val amoledTheme: StateFlow<Boolean> = _amoledTheme.asStateFlow()
     
     private val _useDynamicColors = MutableStateFlow(prefs.getBoolean(KEY_USE_DYNAMIC_COLORS, false))
     val useDynamicColors: StateFlow<Boolean> = _useDynamicColors.asStateFlow()
@@ -1220,6 +1224,11 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     fun setUseDynamicColors(use: Boolean) {
         prefs.edit().putBoolean(KEY_USE_DYNAMIC_COLORS, use).apply()
         _useDynamicColors.value = use
+    }
+    
+    fun setAmoledTheme(amoled: Boolean) {
+        prefs.edit().putBoolean(KEY_AMOLED_THEME, amoled).apply()
+        _amoledTheme.value = amoled
     }
     
     // Artist Separator Settings Methods
@@ -2795,6 +2804,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         // Theme Settings
         _useSystemTheme.value = prefs.getBoolean(KEY_USE_SYSTEM_THEME, true)
         _darkMode.value = prefs.getBoolean(KEY_DARK_MODE, true)
+        _amoledTheme.value = prefs.getBoolean(KEY_AMOLED_THEME, false)
         _useDynamicColors.value = prefs.getBoolean(KEY_USE_DYNAMIC_COLORS, false)
         _customColorScheme.value = prefs.getString(KEY_CUSTOM_COLOR_SCHEME, "Default") ?: "Default"
         _customFont.value = prefs.getString(KEY_CUSTOM_FONT, "Geom") ?: "Geom"

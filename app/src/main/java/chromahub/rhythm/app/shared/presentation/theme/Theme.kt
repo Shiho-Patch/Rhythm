@@ -1270,6 +1270,7 @@ fun getAlbumArtColorScheme(colorsJson: String, darkTheme: Boolean): androidx.com
 @Composable
 fun RhythmTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    amoledTheme: Boolean = false,
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = false, // Set to false to use our expressive theme
     customColorScheme: String = "Default",
@@ -1296,6 +1297,22 @@ fun RhythmTheme(
         // Default Rhythm color scheme
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
+    }.let { scheme ->
+        // Apply AMOLED theme modifications if enabled and in dark mode
+        if (amoledTheme && darkTheme) {
+            scheme.copy(
+                background = Color.Black,
+                surface = Color.Black,
+                surfaceVariant = Color(0xFF121212),
+                surfaceContainer = Color(0xFF121212),
+                surfaceContainerLow = Color(0xFF0A0A0A),
+                surfaceContainerLowest = Color.Black,
+                surfaceContainerHigh = Color(0xFF1E1E1E),
+                surfaceContainerHighest = Color(0xFF2A2A2A),
+                surfaceDim = Color.Black,
+                surfaceBright = Color(0xFF2A2A2A)
+            )
+        } else scheme
     }
     
     // Load typography based on font source

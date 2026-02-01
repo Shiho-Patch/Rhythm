@@ -311,7 +311,8 @@ fun HomeScreen(
             },
             onAlbumClick = { album: Album ->
                 showArtistSheet = false
-                onAlbumClick(album)
+                selectedAlbum = album
+                showAlbumBottomSheet = true
             },
             onPlayAll = { songs ->
                 if (songs.isNotEmpty()) {

@@ -872,7 +872,10 @@ fun SearchScreen(
                 }
             },
             onSongClick = onSongClick,
-            onAlbumClick = onAlbumClick,
+            onAlbumClick = { album ->
+                selectedAlbum = album
+                showAlbumBottomSheet = true
+            },
             onPlayAll = { artistSongs -> 
                 if (artistSongs.isNotEmpty()) {
                     viewModel.playQueue(artistSongs)
