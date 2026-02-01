@@ -49,10 +49,14 @@ import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.math.cos
 import kotlin.math.abs
+import androidx.compose.material3.CircularWavyProgressIndicator
+import androidx.compose.material3.LinearWavyProgressIndicator
+import androidx.compose.material3.LoadingIndicator
+import androidx.compose.material3.ContainedLoadingIndicator
 
 /**
  * Material Design 3 Expressive Linear Progress Indicator
- * Features dynamic breathing animations, enhanced visual feedback, and smart color transitions
+ * Now uses official Material 3 Expressive components from androidx.compose.material3
  */
 @Composable
 fun M3LinearLoader(
@@ -65,28 +69,19 @@ fun M3LinearLoader(
     fourColor: Boolean = false,
     isExpressive: Boolean = true
 ) {
-    if (isExpressive) {
-        M3ExpressiveLinearIndicator(
-            progress = progress,
-            modifier = modifier,
-            primaryColor = color,
-//            trackColor = trackColor,
-            fourColor = fourColor
+    if (progress != null) {
+        LinearWavyProgressIndicator(
+            progress = { progress },
+            modifier = modifier
         )
     } else {
-        M3WaveProgressIndicator(
-            progress = progress ?: 1f,
-            modifier = modifier,
-            waveColor = color,
-            trackColor = trackColor,
-            showLabel = false
-        )
+        LinearWavyProgressIndicator(modifier = modifier)
     }
 }
 
 /**
  * Material Design 3 Expressive Circular Progress Indicator
- * Features breathing animations, dynamic stroke variations, and enhanced visual impact
+ * Now uses official Material 3 Expressive components from androidx.compose.material3
  */
 @Composable
 fun M3CircularLoader(
@@ -99,32 +94,13 @@ fun M3CircularLoader(
     fourColor: Boolean = false,
     isExpressive: Boolean = true
 ) {
-    if (isExpressive) {
-        M3ExpressiveCircularIndicator(
-            progress = progress,
-            modifier = modifier,
-            primaryColor = color,
-//            trackColor = trackColor,
-            baseStrokeWidth = strokeWidth,
-            fourColor = fourColor
+    if (progress != null) {
+        CircularWavyProgressIndicator(
+            progress = { progress },
+            modifier = modifier
         )
     } else {
-        M3CircularWaveProgressIndicator(
-            progress = progress ?: 1f,
-            modifier = modifier,
-            colors = if (fourColor) {
-                listOf(
-                    MaterialTheme.colorScheme.primary,
-                    MaterialTheme.colorScheme.secondary,
-                    MaterialTheme.colorScheme.tertiary,
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            } else {
-                listOf(color, color)
-            },
-//            trackColor = trackColor,
-            strokeWidth = strokeWidth
-        )
+        CircularWavyProgressIndicator(modifier = modifier)
     }
 }
 
@@ -448,7 +424,7 @@ fun M3ExpressiveCircularIndicator(
 }
 /**
  * Material Design 3 four-color circular progress indicator
- * Uses four colors from the Material 3 color scheme for indeterminate progress
+ * Now uses official Material 3 Expressive LoadingIndicator
  */
 @Composable
 fun M3FourColorCircularLoader(
@@ -456,57 +432,19 @@ fun M3FourColorCircularLoader(
     strokeWidth: Float = 4f,
     isExpressive: Boolean = true
 ) {
-    if (isExpressive) {
-        M3ExpressiveCircularIndicator(
-            progress = null, // Indeterminate
-            modifier = modifier,
-            primaryColor = MaterialTheme.colorScheme.primary,
-//            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-            baseStrokeWidth = strokeWidth,
-            fourColor = true
-        )
-    } else {
-        M3CircularWaveProgressIndicator(
-            progress = 1f,
-            modifier = modifier,
-            colors = listOf(
-                MaterialTheme.colorScheme.primary,
-                MaterialTheme.colorScheme.secondary,
-                MaterialTheme.colorScheme.tertiary,
-                MaterialTheme.colorScheme.onSurfaceVariant
-            ),
-            trackColor = MaterialTheme.colorScheme.surfaceVariant,
-            strokeWidth = strokeWidth
-        )
-    }
+    LoadingIndicator(modifier = modifier)
 }
 
 /**
  * Material Design 3 four-color linear progress indicator
- * Uses four colors from the Material 3 color scheme for indeterminate progress
+ * Now uses official Material 3 Expressive LinearWavyProgressIndicator
  */
 @Composable
 fun M3FourColorLinearLoader(
     modifier: Modifier = Modifier,
     isExpressive: Boolean = true
 ) {
-    if (isExpressive) {
-        M3ExpressiveLinearIndicator(
-            progress = null, // Indeterminate
-            modifier = modifier,
-            primaryColor = MaterialTheme.colorScheme.primary,
-//            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-            fourColor = true
-        )
-    } else {
-        M3WaveProgressIndicator(
-            progress = 1f,
-            modifier = modifier,
-            waveColor = MaterialTheme.colorScheme.primary,
-            trackColor = MaterialTheme.colorScheme.surfaceVariant,
-            showLabel = false
-        )
-    }
+    LinearWavyProgressIndicator(modifier = modifier)
 }
 
 /**
@@ -910,6 +848,7 @@ fun M3CircularWaveProgressIndicator(
 
 /**
  * Pulsating circular loader that follows Material Design 3 expressive guidelines
+ * Now uses official Material 3 Expressive LoadingIndicator
  */
 @Composable
 fun M3PulseLoader(
@@ -917,20 +856,7 @@ fun M3PulseLoader(
     color: Color = MaterialTheme.colorScheme.primary,
     isExpressive: Boolean = true
 ) {
-    if (isExpressive) {
-        M3ExpressivePulseIndicator(
-            modifier = modifier,
-            primaryColor = color
-        )
-    } else {
-        M3CircularWaveProgressIndicator(
-            progress = 1f,
-            modifier = modifier,
-            colors = listOf(color, color),
-            trackColor = MaterialTheme.colorScheme.surfaceVariant,
-            strokeWidth = 4f
-        )
-    }
+    LoadingIndicator(modifier = modifier)
 }
 
 /**
@@ -1118,7 +1044,7 @@ fun M3StepProgressIndicator(
 
 /**
  * Simple circular loading indicator for quick actions like blacklisting/whitelisting
- * Enhanced with Material 3 expressive design
+ * Now uses official Material 3 Expressive ContainedLoadingIndicator
  */
 @Composable
 fun SimpleCircularLoader(
@@ -1128,45 +1054,7 @@ fun SimpleCircularLoader(
     color: Color = MaterialTheme.colorScheme.primary,
     isExpressive: Boolean = true
 ) {
-    if (isExpressive) {
-        SimpleExpressiveCircularLoader(
-            modifier = modifier,
-            size = size,
-            strokeWidth = strokeWidth,
-            color = color
-        )
-    } else {
-        val infiniteTransition = rememberInfiniteTransition(label = "simpleCircularLoader")
-        val rotation by infiniteTransition.animateFloat(
-            initialValue = 0f,
-            targetValue = 360f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 1000, easing = LinearEasing),
-                repeatMode = RepeatMode.Restart
-            ),
-            label = "rotation"
-        )
-
-        Canvas(
-            modifier = modifier
-                .size(size)
-                .graphicsLayer { rotationZ = rotation }
-        ) {
-            val strokeWidthPx = strokeWidth.toPx()
-            val radius = (size.toPx() - strokeWidthPx) / 2
-            val center = androidx.compose.ui.geometry.Offset(size.toPx() / 2, size.toPx() / 2)
-            
-            drawArc(
-                color = color,
-                startAngle = 0f,
-                sweepAngle = 270f,
-                useCenter = false,
-                style = Stroke(width = strokeWidthPx, cap = StrokeCap.Round),
-                topLeft = androidx.compose.ui.geometry.Offset(center.x - radius, center.y - radius),
-                size = androidx.compose.ui.geometry.Size(radius * 2, radius * 2)
-            )
-        }
-    }
+    ContainedLoadingIndicator(modifier = modifier)
 }
 
 /**

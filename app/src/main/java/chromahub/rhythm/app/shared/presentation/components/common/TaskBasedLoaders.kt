@@ -6,6 +6,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.CircularWavyProgressIndicator
+import androidx.compose.material3.LinearWavyProgressIndicator
+import androidx.compose.material3.LoadingIndicator
+import androidx.compose.material3.ContainedLoadingIndicator
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 
 /**
  * Task-Based Loader Components
@@ -31,11 +38,12 @@ fun MediaScanningLoader(
     strokeWidth: Float = 4f,
     isExpressive: Boolean = true
 ) {
-    M3FourColorCircularLoader(
-        modifier = modifier,
-        strokeWidth = strokeWidth,
-        isExpressive = isExpressive
-    )
+    if (isExpressive) {
+        // Use Material 3 Expressive Loading Indicator for comprehensive scanning
+        LoadingIndicator(modifier = modifier)
+    } else {
+        CircularWavyProgressIndicator(modifier = modifier)
+    }
 }
 
 /**
@@ -56,13 +64,19 @@ fun DataProcessingLoader(
     color: Color = MaterialTheme.colorScheme.primary,
     isExpressive: Boolean = true
 ) {
-    M3LinearLoader(
-        progress = progress,
-        modifier = modifier,
-        color = color,
-        fourColor = false,
-        isExpressive = isExpressive
-    )
+    if (isExpressive) {
+        if (progress != null) {
+            LinearWavyProgressIndicator(
+                progress = { progress },
+                modifier = modifier
+            )
+        } else {
+            LinearWavyProgressIndicator(modifier = modifier)
+        }
+    } else {
+        // Fallback to simpler indicator
+        LinearWavyProgressIndicator(modifier = modifier)
+    }
 }
 
 /**
@@ -84,13 +98,12 @@ fun ActionProgressLoader(
     color: Color = MaterialTheme.colorScheme.primary,
     isExpressive: Boolean = true
 ) {
-    SimpleCircularLoader(
-        modifier = modifier,
-        size = size,
-        strokeWidth = strokeWidth,
-        color = color,
-        isExpressive = isExpressive
-    )
+    if (isExpressive) {
+        // Use ContainedLoadingIndicator for compact, unobtrusive loading
+        ContainedLoadingIndicator(modifier = modifier)
+    } else {
+        CircularWavyProgressIndicator(modifier = modifier)
+    }
 }
 
 /**
@@ -111,14 +124,11 @@ fun ContentLoadingIndicator(
     strokeWidth: Float = 4f,
     isExpressive: Boolean = true
 ) {
-    M3CircularLoader(
-        progress = null, // Indeterminate
-        modifier = modifier,
-        color = color,
-        strokeWidth = strokeWidth,
-        fourColor = false,
-        isExpressive = isExpressive
-    )
+    if (isExpressive) {
+        CircularWavyProgressIndicator(modifier = modifier)
+    } else {
+        CircularWavyProgressIndicator(modifier = modifier)
+    }
 }
 
 /**
@@ -138,11 +148,12 @@ fun PlaybackBufferingLoader(
     color: Color = MaterialTheme.colorScheme.primary,
     isExpressive: Boolean = true
 ) {
-    M3PulseLoader(
-        modifier = modifier,
-        color = color,
-        isExpressive = isExpressive
-    )
+    if (isExpressive) {
+        // LoadingIndicator provides smooth pulsing animation
+        LoadingIndicator(modifier = modifier)
+    } else {
+        CircularWavyProgressIndicator(modifier = modifier)
+    }
 }
 
 /**
@@ -162,11 +173,12 @@ fun InitializationLoader(
     strokeWidth: Float = 4f,
     isExpressive: Boolean = true
 ) {
-    M3FourColorCircularLoader(
-        modifier = modifier,
-        strokeWidth = strokeWidth,
-        isExpressive = isExpressive
-    )
+    if (isExpressive) {
+        // LoadingIndicator for multi-stage initialization
+        LoadingIndicator(modifier = modifier)
+    } else {
+        CircularWavyProgressIndicator(modifier = modifier)
+    }
 }
 
 /**
@@ -187,13 +199,18 @@ fun FileOperationLoader(
     color: Color = MaterialTheme.colorScheme.primary,
     isExpressive: Boolean = true
 ) {
-    M3LinearLoader(
-        progress = progress,
-        modifier = modifier,
-        color = color,
-        fourColor = false,
-        isExpressive = isExpressive
-    )
+    if (isExpressive) {
+        if (progress != null) {
+            LinearWavyProgressIndicator(
+                progress = { progress },
+                modifier = modifier
+            )
+        } else {
+            LinearWavyProgressIndicator(modifier = modifier)
+        }
+    } else {
+        LinearWavyProgressIndicator(modifier = modifier)
+    }
 }
 
 /**
@@ -214,14 +231,11 @@ fun NetworkOperationLoader(
     strokeWidth: Float = 4f,
     isExpressive: Boolean = true
 ) {
-    M3CircularLoader(
-        progress = null,
-        modifier = modifier,
-        color = color,
-        strokeWidth = strokeWidth,
-        fourColor = false,
-        isExpressive = isExpressive
-    )
+    if (isExpressive) {
+        CircularWavyProgressIndicator(modifier = modifier)
+    } else {
+        CircularWavyProgressIndicator(modifier = modifier)
+    }
 }
 
 /**
@@ -241,11 +255,12 @@ fun ImageLoadingPlaceholder(
     color: Color = MaterialTheme.colorScheme.surfaceVariant,
     isExpressive: Boolean = true
 ) {
-    M3PulseLoader(
-        modifier = modifier,
-        color = color,
-        isExpressive = isExpressive
-    )
+    if (isExpressive) {
+        // Subtle ContainedLoadingIndicator for image placeholders
+        ContainedLoadingIndicator(modifier = modifier)
+    } else {
+        CircularWavyProgressIndicator(modifier = modifier)
+    }
 }
 
 /**
@@ -264,13 +279,11 @@ fun SearchingLoader(
     color: Color = MaterialTheme.colorScheme.primary,
     isExpressive: Boolean = true
 ) {
-    M3LinearLoader(
-        progress = null, // Indeterminate
-        modifier = modifier,
-        color = color,
-        fourColor = false,
-        isExpressive = isExpressive
-    )
+    if (isExpressive) {
+        LinearWavyProgressIndicator(modifier = modifier)
+    } else {
+        LinearWavyProgressIndicator(modifier = modifier)
+    }
 }
 
 /**
@@ -290,10 +303,18 @@ fun MultiStageOperationLoader(
     modifier: Modifier = Modifier,
     isExpressive: Boolean = true
 ) {
-    M3FourColorLinearLoader(
-        modifier = modifier,
-        isExpressive = isExpressive
-    )
+    if (isExpressive) {
+        if (progress != null) {
+            LinearWavyProgressIndicator(
+                progress = { progress },
+                modifier = modifier
+            )
+        } else {
+            LinearWavyProgressIndicator(modifier = modifier)
+        }
+    } else {
+        LinearWavyProgressIndicator(modifier = modifier)
+    }
 }
 
 /**
@@ -314,12 +335,9 @@ fun CacheOperationLoader(
     strokeWidth: Float = 3f,
     isExpressive: Boolean = true
 ) {
-    M3CircularLoader(
-        progress = null,
-        modifier = modifier,
-        color = color,
-        strokeWidth = strokeWidth,
-        fourColor = false,
-        isExpressive = isExpressive
-    )
+    if (isExpressive) {
+        CircularWavyProgressIndicator(modifier = modifier)
+    } else {
+        CircularWavyProgressIndicator(modifier = modifier)
+    }
 }

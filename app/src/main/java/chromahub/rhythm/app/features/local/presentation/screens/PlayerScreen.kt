@@ -1828,18 +1828,14 @@ fun PlayerScreen(
                                         ) {
                                             when {
                                                 isLoadingLyrics -> {
-                                                    // Show loader in the lyrics view area instead of center
+                                                    // Show shape loader with background in the lyrics view area
                                                     Column(
                                                         horizontalAlignment = Alignment.CenterHorizontally,
                                                         modifier = Modifier
                                                             .fillMaxWidth()
                                                             .padding(vertical = 32.dp)
                                                     ) {
-                                                        NetworkOperationLoader(
-                                                            modifier = Modifier.size(56.dp),
-                                                            strokeWidth = 5f,
-                                                            isExpressive = true
-                                                        )
+                                                        androidx.compose.material3.ContainedLoadingIndicator()
                                                         Spacer(modifier = Modifier.height(16.dp))
                                                         Text(
                                                             text = context.getString(R.string.player_loading_lyrics),
@@ -2547,10 +2543,8 @@ fun PlayerScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     if (showLoaderInPlayPauseButton) {
-                                        PlaybackBufferingLoader(
-                                            modifier = Modifier.size(if (isExtraSmallWidth) 18.dp else 24.dp),
-                                            color = MaterialTheme.colorScheme.onPrimary,
-                                            isExpressive = true
+                                        androidx.compose.material3.ContainedLoadingIndicator(
+                                            modifier = Modifier.size(if (isExtraSmallWidth) 20.dp else 26.dp)
                                         )
                                     } else {
                                         Icon(

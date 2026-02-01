@@ -1300,16 +1300,13 @@ fun LibraryScreen(
                         .padding(horizontal = 20.dp)
                         .padding(bottom = 8.dp)
                 ) {
-                    // Expressive wavy animated progress indicator with four-color mode
-                    chromahub.rhythm.app.shared.presentation.components.common.M3ExpressiveLinearIndicator(
-                        progress = null, // Indeterminate mode for ongoing background tasks
+                    // Wavy animated progress indicator for library screen with transparent track
+                    androidx.compose.material3.LinearWavyProgressIndicator(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(6.dp)
                             .clip(RoundedCornerShape(3.dp)),
-                        primaryColor = MaterialTheme.colorScheme.primary,
-//                        trackColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.4f),
-                        fourColor = true // Enable cycling through primary, secondary, tertiary, and error colors
+                        trackColor = Color.Transparent
                     )
                     
 //                    Spacer(modifier = Modifier.height(8.dp))
