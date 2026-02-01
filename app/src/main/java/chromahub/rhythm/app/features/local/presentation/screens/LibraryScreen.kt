@@ -220,6 +220,9 @@ import chromahub.rhythm.app.shared.presentation.components.common.ScrollToTopBut
 import chromahub.rhythm.app.util.AudioFormatDetector
 import chromahub.rhythm.app.util.AudioQualityDetector
 import chromahub.rhythm.app.shared.presentation.components.common.ActionProgressLoader
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButtonGroup
+import chromahub.rhythm.app.shared.presentation.components.common.ButtonGroupStyle
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGroupButton
 
 
 enum class LibraryTab { SONGS, PLAYLISTS, ALBUMS, ARTISTS, EXPLORER }
@@ -2232,45 +2235,40 @@ fun SingleCardSongsContent(
                                 )
                             }
 
-                            // Play All Button
+                            // Play/Shuffle Button Group
                             if (filteredSongs.isNotEmpty()) {
-                                FilledTonalIconButton(
-                                    onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                        onPlayQueue(filteredSongs)
-                                    },
-                                    colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                        contentColor = MaterialTheme.colorScheme.primary
-                                    ),
-                                    modifier = Modifier.size(44.dp)
+                                ExpressiveButtonGroup(
+                                    style = ButtonGroupStyle.Tonal
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.PlayArrow,
-                                        contentDescription = "Play All",
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.width(10.dp))
-
-                                // Shuffle Button
-                                FilledIconButton(
-                                    onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                        onShuffleQueue(filteredSongs)
-                                    },
-                                    colors = IconButtonDefaults.filledIconButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.primary,
-                                        contentColor = MaterialTheme.colorScheme.onPrimary
-                                    ),
-                                    modifier = Modifier.size(44.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Shuffle,
-                                        contentDescription = "Shuffle All",
-                                        modifier = Modifier.size(24.dp)
-                                    )
+                                    ExpressiveGroupButton(
+                                        onClick = {
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            onPlayQueue(filteredSongs)
+                                        },
+                                        isStart = true,
+                                        isEnd = false
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.PlayArrow,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                    
+                                    ExpressiveGroupButton(
+                                        onClick = {
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            onShuffleQueue(filteredSongs)
+                                        },
+                                        isStart = false,
+                                        isEnd = true
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Shuffle,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -2781,52 +2779,47 @@ fun SingleCardAlbumsContent(
                                 )
                             }
 
-                            // Play All Button
-                            FilledTonalIconButton(
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                    val allSongs = preparedAlbums.flatMap { it.songs }
-                                    if (allSongs.isNotEmpty()) {
-                                        onPlayQueue(allSongs)
+                            // Play/Shuffle Button Group
+                            if (preparedAlbums.isNotEmpty()) {
+                                ExpressiveButtonGroup(
+                                    style = ButtonGroupStyle.Tonal
+                                ) {
+                                    ExpressiveGroupButton(
+                                        onClick = {
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            val allSongs = preparedAlbums.flatMap { it.songs }
+                                            if (allSongs.isNotEmpty()) {
+                                                onPlayQueue(allSongs)
+                                            }
+                                        },
+                                        isStart = true,
+                                        isEnd = false
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.PlayArrow,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp)
+                                        )
                                     }
-                                },
-                                colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                ),
-                                modifier = Modifier.size(40.dp),
-                                enabled = preparedAlbums.isNotEmpty()
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.PlayArrow,
-                                    contentDescription = "Play All Albums",
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(8.dp))
-
-                            // Shuffle Button
-                            FilledIconButton(
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                    val allSongs = preparedAlbums.flatMap { it.songs }
-                                    if (allSongs.isNotEmpty()) {
-                                        onShuffleQueue(allSongs)
+                                    
+                                    ExpressiveGroupButton(
+                                        onClick = {
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            val allSongs = preparedAlbums.flatMap { it.songs }
+                                            if (allSongs.isNotEmpty()) {
+                                                onShuffleQueue(allSongs)
+                                            }
+                                        },
+                                        isStart = false,
+                                        isEnd = true
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Shuffle,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp)
+                                        )
                                     }
-                                },
-                                colors = IconButtonDefaults.filledIconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary,
-                                    contentColor = MaterialTheme.colorScheme.onPrimary
-                                ),
-                                modifier = Modifier.size(40.dp),
-                                enabled = preparedAlbums.isNotEmpty()
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Shuffle,
-                                    contentDescription = "Shuffle All Albums",
-                                    modifier = Modifier.size(22.dp)
-                                )
+                                }
                             }
                         }
                     }
@@ -2902,61 +2895,54 @@ fun SingleCardAlbumsContent(
                                 )
                             }
 
-                            // Play All Button
+                            // Play/Shuffle Button Group
                             if (preparedAlbums.isNotEmpty()) {
-                                FilledTonalIconButton(
-                                    onClick = {
-                                        HapticUtils.performHapticFeedback(
-                                            context,
-                                            haptics,
-                                            HapticFeedbackType.LongPress
-                                        )
-                                        val allSongs = preparedAlbums.flatMap { it.songs }
-                                        if (allSongs.isNotEmpty()) {
-                                            onPlayQueue(allSongs)
-                                        }
-                                    },
-                                    colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.primary.copy(
-                                            alpha = 0.15f
-                                        ),
-                                        contentColor = MaterialTheme.colorScheme.primary
-                                    ),
-                                    modifier = Modifier.size(44.dp)
+                                ExpressiveButtonGroup(
+                                    style = ButtonGroupStyle.Tonal
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.PlayArrow,
-                                        contentDescription = "Play All Albums",
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.width(10.dp))
-
-                                // Shuffle Button
-                                FilledIconButton(
-                                    onClick = {
-                                        HapticUtils.performHapticFeedback(
-                                            context,
-                                            haptics,
-                                            HapticFeedbackType.LongPress
+                                    ExpressiveGroupButton(
+                                        onClick = {
+                                            HapticUtils.performHapticFeedback(
+                                                context,
+                                                haptics,
+                                                HapticFeedbackType.LongPress
+                                            )
+                                            val allSongs = preparedAlbums.flatMap { it.songs }
+                                            if (allSongs.isNotEmpty()) {
+                                                onPlayQueue(allSongs)
+                                            }
+                                        },
+                                        isStart = true,
+                                        isEnd = false
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.PlayArrow,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp)
                                         )
-                                        val allSongs = preparedAlbums.flatMap { it.songs }
-                                        if (allSongs.isNotEmpty()) {
-                                            onShuffleQueue(allSongs)
-                                        }
-                                    },
-                                    colors = IconButtonDefaults.filledIconButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.primary,
-                                        contentColor = MaterialTheme.colorScheme.onPrimary
-                                    ),
-                                    modifier = Modifier.size(44.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Shuffle,
-                                        contentDescription = "Shuffle All Albums",
-                                        modifier = Modifier.size(24.dp)
-                                    )
+                                    }
+                                    
+                                    ExpressiveGroupButton(
+                                        onClick = {
+                                            HapticUtils.performHapticFeedback(
+                                                context,
+                                                haptics,
+                                                HapticFeedbackType.LongPress
+                                            )
+                                            val allSongs = preparedAlbums.flatMap { it.songs }
+                                            if (allSongs.isNotEmpty()) {
+                                                onShuffleQueue(allSongs)
+                                            }
+                                        },
+                                        isStart = false,
+                                        isEnd = true
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Shuffle,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -3403,45 +3389,46 @@ fun SongsTab(
                         )
                     }
 
-                    // Play All Button
+                    // Play/Shuffle Button Group
                     if (filteredSongs.isNotEmpty()) {
-                        FilledTonalIconButton(
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                onPlayQueue(filteredSongs)
-                            },
-                            colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                contentColor = MaterialTheme.colorScheme.primary
-                            ),
-                            modifier = Modifier.size(44.dp)
+                        ExpressiveButtonGroup(
+                            style = ButtonGroupStyle.Tonal
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.PlayArrow,
-                                contentDescription = "Play All",
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(10.dp))
-
-                        // Shuffle Button
-                        FilledIconButton(
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                onShuffleQueue(filteredSongs)
-                            },
-                            colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
-                            ),
-                            modifier = Modifier.size(44.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Shuffle,
-                                contentDescription = "Shuffle All",
-                                modifier = Modifier.size(24.dp)
-                            )
+                            ExpressiveGroupButton(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    onPlayQueue(filteredSongs)
+                                },
+                                isStart = true,
+                                isEnd = false
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.PlayArrow,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = context.getString(R.string.action_play),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                            
+                            ExpressiveGroupButton(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    onShuffleQueue(filteredSongs)
+                                },
+                                isStart = false,
+                                isEnd = true
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Shuffle,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -6608,43 +6595,44 @@ fun SingleCardExplorerContent(
 
                         // Play All Button (only show if current folder has songs)
                         if (currentPath != null && currentFolderSongs.isNotEmpty()) {
-                            FilledTonalIconButton(
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                    onPlayQueue(currentFolderSongs)
-                                },
-                                colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                    contentColor = MaterialTheme.colorScheme.primary
-                                ),
-                                modifier = Modifier.size(44.dp)
+                            ExpressiveButtonGroup(
+                                style = ButtonGroupStyle.Tonal
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.PlayArrow,
-                                    contentDescription = "Play All in Folder",
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(10.dp))
-
-                            // Shuffle Button (only show if current folder has songs)
-                            FilledIconButton(
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                    onShuffleQueue(currentFolderSongs)
-                                },
-                                colors = IconButtonDefaults.filledIconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary,
-                                    contentColor = MaterialTheme.colorScheme.onPrimary
-                                ),
-                                modifier = Modifier.size(44.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Shuffle,
-                                    contentDescription = "Shuffle All in Folder",
-                                    modifier = Modifier.size(24.dp)
-                                )
+                                ExpressiveGroupButton(
+                                    onClick = {
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        onPlayQueue(currentFolderSongs)
+                                    },
+                                    isStart = true,
+                                    isEnd = false
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.PlayArrow,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = context.getString(R.string.action_play),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                                
+                                ExpressiveGroupButton(
+                                    onClick = {
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        onShuffleQueue(currentFolderSongs)
+                                    },
+                                    isStart = false,
+                                    isEnd = true
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Shuffle,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
                             }
 
                             Spacer(modifier = Modifier.width(10.dp))
