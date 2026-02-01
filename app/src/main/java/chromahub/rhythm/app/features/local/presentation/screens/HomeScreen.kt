@@ -168,6 +168,17 @@ import chromahub.rhythm.app.features.local.presentation.components.player.MiniPl
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.features.local.presentation.components.settings.HomeSectionOrderBottomSheet
 import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveFilledButton
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveFilledTonalButton
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveOutlinedButton
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveFilledIconButton
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveFilledTonalIconButton
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveLargeIconButton
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveCard
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveElevatedCard
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapes
+import chromahub.rhythm.app.shared.presentation.components.common.ActionProgressLoader
+import chromahub.rhythm.app.shared.presentation.components.common.NetworkOperationLoader
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.ArtistBottomSheet
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AlbumBottomSheet
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AddToPlaylistBottomSheet
@@ -519,12 +530,12 @@ fun HomeScreen(
         showAppIcon = showAppIcon,
         iconVisibilityMode = iconVisibilityMode,
         actions = {
-            FilledIconButton(
+            ExpressiveFilledTonalIconButton(
                 onClick = {
                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                     showHomeSectionOrderSheet = true
                 },
-                colors = IconButtonDefaults.filledIconButtonColors(
+                colors = IconButtonDefaults.filledTonalIconButtonColors(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                 ),
@@ -535,7 +546,7 @@ fun HomeScreen(
                     contentDescription = context.getString(R.string.cd_reorder_home_sections)
                 )
             }
-            FilledIconButton(
+            ExpressiveFilledIconButton(
                 onClick = {
                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                     onSettingsClick()
@@ -1399,7 +1410,7 @@ private fun ModernWelcomeSection(
         }
     }
 
-    Card(
+    ExpressiveCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { 
@@ -1409,7 +1420,7 @@ private fun ModernWelcomeSection(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         ),
-        shape = RoundedCornerShape(28.dp)
+        shape = ExpressiveShapes.ExtraLarge
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             // Decorative elements in background
@@ -1477,7 +1488,7 @@ private fun ModernWelcomeSection(
                     }
 
                     // Modern search button with expressive design
-                    FilledIconButton(
+                    ExpressiveFilledIconButton(
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                             onSearchClick()
@@ -1677,7 +1688,7 @@ private fun ModernRecentSongCard(
             .height(cardHeight)
     }
 
-    Card(
+    ExpressiveCard(
         onClick = {
             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
             onClick()
@@ -1685,14 +1696,14 @@ private fun ModernRecentSongCard(
         modifier = cardModifier
             .shadow(
                 elevation = 4.dp,
-                shape = RoundedCornerShape(20.dp),
+                shape = ExpressiveShapes.Large,
                 ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.06f),
                 spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
             ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
-        shape = RoundedCornerShape(20.dp)
+        shape = ExpressiveShapes.Large
     ) {
         Row(
             modifier = Modifier
@@ -1702,7 +1713,7 @@ private fun ModernRecentSongCard(
         ) {
             // Enhanced artwork with more rounded corners
             Surface(
-                shape = RoundedCornerShape(16.dp), // More rounded
+                shape = ExpressiveShapes.Medium, // More rounded
                 modifier = Modifier.size(52.dp), // Slightly larger
                 color = MaterialTheme.colorScheme.surfaceVariant
             ) {
@@ -1794,12 +1805,12 @@ private fun ModernSectionTitle(
             }
         }
         
-        // Compact Material 3 Split Button Group
+        // Expressive Segmented Button Group
         Row(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Play/Shuffle Split Button (Primary Action)
+            // Play/Shuffle Expressive Segmented Buttons (Primary Action)
             if (onPlayAll != null || onShufflePlay != null) {
                 var isPlayPressed by remember { mutableStateOf(false) }
                 var isShufflePressed by remember { mutableStateOf(false) }
@@ -1821,24 +1832,25 @@ private fun ModernSectionTitle(
                     label = "shuffleScale"
                 )
                 
-                // Split button container
+                // Segmented button container with expressive shapes
                 Surface(
-                    shape = RoundedCornerShape(24.dp),
+                    shape = ExpressiveShapes.Full,
                     color = MaterialTheme.colorScheme.primary,
-                    tonalElevation = 1.dp
+                    tonalElevation = 1.dp,
+                    shadowElevation = 2.dp
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(0.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Play button (left side)
+                        // Play button segment
                         onPlayAll?.let {
                             Surface(
                                 onClick = {
                                     HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
                                     it()
                                 },
-                                shape = RoundedCornerShape(topStart = 24.dp, bottomStart = 24.dp),
+                                shape = ExpressiveShapes.Full,
                                 color = Color.Transparent,
                                 modifier = Modifier
                                     .scale(playScale)
@@ -1884,14 +1896,14 @@ private fun ModernSectionTitle(
                             )
                         }
                         
-                        // Shuffle button (right side)
+                        // Shuffle button segment
                         onShufflePlay?.let {
                             Surface(
                                 onClick = {
                                     HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
                                     it()
                                 },
-                                shape = RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp),
+                                shape = ExpressiveShapes.Full,
                                 color = Color.Transparent,
                                 modifier = Modifier
                                     .scale(shuffleScale)
@@ -1934,17 +1946,16 @@ private fun ModernSectionTitle(
                     label = "viewAllScale"
                 )
                 
-                OutlinedButton(
+                ExpressiveOutlinedButton(
                     onClick = {
                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                         it()
                     },
-                    shape = RoundedCornerShape(24.dp),
+                    shape = ExpressiveShapes.Full,
                     colors = ButtonDefaults.outlinedButtonColors(
                         containerColor = Color.Transparent,
                         contentColor = MaterialTheme.colorScheme.primary
                     ),
-                    border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                     modifier = Modifier
                         .scale(scale)
@@ -2224,7 +2235,7 @@ private fun androidx.compose.material3.carousel.CarouselItemScope.HeroCarouselCa
                             if (showYear && album.year > 0) {
                                 Surface(
                                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
-                                    shape = RoundedCornerShape(20.dp)
+                                    shape = ExpressiveShapes.Full
                                 ) {
                                     Text(
                                         text = album.year.toString(),
@@ -2240,7 +2251,7 @@ private fun androidx.compose.material3.carousel.CarouselItemScope.HeroCarouselCa
 
                             // Enhanced play button
                             if (showPlayButton) {
-                                FilledIconButton(
+                                ExpressiveFilledIconButton(
                                     onClick = {
                                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
                                         viewModel.playAlbum(album)
@@ -2396,9 +2407,9 @@ private fun ModernArtistCard(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(modifier = Modifier.size(cardSize)) {
-            Card(
+            ExpressiveCard(
                 modifier = Modifier.fillMaxSize(),
-                shape = CircleShape,
+                shape = ExpressiveShapes.Full,  // Circular card for artists
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                 )
@@ -2434,7 +2445,7 @@ private fun ModernArtistCard(
                 }
             }
             
-            FilledIconButton(
+            ExpressiveFilledIconButton(
                 onClick = {
                     HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
                     viewModel.playArtist(artist)
@@ -2499,7 +2510,7 @@ private fun ModernAlbumCard(
         else -> 160.dp to 240.dp
     }
 
-    Card(
+    ExpressiveCard(
         onClick = {
             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
             onClick(album)
@@ -2509,11 +2520,11 @@ private fun ModernAlbumCard(
             .height(cardHeight) // Fixed height to prevent layout issues
             .shadow(
                 elevation = 8.dp,
-                shape = RoundedCornerShape(28.dp),
+                shape = ExpressiveShapes.ExtraLarge,
                 ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                 spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
             ),
-        shape = RoundedCornerShape(28.dp),
+        shape = ExpressiveShapes.ExtraLarge,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         )
@@ -2530,7 +2541,7 @@ private fun ModernAlbumCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(24.dp)) // More rounded artwork
+                    .clip(ExpressiveShapes.ExtraLarge) // More rounded artwork
             ) {
                 AsyncImage(
                     model = ImageRequest.Builder(context)
@@ -2558,7 +2569,7 @@ private fun ModernAlbumCard(
                             }
                         )
                 ) {
-                    FilledIconButton(
+                    ExpressiveFilledIconButton(
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
                             viewModel.playAlbum(album)
@@ -2658,7 +2669,7 @@ private fun ModernSongCard(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
 
-    Card(
+    ExpressiveCard(
         onClick = {
             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
             onClick()
@@ -2668,14 +2679,14 @@ private fun ModernSongCard(
             .height(260.dp) // Fixed height to prevent layout issues
             .shadow(
                 elevation = 6.dp,
-                shape = RoundedCornerShape(24.dp),
+                shape = ExpressiveShapes.ExtraLarge,
                 ambientColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.08f),
                 spotColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f)
             ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
-        shape = RoundedCornerShape(24.dp)
+        shape = ExpressiveShapes.ExtraLarge
     ) {
         Column(
             modifier = Modifier
@@ -2684,7 +2695,7 @@ private fun ModernSongCard(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Surface(
-                shape = RoundedCornerShape(18.dp),
+                shape = ExpressiveShapes.Medium,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f), // Take most of the space
@@ -2762,13 +2773,13 @@ private fun ModernListeningStatsSection(
     }
 
     // Enhanced stats card with better design
-    Card(
+    ExpressiveCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
-        shape = RoundedCornerShape(24.dp)
+        shape = ExpressiveShapes.ExtraLarge
     ) {
         Column(
             modifier = Modifier.padding(24.dp)
@@ -2916,12 +2927,12 @@ private fun ModernStatCard(
     backgroundColor: Color,
     contentColor: Color
 ) {
-    Card(
+    ExpressiveCard(
         modifier = Modifier.width(100.dp),
         colors = CardDefaults.cardColors(
             containerColor = backgroundColor
         ),
-        shape = RoundedCornerShape(20.dp)
+        shape = ExpressiveShapes.Large
     ) {
         Column(
             modifier = Modifier
@@ -3071,14 +3082,14 @@ private fun ModernMoodCard(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     
-    Card(
+    ExpressiveCard(
         modifier = Modifier
             .width(200.dp)
             .height(220.dp),
         colors = CardDefaults.cardColors(
             containerColor = backgroundColor
         ),
-        shape = RoundedCornerShape(32.dp)
+        shape = ExpressiveShapes.SquircleExtraLarge
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
@@ -3113,7 +3124,7 @@ private fun ModernMoodCard(
                     )
                 }
                 
-                FilledIconButton(
+                ExpressiveFilledIconButton(
                     onClick = {
                         HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
                         onPlayClick()
@@ -3134,7 +3145,7 @@ private fun ModernMoodCard(
 
             Surface(
                 color = contentColor.copy(alpha = 0.2f),
-                shape = RoundedCornerShape(bottomStart = 20.dp, topEnd = 36.dp),
+                shape = RoundedCornerShape(bottomStart = 20.dp, topEnd = 32.dp),
                 modifier = Modifier.align(Alignment.TopEnd)
             ) {
                 Text(
@@ -3158,7 +3169,7 @@ private fun ModernUpdateSection(
     var isDownloading by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
     
-    Card(
+    ExpressiveCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = {
@@ -3170,7 +3181,7 @@ private fun ModernUpdateSection(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         ),
-        shape = RoundedCornerShape(24.dp)
+        shape = ExpressiveShapes.ExtraLarge
     ) {
         Column(
             modifier = Modifier
@@ -3258,7 +3269,7 @@ private fun ModernUpdateSection(
                 Spacer(modifier = Modifier.height(12.dp))
             }
             
-            ElevatedCard(
+            ExpressiveElevatedCard(
                 onClick = {
                     if (!isDownloading) {
                         isDownloading = true
@@ -3270,8 +3281,7 @@ private fun ModernUpdateSection(
                 colors = CardDefaults.elevatedCardColors(
                     containerColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ),
-                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
-                shape = RoundedCornerShape(20.dp)
+                shape = ExpressiveShapes.Large
             ) {
                 Row(
                     modifier = Modifier.padding(20.dp),
@@ -3286,10 +3296,12 @@ private fun ModernUpdateSection(
                     )
                     
                     if (isDownloading) {
-                        CircularProgressIndicator(
+                        ActionProgressLoader(
                             modifier = Modifier.size(24.dp),
+                            size = 24.dp,
+                            strokeWidth = 2.dp,
                             color = MaterialTheme.colorScheme.primaryContainer,
-                            strokeWidth = 2.dp
+                            isExpressive = true
                         )
                     } else {
                         Icon(
@@ -3323,7 +3335,7 @@ private fun ModernRecommendedSection(
         if (recommendedSongs.isNotEmpty()) {
             Surface(
                 color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.7f),
-                shape = RoundedCornerShape(20.dp),
+                shape = ExpressiveShapes.Large,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
@@ -3371,7 +3383,7 @@ private fun RecommendedSongItem(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Surface(
-            shape = RoundedCornerShape(12.dp),
+            shape = ExpressiveShapes.Small,
             modifier = Modifier.size(52.dp)
         ) {
             AsyncImage(
@@ -3412,7 +3424,7 @@ private fun RecommendedSongItem(
             )
         }
         
-        FilledIconButton(
+        ExpressiveFilledIconButton(
             onClick = {
                 HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                 onClick()
@@ -3439,7 +3451,7 @@ private fun ModernEmptyState(
     subtitle: String,
     iconSize: Dp = 64.dp // Increased icon size
 ) {
-    Card(
+    ExpressiveCard(
         modifier = Modifier
             .fillMaxWidth()
             .height(200.dp) // Increased height for better visual presence
@@ -3447,7 +3459,7 @@ private fun ModernEmptyState(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow // Subtle background
         ),
-        shape = RoundedCornerShape(28.dp) // Rounded corners for the card
+        shape = ExpressiveShapes.ExtraLarge // Rounded corners for the card
     ) {
         Column(
             modifier = Modifier

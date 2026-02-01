@@ -30,7 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.shared.presentation.components.common.M3FourColorCircularLoader
+import chromahub.rhythm.app.shared.presentation.components.common.InitializationLoader
 import chromahub.rhythm.app.features.local.presentation.screens.onboarding.OnboardingStep
 import chromahub.rhythm.app.features.local.presentation.screens.onboarding.PermissionScreenState
 import chromahub.rhythm.app.features.local.presentation.screens.OnboardingScreen
@@ -271,7 +271,7 @@ fun PermissionHandler(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                M3FourColorCircularLoader(
+                InitializationLoader(
                     modifier = Modifier.size(64.dp)
                 )
             }

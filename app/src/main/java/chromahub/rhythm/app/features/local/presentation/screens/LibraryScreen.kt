@@ -210,12 +210,13 @@ import androidx.compose.material.icons.rounded.ArrowCircleUp
 import androidx.compose.ui.text.font.FontFamily
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.features.local.presentation.components.player.PlayingEqIcon
-import chromahub.rhythm.app.shared.presentation.components.common.M3FourColorCircularLoader
+import chromahub.rhythm.app.shared.presentation.components.common.ContentLoadingIndicator
+import chromahub.rhythm.app.shared.presentation.components.common.DataProcessingLoader
 import chromahub.rhythm.app.shared.presentation.components.common.AlphabetBar
 import chromahub.rhythm.app.shared.presentation.components.common.ScrollToTopButton
 import chromahub.rhythm.app.util.AudioFormatDetector
 import chromahub.rhythm.app.util.AudioQualityDetector
-import chromahub.rhythm.app.shared.presentation.components.common.SimpleCircularLoader
+import chromahub.rhythm.app.shared.presentation.components.common.ActionProgressLoader
 
 
 enum class LibraryTab { SONGS, PLAYLISTS, ALBUMS, ARTISTS, EXPLORER }
@@ -2072,7 +2073,7 @@ fun SingleCardSongsContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                M3FourColorCircularLoader(
+                ContentLoadingIndicator(
                     modifier = Modifier.size(48.dp)
                 )
                 Text(
@@ -2395,7 +2396,7 @@ fun SingleCardPlaylistsContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                M3FourColorCircularLoader(
+                ContentLoadingIndicator(
                     modifier = Modifier.size(48.dp)
                 )
                 Text(
@@ -2616,7 +2617,7 @@ fun SingleCardAlbumsContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                M3FourColorCircularLoader(
+                ContentLoadingIndicator(
                     modifier = Modifier.size(48.dp)
                 )
                 Text(
@@ -5383,7 +5384,7 @@ fun SingleCardArtistsContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                M3FourColorCircularLoader(
+                ContentLoadingIndicator(
                     modifier = Modifier.size(48.dp)
                 )
                 Text(
@@ -6622,7 +6623,7 @@ fun SingleCardExplorerContent(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                M3FourColorCircularLoader(
+                                ContentLoadingIndicator(
                                     modifier = Modifier.size(48.dp)
                                 )
 
@@ -7154,7 +7155,7 @@ fun SingleCardExplorerContent(
                                 .fillMaxWidth()
                                 .padding(vertical = 24.dp)
                         ) {
-                            M3FourColorCircularLoader(
+                            DataProcessingLoader(
                                 modifier = Modifier.size(48.dp)
                             )
                             Spacer(modifier = Modifier.height(16.dp))
@@ -9191,7 +9192,7 @@ fun BottomFloatingButtonGroup(
                 enabled = !isPlayAllLoading && !isShuffleLoading
             ) {
                 if (isPlayAllLoading) {
-                    SimpleCircularLoader(
+                    ActionProgressLoader(
                         size = 20.dp,
                         color = MaterialTheme.colorScheme.onPrimary
                     )
@@ -9235,7 +9236,7 @@ fun BottomFloatingButtonGroup(
                 enabled = !isPlayAllLoading && !isShuffleLoading
             ) {
                 if (isShuffleLoading) {
-                    SimpleCircularLoader(
+                    ActionProgressLoader(
                         size = 24.dp,
                         color = MaterialTheme.colorScheme.onTertiaryContainer
                     )

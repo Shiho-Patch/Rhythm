@@ -59,7 +59,8 @@ import chromahub.rhythm.app.R
 import chromahub.rhythm.app.shared.data.model.Song
 import chromahub.rhythm.app.shared.data.model.AppSettings
 import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
-import chromahub.rhythm.app.shared.presentation.components.common.SimpleCircularLoader
+import chromahub.rhythm.app.shared.presentation.components.common.ActionProgressLoader
+import chromahub.rhythm.app.shared.presentation.components.common.ContentLoadingIndicator
 import chromahub.rhythm.app.features.local.presentation.components.player.formatDuration
 import chromahub.rhythm.app.shared.presentation.components.common.MarqueeText
 import chromahub.rhythm.app.util.ImageUtils
@@ -625,7 +626,7 @@ fun SongInfoBottomSheet(
                                 )
                             ) {
                                 if (isLoadingBlacklist) {
-                                    SimpleCircularLoader(
+                                    ActionProgressLoader(
                                         size = 16.dp,
                                         color = MaterialTheme.colorScheme.onSecondaryContainer
                                     )
@@ -667,7 +668,7 @@ fun SongInfoBottomSheet(
                                     )
                                 ) {
                                     if (isLoadingBlacklist) {
-                                        SimpleCircularLoader(
+                                        ActionProgressLoader(
                                             size = 16.dp,
                                             color = MaterialTheme.colorScheme.onTertiaryContainer
                                         )
@@ -1054,8 +1055,8 @@ private fun MetadataGridSection(
                         .height(120.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    SimpleCircularLoader(
-                        size = 32.dp,
+                    ContentLoadingIndicator(
+                        modifier = Modifier.size(32.dp),
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -1623,7 +1624,7 @@ private fun EditSongSheet(
                                                 enabled = title.isNotBlank() && artist.isNotBlank() && !isSaving
                                             ) {
                                                 if (isSaving) {
-                                                    SimpleCircularLoader(
+                                                    ActionProgressLoader(
                                                         size = 16.dp,
                                                         color = MaterialTheme.colorScheme.onPrimary
                                                     )
@@ -2037,7 +2038,7 @@ private fun EditSongSheet(
                         enabled = title.isNotBlank() && artist.isNotBlank() && !isSaving
                     ) {
                         if (isSaving) {
-                            SimpleCircularLoader(
+                            ActionProgressLoader(
                                 size = 16.dp,
                                 color = MaterialTheme.colorScheme.onPrimary
                             )

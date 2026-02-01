@@ -32,7 +32,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
-import chromahub.rhythm.app.shared.presentation.components.common.M3FourColorCircularLoader
+import chromahub.rhythm.app.shared.presentation.components.common.FileOperationLoader
 
 /**
  * Dialog asking user if they want to restart the app after import
@@ -560,10 +560,9 @@ fun PlaylistOperationProgressDialog(
                 modifier = Modifier.padding(32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Enhanced M3 Four-Color Circular Loader (no background shape)
-                M3FourColorCircularLoader(
+                // Enhanced File Operation Loader
+                FileOperationLoader(
                     modifier = Modifier.size(60.dp),
-                    strokeWidth = 6f,
                     isExpressive = true
                 )
                 

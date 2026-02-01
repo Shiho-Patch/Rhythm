@@ -160,8 +160,9 @@ import chromahub.rhythm.app.R
 import chromahub.rhythm.app.shared.data.model.AlbumViewType
 import chromahub.rhythm.app.shared.data.model.ArtistViewType
 import chromahub.rhythm.app.shared.data.model.AppSettings
-import chromahub.rhythm.app.shared.presentation.components.common.M3LinearLoader
-import chromahub.rhythm.app.shared.presentation.components.common.M3FourColorCircularLoader
+import chromahub.rhythm.app.shared.presentation.components.common.DataProcessingLoader
+import chromahub.rhythm.app.shared.presentation.components.common.InitializationLoader
+import chromahub.rhythm.app.shared.presentation.components.common.NetworkOperationLoader
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.features.local.presentation.components.settings.LanguageSwitcherDialog
 import chromahub.rhythm.app.features.local.presentation.components.settings.LibraryTabOrderBottomSheet
@@ -435,7 +436,7 @@ fun OnboardingScreen(
                                                         horizontalArrangement = Arrangement.Center,
                                                         verticalAlignment = Alignment.CenterVertically
                                                     ) {
-                                                        M3LinearLoader(
+                                                        DataProcessingLoader(
                                                             modifier = Modifier.size(20.dp)
                                                         )
                                                         Spacer(modifier = Modifier.width(8.dp))
@@ -1465,7 +1466,7 @@ fun OnboardingScreen(
                                     horizontalArrangement = Arrangement.Center,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    M3LinearLoader(
+                                    DataProcessingLoader(
                                         modifier = Modifier.size(20.dp)
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
@@ -5246,7 +5247,7 @@ fun EnhancedUpdaterContent(
                         contentAlignment = Alignment.Center
                     ) {
                         if (isCheckingForUpdates) {
-                            M3FourColorCircularLoader(
+                            NetworkOperationLoader(
                                 modifier = Modifier
                                     .size(48.dp)
                                     .alpha(glowAlpha)
@@ -5567,7 +5568,7 @@ fun EnhancedUpdaterContent(
                     contentAlignment = Alignment.Center
                 ) {
                     if (isCheckingForUpdates) {
-                        M3FourColorCircularLoader(
+                        NetworkOperationLoader(
                             modifier = Modifier
                                 .size(40.dp)
                                 .alpha(glowAlpha)
@@ -7183,7 +7184,7 @@ private fun OnboardingExpressiveUpdateStatus(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        M3FourColorCircularLoader(
+                        InitializationLoader(
                             modifier = Modifier.size(20.dp)
                         )
                         Text(

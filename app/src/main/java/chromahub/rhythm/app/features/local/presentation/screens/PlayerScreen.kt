@@ -178,7 +178,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
 import kotlin.math.abs
-import chromahub.rhythm.app.shared.presentation.components.common.M3CircularLoader
+import chromahub.rhythm.app.shared.presentation.components.common.NetworkOperationLoader
 import android.view.animation.OvershootInterpolator
 import chromahub.rhythm.app.features.local.presentation.components.player.SleepTimerBottomSheetNew
 import chromahub.rhythm.app.features.local.presentation.components.lyrics.SyncedLyricsView
@@ -188,7 +188,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.material.icons.rounded.AccessTime
 import chromahub.rhythm.app.features.local.presentation.components.player.formatDuration
 import java.util.concurrent.TimeUnit // Import TimeUnit for duration formatting
-import chromahub.rhythm.app.shared.presentation.components.common.M3CircularLoader // Added for play/pause button loader
+import chromahub.rhythm.app.shared.presentation.components.common.PlaybackBufferingLoader
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.QueueBottomSheet
 import chromahub.rhythm.app.features.local.presentation.screens.LibraryTab
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AddToPlaylistBottomSheet
@@ -1835,9 +1835,9 @@ fun PlayerScreen(
                                                             .fillMaxWidth()
                                                             .padding(vertical = 32.dp)
                                                     ) {
-                                                        M3CircularLoader(
+                                                        NetworkOperationLoader(
                                                             modifier = Modifier.size(56.dp),
-                                                            fourColor = true,
+                                                            strokeWidth = 5f,
                                                             isExpressive = true
                                                         )
                                                         Spacer(modifier = Modifier.height(16.dp))
@@ -2547,8 +2547,8 @@ fun PlayerScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     if (showLoaderInPlayPauseButton) {
-                                        M3CircularLoader(
-                                            modifier = Modifier.size(if (isExtraSmallWidth) 18.dp else 24.dp), // Adjust size to fit
+                                        PlaybackBufferingLoader(
+                                            modifier = Modifier.size(if (isExtraSmallWidth) 18.dp else 24.dp),
                                             color = MaterialTheme.colorScheme.onPrimary,
                                             isExpressive = true
                                         )
