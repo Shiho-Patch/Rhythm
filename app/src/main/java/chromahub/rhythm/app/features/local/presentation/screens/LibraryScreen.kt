@@ -33,6 +33,8 @@ import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.draw.clip
@@ -40,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.tween
@@ -658,6 +661,17 @@ fun LibraryScreen(
     }
 
     // Playlist Management now handled in Tuner > Playlists settings
+    
+    // Track media scanning state for pull-to-refresh
+    val isMediaScanning by musicViewModel.isMediaScanning.collectAsState()
+    val scanProgress by musicViewModel.scanProgress.collectAsState()
+    val pullToRefreshState = rememberPullToRefreshState()
+    var isRefreshing by remember { mutableStateOf(false) }
+    
+    // Update refreshing state based on media scanning
+    LaunchedEffect(isMediaScanning) {
+        isRefreshing = isMediaScanning
+    }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -665,29 +679,7 @@ fun LibraryScreen(
             Column {
                 Spacer(modifier = Modifier.height(5.dp)) // Add more padding before the header starts
                 LargeTopAppBar(
-                navigationIcon = {
-                    // Refresh button on far left
-                    FilledIconButton(
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                            // If on Explorer tab, reload explorer; otherwise, trigger media scan
-                            if (visibleTabIds.getOrNull(selectedTabIndex) == "EXPLORER") {
-                                explorerReloadTrigger++
-                            } else {
-                                onRefreshClick()
-                            }
-                        },
-                        colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    ) {
-                        Icon(
-                            imageVector = RhythmIcons.Refresh,
-                            contentDescription = "Refresh"
-                        )
-                    }
-                },
+                navigationIcon = { },
                 title = {
                     val collapsedFraction = scrollBehavior.state.collapsedFraction
                     val fontSize = (24 + (32 - 24) * (1 - collapsedFraction)).sp // Interpolate between 24sp and 32sp
@@ -1367,7 +1359,7 @@ fun LibraryScreen(
                 }
             }
             
-            // Single Big Card Container
+            // Single Big Card Container with Pull-to-Refresh
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1377,8 +1369,23 @@ fun LibraryScreen(
                 color = MaterialTheme.colorScheme.surfaceContainer,
                 shadowElevation = 0.dp
             ) {
-                // Content with animation
-                HorizontalPager(
+                PullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = {
+                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                        // If on Explorer tab, reload explorer; otherwise, trigger media scan
+                        if (visibleTabIds.getOrNull(selectedTabIndex) == "EXPLORER") {
+                            explorerReloadTrigger++
+                        } else {
+                            onRefreshClick()
+                        }
+                    },
+                    state = pullToRefreshState,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        // Content with animation
+                        HorizontalPager(
                     state = pagerState,
                     modifier = Modifier
                         .fillMaxSize()
@@ -1485,6 +1492,87 @@ fun LibraryScreen(
                             isPlaying = isPlaying,
                             enableRatingSystem = enableRatingSystem
                         )
+                    }
+                }
+                        
+                        // Show media scanning progress overlay on top
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = isMediaScanning,
+                            enter = fadeIn() + expandVertically(),
+                            exit = fadeOut() + shrinkVertically(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .align(Alignment.TopCenter)
+                                .padding(top = 8.dp)
+                        ) {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                                ),
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    // Animated scanning icon
+                                    val infiniteTransition = rememberInfiniteTransition(label = "scanIconRotation")
+                                    val rotation by infiniteTransition.animateFloat(
+                                        initialValue = 0f,
+                                        targetValue = 360f,
+                                        animationSpec = infiniteRepeatable(
+                                            animation = tween(2000, easing = LinearEasing),
+                                            repeatMode = RepeatMode.Restart
+                                        ),
+                                        label = "rotation"
+                                    )
+                                    
+                                    Icon(
+                                        imageVector = RhythmIcons.Refresh,
+                                        contentDescription = "Scanning",
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        modifier = Modifier
+                                            .size(24.dp)
+                                            .graphicsLayer { rotationZ = rotation }
+                                    )
+                                    
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = when (scanProgress.stage) {
+                                                "Songs" -> "Scanning songs..."
+                                                "Albums" -> "Processing albums..."
+                                                "Artists" -> "Processing artists..."
+                                                "Genres" -> "Detecting genres..."
+                                                else -> "Scanning media..."
+                                            },
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                        if (scanProgress.total > 0) {
+                                            Text(
+                                                text = "${scanProgress.current} / ${scanProgress.total}",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                            )
+                                        }
+                                    }
+                                    
+                                    // Show circular progress indicator
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        strokeWidth = 2.dp
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
