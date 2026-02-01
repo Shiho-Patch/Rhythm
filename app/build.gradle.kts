@@ -158,14 +158,15 @@ dependencies {
     // Material 3 dependencies
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.material3)
-    implementation("androidx.compose.material3:material3-android")
-    implementation("androidx.compose.material3:material3-window-size-class")
+    implementation("androidx.compose.material3:material3-android:1.4.0")
+    implementation("androidx.compose.material3:material3-window-size-class-android:1.4.0")
+    implementation("com.google.android.material:material:1.13.0")
     
     // Media3 dependencies
-    implementation("androidx.media3:media3-exoplayer:1.9.0")
-    implementation("androidx.media3:media3-exoplayer-dash:1.9.0")
-    implementation("androidx.media3:media3-ui:1.9.0")
-    implementation("androidx.media3:media3-session:1.9.0")
+    implementation("androidx.media3:media3-exoplayer:1.9.1")
+    implementation("androidx.media3:media3-exoplayer-dash:1.9.1")
+    implementation("androidx.media3:media3-ui:1.9.1")
+    implementation("androidx.media3:media3-session:1.9.1")
     
     // Icons
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
@@ -176,13 +177,13 @@ dependencies {
     implementation("androidx.glance:glance-material3:1.1.1")
     
     // Physics-based animations
-    implementation("androidx.compose.animation:animation:1.10.1")
+    implementation("androidx.compose.animation:animation:1.10.2")
     //noinspection GradleDependency
     implementation("androidx.compose.animation:animation-graphics:1.8.3")
     implementation(libs.androidx.compose.animation.core)
     
     // Navigation
-    implementation("androidx.navigation:navigation-compose:2.9.6")
+    implementation("androidx.navigation:navigation-compose:2.9.7")
     
     // Permissions
     implementation("com.google.accompanist:accompanist-permissions:0.37.3")
@@ -218,7 +219,7 @@ dependencies {
     implementation(libs.androidx.foundation.layout)
     
     // WorkManager for background tasks
-    implementation("androidx.work:work-runtime-ktx:2.11.0")
+    implementation("androidx.work:work-runtime-ktx:2.11.1")
     implementation(libs.androidx.room.ktx)
 
     // Testing
