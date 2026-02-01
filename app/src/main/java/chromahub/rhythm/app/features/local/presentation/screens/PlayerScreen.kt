@@ -2366,579 +2366,116 @@ fun PlayerScreen(
                         // Add spacing below progress bar on both views
                         Spacer(modifier = Modifier.height(if (isTablet) 12.dp else 8.dp))
 
-                        // Main player controls matching the reference image exactly
-                        // TODO: Option to use AnimatedPlaybackControls for enhanced weight-based animations
-                        // AnimatedPlaybackControls(
-                        //     isPlayingProvider = { isPlaying },
-                        //     onPrevious = onSkipPrevious,
-                        //     onPlayPause = onPlayPause,
-                        //     onNext = onSkipNext,
-                        //     modifier = Modifier.padding(horizontal = 32.dp),
-                        //     height = 70.dp
-                        // )
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(
-                                    horizontal = when {
-                                        isExtraSmallWidth -> 10.dp
-                                        isCompactWidth -> 16.dp
-                                        isTablet -> 32.dp
-                                        else -> 20.dp
-                                    }
-                                ),
-                            horizontalArrangement = if (isPlaying) Arrangement.SpaceEvenly else Arrangement.spacedBy(
-                                if (isExtraSmallWidth) 4.dp else 8.dp,
-                                Alignment.CenterHorizontally
-                            ),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // Previous button - Circular like in reference image
-                            val prevButtonSize = when {
-                                isExtraSmallWidth -> 40.dp
-                                isCompactWidth -> 44.dp
-                                else -> 48.dp
-                            }
-                            Surface(
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(
-                                        context,
-                                        haptic,
-                                        HapticFeedbackType.TextHandleMove
-                                    )
-                                    onSkipPrevious()
-                                },
-                                modifier = Modifier.size(prevButtonSize),
-                                shape = CircleShape,
-                                color = MaterialTheme.colorScheme.tertiary,
-                                tonalElevation = 0.dp,
-                                shadowElevation = 0.dp
-                            ) {
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier = Modifier.fillMaxSize()
-                                ) {
-                                    Icon(
-                                        imageVector = RhythmIcons.SkipPrevious,
-                                        contentDescription = "Previous track",
-                                        modifier = Modifier.size(if (isExtraSmallWidth) 18.dp else 24.dp),
-                                        tint = MaterialTheme.colorScheme.onTertiary
-                                    )
+                        // Main player controls with Expressive Material 3 button group
+                        // Full width container with same padding as toggle buttons
+                        chromahub.rhythm.app.shared.presentation.components.common.ExpressivePlayerControlGroup(
+                            isPlaying = isPlaying && !showLoaderInPlayPauseButton,
+                            showSeekButtons = playerShowSeekButtons,
+                            onPrevious = {
+                                HapticUtils.performHapticFeedback(
+                                    context,
+                                    haptic,
+                                    HapticFeedbackType.TextHandleMove
+                                )
+                                onSkipPrevious()
+                            },
+                            onPlayPause = {
+                                HapticUtils.performHapticFeedback(
+                                    context,
+                                    haptic,
+                                    HapticFeedbackType.LongPress
+                                )
+                                onPlayPause()
+                            },
+                            onNext = {
+                                HapticUtils.performHapticFeedback(
+                                    context,
+                                    haptic,
+                                    HapticFeedbackType.LongPress
+                                )
+                                onSkipNext()
+                            },
+                            onSeekBack = {
+                                HapticUtils.performHapticFeedback(
+                                    context,
+                                    haptic,
+                                    HapticFeedbackType.LongPress
+                                )
+                                onSeek(
+                                    (currentTimeMs - 10000).coerceAtLeast(0L)
+                                        .toFloat() / totalTimeMs
+                                )
+                            },
+                            onSeekForward = {
+                                HapticUtils.performHapticFeedback(
+                                    context,
+                                    haptic,
+                                    HapticFeedbackType.LongPress
+                                )
+                                onSeek(
+                                    (currentTimeMs + 10000).coerceAtMost(totalTimeMs.toLong())
+                                        .toFloat() / totalTimeMs
+                                )
+                            },
+                            isExtraSmallWidth = isExtraSmallWidth,
+                            isCompactWidth = isCompactWidth,
+                            isLoading = showLoaderInPlayPauseButton,
+                            modifier = Modifier.padding(
+                                horizontal = when {
+                                    isExtraSmallWidth -> 10.dp
+                                    isCompactWidth -> 16.dp
+                                    isTablet -> 32.dp
+                                    else -> 20.dp
                                 }
-                            }
-
-                            // Seek 10 seconds back button
-                            AnimatedVisibility(
-                                visible = isPlaying && playerShowSeekButtons, // Show when paused and setting enabled
-                                enter = fadeIn(
-                                    animationSpec = spring(
-                                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                                        stiffness = Spring.StiffnessLow
-                                    )
-                                ) +
-                                        scaleIn(
-                                            animationSpec = spring(
-                                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                                stiffness = Spring.StiffnessLow
-                                            )
-                                        ),
-                                exit = fadeOut(
-                                    animationSpec = spring(
-                                        dampingRatio = Spring.DampingRatioNoBouncy,
-                                        stiffness = Spring.StiffnessHigh
-                                    )
-                                ) +
-                                        scaleOut(
-                                            animationSpec = spring(
-                                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                                stiffness = Spring.StiffnessHigh
-                                            )
-                                        )
-                            ) {
-                                val seekBackButtonSize = when {
-                                    isExtraSmallWidth -> 44.dp
-                                    isCompactWidth -> 48.dp
-                                    else -> 56.dp
-                                }
-                                Surface(
-                                    onClick = {
-                                        HapticUtils.performHapticFeedback(
-                                            context,
-                                            haptic,
-                                            HapticFeedbackType.LongPress
-                                        )
-                                        onSeek(
-                                            (currentTimeMs - 10000).coerceAtLeast(0L)
-                                                .toFloat() / totalTimeMs
-                                        )
-                                    },
-                                    modifier = Modifier.size(seekBackButtonSize),
-                                    shape = RoundedCornerShape(20.dp), // Squircle shape
-                                    color = MaterialTheme.colorScheme.primaryContainer,
-                                    tonalElevation = 0.dp,
-                                    shadowElevation = 0.dp
-                                ) {
-                                    Box(
-                                        contentAlignment = Alignment.Center,
-                                        modifier = Modifier.fillMaxSize()
-                                    ) {
-                                        Icon(
-                                            imageVector = RhythmIcons.Replay10,
-                                            contentDescription = "Seek 10 seconds back",
-                                            modifier = Modifier.size(if (isExtraSmallWidth) 18.dp else 24.dp),
-                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                        )
-                                    }
-                                }
-                            }
-
-                            // Play/Pause button - Large Oval/Pill shaped exactly like in reference image
-                            val playPauseButtonWidth by animateDpAsState(
-                                targetValue = when {
-                                    isExtraSmallWidth -> if (isPlaying) 50.dp else 120.dp
-                                    isCompactWidth -> if (isPlaying) 54.dp else 130.dp
-                                    else -> if (isPlaying) 60.dp else 140.dp
-                                },
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessLow,
-                                    visibilityThreshold = null
-                                ),
-                                label = "playPauseButtonWidth"
                             )
-                            val playPauseButtonHeight by animateDpAsState(
-                                targetValue = when {
-                                    isExtraSmallWidth -> 50.dp
-                                    isCompactWidth -> 54.dp
-                                    else -> 60.dp
-                                },
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessLow,
-                                    visibilityThreshold = null
-                                ),
-                                label = "playPauseButtonHeight"
-                            )
-
-                            Surface(
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(
-                                        context,
-                                        haptic,
-                                        HapticFeedbackType.LongPress
-                                    )
-                                    onPlayPause()
-                                },
-                                modifier = Modifier
-                                    .width(playPauseButtonWidth)
-                                    .height(playPauseButtonHeight),
-                                shape = RoundedCornerShape(30.dp), // Pill/oval shape
-                                color = MaterialTheme.colorScheme.primary,
-                                tonalElevation = 0.dp,
-                                shadowElevation = 0.dp
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxSize(),
-                                    horizontalArrangement = Arrangement.Center,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    if (showLoaderInPlayPauseButton) {
-                                        androidx.compose.material3.ContainedLoadingIndicator(
-                                            modifier = Modifier.size(if (isExtraSmallWidth) 20.dp else 26.dp)
-                                        )
-                                    } else {
-                                        Icon(
-                                            imageVector = if (isPlaying) RhythmIcons.Pause else RhythmIcons.Play,
-                                            contentDescription = if (isPlaying) "Pause" else "Play",
-                                            modifier = Modifier.size(if (isExtraSmallWidth) 18.dp else 24.dp),
-                                            tint = MaterialTheme.colorScheme.onPrimary
-                                        )
-                                        AnimatedVisibility(
-                                            visible = !isPlaying && !showLoaderInPlayPauseButton, // Show text when inactive and no loader
-                                            enter = fadeIn(
-                                                animationSpec = spring(
-                                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                                    stiffness = Spring.StiffnessLow
-                                                )
-                                            ) +
-                                                    scaleIn(
-                                                        animationSpec = spring(
-                                                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                                                            stiffness = Spring.StiffnessLow
-                                                        )
-                                                    ),
-                                            exit = fadeOut(
-                                                animationSpec = spring(
-                                                    dampingRatio = Spring.DampingRatioNoBouncy,
-                                                    stiffness = Spring.StiffnessHigh
-                                                )
-                                            ) +
-                                                    scaleOut(
-                                                        animationSpec = spring(
-                                                            dampingRatio = Spring.DampingRatioNoBouncy,
-                                                            stiffness = Spring.StiffnessHigh
-                                                        )
-                                                    )
-                                        ) {
-                                            Row {
-                                                Spacer(modifier = Modifier.width(if (isExtraSmallWidth) 4.dp else 8.dp))
-                                                Text(
-                                                    text = if (isPlaying) "PAUSE" else "PLAY",
-                                                    style = MaterialTheme.typography.titleMedium.copy(
-                                                        fontWeight = FontWeight.Bold,
-                                                        letterSpacing = if (isExtraSmallWidth) 0.8.sp else 1.2.sp,
-                                                        fontSize = if (isExtraSmallWidth) 11.sp else 14.sp
-                                                    ),
-                                                    color = MaterialTheme.colorScheme.onPrimary
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            // Seek 10 seconds forward button
-                            AnimatedVisibility(
-                                visible = isPlaying && playerShowSeekButtons, // Show when paused and setting enabled
-                                enter = fadeIn(
-                                    animationSpec = spring(
-                                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                                        stiffness = Spring.StiffnessLow
-                                    )
-                                ) +
-                                        scaleIn(
-                                            animationSpec = spring(
-                                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                                stiffness = Spring.StiffnessLow
-                                            )
-                                        ),
-                                exit = fadeOut(
-                                    animationSpec = spring(
-                                        dampingRatio = Spring.DampingRatioNoBouncy,
-                                        stiffness = Spring.StiffnessHigh
-                                    )
-                                ) +
-                                        scaleOut(
-                                            animationSpec = spring(
-                                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                                stiffness = Spring.StiffnessHigh
-                                            )
-                                        )
-                            ) {
-                                val seekForwardButtonSize = when {
-                                    isExtraSmallWidth -> 44.dp
-                                    isCompactWidth -> 48.dp
-                                    else -> 56.dp
-                                }
-                                Surface(
-                                    onClick = {
-                                        HapticUtils.performHapticFeedback(
-                                            context,
-                                            haptic,
-                                            HapticFeedbackType.LongPress
-                                        )
-                                        onSeek(
-                                            (currentTimeMs + 10000).coerceAtMost(totalTimeMs.toLong())
-                                                .toFloat() / totalTimeMs
-                                        )
-                                    },
-                                    modifier = Modifier.size(seekForwardButtonSize),
-                                    shape = RoundedCornerShape(20.dp), // Squircle shape
-                                    color = MaterialTheme.colorScheme.primaryContainer,
-                                    tonalElevation = 0.dp,
-                                    shadowElevation = 0.dp
-                                ) {
-                                    Box(
-                                        contentAlignment = Alignment.Center,
-                                        modifier = Modifier.fillMaxSize()
-                                    ) {
-                                        Icon(
-                                            imageVector = RhythmIcons.Forward10,
-                                            contentDescription = "Seek 10 seconds forward",
-                                            modifier = Modifier.size(if (isExtraSmallWidth) 18.dp else 24.dp),
-                                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                        )
-                                    }
-                                }
-                            }
-
-                            // Next button - Circular like in reference image
-                            val nextButtonSize = when {
-                                isExtraSmallWidth -> 40.dp
-                                isCompactWidth -> 44.dp
-                                else -> 48.dp
-                            }
-                            Surface(
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(
-                                        context,
-                                        haptic,
-                                        HapticFeedbackType.LongPress
-                                    )
-                                    onSkipNext()
-                                },
-                                modifier = Modifier.size(nextButtonSize),
-                                shape = CircleShape,
-                                color = MaterialTheme.colorScheme.tertiary,
-                                tonalElevation = 0.dp,
-                                shadowElevation = 0.dp
-                            ) {
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier = Modifier.fillMaxSize()
-                                ) {
-                                    Icon(
-                                        imageVector = RhythmIcons.SkipNext,
-                                        contentDescription = "Next track",
-                                        modifier = Modifier.size(if (isExtraSmallWidth) 18.dp else 24.dp),
-                                        tint = MaterialTheme.colorScheme.onTertiary
-                                    )
-                                }
-                            }
-                        }
+                        )
 
                         Spacer(modifier = Modifier.height(if (isTablet) 28.dp else if (isExtraSmallWidth) 20.dp else 28.dp))
 
-                        // Secondary action buttons row - compact design
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(
-                                    horizontal = when {
-                                        isExtraSmallWidth -> 10.dp
-                                        isCompactWidth -> 16.dp
-                                        isTablet -> 32.dp
-                                        else -> 20.dp
-                                    }
-                                ),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // Shuffle button
-                            val shuffleIsActive = isShuffleEnabled
-                            val shuffleButtonColor by animateColorAsState(
-                                targetValue = if (shuffleIsActive) {
-                                    if (isDarkTheme) MaterialTheme.colorScheme.inverseSurface else MaterialTheme.colorScheme.surfaceContainerLowest
-                                } else {
-                                    MaterialTheme.colorScheme.surfaceContainerHighest
-                                },
-                                label = "shuffleButtonColor"
-                            )
-                            val shuffleContentColor by animateColorAsState(
-                                targetValue = if (shuffleIsActive) {
-                                    if (isDarkTheme) MaterialTheme.colorScheme.inverseOnSurface else MaterialTheme.colorScheme.onSurface
-                                } else {
-                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                                },
-                                label = "shuffleContentColor"
-                            )
-                            val shuffleButtonWidth by animateDpAsState(
-                                targetValue = if (shuffleIsActive) 48.dp else 100.dp, // Expand when inactive
-                                label = "shuffleButtonWidth"
-                            )
-                            val shuffleButtonShape by animateDpAsState(
-                                targetValue = if (shuffleIsActive) 24.dp else 24.dp, // 24.dp for RoundedCornerShape(24.dp) and CircleShape for 48.dp size
-                                label = "shuffleButtonShape"
-                            )
-
-                            Surface(
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(
-                                        context,
-                                        haptic,
-                                        HapticFeedbackType.LongPress
-                                    )
-                                    onToggleShuffle()
-                                },
-                                modifier = Modifier
-                                    .width(shuffleButtonWidth)
-                                    .height(48.dp),
-                                shape = RoundedCornerShape(shuffleButtonShape),
-                                color = shuffleButtonColor,
-                                tonalElevation = 0.dp,
-                                shadowElevation = 0.dp
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxSize(),
-                                    horizontalArrangement = Arrangement.Center,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = RhythmIcons.Shuffle,
-                                        contentDescription = "Toggle shuffle",
-                                        modifier = Modifier.size(20.dp),
-                                        tint = shuffleContentColor
-                                    )
-                                    AnimatedVisibility(visible = !shuffleIsActive) { // Show text when inactive
-                                        Row {
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Text(
-                                                text = context.getString(R.string.player_shuffle),
-                                                style = MaterialTheme.typography.labelMedium.copy(
-                                                    fontWeight = FontWeight.Bold,
-                                                    letterSpacing = 0.8.sp
-                                                ),
-                                                color = shuffleContentColor
-                                            )
-                                        }
-                                    }
+                        // Secondary action buttons with Expressive Toggle Button Group
+                        chromahub.rhythm.app.shared.presentation.components.common.ExpressiveToggleButtonGroup(
+                            shuffleEnabled = isShuffleEnabled,
+                            lyricsVisible = showLyricsView,
+                            repeatMode = repeatMode,
+                            onToggleShuffle = {
+                                HapticUtils.performHapticFeedback(
+                                    context,
+                                    haptic,
+                                    HapticFeedbackType.LongPress
+                                )
+                                onToggleShuffle()
+                            },
+                            onToggleLyrics = {
+                                HapticUtils.performHapticFeedback(
+                                    context,
+                                    haptic,
+                                    HapticFeedbackType.LongPress
+                                )
+                                if (!isLyricsContentVisible && isSongInfoVisible) {
+                                    showLyricsView = !showLyricsView
+                                } else if (isLyricsContentVisible && !isSongInfoVisible) {
+                                    showLyricsView = !showLyricsView
                                 }
-                            }
-
-                            // Lyrics toggle button (only show if lyrics are enabled)
-                            if (showLyrics) {
-                                val lyricsIsActive = showLyricsView
-                                val lyricsButtonColor by animateColorAsState(
-                                    targetValue = if (lyricsIsActive) {
-                                        if (isDarkTheme) MaterialTheme.colorScheme.inverseSurface else MaterialTheme.colorScheme.surfaceContainerLowest
-                                    } else {
-                                        MaterialTheme.colorScheme.surfaceContainerHighest
-                                    },
-                                    label = "lyricsButtonColor"
+                            },
+                            onToggleRepeat = {
+                                HapticUtils.performHapticFeedback(
+                                    context,
+                                    haptic,
+                                    HapticFeedbackType.LongPress
                                 )
-                                val lyricsContentColor by animateColorAsState(
-                                    targetValue = if (lyricsIsActive) {
-                                        if (isDarkTheme) MaterialTheme.colorScheme.inverseOnSurface else MaterialTheme.colorScheme.onSurface
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                                    },
-                                    label = "lyricsContentColor"
-                                )
-                                val lyricsButtonWidth by animateDpAsState(
-                                    targetValue = if (lyricsIsActive) 48.dp else 100.dp, // Expand when inactive
-                                    label = "lyricsButtonWidth"
-                                )
-                                val lyricsButtonShape by animateDpAsState(
-                                    targetValue = if (lyricsIsActive) 24.dp else 24.dp,
-                                    label = "lyricsButtonShape"
-                                )
-
-                                Surface(
-                                    onClick = {
-                                        HapticUtils.performHapticFeedback(
-                                            context,
-                                            haptic,
-                                            HapticFeedbackType.LongPress
-                                        )
-                                        if (!isLyricsContentVisible && isSongInfoVisible) {
-                                            showLyricsView = !showLyricsView
-                                        } else if (isLyricsContentVisible && !isSongInfoVisible) {
-                                            showLyricsView = !showLyricsView
-                                        }
-                                    },
-                                    modifier = Modifier
-                                        .width(lyricsButtonWidth)
-                                        .height(48.dp),
-                                    shape = RoundedCornerShape(lyricsButtonShape),
-                                    color = lyricsButtonColor,
-                                    tonalElevation = 0.dp,
-                                    shadowElevation = 0.dp
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxSize(),
-                                        horizontalArrangement = Arrangement.Center,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(
-                                            imageVector = RhythmIcons.Player.Lyrics,
-                                            contentDescription = "Toggle lyrics",
-                                            modifier = Modifier.size(20.dp),
-                                            tint = lyricsContentColor
-                                        )
-                                        AnimatedVisibility(visible = !lyricsIsActive) { // Show text when inactive
-                                            Row {
-                                                Spacer(modifier = Modifier.width(4.dp))
-                                                Text(
-                                                    text = context.getString(R.string.player_lyrics),
-                                                    style = MaterialTheme.typography.labelMedium.copy(
-                                                        fontWeight = FontWeight.Bold,
-                                                        letterSpacing = 0.8.sp
-                                                    ),
-                                                    color = lyricsContentColor
-                                                )
-                                            }
-                                        }
-                                    }
+                                onToggleRepeat()
+                            },
+                            showLyrics = showLyrics,
+                            modifier = Modifier.padding(
+                                horizontal = when {
+                                    isExtraSmallWidth -> 10.dp
+                                    isCompactWidth -> 16.dp
+                                    isTablet -> 32.dp
+                                    else -> 20.dp
                                 }
-                            }
-
-                            // Repeat button
-                            val repeatIsActive = repeatMode != 0
-                            val repeatButtonColor by animateColorAsState(
-                                targetValue = if (repeatIsActive) {
-                                    if (isDarkTheme) MaterialTheme.colorScheme.inverseSurface else MaterialTheme.colorScheme.surfaceContainerLowest
-                                } else {
-                                    MaterialTheme.colorScheme.surfaceContainerHighest
-                                },
-                                label = "repeatButtonColor"
-                            )
-                            val repeatContentColor by animateColorAsState(
-                                targetValue = if (repeatIsActive) {
-                                    if (isDarkTheme) MaterialTheme.colorScheme.inverseOnSurface else MaterialTheme.colorScheme.onSurface
-                                } else {
-                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                                },
-                                label = "repeatContentColor"
-                            )
-                            val repeatButtonWidth by animateDpAsState(
-                                targetValue = if (repeatIsActive) 48.dp else 100.dp, // Expand when inactive
-                                label = "repeatButtonWidth"
-                            )
-                            val repeatButtonShape by animateDpAsState(
-                                targetValue = if (repeatIsActive) 24.dp else 24.dp,
-                                label = "repeatButtonShape"
-                            )
-
-                            Surface(
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(
-                                        context,
-                                        haptic,
-                                        HapticFeedbackType.LongPress
-                                    )
-                                    onToggleRepeat()
-                                },
-                                modifier = Modifier
-                                    .width(repeatButtonWidth)
-                                    .height(48.dp),
-                                shape = RoundedCornerShape(repeatButtonShape),
-                                color = repeatButtonColor,
-                                tonalElevation = 0.dp,
-                                shadowElevation = 0.dp
-                            ) {
-                                Row(
-                                    horizontalArrangement = Arrangement.Center,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.fillMaxSize()
-                                ) {
-                                    val icon = when (repeatMode) {
-                                        1 -> RhythmIcons.RepeatOne
-                                        2 -> RhythmIcons.Repeat
-                                        else -> RhythmIcons.Repeat
-                                    }
-
-                                    Icon(
-                                        imageVector = icon,
-                                        contentDescription = "Toggle repeat mode",
-                                        modifier = Modifier.size(20.dp),
-                                        tint = repeatContentColor
-                                    )
-                                    AnimatedVisibility(visible = !repeatIsActive) { // Show text when inactive
-                                        Row {
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Text(
-                                                text = context.getString(R.string.player_repeat),
-                                                style = MaterialTheme.typography.labelMedium.copy(
-                                                    fontWeight = FontWeight.Bold,
-                                                    letterSpacing = 0.8.sp
-                                                ),
-                                                color = repeatContentColor
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                            ),
+                            isDarkTheme = isDarkTheme
+                        )
 
                         Spacer(modifier = Modifier.height(if (isExtraSmallWidth) 12.dp else 20.dp))
 
@@ -3773,7 +3310,7 @@ fun PlayerScreen(
                                 if (isExtraSmallWidth) 4.dp else if (isCompactWidth) 6.dp else 8.dp
                             )
                         ) {
-                        // Device Output button with rounded pill shape - optimized padding
+                        // Device Output button - expressive style
                         Surface(
                             onClick = {
                                 HapticUtils.performHapticFeedback(
@@ -3783,75 +3320,81 @@ fun PlayerScreen(
                                 )
                                 showDeviceOutputSheet = true
                             },
-                            shape = RoundedCornerShape(if (isCompactHeight) 20.dp else 24.dp),
-                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = RoundedCornerShape(28.dp),
+                            color = MaterialTheme.colorScheme.secondaryContainer,
                             tonalElevation = 0.dp,
-                            shadowElevation = 0.dp,
                             modifier = Modifier.weight(1f)
                         ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(
-                                        vertical = if (isExtraSmallWidth) 6.dp else if (isCompactHeight) 8.dp else 10.dp,
-                                        horizontal = when {
-                                            isExtraSmallWidth -> 6.dp
-                                            isCompactWidth -> 8.dp
-                                            else -> 12.dp
-                                        }
+                                        vertical = if (isCompactHeight) 8.dp else 12.dp,
+                                        horizontal = if (isCompactWidth) 8.dp else 12.dp
                                     ),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                // Choose icon based on device type
+                                // Icon with background
                                 val icon = when {
                                     location?.id?.startsWith("bt_") == true -> RhythmIcons.BluetoothFilled
                                     location?.id == "wired_headset" -> RhythmIcons.HeadphonesFilled
                                     location?.id == "speaker" -> RhythmIcons.SpeakerFilled
                                     else -> RhythmIcons.Location
                                 }
-
-                                Icon(
-                                    imageVector = icon,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    modifier = Modifier.size(if (isExtraSmallWidth) 16.dp else if (isCompactHeight) 20.dp else 24.dp)
-                                )
+                                
+                                Surface(
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    modifier = Modifier.size(if (isCompactHeight) 36.dp else 40.dp)
+                                ) {
+                                    Box(
+                                        contentAlignment = Alignment.Center,
+                                        modifier = Modifier.fillMaxSize()
+                                    ) {
+                                        Icon(
+                                            imageVector = icon,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSecondary,
+                                            modifier = Modifier.size(if (isCompactHeight) 20.dp else 24.dp)
+                                        )
+                                    }
+                                }
 
                                 if (!isCompactWidth) {
-                                    Spacer(modifier = Modifier.width(if (isExtraSmallWidth) 4.dp else 8.dp))
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column(
+                                        modifier = Modifier.weight(1f),
+                                        horizontalAlignment = Alignment.Start
+                                    ) {
                                         Text(
                                             text = location?.name ?: "Device Output",
-                                            style = MaterialTheme.typography.labelLarge.copy(
-                                                fontSize = if (isExtraSmallWidth) 10.sp else if (isCompactHeight) 12.sp else 14.sp
-                                            ),
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            style = MaterialTheme.typography.titleSmall,
+                                            color = MaterialTheme.colorScheme.onSurface,
                                             maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            textAlign = TextAlign.Center
+                                            overflow = TextOverflow.Ellipsis
                                         )
-                                        val displayVolume =
-                                            if (useSystemVolume) systemVolume else volume
+                                        val displayVolume = if (useSystemVolume) systemVolume else volume
                                         val volumeText = if (useSystemVolume) "System" else "App"
                                         Text(
                                             text = "${(displayVolume * 100).toInt()}% $volumeText",
-                                            style = MaterialTheme.typography.labelSmall.copy(
-                                                fontSize = if (isExtraSmallWidth) 8.sp else if (isCompactHeight) 10.sp else 12.sp
-                                            ),
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
-                                                alpha = 0.7f
-                                            ),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            textAlign = TextAlign.Center
+                                            overflow = TextOverflow.Ellipsis
                                         )
                                     }
+                                    
+                                    Icon(
+                                        imageVector = RhythmIcons.ArrowRight,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(20.dp)
+                                    )
                                 }
                             }
                         }
 
-                        // Queue button - optimized design with reduced padding
+                        // Queue button - expressive style
                         Surface(
                             onClick = {
                                 HapticUtils.performHapticFeedback(
@@ -3865,55 +3408,67 @@ fun PlayerScreen(
                                     onQueueClick()
                                 }
                             },
-                            shape = RoundedCornerShape(if (isCompactHeight) 20.dp else 24.dp),
-                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = RoundedCornerShape(28.dp),
+                            color = MaterialTheme.colorScheme.secondaryContainer,
                             tonalElevation = 0.dp,
-                            shadowElevation = 0.dp,
                             modifier = Modifier.weight(1f)
                         ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(
-                                        vertical = if (isCompactHeight) 8.dp else 10.dp,    // Reduced padding
-                                        horizontal = if (isCompactWidth) 8.dp else 12.dp    // Reduced padding
+                                        vertical = if (isCompactHeight) 8.dp else 12.dp,
+                                        horizontal = if (isCompactWidth) 8.dp else 12.dp
                                     ),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    imageVector = RhythmIcons.Queue,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    modifier = Modifier.size(if (isCompactHeight) 20.dp else 24.dp)
-                                )
+                                // Icon with background
+                                Surface(
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    modifier = Modifier.size(if (isCompactHeight) 36.dp else 40.dp)
+                                ) {
+                                    Box(
+                                        contentAlignment = Alignment.Center,
+                                        modifier = Modifier.fillMaxSize()
+                                    ) {
+                                        Icon(
+                                            imageVector = RhythmIcons.Queue,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSecondary,
+                                            modifier = Modifier.size(if (isCompactHeight) 20.dp else 24.dp)
+                                        )
+                                    }
+                                }
 
                                 if (!isCompactWidth) {
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column(
+                                        modifier = Modifier.weight(1f),
+                                        horizontalAlignment = Alignment.Start
+                                    ) {
                                         Text(
                                             text = context.getString(R.string.player_queue),
-                                            style = MaterialTheme.typography.labelLarge.copy(
-                                                fontSize = if (isCompactHeight) 12.sp else 14.sp
-                                            ),
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                            style = MaterialTheme.typography.titleSmall,
+                                            color = MaterialTheme.colorScheme.onSurface,
                                             maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            textAlign = TextAlign.Center
+                                            overflow = TextOverflow.Ellipsis
                                         )
                                         Text(
                                             text = "$queuePosition of $queueTotal",
-                                            style = MaterialTheme.typography.labelSmall.copy(
-                                                fontSize = if (isCompactHeight) 10.sp else 12.sp
-                                            ),
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
-                                                alpha = 0.7f
-                                            ),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            textAlign = TextAlign.Center
+                                            overflow = TextOverflow.Ellipsis
                                         )
                                     }
+                                    
+                                    Icon(
+                                        imageVector = RhythmIcons.ArrowRight,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(20.dp)
+                                    )
                                 }
                             }
                         }

@@ -252,6 +252,7 @@ object RhythmIcons {
     val Close = Navigation.Close
     val Back = Navigation.Back
     val Forward = Navigation.Forward
+    val ArrowRight = Navigation.Forward // Alias for consistency
     val Download = Actions.Download
     val List = Actions.List
     val AppsGrid = Actions.Apps
