@@ -108,10 +108,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalConfiguration
 
 
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapes
+
+
 /**
  * Mini player that appears at the bottom of the screen
  * Updated to support customizable progress bar styles (NORMAL, WAVY, ROUNDED, etc.)
  * Adapted for tablet UI with responsive layout
+ * Uses M3 Expressive design with organic shapes and bouncy animations
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -273,14 +277,14 @@ fun MiniPlayer(
                 onPlayerClick()
             }
         },
-        shape = RoundedCornerShape(24.dp), // Slightly reduced corner radius for better visual balance
+        shape = ExpressiveShapes.Large, // Expressive organic shape
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer,
             contentColor = MaterialTheme.colorScheme.onSurface
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 0.dp, // Remove elevation as requested
-            pressedElevation = 0.dp  // Remove press elevation too
+            defaultElevation = 0.dp, // Subtle elevation for depth
+            pressedElevation = 1.dp  // Reduce on press
         ),
         modifier = if (useTabletLayout) {
             // Tablet: Right-side fixed position
@@ -720,12 +724,31 @@ fun MiniPlayer(
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        // Expressive previous button with bouncy animation
+                        val prevInteractionSource = remember { MutableInteractionSource() }
+                        val isPrevPressed by prevInteractionSource.collectIsPressedAsState()
+                        val prevScale by animateFloatAsState(
+                            targetValue = if (isPrevPressed) 0.88f else 1f,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            ),
+                            label = "prev_scale"
+                        )
+                        
                         FilledTonalIconButton(
                             onClick = {
                                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
                                 onSkipPrevious()
                             },
-                            modifier = Modifier.size(if (isLargeHeight) 48.dp else 40.dp)
+                            modifier = Modifier
+                                .size(if (isLargeHeight) 48.dp else 40.dp)
+                                .graphicsLayer {
+                                    scaleX = prevScale
+                                    scaleY = prevScale
+                                },
+                            shape = ExpressiveShapes.Full,
+                            interactionSource = prevInteractionSource
                         ) {
                             Icon(
                                 imageVector = RhythmIcons.SkipPrevious,
@@ -734,15 +757,34 @@ fun MiniPlayer(
                             )
                         }
 
+                        // Expressive play/pause button with bouncy animation
+                        val playInteractionSource = remember { MutableInteractionSource() }
+                        val isPlayPressed by playInteractionSource.collectIsPressedAsState()
+                        val playScale by animateFloatAsState(
+                            targetValue = if (isPlayPressed) 0.9f else 1f,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            ),
+                            label = "play_scale"
+                        )
+                        
                         FilledIconButton(
                             onClick = {
                                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
                                 onPlayPause()
                             },
-                            modifier = Modifier.size(if (isLargeHeight) 56.dp else 48.dp),
+                            modifier = Modifier
+                                .size(if (isLargeHeight) 56.dp else 48.dp)
+                                .graphicsLayer {
+                                    scaleX = playScale
+                                    scaleY = playScale
+                                },
+                            shape = ExpressiveShapes.Full,
                             colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
                                 containerColor = MaterialTheme.colorScheme.primary
-                            )
+                            ),
+                            interactionSource = playInteractionSource
                         ) {
                             Icon(
                                 imageVector = if (isPlaying) RhythmIcons.Pause else RhythmIcons.Play,
@@ -751,12 +793,31 @@ fun MiniPlayer(
                             )
                         }
 
+                        // Expressive next button with bouncy animation
+                        val nextInteractionSource = remember { MutableInteractionSource() }
+                        val isNextPressed by nextInteractionSource.collectIsPressedAsState()
+                        val nextScale by animateFloatAsState(
+                            targetValue = if (isNextPressed) 0.88f else 1f,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            ),
+                            label = "next_scale"
+                        )
+                        
                         FilledTonalIconButton(
                             onClick = {
                                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
                                 onSkipNext()
                             },
-                            modifier = Modifier.size(if (isLargeHeight) 48.dp else 40.dp)
+                            modifier = Modifier
+                                .size(if (isLargeHeight) 48.dp else 40.dp)
+                                .graphicsLayer {
+                                    scaleX = nextScale
+                                    scaleY = nextScale
+                                },
+                            shape = ExpressiveShapes.Full,
+                            interactionSource = nextInteractionSource
                         ) {
                             Icon(
                                 imageVector = RhythmIcons.SkipNext,
@@ -941,17 +1002,35 @@ fun MiniPlayer(
                             isPlaying = isPlaying,
                             cornerRadius = if (isPlaying) 20.dp else 50.dp // Adapt to button shape
                         ) {
+                            // Expressive play/pause with bouncy animation
+                            val phonePlayInteractionSource = remember { MutableInteractionSource() }
+                            val isPhonePlayPressed by phonePlayInteractionSource.collectIsPressedAsState()
+                            val phonePlayScale by animateFloatAsState(
+                                targetValue = if (isPhonePlayPressed) 0.88f else 1f,
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessMedium
+                                ),
+                                label = "phone_play_scale"
+                            )
+                            
                             FilledIconButton(
                                 onClick = {
                                     HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
                                     onPlayPause()
                                 },
-                                modifier = Modifier.size(if (isCompactHeight) 36.dp else 44.dp),
-                                shape = if (isPlaying) RoundedCornerShape(18.dp) else CircleShape,
+                                modifier = Modifier
+                                    .size(if (isCompactHeight) 36.dp else 44.dp)
+                                    .graphicsLayer {
+                                        scaleX = phonePlayScale
+                                        scaleY = phonePlayScale
+                                    },
+                                shape = ExpressiveShapes.Full, // Always use expressive pill shape
                                 colors = IconButtonDefaults.filledIconButtonColors(
                                     containerColor = MaterialTheme.colorScheme.primary,
                                     contentColor = MaterialTheme.colorScheme.onPrimary
-                                )
+                                ),
+                                interactionSource = phonePlayInteractionSource
                             ) {
                                 Icon(
                                     imageVector = if (isPlaying) RhythmIcons.Pause else RhythmIcons.Play,
@@ -961,18 +1040,35 @@ fun MiniPlayer(
                             }
                         }
                     } else {
-                        // Standard play/pause button without circular progress
+                        // Standard play/pause button without circular progress - with expressive animation
+                        val stdPlayInteractionSource = remember { MutableInteractionSource() }
+                        val isStdPlayPressed by stdPlayInteractionSource.collectIsPressedAsState()
+                        val stdPlayScale by animateFloatAsState(
+                            targetValue = if (isStdPlayPressed) 0.88f else 1f,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            ),
+                            label = "std_play_scale"
+                        )
+                        
                         FilledIconButton(
                             onClick = {
                                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
                                 onPlayPause()
                             },
-                            modifier = Modifier.size(if (isCompactHeight) 36.dp else 44.dp),
-                            shape = if (isPlaying) RoundedCornerShape(18.dp) else CircleShape,
+                            modifier = Modifier
+                                .size(if (isCompactHeight) 36.dp else 44.dp)
+                                .graphicsLayer {
+                                    scaleX = stdPlayScale
+                                    scaleY = stdPlayScale
+                                },
+                            shape = ExpressiveShapes.Full, // Expressive pill shape
                             colors = IconButtonDefaults.filledIconButtonColors(
                                 containerColor = MaterialTheme.colorScheme.primary,
                                 contentColor = MaterialTheme.colorScheme.onPrimary
-                            )
+                            ),
+                            interactionSource = stdPlayInteractionSource
                         ) {
                             Icon(
                                 imageVector = if (isPlaying) RhythmIcons.Pause else RhythmIcons.Play,
@@ -982,18 +1078,36 @@ fun MiniPlayer(
                         }
                     }
                     
-                    // Enhanced next track button with better styling
+                    // Enhanced next track button with expressive bouncy animation
+                    val nextTrackInteractionSource = remember { MutableInteractionSource() }
+                    val isNextTrackPressed by nextTrackInteractionSource.collectIsPressedAsState()
+                    val nextTrackScale by animateFloatAsState(
+                        targetValue = if (isNextTrackPressed) 0.88f else 1f,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium
+                        ),
+                        label = "next_track_scale"
+                    )
+                    
                     FilledTonalIconButton(
                         onClick = {
                             // Strong haptic feedback for next track - respecting settings
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                             onSkipNext()
                         },
-                        modifier = Modifier.size(if (isCompactHeight) 32.dp else 36.dp),
+                        modifier = Modifier
+                            .size(if (isCompactHeight) 32.dp else 36.dp)
+                            .graphicsLayer {
+                                scaleX = nextTrackScale
+                                scaleY = nextTrackScale
+                            },
+                        shape = ExpressiveShapes.Full, // Expressive pill shape
                         colors = IconButtonDefaults.filledTonalIconButtonColors(
                             containerColor = MaterialTheme.colorScheme.secondaryContainer,
                             contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
+                        ),
+                        interactionSource = nextTrackInteractionSource
                     ) {
                         Icon(
                             imageVector = RhythmIcons.SkipNext,

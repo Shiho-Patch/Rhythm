@@ -112,6 +112,10 @@ android {
     kotlin {
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+            freeCompilerArgs.addAll(
+                "-opt-in=androidx.compose.material3.ExperimentalMaterial3ExpressiveApi",
+                "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api"
+            )
         }
     }
     buildFeatures {
@@ -157,11 +161,10 @@ dependencies {
     
     // Material 3 dependencies
     implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.material3)
-    implementation("androidx.compose.material3:material3-android:1.4.0")
-    implementation("androidx.compose.material3:material3-window-size-class-android:1.4.0")
-    implementation("com.google.android.material:material:1.13.0")
-    
+    implementation("androidx.compose.material3:material3-android:1.5.0-alpha13")
+    implementation("androidx.compose.material3:material3-window-size-class-android:1.5.0-alpha13")
+    implementation("com.google.android.material:material:1.13.0-alpha05")
+
     // Media3 dependencies
     implementation("androidx.media3:media3-exoplayer:1.9.1")
     implementation("androidx.media3:media3-exoplayer-dash:1.9.1")

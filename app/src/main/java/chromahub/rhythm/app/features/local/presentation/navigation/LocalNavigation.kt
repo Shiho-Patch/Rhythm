@@ -2,6 +2,8 @@ package chromahub.rhythm.app.features.local.presentation.navigation
 
 import android.util.Log
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -34,6 +36,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -59,6 +62,8 @@ import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveFilledIconButton
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -600,7 +605,7 @@ private fun LocalNavigationContent(
                         }
                     },
                     actionOnNewLine = data.visuals.actionLabel != null && data.visuals.message.length > 50,
-                    shape = RoundedCornerShape(22.dp),
+                    shape = ExpressiveShapes.Full, // Expressive pill shape
                     containerColor = if (isRemovalSnackbar) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer,
                     contentColor = if (isRemovalSnackbar) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer,
                     actionContentColor = if (isRemovalSnackbar) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
@@ -735,11 +740,12 @@ private fun LocalNavigationContent(
                                 .align(Alignment.CenterHorizontally), // Align the row to the center horizontally within the Column
                             verticalAlignment = Alignment.Bottom // Align items to the bottom of the row
                         ) {
-                            // Navigation bar Surface
+                            // Expressive Navigation bar Surface with pill shape
                             Surface(
                                 color = MaterialTheme.colorScheme.surfaceContainer,
-                                shape = RoundedCornerShape(25.dp),
+                                shape = ExpressiveShapes.Full, // Full pill shape for expressive design
                                 tonalElevation = 3.dp,
+                                shadowElevation = 0.dp,
                                 modifier = Modifier
                                     .height(64.dp)
                                     .weight(1f) // Make it take up available space
@@ -845,7 +851,7 @@ private fun LocalNavigationContent(
                                                     }
                                                     .then(
                                                         if (isSelected) Modifier
-                                                            .clip(RoundedCornerShape(20.dp))
+                                                            .clip(ExpressiveShapes.Full) // Expressive pill shape
                                                             .background(MaterialTheme.colorScheme.primaryContainer)
                                                             .height(48.dp)
                                                             .widthIn(min = pillWidth) // Animated width
@@ -914,7 +920,18 @@ private fun LocalNavigationContent(
 
                             Spacer(modifier = Modifier.width(12.dp)) // Gap between nav bar and search icon
 
-                            // Separate Search Icon Button
+                            // Expressive Search Icon Button with bouncy animation
+                            val searchInteractionSource = remember { MutableInteractionSource() }
+                            val isSearchPressed by searchInteractionSource.collectIsPressedAsState()
+                            val searchScale by animateFloatAsState(
+                                targetValue = if (isSearchPressed) 0.88f else 1f,
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessMedium
+                                ),
+                                label = "search_scale"
+                            )
+                            
                             FilledIconButton(
                                 onClick = {
                                     HapticUtils.performHapticFeedback(
@@ -934,8 +951,14 @@ private fun LocalNavigationContent(
                                     containerColor = MaterialTheme.colorScheme.primary,
                                     contentColor = MaterialTheme.colorScheme.onPrimary
                                 ),
+                                shape = ExpressiveShapes.Full,
+                                interactionSource = searchInteractionSource,
                                 modifier = Modifier
                                     .size(64.dp) // Match height of navigation bar
+                                    .graphicsLayer {
+                                        scaleX = searchScale
+                                        scaleY = searchScale
+                                    }
                             ) {
                                 Icon(
                                     imageVector = RhythmIcons.Search,
