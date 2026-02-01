@@ -86,6 +86,10 @@ import androidx.compose.material.icons.rounded.TipsAndUpdates
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.CircularWavyProgressIndicator
+import androidx.compose.material3.LinearWavyProgressIndicator
+import androidx.compose.material3.ContainedLoadingIndicator
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Button
@@ -96,6 +100,9 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.SplitButtonLayout
+import androidx.compose.material3.SplitButtonDefaults
+import androidx.compose.material3.ButtonGroup
 import androidx.compose.ui.draw.scale
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.material.icons.filled.Reorder
@@ -1805,129 +1812,74 @@ private fun ModernSectionTitle(
             }
         }
         
-        // Expressive Segmented Button Group
+        // Material 3 Expressive Button Group for Play/Shuffle
         Row(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Play/Shuffle Expressive Segmented Buttons (Primary Action)
+            // Play/Shuffle Button Group with expressive design
             if (onPlayAll != null || onShufflePlay != null) {
-                var isPlayPressed by remember { mutableStateOf(false) }
-                var isShufflePressed by remember { mutableStateOf(false) }
-                
-                val playScale by animateFloatAsState(
-                    targetValue = if (isPlayPressed) 0.94f else 1f,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMedium
-                    ),
-                    label = "playScale"
-                )
-                val shuffleScale by animateFloatAsState(
-                    targetValue = if (isShufflePressed) 0.94f else 1f,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMedium
-                    ),
-                    label = "shuffleScale"
-                )
-                
-                // Segmented button container with expressive shapes
-                Surface(
-                    shape = ExpressiveShapes.Full,
-                    color = MaterialTheme.colorScheme.primary,
-                    tonalElevation = 1.dp,
-                    shadowElevation = 2.dp
+                // Using FilledTonalButton group for better visual hierarchy
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(0.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Play button segment
-                        onPlayAll?.let {
-                            Surface(
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
-                                    it()
-                                },
-                                shape = ExpressiveShapes.Full,
-                                color = Color.Transparent,
-                                modifier = Modifier
-                                    .scale(playScale)
-                                    .pointerInput(Unit) {
-                                        detectTapGestures(
-                                            onPress = {
-                                                isPlayPressed = true
-                                                tryAwaitRelease()
-                                                isPlayPressed = false
-                                            }
-                                        )
-                                    }
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(start = 14.dp, end = 10.dp, top = 10.dp, bottom = 10.dp),
-                                    horizontalArrangement = Arrangement.Center,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.PlayArrow,
-                                        contentDescription = context.getString(R.string.cd_play),
-                                        modifier = Modifier.size(18.dp),
-                                        tint = MaterialTheme.colorScheme.onPrimary
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = context.getString(R.string.action_play),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = MaterialTheme.colorScheme.onPrimary
-                                    )
-                                }
-                            }
-                        }
-                        
-                        // Divider
-                        if (onPlayAll != null && onShufflePlay != null) {
-                            Box(
-                                modifier = Modifier
-                                    .width(1.dp)
-                                    .height(24.dp)
-                                    .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f))
+                    onPlayAll?.let { playAction ->
+                        ExpressiveFilledTonalButton(
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                playAction()
+                            },
+                            shape = if (onShufflePlay != null) 
+                                RoundedCornerShape(topStart = 24.dp, bottomStart = 24.dp, topEnd = 4.dp, bottomEnd = 4.dp)
+                            else ExpressiveShapes.Full,
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.PlayArrow,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = context.getString(R.string.action_play),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
-                        
-                        // Shuffle button segment
-                        onShufflePlay?.let {
-                            Surface(
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
-                                    it()
-                                },
-                                shape = ExpressiveShapes.Full,
-                                color = Color.Transparent,
-                                modifier = Modifier
-                                    .scale(shuffleScale)
-                                    .pointerInput(Unit) {
-                                        detectTapGestures(
-                                            onPress = {
-                                                isShufflePressed = true
-                                                tryAwaitRelease()
-                                                isShufflePressed = false
-                                            }
-                                        )
-                                    }
-                            ) {
-                                Box(
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Shuffle,
-                                        contentDescription = context.getString(R.string.cd_shuffle),
-                                        modifier = Modifier.size(18.dp),
-                                        tint = MaterialTheme.colorScheme.onPrimary
-                                    )
-                                }
+                    }
+                    
+                    onShufflePlay?.let { shuffleAction ->
+                        ExpressiveFilledTonalButton(
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                shuffleAction()
+                            },
+                            shape = if (onPlayAll != null)
+                                RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp, topEnd = 24.dp, bottomEnd = 24.dp)
+                            else ExpressiveShapes.Full,
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            ),
+                            contentPadding = if (onPlayAll != null) 
+                                PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+                            else PaddingValues(horizontal = 20.dp, vertical = 12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Shuffle,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            if (onPlayAll == null) {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = context.getString(R.string.cd_shuffle),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
                             }
                         }
                     }
@@ -2407,10 +2359,10 @@ private fun ModernArtistCard(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(modifier = Modifier.size(cardSize)) {
-            ExpressiveCard(
+            ExpressiveElevatedCard(
                 modifier = Modifier.fillMaxSize(),
-                shape = ExpressiveShapes.Full,  // Circular card for artists
-                colors = CardDefaults.cardColors(
+                shape = ExpressiveShapes.SquircleExtraLarge,  // Squircle shape for modern artist cards
+                colors = CardDefaults.elevatedCardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                 )
             ) {
@@ -2510,7 +2462,8 @@ private fun ModernAlbumCard(
         else -> 160.dp to 240.dp
     }
 
-    ExpressiveCard(
+    // Enhanced Expressive Card with elevated styling
+    ExpressiveElevatedCard(
         onClick = {
             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
             onClick(album)
@@ -2519,14 +2472,14 @@ private fun ModernAlbumCard(
             .width(cardWidth)
             .height(cardHeight) // Fixed height to prevent layout issues
             .shadow(
-                elevation = 8.dp,
-                shape = ExpressiveShapes.ExtraLarge,
-                ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                elevation = 12.dp, // Increased elevation for more depth
+                shape = ExpressiveShapes.SquircleLarge, // Using squircle shape for modern look
+                ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
             ),
-        shape = ExpressiveShapes.ExtraLarge,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        shape = ExpressiveShapes.SquircleLarge, // More organic shape
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         )
     ) {
         Column(modifier = Modifier.padding(
@@ -2541,8 +2494,22 @@ private fun ModernAlbumCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(ExpressiveShapes.ExtraLarge) // More rounded artwork
+                    .clip(ExpressiveShapes.SquircleMedium) // More rounded squircle artwork for modern feel
             ) {
+                // Background gradient for depth
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.surfaceVariant,
+                                    MaterialTheme.colorScheme.surfaceContainerHigh
+                                )
+                            )
+                        )
+                )
+                
                 AsyncImage(
                     model = ImageRequest.Builder(context)
                         .apply(ImageUtils.buildImageRequest(
@@ -2669,24 +2636,25 @@ private fun ModernSongCard(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
 
-    ExpressiveCard(
+    // Enhanced Expressive Card with improved visual depth
+    ExpressiveElevatedCard(
         onClick = {
             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
             onClick()
         },
         modifier = Modifier
-            .width(180.dp)
-            .height(260.dp) // Fixed height to prevent layout issues
+            .width(190.dp) // Slightly wider
+            .height(270.dp) // Slightly taller for better proportions
             .shadow(
-                elevation = 6.dp,
-                shape = ExpressiveShapes.ExtraLarge,
-                ambientColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.08f),
-                spotColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f)
+                elevation = 10.dp, // Increased elevation
+                shape = ExpressiveShapes.SquircleLarge,
+                ambientColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f),
+                spotColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f)
             ),
-        colors = CardDefaults.cardColors(
+        colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
-        shape = ExpressiveShapes.ExtraLarge
+        shape = ExpressiveShapes.SquircleLarge // More organic squircle shape
     ) {
         Column(
             modifier = Modifier
@@ -2695,25 +2663,41 @@ private fun ModernSongCard(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Surface(
-                shape = ExpressiveShapes.Medium,
+                shape = ExpressiveShapes.SquircleMedium, // Squircle shape for artwork
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f), // Take most of the space
                 color = MaterialTheme.colorScheme.surfaceVariant
             ) {
-                AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .apply(ImageUtils.buildImageRequest(
-                            song.artworkUri,
-                            song.title,
-                            context.cacheDir,
-                            M3PlaceholderType.TRACK
-                        ))
-                        .build(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
+                Box(modifier = Modifier.fillMaxSize()) {
+                    // Background gradient for better aesthetics
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.radialGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
+                                        MaterialTheme.colorScheme.surfaceVariant
+                                    )
+                                )
+                            )
+                    )
+                    
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .apply(ImageUtils.buildImageRequest(
+                                song.artworkUri,
+                                song.title,
+                                context.cacheDir,
+                                M3PlaceholderType.TRACK
+                            ))
+                            .build(),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
             
             // Text section with fixed height
@@ -2772,14 +2756,14 @@ private fun ModernListeningStatsSection(
         (statsSummary?.uniqueArtists ?: 0).toString()
     }
 
-    // Enhanced stats card with better design
-    ExpressiveCard(
+    // Enhanced stats card with expressive elevated design
+    ExpressiveElevatedCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
-        shape = ExpressiveShapes.ExtraLarge
+        shape = ExpressiveShapes.SquircleLarge
     ) {
         Column(
             modifier = Modifier.padding(24.dp)
@@ -2790,9 +2774,9 @@ private fun ModernListeningStatsSection(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Surface(
-                    shape = CircleShape,
+                    shape = ExpressiveShapes.SquircleMedium, // Squircle for modern look
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(52.dp) // Slightly larger
                 ) {
                     Box(
                         contentAlignment = Alignment.Center,
@@ -2880,11 +2864,11 @@ private fun EnhancedStatItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Icon with accent color background
+        // Icon with accent color background and squircle shape
         Surface(
-            shape = CircleShape,
-            color = accentColor.copy(alpha = 0.12f),
-            modifier = Modifier.size(56.dp)
+            shape = ExpressiveShapes.SquircleMedium,
+            color = accentColor.copy(alpha = 0.15f),
+            modifier = Modifier.size(64.dp) // Slightly larger
         ) {
             Box(
                 contentAlignment = Alignment.Center,
@@ -3169,7 +3153,7 @@ private fun ModernUpdateSection(
     var isDownloading by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
     
-    ExpressiveCard(
+    ExpressiveElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = {
@@ -3178,10 +3162,10 @@ private fun ModernUpdateSection(
                     onUpdateClick(false)
                 }
             }),
-        colors = CardDefaults.cardColors(
+        colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         ),
-        shape = ExpressiveShapes.ExtraLarge
+        shape = ExpressiveShapes.SquircleLarge
     ) {
         Column(
             modifier = Modifier
@@ -3214,9 +3198,9 @@ private fun ModernUpdateSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Surface(
-                    modifier = Modifier.size(48.dp),
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f)
+                    modifier = Modifier.size(52.dp),
+                    shape = ExpressiveShapes.SquircleSmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f)
                 ) {
                     Icon(
                         imageVector = RhythmIcons.Download,
@@ -3296,12 +3280,11 @@ private fun ModernUpdateSection(
                     )
                     
                     if (isDownloading) {
-                        ActionProgressLoader(
+                        CircularWavyProgressIndicator(
+                            progress = { 0.75f },
                             modifier = Modifier.size(24.dp),
-                            size = 24.dp,
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            isExpressive = true
+                            trackColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                            color = MaterialTheme.colorScheme.primaryContainer
                         )
                     } else {
                         Icon(
@@ -3451,29 +3434,41 @@ private fun ModernEmptyState(
     subtitle: String,
     iconSize: Dp = 64.dp // Increased icon size
 ) {
-    ExpressiveCard(
+    ExpressiveElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp) // Increased height for better visual presence
-            .padding(horizontal = 8.dp), // Added horizontal padding
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow // Subtle background
+            .height(220.dp) // Increased height for better visual presence
+            .padding(horizontal = 8.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
-        shape = ExpressiveShapes.ExtraLarge // Rounded corners for the card
+        shape = ExpressiveShapes.SquircleLarge // Squircle shape for modern look
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp), // Increased padding inside the card
+                .padding(28.dp), // Increased padding
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f), // Changed tint to primary with alpha
-                modifier = Modifier.size(iconSize)
-            )
+            // Icon with subtle background
+            Surface(
+                shape = ExpressiveShapes.SquircleMedium,
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                modifier = Modifier.size(iconSize + 24.dp)
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(iconSize)
+                    )
+                }
+            }
             
             Spacer(modifier = Modifier.height(16.dp)) // Increased spacing
             
