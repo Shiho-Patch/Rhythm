@@ -1068,3 +1068,129 @@ fun ExpressiveActionRow(
         content = content
     )
 }
+
+// ============================================================================
+// EXPRESSIVE BUTTON GROUP
+// ============================================================================
+
+/**
+ * Material 3 Expressive Button Group for connected button actions
+ * Perfect for Play/Shuffle, Sort/Filter, etc.
+ * 
+ * Creates visually grouped buttons with continuous background and minimal spacing
+ */
+@Composable
+fun ExpressiveButtonGroup(
+    modifier: Modifier = Modifier,
+    style: ButtonGroupStyle = ButtonGroupStyle.Tonal,
+    content: @Composable RowScope.() -> Unit
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        content = content
+    )
+}
+
+/**
+ * Button Group Style
+ */
+enum class ButtonGroupStyle {
+    Filled,
+    Tonal,
+    Outlined
+}
+
+/**
+ * Individual button within an ExpressiveButtonGroup
+ * Automatically handles start/end/middle positioning
+ */
+@Composable
+fun ExpressiveGroupButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    isStart: Boolean = false,
+    isEnd: Boolean = false,
+    content: @Composable RowScope.() -> Unit
+) {
+    val shape = when {
+        isStart && isEnd -> ExpressiveShapes.Full // Single button
+        isStart -> RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp, topEnd = 8.dp, bottomEnd = 8.dp)
+        isEnd -> RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp, topEnd = 20.dp, bottomEnd = 20.dp)
+        else -> RoundedCornerShape(8.dp) // Middle button
+    }
+    
+    ExpressiveFilledTonalButton(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        shape = shape,
+        colors = ButtonDefaults.filledTonalButtonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+        ),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        content = content
+    )
+}
+
+// ============================================================================
+// EXPRESSIVE SETTINGS GROUP
+// ============================================================================
+
+/**
+ * Material 3 Expressive Settings Group
+ * Replaces individual settings with dividers by using a unified card container
+ * with subtle spacing between items
+ */
+@Composable
+fun ExpressiveSettingsGroup(
+    modifier: Modifier = Modifier,
+    title: String? = null,
+    content: @Composable () -> Unit
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        title?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+            )
+        }
+        
+        ExpressiveCard(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
+            ),
+            shape = ExpressiveShapes.Large
+        ) {
+            Column(
+                modifier = Modifier.padding(vertical = 4.dp)
+            ) {
+                content()
+            }
+        }
+    }
+}
+
+/**
+ * Individual setting item within an ExpressiveSettingsGroup
+ * No dividers - spacing handled by padding
+ */
+@Composable
+fun ExpressiveSettingItem(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 8.dp)
+    ) {
+        content()
+    }
+}

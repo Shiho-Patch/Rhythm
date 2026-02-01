@@ -184,6 +184,9 @@ import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveLarg
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveCard
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveElevatedCard
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapes
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButtonGroup
+import chromahub.rhythm.app.shared.presentation.components.common.ButtonGroupStyle
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGroupButton
 import chromahub.rhythm.app.shared.presentation.components.common.ActionProgressLoader
 import chromahub.rhythm.app.shared.presentation.components.common.NetworkOperationLoader
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.ArtistBottomSheet
@@ -1819,23 +1822,18 @@ private fun ModernSectionTitle(
         ) {
             // Play/Shuffle Button Group with expressive design
             if (onPlayAll != null || onShufflePlay != null) {
-                // Using FilledTonalButton group for better visual hierarchy
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                // Using proper ExpressiveButtonGroup component
+                ExpressiveButtonGroup(
+                    style = ButtonGroupStyle.Tonal
                 ) {
                     onPlayAll?.let { playAction ->
-                        ExpressiveFilledTonalButton(
+                        ExpressiveGroupButton(
                             onClick = {
                                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
                                 playAction()
                             },
-                            shape = if (onShufflePlay != null) 
-                                RoundedCornerShape(topStart = 24.dp, bottomStart = 24.dp, topEnd = 4.dp, bottomEnd = 4.dp)
-                            else ExpressiveShapes.Full,
-                            colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
+                            isStart = true,
+                            isEnd = onShufflePlay == null
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.PlayArrow,
@@ -1852,21 +1850,13 @@ private fun ModernSectionTitle(
                     }
                     
                     onShufflePlay?.let { shuffleAction ->
-                        ExpressiveFilledTonalButton(
+                        ExpressiveGroupButton(
                             onClick = {
                                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
                                 shuffleAction()
                             },
-                            shape = if (onPlayAll != null)
-                                RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp, topEnd = 24.dp, bottomEnd = 24.dp)
-                            else ExpressiveShapes.Full,
-                            colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            ),
-                            contentPadding = if (onPlayAll != null) 
-                                PaddingValues(horizontal = 16.dp, vertical = 12.dp)
-                            else PaddingValues(horizontal = 20.dp, vertical = 12.dp)
+                            isStart = onPlayAll == null,
+                            isEnd = true
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Shuffle,
