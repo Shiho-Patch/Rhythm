@@ -51,11 +51,17 @@ import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.rememberTopAppBarState
+import androidx.compose.material3.HorizontalFloatingToolbar
+import androidx.compose.material3.FloatingToolbarDefaults
+import androidx.compose.material3.FloatingToolbarDefaults.ScreenOffset
+import androidx.compose.material3.FloatingToolbarExitDirection.Companion.Bottom
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -198,6 +204,9 @@ fun PlaylistDetailScreen(
     val appSettings = remember { chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context) }
     val playlistClickBehavior by appSettings.playlistClickBehavior.collectAsState(initial = "ask")
     val useHoursFormat by appSettings.useHoursInTimeFormat.collectAsState()
+    
+    // Floating toolbar scroll behavior
+    val exitAlwaysScrollBehavior = FloatingToolbarDefaults.exitAlwaysScrollBehavior(exitDirection = Bottom)
 
     // Queue Options Dialog - matches app-wide dialog design
     if (showQueueOptionsDialog && selectedSongForQueue != null) {
@@ -723,7 +732,7 @@ fun PlaylistDetailScreen(
                     }
                     
                     // Select songs option (multi-select mode)
-                    if (!isDefault && playlist.songs.isNotEmpty()) {
+                    if (playlist.songs.isNotEmpty()) {
                         Surface(
                             color = MaterialTheme.colorScheme.surface,
                             shape = RoundedCornerShape(16.dp),
@@ -1050,7 +1059,8 @@ fun PlaylistDetailScreen(
     ) { modifier ->
         if (isTablet && !isCompactHeight) {
             // Tablet split-view layout: Left side (art + controls), Right side (song list)
-            Row(modifier = modifier.fillMaxSize()) {
+            Box(modifier = modifier.fillMaxSize()) {
+            Row(modifier = Modifier.fillMaxSize()) {
                 // Left Column: Playlist Art and Controls
                 Column(
                     modifier = Modifier
@@ -1265,15 +1275,36 @@ fun PlaylistDetailScreen(
 
                     LazyColumn(
                         state = listState,
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .nestedScroll(exitAlwaysScrollBehavior),
                         contentPadding = PaddingValues(
                             top = 8.dp,
                             bottom = 20.dp
                         )
                     ) {
                         // Search field for tablet
-                        if (showSearchBar) {
-                            item {
+                        item {
+                            Column {
+                            AnimatedVisibility(
+                                visible = showSearchBar,
+                                enter = expandVertically(
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessMedium
+                                    )
+                                ) + fadeIn(
+                                    animationSpec = tween(durationMillis = 300)
+                                ),
+                                exit = shrinkVertically(
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessMedium
+                                    )
+                                ) + fadeOut(
+                                    animationSpec = tween(durationMillis = 200)
+                                )
+                            ) {
                                 OutlinedTextField(
                                     value = searchQuery,
                                     onValueChange = { searchQuery = it },
@@ -1298,33 +1329,34 @@ fun PlaylistDetailScreen(
                                     }
                                 )
                             }
+                            }
                         }
 
-                        // Section header
+                        // Song count and total time header
                         if (filteredSongs.isNotEmpty()) {
                             item {
-                                Surface(
+                                val totalDurationMs = filteredSongs.sumOf { it.duration.toLong() }
+                                val durationSeconds = totalDurationMs / 1000
+                                val hours = (durationSeconds / 3600).toInt()
+                                val minutes = ((durationSeconds % 3600) / 60).toInt()
+                                val timeText = when {
+                                    hours > 0 && minutes > 0 -> "$hours hr $minutes mins"
+                                    hours > 0 -> "$hours hr"
+                                    else -> "$minutes mins"
+                                }
+                                Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(vertical = 12.dp),
-                                    color = Color.Transparent
+                                    horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Text(
-                                            text = context.getString(R.string.common_songs),
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        Text(
-                                            text = "${filteredSongs.size}",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-                                        )
-                                    }
+                                    Text(
+                                        text = if (filteredSongs.size == 1) "1 song • $timeText" else "${filteredSongs.size} songs • $timeText",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
                                 }
                             }
                         }
@@ -1332,11 +1364,18 @@ fun PlaylistDetailScreen(
                         // Empty state
                         if (filteredSongs.isEmpty()) {
                             item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .fillParentMaxHeight(),
+                                    contentAlignment = Alignment.Center
+                                ) {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(32.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
                                 ) {
                                     Surface(
                                         modifier = Modifier.size(80.dp),
@@ -1361,6 +1400,7 @@ fun PlaylistDetailScreen(
                                         style = MaterialTheme.typography.headlineSmall,
                                         fontWeight = FontWeight.Bold
                                     )
+                                }
                                 }
                             }
                         } else {
@@ -1424,6 +1464,256 @@ fun PlaylistDetailScreen(
                     }
                 }
             }
+            
+            // New Floating Toolbar with hide on scroll
+            if (playlist.songs.isNotEmpty()) {
+                val isDefault = playlist.id == "1" || playlist.id == "2" || playlist.id == "3"
+                HorizontalFloatingToolbar(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = (LocalMiniPlayerPadding.current.calculateBottomPadding() + 20.dp).coerceAtLeast(80.dp))
+                        .offset(y = -ScreenOffset),
+                    expanded = true,
+                    content = {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Left side buttons group
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                // Add Songs button
+                                var addPressed by remember { mutableStateOf(false) }
+                                val addScale by animateFloatAsState(
+                                    targetValue = if (addPressed) 0.92f else 1f,
+                                    animationSpec = spring(dampingRatio = Spring.DampingRatioHighBouncy),
+                                    label = "addScale"
+                                )
+                                LaunchedEffect(addPressed) {
+                                    if (addPressed) {
+                                        delay(120)
+                                        addPressed = false
+                                    }
+                                }
+                                FilledIconButton(
+                                    onClick = {
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                        onAddSongsToPlaylist()
+                                        addPressed = true
+                                    },
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .graphicsLayer {
+                                            scaleX = addScale
+                                            scaleY = addScale
+                                        },
+                                    colors = IconButtonDefaults.filledIconButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                ) {
+                                    Icon(
+                                        imageVector = RhythmIcons.Add,
+                                        contentDescription = "Add songs",
+                                        modifier = Modifier.size(26.dp)
+                                    )
+                                }
+                                
+                                // Delete/Select Songs button
+                                var deletePressed by remember { mutableStateOf(false) }
+                                val deleteScale by animateFloatAsState(
+                                        targetValue = if (deletePressed) 0.92f else 1f,
+                                        animationSpec = spring(dampingRatio = Spring.DampingRatioHighBouncy),
+                                        label = "deleteScale"
+                                    )
+                                    LaunchedEffect(deletePressed) {
+                                        if (deletePressed) {
+                                            delay(120)
+                                            deletePressed = false
+                                        }
+                                    }
+                                    FilledIconButton(
+                                        onClick = {
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                            isMultiSelectMode = !isMultiSelectMode
+                                            if (isMultiSelectMode) {
+                                                isReorderMode = false
+                                            } else {
+                                                selectedSongs = emptySet()
+                                            }
+                                            deletePressed = true
+                                        },
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .graphicsLayer {
+                                                scaleX = deleteScale
+                                                scaleY = deleteScale
+                                            },
+                                        colors = IconButtonDefaults.filledIconButtonColors(
+                                            containerColor = if (isMultiSelectMode) 
+                                                MaterialTheme.colorScheme.errorContainer
+                                            else 
+                                                MaterialTheme.colorScheme.secondaryContainer,
+                                            contentColor = if (isMultiSelectMode) 
+                                                MaterialTheme.colorScheme.onErrorContainer
+                                            else 
+                                                MaterialTheme.colorScheme.onSecondaryContainer
+                                        )
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isMultiSelectMode) Icons.Default.Close else Icons.Default.CheckBox,
+                                            contentDescription = if (isMultiSelectMode) "Cancel selection" else "Select songs",
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
+                            }
+                            
+                            // Center Play All button (pill-shaped)
+                            var playPressed by remember { mutableStateOf(false) }
+                            val playScale by animateFloatAsState(
+                                targetValue = if (playPressed) 0.92f else 1f,
+                                animationSpec = spring(dampingRatio = Spring.DampingRatioHighBouncy),
+                                label = "playScale"
+                            )
+                            LaunchedEffect(playPressed) {
+                                if (playPressed) {
+                                    delay(120)
+                                    playPressed = false
+                                }
+                            }
+                            Button(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    onPlayAll()
+                                    playPressed = true
+                                },
+                                modifier = Modifier
+                                    .weight(1.5f)
+                                    .height(56.dp)
+                                    .graphicsLayer {
+                                        scaleX = playScale
+                                        scaleY = playScale
+                                    },
+                                shape = RoundedCornerShape(28.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                ),
+                                contentPadding = PaddingValues(horizontal = 20.dp)
+                            ) {
+                                Icon(
+                                    imageVector = RhythmIcons.Play,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Play All",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            
+                            // Right side buttons group
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                // Shuffle button
+                                var shufflePressed by remember { mutableStateOf(false) }
+                                val shuffleScale by animateFloatAsState(
+                                    targetValue = if (shufflePressed) 0.92f else 1f,
+                                    animationSpec = spring(dampingRatio = Spring.DampingRatioHighBouncy),
+                                    label = "shuffleScale"
+                                )
+                                LaunchedEffect(shufflePressed) {
+                                    if (shufflePressed) {
+                                        delay(120)
+                                        shufflePressed = false
+                                    }
+                                }
+                                FilledIconButton(
+                                    onClick = {
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        onShufflePlay()
+                                        shufflePressed = true
+                                    },
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .graphicsLayer {
+                                            scaleX = shuffleScale
+                                            scaleY = shuffleScale
+                                        },
+                                    colors = IconButtonDefaults.filledIconButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
+                                ) {
+                                    Icon(
+                                        imageVector = RhythmIcons.Shuffle,
+                                        contentDescription = "Shuffle",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                                
+                                // Search button
+                                var searchPressed by remember { mutableStateOf(false) }
+                                val searchScale by animateFloatAsState(
+                                    targetValue = if (searchPressed) 0.92f else 1f,
+                                    animationSpec = spring(dampingRatio = Spring.DampingRatioHighBouncy),
+                                    label = "searchScale"
+                                )
+                                LaunchedEffect(searchPressed) {
+                                    if (searchPressed) {
+                                        delay(120)
+                                        searchPressed = false
+                                    }
+                                }
+                                FilledIconButton(
+                                    onClick = {
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        showSearchBar = !showSearchBar
+                                        if (!showSearchBar) {
+                                            searchQuery = ""
+                                        }
+                                        searchPressed = true
+                                    },
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .graphicsLayer {
+                                            scaleX = searchScale
+                                            scaleY = searchScale
+                                        },
+                                    colors = IconButtonDefaults.filledIconButtonColors(
+                                        containerColor = if (showSearchBar) 
+                                            MaterialTheme.colorScheme.primaryContainer
+                                        else 
+                                            MaterialTheme.colorScheme.tertiaryContainer,
+                                        contentColor = if (showSearchBar) 
+                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                        else 
+                                            MaterialTheme.colorScheme.onTertiaryContainer
+                                    )
+                                ) {
+                                    Icon(
+                                        imageVector = if (showSearchBar) RhythmIcons.Close else RhythmIcons.Search,
+                                        contentDescription = if (showSearchBar) "Close search" else "Search",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    scrollBehavior = exitAlwaysScrollBehavior
+                )
+            }
+            }
         } else {
             // Phone/Compact layout: Original vertical layout
             Box(modifier = modifier.fillMaxSize()) {
@@ -1443,7 +1733,7 @@ fun PlaylistDetailScreen(
 
             LaunchedEffect(showSearchBar) {
                 if (showSearchBar) {
-                    listState.animateScrollToItem(1) // Scroll to the top to show the search bar
+                    listState.animateScrollToItem(0) // Scroll to the top to show the search bar
                 }
             }
 
@@ -1451,198 +1741,35 @@ fun PlaylistDetailScreen(
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 16.dp)
+                    .nestedScroll(exitAlwaysScrollBehavior),
                 contentPadding = PaddingValues(
                     bottom = (LocalMiniPlayerPadding.current.calculateBottomPadding() + 20.dp).coerceAtLeast(120.dp)
                 )
             ) {
-            item { // Wrap playlist header in an item
-                // Enhanced Playlist header with better visual hierarchy
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    val context = LocalContext.current
+            // Removed playlist artwork and action buttons - now in floating toolbar
 
-                        // Enhanced Playlist artwork without shadows as requested - responsive sizing
-                        val playlistArtSize = when {
-                            isExtraSmallWidth -> 120.dp
-                            isCompactWidth -> 140.dp
-                            isMidWidth -> 150.dp
-                            else -> 160.dp
-                        }
-                        val artworkCornerRadius = when {
-                            isExtraSmallWidth -> 28.dp
-                            isCompactWidth -> 30.dp
-                            else -> 34.dp
-                        }
-                        
-                        Surface(
-                            modifier = Modifier.size(playlistArtSize),
-                            shape = RoundedCornerShape(artworkCornerRadius),
-                            tonalElevation = 8.dp, 
-                            shadowElevation = 0.dp
-                        ) {
-                            Box(
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (playlist.artworkUri != null) {
-                                    AsyncImage(
-                                        model = ImageRequest.Builder(context)
-                                            .apply(ImageUtils.buildImageRequest(
-                                                playlist.artworkUri,
-                                                playlist.name,
-                                                context.cacheDir,
-                                                M3PlaceholderType.PLAYLIST
-                                            ))
-                                            .build(),
-                                        contentDescription = null,
-                                        contentScale = ContentScale.Crop,
-                                        modifier = Modifier.fillMaxSize()
-                                    )
-                                } else {
-                                    val iconSize = when {
-                                        isExtraSmallWidth -> 60.dp
-                                        isCompactWidth -> 70.dp
-                                        isMidWidth -> 75.dp
-                                        else -> 84.dp
-                                    }
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(
-                                                MaterialTheme.colorScheme.primaryContainer,
-                                                RoundedCornerShape(artworkCornerRadius)
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = RhythmIcons.PlaylistFilled,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                            modifier = Modifier.size(iconSize)
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        // Playlist info section
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            // Song count with improved typography
-                            // Text(
-                            //     text = if (playlist.songs.size == 1) "1 song" else "${playlist.songs.size} songs",
-                            //     style = MaterialTheme.typography.titleMedium,
-                            //     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                            // )
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            // Redesigned action buttons with modern UI
-                            if (playlist.songs.isNotEmpty()) {
-                                // Main action row with improved spacing
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp)
-                                ) {
-                                    // Play All button - primary action, more prominent
-                                    Button(
-                                        onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                            onPlayAll()
-                                        },
-                                        shape = RoundedCornerShape(24.dp),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = MaterialTheme.colorScheme.primary,
-                                            contentColor = MaterialTheme.colorScheme.onPrimary
-                                        ),
-                                        contentPadding = PaddingValues(
-                                            horizontal = when {
-                                                isExtraSmallWidth -> 14.dp
-                                                isCompactWidth -> 18.dp
-                                                else -> 22.dp
-                                            },
-                                            vertical = 14.dp
-                                        ),
-                                        modifier = Modifier
-                                            .weight(0.7f)
-                                            .height(when {
-                                                isExtraSmallWidth -> 44.dp
-                                                isCompactWidth -> 48.dp
-                                                else -> 52.dp
-                                            })
-                                    ) {
-                                        Icon(
-                                            imageVector = RhythmIcons.Play,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(when {
-                                                isExtraSmallWidth -> 18.dp
-                                                isCompactWidth -> 20.dp
-                                                else -> 22.dp
-                                            })
-                                        )
-                                        Spacer(modifier = Modifier.width(when {
-                                            isExtraSmallWidth -> 4.dp
-                                            else -> 6.dp
-                                        }))
-                                        Text(
-                                            text = when {
-                                                isExtraSmallWidth -> "Play"
-                                                else -> "Play All"
-                                            },
-                                            style = when {
-                                                isExtraSmallWidth -> MaterialTheme.typography.labelLarge
-                                                else -> MaterialTheme.typography.titleSmall
-                                            },
-                                            fontWeight = FontWeight.SemiBold
-                                        )
-                                    }
-
-                                    // Shuffle button - secondary action with improved styling
-                                    FilledTonalButton(
-                                        onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                            onShufflePlay()
-                                        },
-                                        shape = RoundedCornerShape(24.dp),
-                                        colors = ButtonDefaults.filledTonalButtonColors(
-                                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                        ),
-                                        contentPadding = PaddingValues(12.dp),
-                                        modifier = Modifier.size(when {
-                                            isExtraSmallWidth -> 44.dp
-                                            isCompactWidth -> 48.dp
-                                            else -> 52.dp
-                                        })
-                                    ) {
-                                        Icon(
-                                            imageVector = RhythmIcons.Shuffle,
-                                            contentDescription = "Shuffle play",
-                                            modifier = Modifier.size(when {
-                                                isExtraSmallWidth -> 20.dp
-                                                isCompactWidth -> 22.dp
-                                                else -> 24.dp
-                                            })
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (showSearchBar) {
-                    item {
+                item {
+                    Column {
+                    AnimatedVisibility(
+                        visible = showSearchBar,
+                        enter = expandVertically(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            )
+                        ) + fadeIn(
+                            animationSpec = tween(durationMillis = 300)
+                        ),
+                        exit = shrinkVertically(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            )
+                        ) + fadeOut(
+                            animationSpec = tween(durationMillis = 200)
+                        )
+                    ) {
                         OutlinedTextField(
                             value = searchQuery,
                             onValueChange = { searchQuery = it },
@@ -1651,7 +1778,7 @@ fun PlaylistDetailScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 8.dp),
-                            shape = RoundedCornerShape(24.dp), // Added rounded corners
+                            shape = RoundedCornerShape(24.dp),
                             trailingIcon = {
                                 if (searchQuery.isNotEmpty()) {
                                     IconButton(onClick = {
@@ -1667,37 +1794,34 @@ fun PlaylistDetailScreen(
                             }
                         )
                     }
+                    }
                 }
 
-                // Section header for songs list
+                // Song count and total time header
                 if (filteredSongs.isNotEmpty()) {
                     item {
-                        Surface(
+                        val totalDurationMs = filteredSongs.sumOf { it.duration.toLong() }
+                        val durationSeconds = totalDurationMs / 1000
+                        val hours = (durationSeconds / 3600).toInt()
+                        val minutes = ((durationSeconds % 3600) / 60).toInt()
+                        val timeText = when {
+                            hours > 0 && minutes > 0 -> "$hours hr $minutes mins"
+                            hours > 0 -> "$hours hr"
+                            else -> "$minutes mins"
+                        }
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 16.dp),
-                            color = Color.Transparent
+                                .padding(vertical = 16.dp, horizontal = 4.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = context.getString(R.string.common_songs),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onBackground
-                                )
-
-                                Text(
-                                    text = "${filteredSongs.size}",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-                                )
-                            }
+                            Text(
+                                text = if (filteredSongs.size == 1) "1 song • $timeText" else "${filteredSongs.size} songs • $timeText",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
                         }
                     }
                 }
@@ -1705,11 +1829,18 @@ fun PlaylistDetailScreen(
                 // Songs list
                 if (filteredSongs.isEmpty()) {
                     item { // Enhanced empty state with better visual design
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillParentMaxHeight(),
+                            contentAlignment = Alignment.Center
+                        ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(32.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
                         ) {
                             // Empty state icon
                             Surface(
@@ -1771,6 +1902,7 @@ fun PlaylistDetailScreen(
                                     style = MaterialTheme.typography.titleMedium
                                 )
                             }
+                        }
                         }
                     }
                 } else {
@@ -1990,179 +2122,259 @@ fun PlaylistDetailScreen(
                 }
             }
             
-            // Bottom Floating Action Bar with Material 3 expressive design - only show when playlist has songs
+            // Floating Toolbar with hide on scroll
             if (playlist.songs.isNotEmpty()) {
-            val context = LocalContext.current
-            val haptics = LocalHapticFeedback.current
-            
-            // Animate bar entrance
-            val barAlpha by animateFloatAsState(
-                targetValue = 1f,
-                animationSpec = tween(durationMillis = 400, delayMillis = 200),
-                label = "barAlpha"
-            )
-            
-            val barOffset by animateDpAsState(
-                targetValue = 0.dp,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
-                ),
-                label = "barOffset"
-            )
-            
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(horizontal = when {
-                        isExtraSmallWidth -> 12.dp
-                        isCompactWidth -> 16.dp
-                        else -> 24.dp
-                    })
-                    .padding(bottom = if (LocalMiniPlayerPadding.current.calculateBottomPadding() > 0.dp) 40.dp else 44.dp)
-                    .offset(y = barOffset)
-                    .graphicsLayer { alpha = barAlpha },
-                shape = RoundedCornerShape(32.dp),
-                color = MaterialTheme.colorScheme.surfaceContainer,
-                tonalElevation = 8.dp,
-                shadowElevation = 0.dp,
-//                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
-            ) {
-                Row(
+                val isDefault = playlist.id == "1" || playlist.id == "2" || playlist.id == "3"
+                HorizontalFloatingToolbar(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Search button
-                    var searchPressed by remember { mutableStateOf(false) }
-                    val searchScale by animateFloatAsState(
-                        targetValue = if (searchPressed) 0.92f else 1f,
-                        animationSpec = spring(dampingRatio = Spring.DampingRatioHighBouncy),
-                        label = "searchScale"
-                    )
-                    
-                    LaunchedEffect(searchPressed) {
-                        if (searchPressed) {
-                            delay(120)
-                            searchPressed = false
-                        }
-                    }
-                    
-                    val buttonHeight = when {
-                        isExtraSmallWidth -> 48.dp
-                        isCompactWidth -> 52.dp
-                        else -> 56.dp
-                    }
-                    val buttonIconSize = when {
-                        isExtraSmallWidth -> 20.dp
-                        isCompactWidth -> 22.dp
-                        else -> 24.dp
-                    }
-                    val buttonTextStyle = when {
-                        isExtraSmallWidth -> MaterialTheme.typography.labelSmall
-                        isCompactWidth -> MaterialTheme.typography.labelMedium
-                        else -> MaterialTheme.typography.labelLarge
-                    }
-                    
-                    FilledTonalButton(
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                            showSearchBar = !showSearchBar
-                            if (!showSearchBar) {
-                                searchQuery = ""
+                        .align(Alignment.BottomCenter)
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = (LocalMiniPlayerPadding.current.calculateBottomPadding() + 20.dp).coerceAtLeast(80.dp))
+                        .offset(y = -ScreenOffset),
+                    expanded = true,
+                    content = {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Left side buttons group
+                            Surface(
+                                shape = RoundedCornerShape(100.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(4.dp)
+                                ) {
+                                    // Add Songs button
+                                    var addPressed by remember { mutableStateOf(false) }
+                                    val addScale by animateFloatAsState(
+                                        targetValue = if (addPressed) 0.90f else 1f,
+                                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                                        label = "addScale"
+                                    )
+                                    LaunchedEffect(addPressed) {
+                                        if (addPressed) {
+                                            delay(100)
+                                            addPressed = false
+                                        }
+                                    }
+                                    IconButton(
+                                        onClick = {
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                            onAddSongsToPlaylist()
+                                            addPressed = true
+                                        },
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .aspectRatio(1f)
+                                            .graphicsLayer {
+                                                scaleX = addScale
+                                                scaleY = addScale
+                                            }
+                                    ) {
+                                        Icon(
+                                            imageVector = RhythmIcons.Add,
+                                            contentDescription = "Add songs",
+                                            modifier = Modifier.size(24.dp),
+                                            tint = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                    
+                                    // Delete/Select Songs button
+                                    var deletePressed by remember { mutableStateOf(false) }
+                                    val deleteScale by animateFloatAsState(
+                                            targetValue = if (deletePressed) 0.90f else 1f,
+                                            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                                            label = "deleteScale"
+                                        )
+                                        LaunchedEffect(deletePressed) {
+                                            if (deletePressed) {
+                                                delay(100)
+                                                deletePressed = false
+                                            }
+                                        }
+                                        IconButton(
+                                            onClick = {
+                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                                isMultiSelectMode = !isMultiSelectMode
+                                                if (isMultiSelectMode) {
+                                                    isReorderMode = false
+                                                } else {
+                                                    selectedSongs = emptySet()
+                                                }
+                                                deletePressed = true
+                                            },
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .aspectRatio(1f)
+                                                .graphicsLayer {
+                                                    scaleX = deleteScale
+                                                    scaleY = deleteScale
+                                                }
+                                        ) {
+                                            Icon(
+                                                imageVector = if (isMultiSelectMode) Icons.Default.Close else Icons.Default.CheckBox,
+                                                contentDescription = if (isMultiSelectMode) "Cancel selection" else "Select songs",
+                                                modifier = Modifier.size(22.dp),
+                                                tint = if (isMultiSelectMode) 
+                                                    MaterialTheme.colorScheme.error
+                                                else 
+                                                    MaterialTheme.colorScheme.onSurface
+                                            )
+                                        }
+                                }
                             }
-                            searchPressed = true
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(buttonHeight)
-                            .graphicsLayer {
-                                scaleX = searchScale
-                                scaleY = searchScale
-                            },
-                        shape = RoundedCornerShape(24.dp),
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = if (showSearchBar) 
-                                MaterialTheme.colorScheme.primaryContainer
-                            else 
-                                MaterialTheme.colorScheme.surfaceContainerLowest,
-                            contentColor = if (showSearchBar) 
-                                MaterialTheme.colorScheme.onPrimaryContainer 
-                            else 
-                                MaterialTheme.colorScheme.onSurface
-                        ),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                    ) {
-                        Icon(
-                            imageVector = RhythmIcons.Search,
-                            contentDescription = "Toggle search",
-                            modifier = Modifier.size(buttonIconSize)
-                        )
-                        if (!isExtraSmallWidth) {
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = if (showSearchBar) "Searching" else "Search",
-                                style = buttonTextStyle,
-                                fontWeight = FontWeight.Medium
+                            
+                            // Center Play All button (pill-shaped)
+                            var playPressed by remember { mutableStateOf(false) }
+                            val playScale by animateFloatAsState(
+                                targetValue = if (playPressed) 0.95f else 1f,
+                                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                                label = "playScale"
                             )
+                            LaunchedEffect(playPressed) {
+                                if (playPressed) {
+                                    delay(100)
+                                    playPressed = false
+                                }
+                            }
+                            Button(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    onPlayAll()
+                                    playPressed = true
+                                },
+                                modifier = Modifier
+                                    .weight(1.6f)
+                                    .height(52.dp)
+                                    .graphicsLayer {
+                                        scaleX = playScale
+                                        scaleY = playScale
+                                    },
+                                shape = RoundedCornerShape(100.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                ),
+                                elevation = ButtonDefaults.buttonElevation(
+                                    defaultElevation = 2.dp,
+                                    pressedElevation = 4.dp
+                                ),
+                                contentPadding = PaddingValues(horizontal = 24.dp)
+                            ) {
+                                Icon(
+                                    imageVector = RhythmIcons.Play,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Play All",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            
+                            // Right side buttons group
+                            Surface(
+                                shape = RoundedCornerShape(100.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(4.dp)
+                                ) {
+                                    // Shuffle button
+                                    var shufflePressed by remember { mutableStateOf(false) }
+                                    val shuffleScale by animateFloatAsState(
+                                        targetValue = if (shufflePressed) 0.90f else 1f,
+                                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                                        label = "shuffleScale"
+                                    )
+                                    LaunchedEffect(shufflePressed) {
+                                        if (shufflePressed) {
+                                            delay(100)
+                                            shufflePressed = false
+                                        }
+                                    }
+                                    IconButton(
+                                        onClick = {
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            onShufflePlay()
+                                            shufflePressed = true
+                                        },
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .aspectRatio(1f)
+                                            .graphicsLayer {
+                                                scaleX = shuffleScale
+                                                scaleY = shuffleScale
+                                            }
+                                    ) {
+                                        Icon(
+                                            imageVector = RhythmIcons.Shuffle,
+                                            contentDescription = "Shuffle",
+                                            modifier = Modifier.size(22.dp),
+                                            tint = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                    
+                                    // Search button
+                                    var searchPressed by remember { mutableStateOf(false) }
+                                    val searchScale by animateFloatAsState(
+                                        targetValue = if (searchPressed) 0.90f else 1f,
+                                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                                        label = "searchScale"
+                                    )
+                                    LaunchedEffect(searchPressed) {
+                                        if (searchPressed) {
+                                            delay(100)
+                                            searchPressed = false
+                                        }
+                                    }
+                                    IconButton(
+                                        onClick = {
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            showSearchBar = !showSearchBar
+                                            if (!showSearchBar) {
+                                                searchQuery = ""
+                                            }
+                                            searchPressed = true
+                                        },
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .aspectRatio(1f)
+                                            .graphicsLayer {
+                                                scaleX = searchScale
+                                                scaleY = searchScale
+                                            }
+                                    ) {
+                                        Icon(
+                                            imageVector = if (showSearchBar) RhythmIcons.Close else RhythmIcons.Search,
+                                            contentDescription = if (showSearchBar) "Close search" else "Search",
+                                            modifier = Modifier.size(22.dp),
+                                            tint = if (showSearchBar) 
+                                                MaterialTheme.colorScheme.primary
+                                            else 
+                                                MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                            }
                         }
-                    }
-
-                    // Add songs button
-                    var addPressed by remember { mutableStateOf(false) }
-                    val addScale by animateFloatAsState(
-                        targetValue = if (addPressed) 0.92f else 1f,
-                        animationSpec = spring(dampingRatio = Spring.DampingRatioHighBouncy),
-                        label = "addScale"
-                    )
-                    
-                    LaunchedEffect(addPressed) {
-                        if (addPressed) {
-                            delay(120)
-                            addPressed = false
-                        }
-                    }
-                    
-                    Button(
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                            onAddSongsToPlaylist()
-                            addPressed = true
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(buttonHeight)
-                            .graphicsLayer {
-                                scaleX = addScale
-                                scaleY = addScale
-                            },
-                        shape = RoundedCornerShape(24.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        ),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                    ) {
-                        Icon(
-                            imageVector = RhythmIcons.Add,
-                            contentDescription = "Add songs to playlist",
-                            modifier = Modifier.size(buttonIconSize)
-                        )
-                        if (!isExtraSmallWidth) {
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "Add Songs",
-                                style = buttonTextStyle,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                    }
-                }
+                    },
+                    scrollBehavior = exitAlwaysScrollBehavior
+                )
             }
             }
-        }
         }
     }
 }
@@ -2298,19 +2510,46 @@ fun PlaylistSongItem(
         targetValue = if (isSelected) MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f) 
                       else if (isCurrentSong) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f) 
                       else MaterialTheme.colorScheme.surface,
-        animationSpec = tween(200),
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
         label = "selectionContainerColor"
+    )
+    
+    // Add scale animation for reorder and select modes
+    val itemScale by animateFloatAsState(
+        targetValue = if (isReorderMode || isMultiSelectMode) 0.98f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "itemScale"
+    )
+    
+    // Add elevation animation
+    val itemElevation by animateDpAsState(
+        targetValue = if (isReorderMode) 4.dp else 2.dp,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "itemElevation"
     )
     
     Surface(
         onClick = onClick,
         color = selectionContainerColor,
         shape = RoundedCornerShape(16.dp),
-        tonalElevation = 2.dp,
-        shadowElevation = 0.dp, // Remove shadow as requested
+        tonalElevation = itemElevation,
+        shadowElevation = 0.dp,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 4.dp)
+            .graphicsLayer {
+                scaleX = itemScale
+                scaleY = itemScale
+            }
     ) {
         Row(
             modifier = Modifier
@@ -2319,10 +2558,24 @@ fun PlaylistSongItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Checkbox for multi-select mode
-            if (isMultiSelectMode) {
+            AnimatedVisibility(
+                visible = isMultiSelectMode,
+                enter = expandHorizontally(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                ) + fadeIn(),
+                exit = shrinkHorizontally(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                ) + fadeOut()
+            ) {
                 Checkbox(
                     checked = isSelected,
-                    onCheckedChange = null, // Handled by Surface onClick
+                    onCheckedChange = null,
                     modifier = Modifier.padding(end = 8.dp)
                 )
             }
