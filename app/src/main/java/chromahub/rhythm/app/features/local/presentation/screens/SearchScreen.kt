@@ -1654,11 +1654,7 @@ fun SearchSongItem(
             M3ImageUtils.TrackImage(
                 imageUrl = song.artworkUri,
                 trackName = song.title,
-                modifier = Modifier.size(48.dp),
-                shape = rememberExpressiveShapeFor(
-                    ExpressiveShapeTarget.ALBUM_ART,
-                    fallbackShape = RoundedCornerShape(12.dp)
-                )
+                modifier = Modifier.size(48.dp)
             )
             
             // Song info with reduced spacing and font sizes
@@ -1738,11 +1734,7 @@ fun SearchAlbumItem(
                 albumName = album.title,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(1f),
-                shape = rememberExpressiveShapeFor(
-                    ExpressiveShapeTarget.ALBUM_ART,
-                    fallbackShape = RoundedCornerShape(20.dp)
-                )
+                    .aspectRatio(1f)
             )
             
             Spacer(modifier = Modifier.height(8.dp))
@@ -1881,11 +1873,7 @@ fun SearchPlaylistItem(
                 M3ImageUtils.PlaylistImage(
                     imageUrl = playlist.artworkUri,
                     playlistName = playlist.name,
-                    modifier = Modifier.size(68.dp),
-                    shape = rememberExpressiveShapeFor(
-                        ExpressiveShapeTarget.ALBUM_ART,
-                        fallbackShape = RoundedCornerShape(25.dp)
-                    )
+                    modifier = Modifier.size(68.dp)
                 )
             } else {
                 // Placeholder when no artwork

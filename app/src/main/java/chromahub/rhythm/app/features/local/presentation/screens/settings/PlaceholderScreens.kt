@@ -9810,7 +9810,7 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                 items = listOf(
                     SettingItem(
                         Icons.Default.Interests,
-                        "Expressive Shapes",
+                        "Shapes",
                         "Customize Material 3 expressive shapes for artwork and player elements",
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
@@ -14550,7 +14550,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
     }
     
     CollapsibleHeaderScreen(
-        title = "Expressive Shapes",
+        title = "Shapes",
         showBackButton = true,
         onBackClick = onBackClick
     ) { modifier ->

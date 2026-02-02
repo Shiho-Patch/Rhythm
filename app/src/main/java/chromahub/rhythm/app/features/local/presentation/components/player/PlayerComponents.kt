@@ -601,7 +601,8 @@ fun MiniPlayer(
                                             M3ImageUtils.TrackImage(
                                                 imageUrl = song.artworkUri,
                                                 trackName = song.title,
-                                                modifier = Modifier.fillMaxSize()
+                                                modifier = Modifier.fillMaxSize(),
+                                                applyExpressiveShape = false
                                             )
                                         } else {
                                             Box(
@@ -1002,6 +1003,11 @@ fun MiniPlayer(
                 }
                 
                 // Enhanced controls with better visual hierarchy and spacing
+                // Get miniplayer play button shape from expressive settings
+                val miniPlayButtonShape = rememberExpressiveShapeFor(
+                    ExpressiveShapeTarget.PLAYER_CONTROLS,
+                    fallbackShape = CircleShape
+                )
                 Row(
                     horizontalArrangement = spacedBy(if (isCompactHeight) 4.dp else 10.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -1041,7 +1047,7 @@ fun MiniPlayer(
                                         scaleX = phonePlayScale
                                         scaleY = phonePlayScale
                                     },
-                                shape = ExpressiveShapes.Full, // Always use expressive pill shape
+                                shape = miniPlayButtonShape,
                                 colors = IconButtonDefaults.filledIconButtonColors(
                                     containerColor = MaterialTheme.colorScheme.primary,
                                     contentColor = MaterialTheme.colorScheme.onPrimary
@@ -1079,7 +1085,7 @@ fun MiniPlayer(
                                     scaleX = stdPlayScale
                                     scaleY = stdPlayScale
                                 },
-                            shape = ExpressiveShapes.Full, // Expressive pill shape
+                            shape = miniPlayButtonShape,
                             colors = IconButtonDefaults.filledIconButtonColors(
                                 containerColor = MaterialTheme.colorScheme.primary,
                                 contentColor = MaterialTheme.colorScheme.onPrimary

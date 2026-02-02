@@ -4667,19 +4667,23 @@ fun PlaylistArtCollage(
             M3ImageUtils.AlbumArt(
                 imageUrl = songs[0].artworkUri,
                 albumName = songs[0].album,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                shape = RoundedCornerShape(0.dp),
+                applyExpressiveShape = false
             )
         }
         2 -> {
             // Two album arts side by side
-            Row(modifier = Modifier.fillMaxSize()) {
+            Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(0.dp)) {
                 Box(modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()) {
                     M3ImageUtils.AlbumArt(
                         imageUrl = songs[0].artworkUri,
                         albumName = songs[0].album,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        shape = RoundedCornerShape(0.dp),
+                        applyExpressiveShape = false
                     )
                 }
                 Box(modifier = Modifier
@@ -4688,33 +4692,39 @@ fun PlaylistArtCollage(
                     M3ImageUtils.AlbumArt(
                         imageUrl = songs[1].artworkUri,
                         albumName = songs[1].album,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        shape = RoundedCornerShape(0.dp),
+                        applyExpressiveShape = false
                     )
                 }
             }
         }
         3 -> {
             // Three album arts: one large on left, two stacked on right
-            Row(modifier = Modifier.fillMaxSize()) {
+            Row(modifier = Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(0.dp)) {
                 Box(modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()) {
                     M3ImageUtils.AlbumArt(
                         imageUrl = songs[0].artworkUri,
                         albumName = songs[0].album,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        shape = RoundedCornerShape(0.dp),
+                        applyExpressiveShape = false
                     )
                 }
                 Column(modifier = Modifier
                     .weight(1f)
-                    .fillMaxHeight()) {
+                    .fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(0.dp)) {
                     Box(modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()) {
                         M3ImageUtils.AlbumArt(
                             imageUrl = songs[1].artworkUri,
                             albumName = songs[1].album,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize(),
+                            shape = RoundedCornerShape(0.dp),
+                            applyExpressiveShape = false
                         )
                     }
                     Box(modifier = Modifier
@@ -4723,7 +4733,9 @@ fun PlaylistArtCollage(
                         M3ImageUtils.AlbumArt(
                             imageUrl = songs[2].artworkUri,
                             albumName = songs[2].album,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize(),
+                            shape = RoundedCornerShape(0.dp),
+                            applyExpressiveShape = false
                         )
                     }
                 }
@@ -4731,17 +4743,19 @@ fun PlaylistArtCollage(
         }
         else -> {
             // Four album arts in a 2x2 grid
-            Column(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(0.dp)) {
                 Row(modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth()) {
+                    .fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(0.dp)) {
                     Box(modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()) {
                         M3ImageUtils.AlbumArt(
                             imageUrl = songs[0].artworkUri,
                             albumName = songs[0].album,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize(),
+                            shape = RoundedCornerShape(0.dp),
+                            applyExpressiveShape = false
                         )
                     }
                     Box(modifier = Modifier
@@ -4750,20 +4764,24 @@ fun PlaylistArtCollage(
                         M3ImageUtils.AlbumArt(
                             imageUrl = songs[1].artworkUri,
                             albumName = songs[1].album,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize(),
+                            shape = RoundedCornerShape(0.dp),
+                            applyExpressiveShape = false
                         )
                     }
                 }
                 Row(modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth()) {
+                    .fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(0.dp)) {
                     Box(modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()) {
                         M3ImageUtils.AlbumArt(
                             imageUrl = songs[2].artworkUri,
                             albumName = songs[2].album,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize(),
+                            shape = RoundedCornerShape(0.dp),
+                            applyExpressiveShape = false
                         )
                     }
                     Box(modifier = Modifier
@@ -4772,7 +4790,9 @@ fun PlaylistArtCollage(
                         M3ImageUtils.AlbumArt(
                             imageUrl = songs[3].artworkUri,
                             albumName = songs[3].album,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize(),
+                            shape = RoundedCornerShape(0.dp),
+                            applyExpressiveShape = false
                         )
                     }
                 }
@@ -5161,12 +5181,12 @@ fun PlaylistGridItem(
                     fallbackShape = RoundedCornerShape(16.dp)
                 ),
                 tonalElevation = 0.dp,
-                color = MaterialTheme.colorScheme.secondaryContainer
+                color = MaterialTheme.colorScheme.primaryContainer
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.secondaryContainer),
+                        .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center
                 ) {
                     if (playlist.songs.isNotEmpty()) {
@@ -5176,9 +5196,9 @@ fun PlaylistGridItem(
                         )
                     } else {
                         Icon(
-                            imageVector = RhythmIcons.Player.Queue,
+                            imageVector = RhythmIcons.PlaylistFilled,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
                             modifier = Modifier.size(52.dp)
                         )
                     }
@@ -6005,7 +6025,7 @@ private fun ArtistListCard(
                                 modifier = Modifier.size(12.dp)
                             )
                             Text(
-                                text = "${artist.numberOfTracks} Songs",
+                                text = "${artist.numberOfTracks}",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer

@@ -168,6 +168,8 @@ import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.shared.presentation.components.common.AutoScrollingTextOnDemand
 import chromahub.rhythm.app.features.local.presentation.components.player.PlayingEqIcon
 import chromahub.rhythm.app.shared.presentation.components.common.ShimmerBox
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
+import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
 import chromahub.rhythm.app.ui.theme.PlayerButtonColor
 // import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
 import chromahub.rhythm.app.util.ImageUtils
@@ -312,6 +314,12 @@ fun PlayerScreen(
     val playerArtworkCornerRadius by appSettingsInstance.playerArtworkCornerRadius.collectAsState()
     val playerShowAudioQualityBadges by appSettingsInstance.playerShowAudioQualityBadges.collectAsState()
     val canvasApiEnabled by appSettingsInstance.canvasApiEnabled.collectAsState()
+    
+    // Expressive shape for player artwork display
+    val playerArtworkShape = rememberExpressiveShapeFor(
+        ExpressiveShapeTarget.PLAYER_ART,
+        RoundedCornerShape(28.dp)
+    )
     
     // Progress bar customization settings
     val playerProgressStyle by appSettingsInstance.playerProgressStyle.collectAsState()
@@ -1347,7 +1355,6 @@ fun PlayerScreen(
                             modifier = Modifier
                                 .fillMaxWidth(1.0f) // Enlarged album art to touch screen edges
                                 .aspectRatio(1f)
-                                .clip(RoundedCornerShape(if (isTablet) 16.dp else if (isCompactHeight) 20.dp else playerArtworkCornerRadius.dp))
                                 .graphicsLayer {
                                     // Album art scales and shrinks during swipe (mini-player effect)
                                     val combinedScale = albumScale * (1f - swipeProgress * 0.2f)
@@ -1418,7 +1425,7 @@ fun PlayerScreen(
                                 CanvasPlayer(
                                     videoUrl = canvasData?.videoUrl,
                                     isPlaying = true, // Always keep canvas playing
-                                    cornerRadius = if (isTablet) 16.dp else if (isCompactHeight) 20.dp else playerArtworkCornerRadius.dp,
+                                    cornerRadius = 28.dp,
                                     modifier = Modifier.fillMaxSize(),
                                     albumArtUrl = song.artworkUri,
                                     albumName = song.title,
@@ -1446,7 +1453,7 @@ fun PlayerScreen(
                                                     ShimmerBox(
                                                         modifier = Modifier
                                                             .fillMaxSize()
-                                                            .clip(RoundedCornerShape(if (isCompactHeight) 20.dp else playerArtworkCornerRadius.dp))
+                                                            .clip(playerArtworkShape)
                                                     )
                                                     
                                                     AsyncImage(
@@ -1459,7 +1466,7 @@ fun PlayerScreen(
                                                         contentScale = ContentScale.Crop,
                                                         modifier = Modifier
                                                             .fillMaxSize()
-                                                            .clip(RoundedCornerShape(playerArtworkCornerRadius.dp))
+                                                            .clip(playerArtworkShape)
                                                     )
                                                 }
                                             } else {
@@ -1467,7 +1474,7 @@ fun PlayerScreen(
                                                 Box(
                                                     modifier = Modifier
                                                         .fillMaxSize()
-                                                        .clip(RoundedCornerShape(if (isCompactHeight) 20.dp else playerArtworkCornerRadius.dp))
+                                                        .clip(playerArtworkShape)
                                                         .background(
                                                             Brush.radialGradient(
                                                                 colors = listOf(

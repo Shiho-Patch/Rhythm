@@ -520,7 +520,7 @@ fun CanvasPlayer(
                     .fillMaxSize()
                     .clip(
                         rememberExpressiveShapeFor(
-                            ExpressiveShapeTarget.ALBUM_ART,
+                            ExpressiveShapeTarget.PLAYER_ART,
                             fallbackShape = RoundedCornerShape(cornerRadius)
                         )
                     )
@@ -532,10 +532,7 @@ fun CanvasPlayer(
                             imageUrl = albumArtUrl,
                             albumName = albumName,
                             modifier = Modifier.fillMaxSize(),
-                            shape = rememberExpressiveShapeFor(
-                                ExpressiveShapeTarget.ALBUM_ART,
-                                fallbackShape = RoundedCornerShape(cornerRadius)
-                            )
+                            applyExpressiveShape = false
                         )
                         
                         // Add gradient overlays to album art for consistency with canvas (controlled by setting)
@@ -587,8 +584,7 @@ fun CanvasPlayer(
                                         BottomSheetDefaults.ContainerColor
                                     ),
                                     radius = 400f
-                                ),
-                                RoundedCornerShape(cornerRadius)
+                                )
                             ),
                         contentAlignment = Alignment.Center
                     ) {
