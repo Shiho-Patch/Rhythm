@@ -3934,7 +3934,7 @@ fun LibrarySongItem(
             Box {
                 Surface(
                     shape = rememberExpressiveShapeFor(
-                        ExpressiveShapeTarget.ALBUM_ART,
+                        ExpressiveShapeTarget.SONG_ART,
                         fallbackShape = MaterialTheme.shapes.large
                     ),
                     modifier = Modifier.size(56.dp),
@@ -3943,7 +3943,8 @@ fun LibrarySongItem(
                     M3ImageUtils.TrackImage(
                         imageUrl = song.artworkUri,
                         trackName = song.title,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        applyExpressiveShape = false
                     )
                 }
                 if (isCurrentSong && isPlaying) {
@@ -4520,7 +4521,8 @@ fun PlaylistItem(
                         M3ImageUtils.PlaylistImage(
                             imageUrl = playlist.artworkUri,
                             playlistName = playlist.name,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize(),
+                            applyExpressiveShape = false
                         )
                     } else if (albumArts.isNotEmpty()) {
                         // Create collage from album arts
@@ -5814,8 +5816,7 @@ private fun ArtistGridCard(
                     imageUrl = artist.artworkUri,
                     artistName = artist.name,
                     modifier = Modifier
-                        .fillMaxSize(),
-                    shape = artworkShape
+                        .fillMaxSize()
                 )
                 
                 // Play button overlay positioned at bottom right
@@ -5962,8 +5963,7 @@ private fun ArtistListCard(
                 imageUrl = artist.artworkUri,
                 artistName = artist.name,
                 modifier = Modifier
-                    .size(90.dp),
-                shape = artworkShape
+                    .size(90.dp)
             )
 
             Spacer(modifier = Modifier.width(16.dp))

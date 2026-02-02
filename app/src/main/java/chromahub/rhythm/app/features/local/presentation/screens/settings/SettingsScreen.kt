@@ -227,7 +227,6 @@ fun SettingsScreen(
                 title = context.getString(R.string.settings_section_appearance),
                 items = buildList {
                     add(SettingItem(Icons.Default.Palette, context.getString(R.string.settings_theme_customization), context.getString(R.string.settings_theme_customization_desc), onClick = { onNavigateTo(SettingsRoutes.THEME_CUSTOMIZATION) }))
-                    add(SettingItem(Icons.Default.Interests, "Expressive Shapes", "Customize Material 3 expressive shapes for UI elements", onClick = { onNavigateTo(SettingsRoutes.EXPRESSIVE_SHAPES) }))
                     // Local-only customizations
                     if (appMode == "LOCAL") {
                         add(SettingItem(Icons.Default.Home, context.getString(R.string.settings_home_customization), context.getString(R.string.settings_home_customization_desc), onClick = { onNavigateTo(SettingsRoutes.HOME_SCREEN) }))

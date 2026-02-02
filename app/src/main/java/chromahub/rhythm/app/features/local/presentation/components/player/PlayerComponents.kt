@@ -577,7 +577,8 @@ fun MiniPlayer(
                                             M3ImageUtils.TrackImage(
                                                 imageUrl = song.artworkUri,
                                                 trackName = song.title,
-                                                modifier = Modifier.fillMaxSize()
+                                                modifier = Modifier.fillMaxSize(),
+                                                applyExpressiveShape = false
                                             )
                                         }
                                     }
@@ -729,6 +730,12 @@ fun MiniPlayer(
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        // Get player controls shape once, used for all buttons
+                        val playerControlsShape = rememberExpressiveShapeFor(
+                            ExpressiveShapeTarget.PLAYER_CONTROLS,
+                            fallbackShape = ExpressiveShapes.Full
+                        )
+                        
                         // Expressive previous button with bouncy animation
                         val prevInteractionSource = remember { MutableInteractionSource() }
                         val isPrevPressed by prevInteractionSource.collectIsPressedAsState()
@@ -752,7 +759,7 @@ fun MiniPlayer(
                                     scaleX = prevScale
                                     scaleY = prevScale
                                 },
-                            shape = ExpressiveShapes.Full,
+                            shape = playerControlsShape,
                             interactionSource = prevInteractionSource
                         ) {
                             Icon(
@@ -774,6 +781,7 @@ fun MiniPlayer(
                             label = "play_scale"
                         )
                         
+                        // Play button with primary color
                         FilledIconButton(
                             onClick = {
                                 HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
@@ -785,7 +793,7 @@ fun MiniPlayer(
                                     scaleX = playScale
                                     scaleY = playScale
                                 },
-                            shape = ExpressiveShapes.Full,
+                            shape = playerControlsShape,
                             colors = androidx.compose.material3.IconButtonDefaults.filledIconButtonColors(
                                 containerColor = MaterialTheme.colorScheme.primary
                             ),
@@ -821,7 +829,7 @@ fun MiniPlayer(
                                     scaleX = nextScale
                                     scaleY = nextScale
                                 },
-                            shape = ExpressiveShapes.Full,
+                            shape = playerControlsShape,
                             interactionSource = nextInteractionSource
                         ) {
                             Icon(
@@ -868,7 +876,8 @@ fun MiniPlayer(
                                 M3ImageUtils.TrackImage(
                                     imageUrl = song.artworkUri,
                                     trackName = song.title,
-                                    modifier = Modifier.fillMaxSize()
+                                    modifier = Modifier.fillMaxSize(),
+                                    applyExpressiveShape = false
                                 )
                             } else {
                                 Box(

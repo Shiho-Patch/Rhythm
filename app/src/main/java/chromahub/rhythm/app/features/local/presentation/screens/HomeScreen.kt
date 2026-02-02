@@ -1728,8 +1728,7 @@ private fun ModernRecentSongCard(
             M3ImageUtils.TrackImage(
                 imageUrl = song.artworkUri,
                 trackName = song.title,
-                modifier = Modifier.size(52.dp),
-                shape = rememberExpressiveShapeFor(ExpressiveShapeTarget.ALBUM_ART)
+                modifier = Modifier.size(52.dp)
             )
             
             Spacer(modifier = Modifier.width(12.dp))
@@ -2096,7 +2095,7 @@ private fun androidx.compose.material3.carousel.CarouselItemScope.HeroCarouselCa
                 imageUrl = album.artworkUri,
                 albumName = album.title,
                 modifier = Modifier.fillMaxSize(),
-                shape = MaterialTheme.shapes.extraLarge
+                applyExpressiveShape = false
             )
             
             // Enhanced gradient overlays for better text readability
@@ -2336,8 +2335,7 @@ private fun ModernArtistCard(
             M3ImageUtils.ArtistImage(
                 imageUrl = artist.artworkUri,
                 artistName = artist.name,
-                modifier = Modifier.fillMaxSize(),
-                shape = rememberExpressiveShapeFor(ExpressiveShapeTarget.ALBUM_ART)
+                modifier = Modifier.fillMaxSize()
             )
             
             ExpressiveFilledIconButton(
@@ -2595,8 +2593,7 @@ private fun ModernSongCard(
                     M3ImageUtils.TrackImage(
                         imageUrl = song.artworkUri,
                         trackName = song.title,
-                        modifier = Modifier.fillMaxSize(),
-                        shape = rememberExpressiveShapeFor(ExpressiveShapeTarget.ALBUM_ART)
+                        modifier = Modifier.fillMaxSize()
                     )
                 }
             }
@@ -3269,8 +3266,7 @@ private fun RecommendedSongItem(
         M3ImageUtils.TrackImage(
             imageUrl = song.artworkUri,
             trackName = song.title,
-            modifier = Modifier.size(52.dp),
-            shape = rememberExpressiveShapeFor(ExpressiveShapeTarget.ALBUM_ART)
+            modifier = Modifier.size(52.dp)
         )
         
         Spacer(modifier = Modifier.width(16.dp))

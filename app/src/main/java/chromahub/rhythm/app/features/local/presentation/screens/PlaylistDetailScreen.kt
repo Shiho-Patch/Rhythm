@@ -113,6 +113,9 @@ import coil.request.ImageRequest
 import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.util.HapticUtils
+import chromahub.rhythm.app.util.M3ImageUtils
+import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
 import chromahub.rhythm.app.features.local.presentation.components.player.formatDuration
 import kotlinx.coroutines.delay // Import delay
 import androidx.compose.animation.core.Spring
@@ -1149,24 +1152,20 @@ fun PlaylistDetailScreen(
                     val playlistArtSize = 180.dp
                     Surface(
                         modifier = Modifier.size(playlistArtSize),
-                        shape = RoundedCornerShape(32.dp),
+                        shape = rememberExpressiveShapeFor(
+                            ExpressiveShapeTarget.PLAYLIST_ART,
+                            fallbackShape = RoundedCornerShape(32.dp)
+                        ),
                         tonalElevation = 8.dp,
                         shadowElevation = 0.dp
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             if (playlist.artworkUri != null) {
-                                AsyncImage(
-                                    model = ImageRequest.Builder(context)
-                                        .apply(ImageUtils.buildImageRequest(
-                                            playlist.artworkUri,
-                                            playlist.name,
-                                            context.cacheDir,
-                                            M3PlaceholderType.PLAYLIST
-                                        ))
-                                        .build(),
-                                    contentDescription = null,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.fillMaxSize()
+                                M3ImageUtils.PlaylistImage(
+                                    imageUrl = playlist.artworkUri,
+                                    playlistName = playlist.name,
+                                    modifier = Modifier.fillMaxSize(),
+                                    applyExpressiveShape = false
                                 )
                             } else {
                                 Box(
@@ -2755,26 +2754,22 @@ fun PlaylistSongItem(
                 )
             }
             
-            // Enhanced album art with better styling
+            // Enhanced album art with expressive shape support
             Box {
                 Surface(
                     modifier = Modifier.size(56.dp),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = rememberExpressiveShapeFor(
+                        ExpressiveShapeTarget.SONG_ART,
+                        fallbackShape = RoundedCornerShape(12.dp)
+                    ),
                     tonalElevation = 4.dp,
                     border = if (isCurrentSong) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.tertiary) else null
                 ) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(context)
-                            .apply(ImageUtils.buildImageRequest(
-                                song.artworkUri,
-                                song.title,
-                                context.cacheDir,
-                                M3PlaceholderType.TRACK
-                            ))
-                            .build(),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
+                    M3ImageUtils.TrackImage(
+                        imageUrl = song.artworkUri,
+                        trackName = song.title,
+                        modifier = Modifier.fillMaxSize(),
+                        applyExpressiveShape = false
                     )
                 }
                 if (isCurrentSong && isPlaying) {

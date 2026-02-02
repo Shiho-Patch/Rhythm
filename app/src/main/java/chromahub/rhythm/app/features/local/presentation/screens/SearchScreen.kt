@@ -1797,11 +1797,7 @@ fun SearchArtistItem(
                 artistName = artist.name,
                 modifier = Modifier
                     .size(96.dp)
-                    .padding(4.dp),
-                shape = rememberExpressiveShapeFor(
-                    ExpressiveShapeTarget.ALBUM_ART,
-                    fallbackShape = CircleShape
-                )
+                    .padding(4.dp)
             )
             
             Spacer(modifier = Modifier.height(12.dp))

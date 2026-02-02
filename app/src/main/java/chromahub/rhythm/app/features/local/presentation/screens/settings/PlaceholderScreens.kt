@@ -118,6 +118,7 @@ import chromahub.rhythm.app.features.local.presentation.components.player.Playin
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.BulkPlaylistExportDialog
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistImportDialog
+import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShape
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistOperationProgressDialog
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistOperationResultDialog
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.AppRestartDialog
@@ -5422,23 +5423,10 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
     val hapticFeedbackEnabled by appSettings.hapticFeedbackEnabled.collectAsState()
     val showLyrics by appSettings.showLyrics.collectAsState()
     val ignoreMediaStoreCovers by appSettings.ignoreMediaStoreCovers.collectAsState()
-    val festiveThemeEnabled by appSettings.festiveThemeEnabled.collectAsState()
-    val festiveThemeAutoDetect by appSettings.festiveThemeAutoDetect.collectAsState()
-    val festiveThemeIntensity by appSettings.festiveThemeIntensity.collectAsState()
-    val festiveSnowflakeSize by appSettings.festiveSnowflakeSize.collectAsState()
-    val festiveSnowflakeArea by appSettings.festiveSnowflakeArea.collectAsState()
-    val festiveThemeType by appSettings.festiveThemeType.collectAsState()
     val appMode by appSettings.appMode.collectAsState()
     val allowCellularStreaming by appSettings.allowCellularStreaming.collectAsState()
-
-    // Decoration position settings
-    val festiveShowTopLights by appSettings.festiveShowTopLights.collectAsState()
-    val festiveShowSideGarland by appSettings.festiveShowSideGarland.collectAsState()
-    val festiveShowBottomSnow by appSettings.festiveShowBottomSnow.collectAsState()
-    val festiveShowSnowfall by appSettings.festiveShowSnowfall.collectAsState()
     val haptic = LocalHapticFeedback.current
 
-    var showFestivalSelectionSheet by remember { mutableStateOf(false) }
     var showAppModeDialog by remember { mutableStateOf(false) }
 
     CollapsibleHeaderScreen(
@@ -5446,45 +5434,6 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
         showBackButton = true,
         onBackClick = onBackClick
     ) { modifier ->
-        // Build festive decoration items conditionally
-        val festiveItems = buildList {
-            // Always show the main toggle
-            add(
-                SettingItem(
-                    Icons.Default.Celebration,
-                    "Enable Festive Theme",
-                    "Show festive decorations across the app",
-                    toggleState = festiveThemeEnabled,
-                    onToggleChange = { appSettings.setFestiveThemeEnabled(it) }
-                )
-            )
-
-            // Show these only if festive theme is enabled
-            if (festiveThemeEnabled) {
-                add(
-                    SettingItem(
-                        Icons.Default.EventAvailable,
-                        "Auto-Detect Holidays",
-                        "Automatically show decorations for holidays",
-                        toggleState = festiveThemeAutoDetect,
-                        onToggleChange = { appSettings.setFestiveThemeAutoDetect(it) }
-                    )
-                )
-
-                // Show festival selection only if auto-detect is off
-                if (!festiveThemeAutoDetect) {
-                    add(
-                        SettingItem(
-                            Icons.Default.AutoAwesome,
-                            "Select Festival",
-                            getFestivalDisplayName(festiveThemeType),
-                            onClick = { showFestivalSelectionSheet = true }
-                        )
-                    )
-                }
-            }
-        }
-
         val settingGroups = buildList {
             // Music Source settings group
             add(
@@ -5526,15 +5475,6 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                                 onToggleChange = { appSettings.setIgnoreMediaStoreCovers(it) }
                             )
                         )
-                    )
-                )
-            }
-            
-            if (festiveItems.isNotEmpty()) {
-                add(
-                    SettingGroup(
-                        title = "Festive Decorations",
-                        items = festiveItems
                     )
                 )
             }
@@ -5602,226 +5542,7 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-
-            // Festive Intensity Slider with animation
-            item {
-                AnimatedVisibility(
-                    visible = festiveThemeEnabled,
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically()
-                ) {
-                    Column {
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Text(
-                            text = "Decoration Intensity",
-                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
-                        )
-
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(18.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(20.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "Intensity",
-                                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                    Text(
-                                        text = "${(festiveThemeIntensity * 100).toInt()}%",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                Slider(
-                                    value = festiveThemeIntensity,
-                                    onValueChange = {
-                                        appSettings.setFestiveThemeIntensity(it)
-                                    },
-                                    valueRange = 0.1f..1f,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                Text(
-                                    text = "Adjust the amount of festive decorations shown",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-
-                                // Snowflake Size Control
-                                Spacer(modifier = Modifier.height(24.dp))
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "Snowflake Size",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.Medium
-                                    )
-
-                                    Text(
-                                        text = "${(festiveSnowflakeSize * 100).toInt()}%",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                Slider(
-                                    value = festiveSnowflakeSize,
-                                    onValueChange = {
-                                        appSettings.setFestiveSnowflakeSize(it)
-                                    },
-                                    valueRange = 0.5f..2.0f,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                Text(
-                                    text = "Adjust snowflake size (smaller size = more snowflakes)",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-
-                                // Snowflake Area Control
-                                Spacer(modifier = Modifier.height(24.dp))
-
-                                Text(
-                                    text = "Snowflake Display Area",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium
-                                )
-
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    // Full Screen Button
-                                    FilterChip(
-                                        selected = festiveSnowflakeArea == "FULL_SCREEN",
-                                        onClick = { appSettings.setFestiveSnowflakeArea("FULL_SCREEN") },
-                                        label = { Text("Full Screen") },
-                                        modifier = Modifier.weight(1f)
-                                    )
-
-                                    // Left-Right Only Button
-                                    FilterChip(
-                                        selected = festiveSnowflakeArea == "LEFT_RIGHT_ONLY",
-                                        onClick = { appSettings.setFestiveSnowflakeArea("LEFT_RIGHT_ONLY") },
-                                        label = { Text("Sides Only") },
-                                        modifier = Modifier.weight(1f)
-                                    )
-
-                                    // Top 1/3 Button
-                                    FilterChip(
-                                        selected = festiveSnowflakeArea == "TOP_ONE_THIRD",
-                                        onClick = { appSettings.setFestiveSnowflakeArea("TOP_ONE_THIRD") },
-                                        label = { Text("Top ⅓") },
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                Text(
-                                    text = when (festiveSnowflakeArea) {
-                                        "FULL_SCREEN" -> "Snowflakes appear across the entire screen"
-                                        "LEFT_RIGHT_ONLY" -> "Snowflakes only on left and right edges"
-                                        "TOP_ONE_THIRD" -> "Snowflakes on top third of screen"
-                                        else -> "Choose where snowflakes appear"
-                                    },
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-
-                                // Decoration Elements Section
-                                Spacer(modifier = Modifier.height(24.dp))
-
-                                Text(
-                                    text = "Decoration Elements",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium
-                                )
-
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                Text(
-                                    text = "Toggle individual decoration elements by position",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-
-                                Spacer(modifier = Modifier.height(16.dp))
-
-                                // Decoration Toggle Cards
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    // Snowfall Toggle
-                                    DecorationToggleCard(
-                                        title = "Snowfall",
-                                        description = "Animated falling snowflakes",
-                                        icon = Icons.Rounded.AcUnit,
-                                        isEnabled = festiveShowSnowfall,
-                                        onToggle = { appSettings.setFestiveShowSnowfall(it) }
-                                    )
-
-                                    // Top Lights Toggle
-                                    DecorationToggleCard(
-                                        title = "Top Lights",
-                                        description = "Christmas lights at the top",
-                                        icon = Icons.Rounded.Lightbulb,
-                                        isEnabled = festiveShowTopLights,
-                                        onToggle = { appSettings.setFestiveShowTopLights(it) }
-                                    )
-
-                                    // Side Garland Toggle
-                                    DecorationToggleCard(
-                                        title = "Side Garland",
-                                        description = "Ornaments on left and right sides",
-                                        icon = Icons.Rounded.Park,
-                                        isEnabled = festiveShowSideGarland,
-                                        onToggle = { appSettings.setFestiveShowSideGarland(it) }
-                                    )
-
-                                    // Bottom Snow Toggle
-                                    DecorationToggleCard(
-                                        title = "Snow Pile",
-                                        description = "Snow collection at the bottom",
-                                        icon = Icons.Rounded.Terrain,
-                                        isEnabled = festiveShowBottomSnow,
-                                        onToggle = { appSettings.setFestiveShowBottomSnow(it) }
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
+            
             item {
                 Spacer(modifier = Modifier.height(16.dp))
                 Card(
@@ -5853,18 +5574,6 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
 
             item { Spacer(modifier = Modifier.height(40.dp)) }
         }
-    }
-
-    // Festival Selection Bottom Sheet
-    if (showFestivalSelectionSheet) {
-        FestivalSelectionBottomSheet(
-            currentFestival = festiveThemeType,
-            onDismiss = { showFestivalSelectionSheet = false },
-            onFestivalSelected = { festival ->
-                appSettings.setFestiveThemeType(festival)
-                showFestivalSelectionSheet = false
-            }
-        )
     }
     
     if (showAppModeDialog) {
@@ -9956,6 +9665,26 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
     var showColorSchemesDialog by remember { mutableStateOf(false) }
     var showCustomColorsDialog by remember { mutableStateOf(false) }
     var showFontSelectionDialog by remember { mutableStateOf(false) }
+    var navigateToExpressiveShapes by remember { mutableStateOf(false) }
+    
+    // Festive theme states
+    val festiveThemeEnabled by appSettings.festiveThemeEnabled.collectAsState()
+    val festiveThemeAutoDetect by appSettings.festiveThemeAutoDetect.collectAsState()
+    val festiveThemeType by appSettings.festiveThemeType.collectAsState()
+    val festiveThemeIntensity by appSettings.festiveThemeIntensity.collectAsState()
+    val festiveSnowflakeSize by appSettings.festiveSnowflakeSize.collectAsState()
+    val festiveSnowflakeArea by appSettings.festiveSnowflakeArea.collectAsState()
+    val festiveShowTopLights by appSettings.festiveShowTopLights.collectAsState()
+    val festiveShowSideGarland by appSettings.festiveShowSideGarland.collectAsState()
+    val festiveShowBottomSnow by appSettings.festiveShowBottomSnow.collectAsState()
+    val festiveShowSnowfall by appSettings.festiveShowSnowfall.collectAsState()
+    var showFestivalSelectionDialog by remember { mutableStateOf(false) }
+    
+    // Handle navigation to Expressive Shapes screen
+    if (navigateToExpressiveShapes) {
+        ExpressiveShapesSettingsScreen(onBackClick = { navigateToExpressiveShapes = false })
+        return
+    }
 
     CollapsibleHeaderScreen(
         title = "Theme",
@@ -10075,6 +9804,58 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                         }
                     )
                 )
+            ),
+            SettingGroup(
+                title = "Shape Customization",
+                items = listOf(
+                    SettingItem(
+                        Icons.Default.Interests,
+                        "Expressive Shapes",
+                        "Customize Material 3 expressive shapes for artwork and player elements",
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            navigateToExpressiveShapes = true
+                        }
+                    )
+                )
+            ),
+            SettingGroup(
+                title = "Festive Themes",
+                items = buildList {
+                    add(
+                        SettingItem(
+                            Icons.Default.Celebration,
+                            "Enable Festive Theme",
+                            "Show festive decorations across the app",
+                            toggleState = festiveThemeEnabled,
+                            onToggleChange = { appSettings.setFestiveThemeEnabled(it) }
+                        )
+                    )
+                    if (festiveThemeEnabled) {
+                        add(
+                            SettingItem(
+                                Icons.Default.EventAvailable,
+                                "Auto-Detect Holidays",
+                                "Automatically show decorations for holidays",
+                                toggleState = festiveThemeAutoDetect,
+                                onToggleChange = { appSettings.setFestiveThemeAutoDetect(it) }
+                            )
+                        )
+                        if (!festiveThemeAutoDetect) {
+                            add(
+                                SettingItem(
+                                    Icons.Default.AutoAwesome,
+                                    "Select Festival",
+                                    getFestivalDisplayName(festiveThemeType),
+                                    onClick = {
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        showFestivalSelectionDialog = true
+                                    }
+                                )
+                            )
+                        }
+                    }
+                }
             )
         )
 
@@ -10271,6 +10052,247 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
         context = context,
         haptic = haptic
     )
+
+    // Festival Selection Dialog with Intensity Controls
+    if (showFestivalSelectionDialog) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        
+        ModalBottomSheet(
+            onDismissRequest = { showFestivalSelectionDialog = false },
+            sheetState = sheetState,
+            dragHandle = { BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.primary) },
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+            ) {
+                item {
+                    Text(
+                        text = "Festive Theme Settings",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                }
+                
+                // Festival Selection
+                item {
+                    Text(
+                        text = "Select Festival",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+                
+                item {
+                    val festivals = listOf(
+                        "CHRISTMAS" to "Christmas",
+                        "NEW_YEAR" to "New Year",
+                        "HALLOWEEN" to "Halloween",
+                        "VALENTINES" to "Valentine's Day",
+                        "DIWALI" to "Diwali"
+                    )
+                    
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        festivals.forEach { (id, name) ->
+                            val isSelected = id == festiveThemeType
+                            Card(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    appSettings.setFestiveThemeType(id)
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (isSelected)
+                                        MaterialTheme.colorScheme.primaryContainer
+                                    else
+                                        MaterialTheme.colorScheme.surfaceContainerHigh
+                                ),
+                                border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = name,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (isSelected)
+                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                        else
+                                            MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    if (isSelected) {
+                                        Icon(
+                                            imageVector = Icons.Filled.CheckCircle,
+                                            contentDescription = "Selected",
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Decoration Intensity
+                item {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = "Decoration Intensity",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Intensity",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "${(festiveThemeIntensity * 100).toInt()}%",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Slider(
+                        value = festiveThemeIntensity,
+                        onValueChange = { appSettings.setFestiveThemeIntensity(it) },
+                        valueRange = 0.1f..1f,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                
+                // Snowflake Size
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Snowflake Size",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "${(festiveSnowflakeSize * 100).toInt()}%",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Slider(
+                        value = festiveSnowflakeSize,
+                        onValueChange = { appSettings.setFestiveSnowflakeSize(it) },
+                        valueRange = 0.5f..2.0f,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                
+                // Snowflake Area
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Snowflake Display Area",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        FilterChip(
+                            selected = festiveSnowflakeArea == "FULL_SCREEN",
+                            onClick = { appSettings.setFestiveSnowflakeArea("FULL_SCREEN") },
+                            label = { Text("Full") },
+                            modifier = Modifier.weight(1f)
+                        )
+                        FilterChip(
+                            selected = festiveSnowflakeArea == "LEFT_RIGHT_ONLY",
+                            onClick = { appSettings.setFestiveSnowflakeArea("LEFT_RIGHT_ONLY") },
+                            label = { Text("Sides") },
+                            modifier = Modifier.weight(1f)
+                        )
+                        FilterChip(
+                            selected = festiveSnowflakeArea == "TOP_ONE_THIRD",
+                            onClick = { appSettings.setFestiveSnowflakeArea("TOP_ONE_THIRD") },
+                            label = { Text("Top ⅓") },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+                
+                // Decoration Elements
+                item {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = "Decoration Elements",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+                
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        DecorationToggleCard(
+                            title = "Snowfall",
+                            description = "Animated falling snowflakes",
+                            icon = Icons.Rounded.AcUnit,
+                            isEnabled = festiveShowSnowfall,
+                            onToggle = { appSettings.setFestiveShowSnowfall(it) }
+                        )
+                        DecorationToggleCard(
+                            title = "Top Lights",
+                            description = "Christmas lights at the top",
+                            icon = Icons.Rounded.Lightbulb,
+                            isEnabled = festiveShowTopLights,
+                            onToggle = { appSettings.setFestiveShowTopLights(it) }
+                        )
+                        DecorationToggleCard(
+                            title = "Side Garland",
+                            description = "Ornaments on sides",
+                            icon = Icons.Rounded.Park,
+                            isEnabled = festiveShowSideGarland,
+                            onToggle = { appSettings.setFestiveShowSideGarland(it) }
+                        )
+                        DecorationToggleCard(
+                            title = "Snow Pile",
+                            description = "Snow at the bottom",
+                            icon = Icons.Rounded.Terrain,
+                            isEnabled = festiveShowBottomSnow,
+                            onToggle = { appSettings.setFestiveShowBottomSnow(it) }
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+            }
+        }
+    }
 }
 
 // Color Source and Font Source Dialogs for Theme Customization
@@ -14443,13 +14465,12 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
     val expressiveShapesEnabled by appSettings.expressiveShapesEnabled.collectAsState()
     val currentPreset by appSettings.expressiveShapePreset.collectAsState()
     val shapeAlbumArt by appSettings.expressiveShapeAlbumArt.collectAsState()
-    val shapeFab by appSettings.expressiveShapeFab.collectAsState()
-    val shapeCards by appSettings.expressiveShapeCards.collectAsState()
-    val shapeButtons by appSettings.expressiveShapeButtons.collectAsState()
-    val shapeChips by appSettings.expressiveShapeChips.collectAsState()
+    val shapePlayerArt by appSettings.expressiveShapePlayerArt.collectAsState()
+    val shapeSongArt by appSettings.expressiveShapeSongArt.collectAsState()
+    val shapePlaylistArt by appSettings.expressiveShapePlaylistArt.collectAsState()
+    val shapeArtistArt by appSettings.expressiveShapeArtistArt.collectAsState()
     val shapePlayerControls by appSettings.expressiveShapePlayerControls.collectAsState()
     val shapeMiniPlayer by appSettings.expressiveShapeMiniPlayer.collectAsState()
-    val shapeNavIndicator by appSettings.expressiveShapeNavIndicator.collectAsState()
     
     // Dialog states
     var showPresetDialog by remember { mutableStateOf(false) }
@@ -14516,16 +14537,15 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
     }
     
     // Define shape targets with current values
-    val shapeTargets = remember(shapeAlbumArt, shapeFab, shapeCards, shapeButtons, shapeChips, shapePlayerControls, shapeMiniPlayer, shapeNavIndicator) {
+    val shapeTargets = remember(shapeAlbumArt, shapePlayerArt, shapeSongArt, shapePlaylistArt, shapeArtistArt, shapePlayerControls, shapeMiniPlayer) {
         listOf(
-            Triple("ALBUM_ART", "Album Artwork" to "Shape for album artwork on player", shapeAlbumArt),
-            Triple("FAB", "Floating Action Button" to "Shape for FAB buttons", shapeFab),
-            Triple("CARDS", "Cards" to "Shape for cards and containers", shapeCards),
-            Triple("BUTTONS", "Buttons" to "Shape for action buttons", shapeButtons),
-            Triple("CHIPS", "Chips & Tags" to "Shape for chips and tags", shapeChips),
+            Triple("ALBUM_ART", "Album Artwork" to "Shape for album artwork", shapeAlbumArt),
+            Triple("PLAYER_ART", "Player Artwork" to "Shape for player screen artwork", shapePlayerArt),
+            Triple("SONG_ART", "Song Artwork" to "Shape for song artwork in lists", shapeSongArt),
+            Triple("PLAYLIST_ART", "Playlist Artwork" to "Shape for playlist covers", shapePlaylistArt),
+            Triple("ARTIST_ART", "Artist Artwork" to "Shape for artist images", shapeArtistArt),
             Triple("PLAYER_CONTROLS", "Player Controls" to "Shape for player control buttons", shapePlayerControls),
-            Triple("MINI_PLAYER", "Mini Player" to "Shape for mini player artwork", shapeMiniPlayer),
-            Triple("NAV_INDICATOR", "Navigation Indicator" to "Shape for nav bar indicator", shapeNavIndicator)
+            Triple("MINI_PLAYER", "Mini Player" to "Shape for mini player artwork", shapeMiniPlayer)
         )
     }
     
@@ -14747,13 +14767,12 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                                             Icon(
                                                 imageVector = when (targetId) {
                                                     "ALBUM_ART" -> Icons.Default.Album
-                                                    "FAB" -> Icons.Default.Add
-                                                    "CARDS" -> Icons.Default.CreditCard
-                                                    "BUTTONS" -> Icons.Default.RadioButtonChecked
-                                                    "CHIPS" -> Icons.Default.Label
+                                                    "PLAYER_ART" -> Icons.Default.MusicNote
+                                                    "SONG_ART" -> Icons.Default.AudioFile
+                                                    "PLAYLIST_ART" -> Icons.Default.QueueMusic
+                                                    "ARTIST_ART" -> Icons.Default.Person
                                                     "PLAYER_CONTROLS" -> Icons.Default.PlayCircle
                                                     "MINI_PLAYER" -> Icons.Default.MusicNote
-                                                    "NAV_INDICATOR" -> Icons.Default.Navigation
                                                     else -> Icons.Default.Category
                                                 },
                                                 contentDescription = targetName,
@@ -14933,13 +14952,12 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
         val targetName = shapeTargets.find { it.first == targetId }?.second?.first ?: targetId
         val currentShapeForTarget = when (targetId) {
             "ALBUM_ART" -> shapeAlbumArt
-            "FAB" -> shapeFab
-            "CARDS" -> shapeCards
-            "BUTTONS" -> shapeButtons
-            "CHIPS" -> shapeChips
+            "PLAYER_ART" -> shapePlayerArt
+            "SONG_ART" -> shapeSongArt
+            "PLAYLIST_ART" -> shapePlaylistArt
+            "ARTIST_ART" -> shapeArtistArt
             "PLAYER_CONTROLS" -> shapePlayerControls
             "MINI_PLAYER" -> shapeMiniPlayer
-            "NAV_INDICATOR" -> shapeNavIndicator
             else -> "CIRCLE"
         }
         
@@ -14996,13 +15014,12 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                                     HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
                                     when (targetId) {
                                         "ALBUM_ART" -> appSettings.setExpressiveShapeAlbumArt(shape.id)
-                                        "FAB" -> appSettings.setExpressiveShapeFab(shape.id)
-                                        "CARDS" -> appSettings.setExpressiveShapeCards(shape.id)
-                                        "BUTTONS" -> appSettings.setExpressiveShapeButtons(shape.id)
-                                        "CHIPS" -> appSettings.setExpressiveShapeChips(shape.id)
+                                        "PLAYER_ART" -> appSettings.setExpressiveShapePlayerArt(shape.id)
+                                        "SONG_ART" -> appSettings.setExpressiveShapeSongArt(shape.id)
+                                        "PLAYLIST_ART" -> appSettings.setExpressiveShapePlaylistArt(shape.id)
+                                        "ARTIST_ART" -> appSettings.setExpressiveShapeArtistArt(shape.id)
                                         "PLAYER_CONTROLS" -> appSettings.setExpressiveShapePlayerControls(shape.id)
                                         "MINI_PLAYER" -> appSettings.setExpressiveShapeMiniPlayer(shape.id)
-                                        "NAV_INDICATOR" -> appSettings.setExpressiveShapeNavIndicator(shape.id)
                                     }
                                     showShapePickerDialog = null
                                 },
@@ -15022,6 +15039,20 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                                         .padding(16.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
+                                    // Shape Preview
+                                    Surface(
+                                        modifier = Modifier.size(40.dp),
+                                        shape = rememberExpressiveShape(shape.id, CircleShape),
+                                        color = if (isSelected)
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                                        else
+                                            MaterialTheme.colorScheme.surfaceVariant
+                                    ) {
+                                        Box(modifier = Modifier.fillMaxSize())
+                                    }
+                                    
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
                                             text = shape.displayName,

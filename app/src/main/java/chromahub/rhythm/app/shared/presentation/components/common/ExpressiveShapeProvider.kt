@@ -29,13 +29,12 @@ import chromahub.rhythm.app.shared.data.model.AppSettings
  */
 enum class ExpressiveShapeTarget {
     ALBUM_ART,
-    FAB,
-    CARDS,
-    BUTTONS,
-    CHIPS,
+    PLAYER_ART,
+    SONG_ART,
+    PLAYLIST_ART,
+    ARTIST_ART,
     PLAYER_CONTROLS,
-    MINI_PLAYER,
-    NAV_INDICATOR
+    MINI_PLAYER
 }
 
 /**
@@ -129,13 +128,12 @@ private fun getShapeById(shapeId: String): RoundedPolygon? {
 private fun getDefaultShapeForTarget(target: ExpressiveShapeTarget): Shape {
     return when (target) {
         ExpressiveShapeTarget.ALBUM_ART -> RoundedCornerShape(28.dp)
-        ExpressiveShapeTarget.FAB -> CircleShape
-        ExpressiveShapeTarget.CARDS -> RoundedCornerShape(20.dp)
-        ExpressiveShapeTarget.BUTTONS -> CircleShape
-        ExpressiveShapeTarget.CHIPS -> CircleShape
+        ExpressiveShapeTarget.PLAYER_ART -> RoundedCornerShape(28.dp)
+        ExpressiveShapeTarget.SONG_ART -> RoundedCornerShape(16.dp)
+        ExpressiveShapeTarget.PLAYLIST_ART -> RoundedCornerShape(20.dp)
+        ExpressiveShapeTarget.ARTIST_ART -> CircleShape
         ExpressiveShapeTarget.PLAYER_CONTROLS -> CircleShape
         ExpressiveShapeTarget.MINI_PLAYER -> RoundedCornerShape(16.dp)
-        ExpressiveShapeTarget.NAV_INDICATOR -> CircleShape
     }
 }
 
@@ -159,13 +157,12 @@ fun rememberExpressiveShapeFor(
     
     val shapeId = when (target) {
         ExpressiveShapeTarget.ALBUM_ART -> appSettings.expressiveShapeAlbumArt.collectAsState().value
-        ExpressiveShapeTarget.FAB -> appSettings.expressiveShapeFab.collectAsState().value
-        ExpressiveShapeTarget.CARDS -> appSettings.expressiveShapeCards.collectAsState().value
-        ExpressiveShapeTarget.BUTTONS -> appSettings.expressiveShapeButtons.collectAsState().value
-        ExpressiveShapeTarget.CHIPS -> appSettings.expressiveShapeChips.collectAsState().value
+        ExpressiveShapeTarget.PLAYER_ART -> appSettings.expressiveShapePlayerArt.collectAsState().value
+        ExpressiveShapeTarget.SONG_ART -> appSettings.expressiveShapeSongArt.collectAsState().value
+        ExpressiveShapeTarget.PLAYLIST_ART -> appSettings.expressiveShapePlaylistArt.collectAsState().value
+        ExpressiveShapeTarget.ARTIST_ART -> appSettings.expressiveShapeArtistArt.collectAsState().value
         ExpressiveShapeTarget.PLAYER_CONTROLS -> appSettings.expressiveShapePlayerControls.collectAsState().value
         ExpressiveShapeTarget.MINI_PLAYER -> appSettings.expressiveShapeMiniPlayer.collectAsState().value
-        ExpressiveShapeTarget.NAV_INDICATOR -> appSettings.expressiveShapeNavIndicator.collectAsState().value
     }
     
     return remember(expressiveShapesEnabled, shapeId, fallbackShape) {

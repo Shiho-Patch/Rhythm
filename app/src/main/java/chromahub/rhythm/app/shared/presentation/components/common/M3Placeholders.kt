@@ -18,12 +18,18 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import chromahub.rhythm.app.shared.data.model.AppSettings
 import kotlin.random.Random
 
 /**
@@ -38,45 +44,54 @@ enum class M3PlaceholderType {
 }
 
 /**
- * A Material 3 placeholder for media content
+ * A Material 3 placeholder for media content with expressive shape support
  */
 @Composable
 fun M3Placeholder(
     type: M3PlaceholderType,
     name: String? = null,
     modifier: Modifier = Modifier,
+    shape: Shape? = null
 ) {
-    val (icon, shape, containerColor) = when (type) {
-        M3PlaceholderType.ALBUM -> Triple(
-            Icons.Filled.Album,
-            RoundedCornerShape(8.dp),
-            getColorForName(name, MaterialTheme.colorScheme.surfaceVariant)
-        )
-        M3PlaceholderType.ARTIST -> Triple(
-            Icons.Filled.Person,
-            CircleShape,
-            getColorForName(name, MaterialTheme.colorScheme.surfaceVariant)
-        )
-        M3PlaceholderType.TRACK -> Triple(
-            Icons.Filled.MusicNote,
-            RoundedCornerShape(4.dp),
-            getColorForName(name, MaterialTheme.colorScheme.surfaceVariant)
-        )
-        M3PlaceholderType.PLAYLIST -> Triple(
-            Icons.AutoMirrored.Filled.QueueMusic,
-            RoundedCornerShape(8.dp),
-            getColorForName(name, MaterialTheme.colorScheme.surfaceVariant)
-        )
-        M3PlaceholderType.GENERAL -> Triple(
-            Icons.Filled.AudioFile,
-            RoundedCornerShape(8.dp),
-            getColorForName(name, MaterialTheme.colorScheme.surfaceVariant)
-        )
+    val context = LocalContext.current
+    val appSettings = remember { AppSettings.getInstance(context) }
+    val expressiveShapesEnabled by appSettings.expressiveShapesEnabled.collectAsState()
+    
+    // Get the default shapes for each type (when expressive shapes are disabled)
+    val defaultShape = when (type) {
+        M3PlaceholderType.ALBUM -> RoundedCornerShape(8.dp)
+        M3PlaceholderType.ARTIST -> CircleShape
+        M3PlaceholderType.TRACK -> RoundedCornerShape(4.dp)
+        M3PlaceholderType.PLAYLIST -> RoundedCornerShape(8.dp)
+        M3PlaceholderType.GENERAL -> RoundedCornerShape(8.dp)
     }
+    
+    // Use provided shape if available, otherwise get expressive shape from settings
+    val finalShape = shape ?: if (expressiveShapesEnabled) {
+        when (type) {
+            M3PlaceholderType.ALBUM -> rememberExpressiveShapeFor(ExpressiveShapeTarget.ALBUM_ART, defaultShape)
+            M3PlaceholderType.ARTIST -> rememberExpressiveShapeFor(ExpressiveShapeTarget.ARTIST_ART, defaultShape)
+            M3PlaceholderType.TRACK -> rememberExpressiveShapeFor(ExpressiveShapeTarget.SONG_ART, defaultShape)
+            M3PlaceholderType.PLAYLIST -> rememberExpressiveShapeFor(ExpressiveShapeTarget.PLAYLIST_ART, defaultShape)
+            M3PlaceholderType.GENERAL -> rememberExpressiveShapeFor(ExpressiveShapeTarget.ALBUM_ART, defaultShape)
+        }
+    } else {
+        defaultShape
+    }
+    
+    val icon = when (type) {
+        M3PlaceholderType.ALBUM -> Icons.Filled.Album
+        M3PlaceholderType.ARTIST -> Icons.Filled.Person
+        M3PlaceholderType.TRACK -> Icons.Filled.MusicNote
+        M3PlaceholderType.PLAYLIST -> Icons.AutoMirrored.Filled.QueueMusic
+        M3PlaceholderType.GENERAL -> Icons.Filled.AudioFile
+    }
+    
+    val containerColor = getColorForName(name, MaterialTheme.colorScheme.surfaceVariant)
 
     Surface(
         modifier = modifier.aspectRatio(1f),
-        shape = shape,
+        shape = finalShape,
         color = containerColor,
         tonalElevation = 1.dp
     ) {
@@ -123,11 +138,12 @@ private fun getColorForName(name: String?, fallbackColor: Color): Color {
  * Album art placeholder
  */
 @Composable
-fun AlbumPlaceholder(name: String? = null, modifier: Modifier = Modifier) {
+fun AlbumPlaceholder(name: String? = null, modifier: Modifier = Modifier, shape: Shape? = null) {
     M3Placeholder(
         type = M3PlaceholderType.ALBUM,
         name = name,
-        modifier = modifier
+        modifier = modifier,
+        shape = shape
     )
 }
 
@@ -135,11 +151,12 @@ fun AlbumPlaceholder(name: String? = null, modifier: Modifier = Modifier) {
  * Artist image placeholder
  */
 @Composable
-fun ArtistPlaceholder(name: String? = null, modifier: Modifier = Modifier) {
+fun ArtistPlaceholder(name: String? = null, modifier: Modifier = Modifier, shape: Shape? = null) {
     M3Placeholder(
         type = M3PlaceholderType.ARTIST,
         name = name,
-        modifier = modifier
+        modifier = modifier,
+        shape = shape
     )
 }
 
@@ -147,11 +164,12 @@ fun ArtistPlaceholder(name: String? = null, modifier: Modifier = Modifier) {
  * Track placeholder
  */
 @Composable
-fun TrackPlaceholder(name: String? = null, modifier: Modifier = Modifier) {
+fun TrackPlaceholder(name: String? = null, modifier: Modifier = Modifier, shape: Shape? = null) {
     M3Placeholder(
         type = M3PlaceholderType.TRACK,
         name = name,
-        modifier = modifier
+        modifier = modifier,
+        shape = shape
     )
 }
 
@@ -159,10 +177,11 @@ fun TrackPlaceholder(name: String? = null, modifier: Modifier = Modifier) {
  * Playlist placeholder
  */
 @Composable
-fun PlaylistPlaceholder(name: String? = null, modifier: Modifier = Modifier) {
+fun PlaylistPlaceholder(name: String? = null, modifier: Modifier = Modifier, shape: Shape? = null) {
     M3Placeholder(
         type = M3PlaceholderType.PLAYLIST,
         name = name,
-        modifier = modifier
+        modifier = modifier,
+        shape = shape
     )
 }
