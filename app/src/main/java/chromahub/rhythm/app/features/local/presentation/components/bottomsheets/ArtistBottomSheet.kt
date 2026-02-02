@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material.icons.filled.*
@@ -41,6 +42,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import chromahub.rhythm.app.shared.data.model.AppSettings
 import chromahub.rhythm.app.shared.data.model.Album
 import chromahub.rhythm.app.shared.data.model.Artist
@@ -307,11 +309,47 @@ fun ArtistBottomSheet(
 
                                 Spacer(modifier = Modifier.height(32.dp))
 
-                                // Action buttons
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
+                                // Action buttons - Grouped button design
+                                var shufflePressed by remember { mutableStateOf(false) }
+                                var playAllPressed by remember { mutableStateOf(false) }
+                                
+                                val shuffleScale by animateFloatAsState(
+                                    targetValue = if (shufflePressed) 0.96f else 1f,
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessMedium
+                                    ),
+                                    label = "shuffleScale"
+                                )
+                                
+                                val playAllScale by animateFloatAsState(
+                                    targetValue = if (playAllPressed) 0.96f else 1f,
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessMedium
+                                    ),
+                                    label = "playAllScale"
+                                )
+                                
+                                LaunchedEffect(shufflePressed) {
+                                    if (shufflePressed) {
+                                        delay(150)
+                                        shufflePressed = false
+                                    }
+                                }
+                                
+                                LaunchedEffect(playAllPressed) {
+                                    if (playAllPressed) {
+                                        delay(150)
+                                        playAllPressed = false
+                                    }
+                                }
+                                
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 ) {
+                                    // Play All Button - Equal sizing with text
                                     Button(
                                         onClick = {
                                             HapticUtils.performHapticFeedback(
@@ -319,35 +357,41 @@ fun ArtistBottomSheet(
                                                 haptics,
                                                 HapticFeedbackType.LongPress
                                             )
+                                            playAllPressed = true
                                             if (artistSongs.isNotEmpty()) {
                                                 onPlayAll(artistSongs)
                                             }
                                             onDismiss()
                                             onPlayerClick()
                                         },
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(52.dp)
+                                            .graphicsLayer {
+                                                scaleX = playAllScale
+                                                scaleY = playAllScale
+                                            },
+                                        shape = ButtonGroupDefaults.connectedLeadingButtonShapes().shape,
                                         colors = ButtonDefaults.buttonColors(
-                                            containerColor = MaterialTheme.colorScheme.primary
+                                            containerColor = MaterialTheme.colorScheme.primary,
+                                            contentColor = MaterialTheme.colorScheme.onPrimary
                                         ),
-                                        shape = RoundedCornerShape(24.dp),
-                                        contentPadding = PaddingValues(
-                                            horizontal = 32.dp,
-                                            vertical = 16.dp
-                                        ),
-                                        modifier = Modifier.fillMaxWidth()
+                                        contentPadding = PaddingValues(horizontal = 16.dp)
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Filled.PlayArrow,
+                                            imageVector = RhythmIcons.Play,
                                             contentDescription = null,
-                                            modifier = Modifier.size(24.dp)
+                                            modifier = Modifier.size(20.dp)
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(
                                             text = "Play All",
                                             style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.SemiBold
+                                            fontWeight = FontWeight.Bold
                                         )
                                     }
-
+                                    
+                                    // Shuffle Button - Equal sizing with text
                                     FilledTonalButton(
                                         onClick = {
                                             HapticUtils.performHapticFeedback(
@@ -355,29 +399,37 @@ fun ArtistBottomSheet(
                                                 haptics,
                                                 HapticFeedbackType.LongPress
                                             )
+                                            shufflePressed = true
                                             if (artistSongs.isNotEmpty()) {
                                                 onShufflePlay(artistSongs)
                                             }
                                             onDismiss()
                                             onPlayerClick()
                                         },
-                                        shape = RoundedCornerShape(24.dp),
-                                        contentPadding = PaddingValues(
-                                            horizontal = 32.dp,
-                                            vertical = 16.dp
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(52.dp)
+                                            .graphicsLayer {
+                                                scaleX = shuffleScale
+                                                scaleY = shuffleScale
+                                            },
+                                        shape = ButtonGroupDefaults.connectedTrailingButtonShapes().shape,
+                                        colors = ButtonDefaults.filledTonalButtonColors(
+                                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                                         ),
-                                        modifier = Modifier.fillMaxWidth()
+                                        contentPadding = PaddingValues(horizontal = 16.dp)
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Filled.Shuffle,
-                                            contentDescription = "Shuffle play",
-                                            modifier = Modifier.size(24.dp)
+                                            imageVector = RhythmIcons.Shuffle,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(20.dp)
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(
-                                            text = "Shuffle Play",
+                                            text = "Shuffle",
                                             style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.SemiBold
+                                            fontWeight = FontWeight.Medium
                                         )
                                     }
                                 }
@@ -724,14 +776,51 @@ fun ArtistBottomSheet(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Enhanced Action buttons row
+                    // Enhanced Action buttons row - Grouped button design
+                    var shufflePressed by remember { mutableStateOf(false) }
+                    var playAllPressed by remember { mutableStateOf(false) }
+                    
+                    val shuffleScale by animateFloatAsState(
+                        targetValue = if (shufflePressed) 0.96f else 1f,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium
+                        ),
+                        label = "shuffleScale"
+                    )
+                    
+                    val playAllScale by animateFloatAsState(
+                        targetValue = if (playAllPressed) 0.96f else 1f,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium
+                        ),
+                        label = "playAllScale"
+                    )
+                    
+                    LaunchedEffect(shufflePressed) {
+                        if (shufflePressed) {
+                            delay(150)
+                            shufflePressed = false
+                        }
+                    }
+                    
+                    LaunchedEffect(playAllPressed) {
+                        if (playAllPressed) {
+                            delay(150)
+                            playAllPressed = false
+                        }
+                    }
+                    
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                    // Play All button with proper queue management
+                        // Play All Button - Equal sizing with text
                         Button(
                             onClick = {
                                 HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                playAllPressed = true
                                 if (artistSongs.isNotEmpty()) {
                                     onPlayAll(artistSongs)
                                     scope.launch {
@@ -744,17 +833,24 @@ fun ArtistBottomSheet(
                                     }
                                 }
                             },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(52.dp)
+                                .graphicsLayer {
+                                    scaleX = playAllScale
+                                    scaleY = playAllScale
+                                },
+                            shape = ButtonGroupDefaults.connectedLeadingButtonShapes().shape,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary,
                                 contentColor = MaterialTheme.colorScheme.onPrimary
                             ),
-                            shape = RoundedCornerShape(28.dp),
-                            modifier = Modifier.weight(1f)
+                            contentPadding = PaddingValues(horizontal = 16.dp)
                         ) {
                             Icon(
                                 imageVector = RhythmIcons.Play,
                                 contentDescription = null,
-                                modifier = Modifier.size(25.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
@@ -763,13 +859,13 @@ fun ArtistBottomSheet(
                                 fontWeight = FontWeight.Bold
                             )
                         }
-
-                        // Shuffle button with proper queue management
-                        FilledIconButton(
+                        
+                        // Shuffle Button - Equal sizing with text
+                        FilledTonalButton(
                             onClick = {
                                 HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                shufflePressed = true
                                 if (artistSongs.isNotEmpty()) {
-                                    // Pass songs to be shuffled by viewModel (respects shuffle settings)
                                     onShufflePlay(artistSongs)
                                     scope.launch {
                                         sheetState.hide()
@@ -781,16 +877,30 @@ fun ArtistBottomSheet(
                                     }
                                 }
                             },
-                            colors = IconButtonDefaults.filledIconButtonColors(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(52.dp)
+                                .graphicsLayer {
+                                    scaleX = shuffleScale
+                                    scaleY = shuffleScale
+                                },
+                            shape = ButtonGroupDefaults.connectedTrailingButtonShapes().shape,
+                            colors = ButtonDefaults.filledTonalButtonColors(
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                             ),
-                            modifier = Modifier.size(48.dp)
+                            contentPadding = PaddingValues(horizontal = 16.dp)
                         ) {
                             Icon(
                                 imageVector = RhythmIcons.Shuffle,
-                                contentDescription = "Shuffle play",
-                                modifier = Modifier.size(24.dp)
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "Shuffle",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Medium
                             )
                         }
                     }
