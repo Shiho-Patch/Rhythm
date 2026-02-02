@@ -141,6 +141,8 @@ import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.util.M3ImageUtils
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
+import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
 
 // Experimental API opt-ins required for:
 // - Material3 SearchBar APIs (DockedSearchBar, SearchBarDefaults) - stable in Material3 1.4.0
@@ -1652,7 +1654,11 @@ fun SearchSongItem(
             M3ImageUtils.TrackImage(
                 imageUrl = song.artworkUri,
                 trackName = song.title,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(48.dp),
+                shape = rememberExpressiveShapeFor(
+                    ExpressiveShapeTarget.ALBUM_ART,
+                    fallbackShape = RoundedCornerShape(12.dp)
+                )
             )
             
             // Song info with reduced spacing and font sizes
@@ -1732,7 +1738,11 @@ fun SearchAlbumItem(
                 albumName = album.title,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(1f)
+                    .aspectRatio(1f),
+                shape = rememberExpressiveShapeFor(
+                    ExpressiveShapeTarget.ALBUM_ART,
+                    fallbackShape = RoundedCornerShape(20.dp)
+                )
             )
             
             Spacer(modifier = Modifier.height(8.dp))
@@ -1787,7 +1797,11 @@ fun SearchArtistItem(
                 artistName = artist.name,
                 modifier = Modifier
                     .size(96.dp)
-                    .padding(4.dp)
+                    .padding(4.dp),
+                shape = rememberExpressiveShapeFor(
+                    ExpressiveShapeTarget.ALBUM_ART,
+                    fallbackShape = CircleShape
+                )
             )
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -1872,7 +1886,10 @@ fun SearchPlaylistItem(
                     imageUrl = playlist.artworkUri,
                     playlistName = playlist.name,
                     modifier = Modifier.size(68.dp),
-                    shape = RoundedCornerShape(25.dp)
+                    shape = rememberExpressiveShapeFor(
+                        ExpressiveShapeTarget.ALBUM_ART,
+                        fallbackShape = RoundedCornerShape(25.dp)
+                    )
                 )
             } else {
                 // Placeholder when no artwork

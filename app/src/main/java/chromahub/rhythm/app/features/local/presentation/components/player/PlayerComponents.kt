@@ -73,6 +73,8 @@ import chromahub.rhythm.app.ui.theme.PlayerButtonColor
 import chromahub.rhythm.app.ui.theme.PlayerProgressColor
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.util.M3ImageUtils
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
+import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import java.util.concurrent.TimeUnit
@@ -533,6 +535,10 @@ fun MiniPlayer(
 
             if (useTabletLayout) {
                 // Tablet: Vertical layout for right-side positioning
+                val miniPlayerArtShape = rememberExpressiveShapeFor(
+                    ExpressiveShapeTarget.MINI_PLAYER,
+                    fallbackShape = RoundedCornerShape(miniPlayerCornerRadius.dp)
+                )
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -558,7 +564,7 @@ fun MiniPlayer(
                                     // Artwork inside the progress ring
                                     Surface(
                                         modifier = Modifier.size(if (isLargeHeight) 140.dp else 120.dp),
-                                        shape = RoundedCornerShape(miniPlayerCornerRadius.dp),
+                                        shape = miniPlayerArtShape,
                                         shadowElevation = 0.dp,
                                         tonalElevation = 2.dp,
                                         color = MaterialTheme.colorScheme.surfaceVariant
@@ -580,7 +586,7 @@ fun MiniPlayer(
                                 // Regular artwork without circular progress
                                 Surface(
                                     modifier = Modifier.size(if (isLargeHeight) 140.dp else 120.dp),
-                                    shape = RoundedCornerShape(miniPlayerCornerRadius.dp),
+                                    shape = miniPlayerArtShape,
                                     shadowElevation = 0.dp,
                                     tonalElevation = 2.dp,
                                     color = MaterialTheme.colorScheme.surfaceVariant
@@ -840,10 +846,14 @@ fun MiniPlayer(
             ) {
                 // Customizable album art with settings-driven size and corner radius
                 if (miniPlayerShowArtwork) {
+                    val miniPlayerArtShape = rememberExpressiveShapeFor(
+                        ExpressiveShapeTarget.MINI_PLAYER,
+                        fallbackShape = RoundedCornerShape(miniPlayerCornerRadius.dp)
+                    )
                     Surface(
                         modifier = Modifier
                             .size((if (isTablet) miniPlayerArtworkSize + 8 else miniPlayerArtworkSize).dp),
-                        shape = RoundedCornerShape(miniPlayerCornerRadius.dp),
+                        shape = miniPlayerArtShape,
                         shadowElevation = 0.dp, // Remove shadow as requested
                         tonalElevation = 2.dp, // Keep subtle tonal elevation for depth
                         color = MaterialTheme.colorScheme.surfaceVariant

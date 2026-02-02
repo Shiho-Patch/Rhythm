@@ -148,6 +148,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
@@ -183,6 +184,8 @@ import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog
 import chromahub.rhythm.app.features.local.presentation.components.player.MiniPlayer
 import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
+import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.BulkPlaylistExportDialog
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistImportDialog
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistOperationProgressDialog
@@ -3930,7 +3933,10 @@ fun LibrarySongItem(
         leadingContent = {
             Box {
                 Surface(
-                    shape = MaterialTheme.shapes.large,
+                    shape = rememberExpressiveShapeFor(
+                        ExpressiveShapeTarget.ALBUM_ART,
+                        fallbackShape = MaterialTheme.shapes.large
+                    ),
                     modifier = Modifier.size(56.dp),
                     border = if (isCurrentSong) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
                 ) {
@@ -4497,7 +4503,10 @@ fun PlaylistItem(
             // Stylish playlist artwork with collage
             Surface(
                 modifier = Modifier.size(72.dp),
-                shape = RoundedCornerShape(16.dp),
+                shape = rememberExpressiveShapeFor(
+                    ExpressiveShapeTarget.ALBUM_ART,
+                    fallbackShape = RoundedCornerShape(16.dp)
+                ),
                 tonalElevation = 0.dp,
                 color = MaterialTheme.colorScheme.primaryContainer,
                 shadowElevation = 0.dp
@@ -4779,6 +4788,10 @@ fun LibraryAlbumItem(
     haptics: androidx.compose.ui.hapticfeedback.HapticFeedback // Add haptics parameter
 ) {
     val context = LocalContext.current
+    val artworkShape = rememberExpressiveShapeFor(
+        ExpressiveShapeTarget.ALBUM_ART,
+        fallbackShape = RoundedCornerShape(18.dp)
+    )
     
     Surface(
         onClick = {
@@ -4802,7 +4815,7 @@ fun LibraryAlbumItem(
             // Enhanced album artwork
             Surface(
                 modifier = Modifier.size(68.dp),
-                shape = RoundedCornerShape(18.dp),
+                shape = artworkShape,
                 tonalElevation = 0.dp,
                 color = MaterialTheme.colorScheme.secondaryContainer
             ) {
@@ -4819,7 +4832,8 @@ fun LibraryAlbumItem(
                         M3ImageUtils.AlbumArt(
                             imageUrl = album.artworkUri,
                             albumName = album.title,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize(),
+                            shape = artworkShape
                         )
                     } else {
                         Icon(
@@ -5140,7 +5154,10 @@ fun PlaylistGridItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f),
-                shape = RoundedCornerShape(16.dp),
+                shape = rememberExpressiveShapeFor(
+                    ExpressiveShapeTarget.ALBUM_ART,
+                    fallbackShape = RoundedCornerShape(16.dp)
+                ),
                 tonalElevation = 0.dp,
                 color = MaterialTheme.colorScheme.secondaryContainer
             ) {
@@ -5256,7 +5273,10 @@ fun AlbumGridItem(
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(1f),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = rememberExpressiveShapeFor(
+                        ExpressiveShapeTarget.ALBUM_ART,
+                        fallbackShape = RoundedCornerShape(16.dp)
+                    ),
                     tonalElevation = 0.dp,
                     color = MaterialTheme.colorScheme.secondaryContainer
                 ) {
@@ -5766,6 +5786,7 @@ private fun ArtistGridCard(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val artworkShape = rememberExpressiveShapeFor(ExpressiveShapeTarget.ALBUM_ART)
     
     Card(
         onClick = onClick,
@@ -5785,15 +5806,16 @@ private fun ArtistGridCard(
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Artist image with play button overlay
+            // Artist image with expressive shape container
             Box(
-                modifier = Modifier.size(120.dp)
+                modifier = Modifier.size(140.dp)
             ) {
-                // Artist image with expressive shape from settings
                 M3ImageUtils.ArtistImage(
                     imageUrl = artist.artworkUri,
                     artistName = artist.name,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    shape = artworkShape
                 )
                 
                 // Play button overlay positioned at bottom right
@@ -5915,6 +5937,7 @@ private fun ArtistListCard(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val artworkShape = rememberExpressiveShapeFor(ExpressiveShapeTarget.ALBUM_ART)
 
     Card(
         onClick = onClick,
@@ -5922,7 +5945,7 @@ private fun ArtistListCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 0.dp,
             pressedElevation = 0.dp
@@ -5934,11 +5957,13 @@ private fun ArtistListCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Artist image with expressive shape from settings
+            // Artist image with expressive shape
             M3ImageUtils.ArtistImage(
                 imageUrl = artist.artworkUri,
                 artistName = artist.name,
-                modifier = Modifier.size(64.dp)
+                modifier = Modifier
+                    .size(90.dp),
+                shape = artworkShape
             )
 
             Spacer(modifier = Modifier.width(16.dp))

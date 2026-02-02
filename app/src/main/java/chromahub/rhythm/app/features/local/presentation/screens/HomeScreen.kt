@@ -184,6 +184,8 @@ import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveLarg
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveCard
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveElevatedCard
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapes
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
+import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButtonGroup
 import chromahub.rhythm.app.shared.presentation.components.common.ButtonGroupStyle
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGroupButton
@@ -1726,7 +1728,8 @@ private fun ModernRecentSongCard(
             M3ImageUtils.TrackImage(
                 imageUrl = song.artworkUri,
                 trackName = song.title,
-                modifier = Modifier.size(52.dp)
+                modifier = Modifier.size(52.dp),
+                shape = rememberExpressiveShapeFor(ExpressiveShapeTarget.ALBUM_ART)
             )
             
             Spacer(modifier = Modifier.width(12.dp))
@@ -2092,7 +2095,8 @@ private fun androidx.compose.material3.carousel.CarouselItemScope.HeroCarouselCa
             M3ImageUtils.AlbumArt(
                 imageUrl = album.artworkUri,
                 albumName = album.title,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                shape = MaterialTheme.shapes.extraLarge
             )
             
             // Enhanced gradient overlays for better text readability
@@ -2332,7 +2336,8 @@ private fun ModernArtistCard(
             M3ImageUtils.ArtistImage(
                 imageUrl = artist.artworkUri,
                 artistName = artist.name,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                shape = rememberExpressiveShapeFor(ExpressiveShapeTarget.ALBUM_ART)
             )
             
             ExpressiveFilledIconButton(
@@ -2435,7 +2440,8 @@ private fun ModernAlbumCard(
                     albumName = album.title,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(1f)
+                        .aspectRatio(1f),
+                    shape = rememberExpressiveShapeFor(ExpressiveShapeTarget.ALBUM_ART)
                 )
                 
                 // Play button overlay
@@ -2589,7 +2595,8 @@ private fun ModernSongCard(
                     M3ImageUtils.TrackImage(
                         imageUrl = song.artworkUri,
                         trackName = song.title,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        shape = rememberExpressiveShapeFor(ExpressiveShapeTarget.ALBUM_ART)
                     )
                 }
             }
@@ -3262,7 +3269,8 @@ private fun RecommendedSongItem(
         M3ImageUtils.TrackImage(
             imageUrl = song.artworkUri,
             trackName = song.title,
-            modifier = Modifier.size(52.dp)
+            modifier = Modifier.size(52.dp),
+            shape = rememberExpressiveShapeFor(ExpressiveShapeTarget.ALBUM_ART)
         )
         
         Spacer(modifier = Modifier.width(16.dp))

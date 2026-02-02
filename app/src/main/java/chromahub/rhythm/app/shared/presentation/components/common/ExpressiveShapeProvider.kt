@@ -49,21 +49,31 @@ fun RoundedPolygon.toComposeShape(): Shape {
             density: Density
         ): Outline {
             val path = this@toComposeShape.toPath().asComposePath()
-            
-            // The MaterialShapes are normalized to [-1, 1] so we need to scale them
+
+            // Scale and center the path to fit the target size.
+            // MaterialShapes polygons are not guaranteed to be in [-1, 1] space, so
+            // derive scaling from actual path bounds to avoid under-sizing.
+            val bounds = path.getBounds()
             val matrix = Matrix()
-            
-            // Scale to fit the target size
-            val scale = minOf(size.width, size.height) / 2f
-            
-            // Center the shape
-            matrix.translate(size.width / 2f, size.height / 2f)
-            matrix.scale(scale, scale)
-            
+
+            // Use non-uniform scaling so wide/tall shapes (e.g. Pill/Oval/Arch) still
+            // reach the container edges and don't look "too small" when used in square slots.
+            val scaleX = size.width / (bounds.width.takeIf { it > 0f } ?: 1f)
+            val scaleY = size.height / (bounds.height.takeIf { it > 0f } ?: 1f)
+
+            val scaledWidth = bounds.width * scaleX
+            val scaledHeight = bounds.height * scaleY
+            val translateX = (size.width - scaledWidth) / 2f - bounds.left * scaleX
+            val translateY = (size.height - scaledHeight) / 2f - bounds.top * scaleY
+
+            // Scale first, then translate in unscaled space.
+            matrix.scale(scaleX, scaleY)
+            matrix.translate(translateX / scaleX, translateY / scaleY)
+
             val scaledPath = Path()
             scaledPath.addPath(path)
             scaledPath.transform(matrix)
-            
+
             return Outline.Generic(scaledPath)
         }
     }

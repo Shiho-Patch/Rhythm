@@ -51,6 +51,8 @@ import kotlinx.coroutines.delay
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.shared.presentation.components.common.PlaybackBufferingLoader
 import androidx.compose.material3.ExperimentalMaterial3Api
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
+import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
 
 /**
  * A composable that displays a looping video player for Spotify Canvas videos with enhanced performance
@@ -516,7 +518,12 @@ fun CanvasPlayer(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .clip(RoundedCornerShape(cornerRadius))
+                    .clip(
+                        rememberExpressiveShapeFor(
+                            ExpressiveShapeTarget.ALBUM_ART,
+                            fallbackShape = RoundedCornerShape(cornerRadius)
+                        )
+                    )
             ) {
                 if (albumArtUrl != null) {
                     // Show album art with loading state and gradients
@@ -525,7 +532,10 @@ fun CanvasPlayer(
                             imageUrl = albumArtUrl,
                             albumName = albumName,
                             modifier = Modifier.fillMaxSize(),
-                            shape = RoundedCornerShape(cornerRadius)
+                            shape = rememberExpressiveShapeFor(
+                                ExpressiveShapeTarget.ALBUM_ART,
+                                fallbackShape = RoundedCornerShape(cornerRadius)
+                            )
                         )
                         
                         // Add gradient overlays to album art for consistency with canvas (controlled by setting)

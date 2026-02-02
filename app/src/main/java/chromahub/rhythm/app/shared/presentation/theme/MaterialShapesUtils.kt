@@ -168,19 +168,17 @@ fun RoundedPolygon.toComposeShape(): Shape {
             val matrix = Matrix()
             val bounds = path.getBounds()
             
-            // Calculate scale to fit
-            val scaleX = size.width / (bounds.width.takeIf { it > 0 } ?: 1f)
-            val scaleY = size.height / (bounds.height.takeIf { it > 0 } ?: 1f)
-            val scale = minOf(scaleX, scaleY)
+            // Non-uniform scaling so non-square shapes still fit the target bounds.
+            val scaleX = size.width / (bounds.width.takeIf { it > 0f } ?: 1f)
+            val scaleY = size.height / (bounds.height.takeIf { it > 0f } ?: 1f)
             
-            // Translate to center after scaling
-            val scaledWidth = bounds.width * scale
-            val scaledHeight = bounds.height * scale
-            val translateX = (size.width - scaledWidth) / 2f - bounds.left * scale
-            val translateY = (size.height - scaledHeight) / 2f - bounds.top * scale
+            val scaledWidth = bounds.width * scaleX
+            val scaledHeight = bounds.height * scaleY
+            val translateX = (size.width - scaledWidth) / 2f - bounds.left * scaleX
+            val translateY = (size.height - scaledHeight) / 2f - bounds.top * scaleY
             
-            matrix.scale(scale, scale)
-            matrix.translate(translateX / scale, translateY / scale)
+            matrix.scale(scaleX, scaleY)
+            matrix.translate(translateX / scaleX, translateY / scaleY)
             
             val scaledPath = Path()
             scaledPath.addPath(path)
