@@ -43,6 +43,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -62,6 +64,9 @@ import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.FloatingToolbarDefaults.ScreenOffset
 import androidx.compose.material3.FloatingToolbarExitDirection.Companion.Bottom
+import androidx.compose.material3.ButtonGroupDefaults
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -102,6 +107,7 @@ import chromahub.rhythm.app.features.local.presentation.components.dialogs.Playl
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.PlaylistOperationResultDialog
 import chromahub.rhythm.app.util.PlaylistImportExportUtils
 import android.net.Uri
+import android.widget.Toast
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
@@ -126,6 +132,13 @@ import androidx.compose.runtime.collectAsState
 import chromahub.rhythm.app.features.local.presentation.components.player.PlayingEqIcon
 import androidx.compose.ui.graphics.Color
 import androidx.room.util.copy
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Share
 
 // Playlist sort order enum
 enum class PlaylistSortOrder {
@@ -160,7 +173,13 @@ fun PlaylistDetailScreen(
     onExportPlaylistToCustomLocation: ((PlaylistImportExportUtils.PlaylistExportFormat, Uri) -> Unit)? = null,
     onImportPlaylist: ((Uri, (Result<String>) -> Unit, (() -> Unit)?) -> Unit)? = null,
     onReorderSongs: ((Int, Int) -> Unit)? = null,
-    onUpdatePlaylistSongs: ((List<Song>) -> Unit)? = null
+    onUpdatePlaylistSongs: ((List<Song>) -> Unit)? = null,
+    onPlayNext: (Song) -> Unit = {},
+    onAddToQueue: (Song) -> Unit = {},
+    onToggleFavorite: (Song) -> Unit = {},
+    onGoToAlbum: (Song) -> Unit = {},
+    onGoToArtist: (Song) -> Unit = {},
+    onShare: (Song) -> Unit = {}
 ) {
     // Screen size detection for responsive UI
     val configuration = LocalConfiguration.current
@@ -190,6 +209,14 @@ fun PlaylistDetailScreen(
     var selectedSongForQueue by remember { mutableStateOf<Song?>(null) }
     var isReorderMode by remember { mutableStateOf(false) }
     var showSortMenu by remember { mutableStateOf(false) }
+    
+    // Song options bottom sheet
+    var showSongOptionsSheet by remember { mutableStateOf(false) }
+    var selectedSongForOptions by remember { mutableStateOf<Song?>(null) }
+    var selectedSongForPlaylistAdd by remember { mutableStateOf<Song?>(null) }
+    var showPlaylistSelector by remember { mutableStateOf(false) }
+    var selectedSongForInfo by remember { mutableStateOf<Song?>(null) }
+    var showSongInfo by remember { mutableStateOf(false) }
     
     // Multi-select mode state
     var isMultiSelectMode by remember { mutableStateOf(false) }
@@ -577,6 +604,51 @@ fun PlaylistDetailScreen(
             message = message,
             isError = isError,
             onDismiss = { operationResult = null }
+        )
+    }
+    
+    // Song Options Bottom Sheet - matching search screen
+    if (showSongOptionsSheet && selectedSongForOptions != null) {
+        PlaylistSongOptionsBottomSheet(
+            song = selectedSongForOptions!!,
+            onDismiss = { showSongOptionsSheet = false },
+            onRemoveFromPlaylist = {
+                onRemoveSong(selectedSongForOptions!!, "Removed ${selectedSongForOptions!!.title} from playlist")
+                showSongOptionsSheet = false
+            },
+            onPlayNext = {
+                onPlayNext(selectedSongForOptions!!)
+                showSongOptionsSheet = false
+                Toast.makeText(context, "${selectedSongForOptions!!.title} will play next", Toast.LENGTH_SHORT).show()
+            },
+            onAddToQueue = {
+                onAddToQueue(selectedSongForOptions!!)
+                showSongOptionsSheet = false
+                Toast.makeText(context, "${selectedSongForOptions!!.title} added to queue", Toast.LENGTH_SHORT).show()
+            },
+            onAddToPlaylist = {
+                selectedSongForPlaylistAdd = selectedSongForOptions
+                showPlaylistSelector = true
+                showSongOptionsSheet = false
+            },
+            onShowSongInfo = {
+                selectedSongForInfo = selectedSongForOptions
+                showSongInfo = true
+                showSongOptionsSheet = false
+            },
+            onGoToAlbum = {
+                onGoToAlbum(selectedSongForOptions!!)
+                showSongOptionsSheet = false
+            },
+            onGoToArtist = {
+                onGoToArtist(selectedSongForOptions!!)
+                showSongOptionsSheet = false
+            },
+            onShare = {
+                onShare(selectedSongForOptions!!)
+                showSongOptionsSheet = false
+            },
+            haptics = haptics
         )
     }
 
@@ -1279,7 +1351,7 @@ fun PlaylistDetailScreen(
                             .fillMaxSize()
                             .nestedScroll(exitAlwaysScrollBehavior),
                         contentPadding = PaddingValues(
-                            top = 8.dp,
+                            top = 16.dp,
                             bottom = 20.dp
                         )
                     ) {
@@ -1328,6 +1400,117 @@ fun PlaylistDetailScreen(
                                         }
                                     }
                                 )
+                            }
+                            
+                            // Button Group for Play All and Shuffle (Tablet)
+                            var shufflePressed by remember { mutableStateOf(false) }
+                            var playAllPressed by remember { mutableStateOf(false) }
+                            
+                            val shuffleScale by animateFloatAsState(
+                                targetValue = if (shufflePressed) 0.96f else 1f,
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessMedium
+                                ),
+                                label = "shuffleScale"
+                            )
+                            
+                            val playAllScale by animateFloatAsState(
+                                targetValue = if (playAllPressed) 0.96f else 1f,
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessMedium
+                                ),
+                                label = "playAllScale"
+                            )
+                            
+                            LaunchedEffect(shufflePressed) {
+                                if (shufflePressed) {
+                                    delay(150)
+                                    shufflePressed = false
+                                }
+                            }
+                            
+                            LaunchedEffect(playAllPressed) {
+                                if (playAllPressed) {
+                                    delay(150)
+                                    playAllPressed = false
+                                }
+                            }
+                            
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 12.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                // Play All Button - Equal sizing with text
+                                Button(
+                                    onClick = {
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        playAllPressed = true
+                                        onPlayAll()
+                                    },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(52.dp)
+                                        .graphicsLayer {
+                                            scaleX = playAllScale
+                                            scaleY = playAllScale
+                                        },
+                                    shape = ButtonGroupDefaults.connectedLeadingButtonShapes().shape,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 16.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = RhythmIcons.Play,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        "Play All",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                
+                                // Shuffle Button - Equal sizing with text
+                                FilledTonalButton(
+                                    onClick = {
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        shufflePressed = true
+                                        onShufflePlay()
+                                    },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(52.dp)
+                                        .graphicsLayer {
+                                            scaleX = shuffleScale
+                                            scaleY = shuffleScale
+                                        },
+                                    shape = ButtonGroupDefaults.connectedTrailingButtonShapes().shape,
+                                    colors = ButtonDefaults.filledTonalButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 16.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = RhythmIcons.Shuffle,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        "Shuffle",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
                             }
                             }
                         }
@@ -1436,7 +1619,7 @@ fun PlaylistDetailScreen(
                                                 }
                                             }
                                         },
-                                        onRemove = if (isReorderMode || isMultiSelectMode) null else { message -> onRemoveSong(song, message) },
+                                        onRemove = { message -> onRemoveSong(song, message) },
                                         currentSong = currentSong,
                                         isPlaying = isPlaying,
                                         useHoursFormat = useHoursFormat,
@@ -1456,7 +1639,11 @@ fun PlaylistDetailScreen(
                                             }
                                         } else null,
                                         isMultiSelectMode = isMultiSelectMode,
-                                        isSelected = selectedSongs.contains(song.id)
+                                        isSelected = selectedSongs.contains(song.id),
+                                        onMoreClick = {
+                                            selectedSongForOptions = song
+                                            showSongOptionsSheet = true
+                                        }
                                     )
                                 }
                             }
@@ -1471,207 +1658,32 @@ fun PlaylistDetailScreen(
                 HorizontalFloatingToolbar(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(horizontal = 24.dp)
-                        .padding(bottom = (LocalMiniPlayerPadding.current.calculateBottomPadding() + 20.dp).coerceAtLeast(80.dp))
+                        .padding(horizontal = 20.dp)
+                        .padding(bottom = 8.dp)
                         .offset(y = -ScreenOffset),
                     expanded = true,
                     content = {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                .padding(6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Left side buttons group
+                            // Left side - Search button
                             Row(
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                horizontalArrangement = Arrangement.Start,
                                 modifier = Modifier.weight(1f)
                             ) {
-                                // Add Songs button
-                                var addPressed by remember { mutableStateOf(false) }
-                                val addScale by animateFloatAsState(
-                                    targetValue = if (addPressed) 0.92f else 1f,
-                                    animationSpec = spring(dampingRatio = Spring.DampingRatioHighBouncy),
-                                    label = "addScale"
-                                )
-                                LaunchedEffect(addPressed) {
-                                    if (addPressed) {
-                                        delay(120)
-                                        addPressed = false
-                                    }
-                                }
-                                FilledIconButton(
-                                    onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                        onAddSongsToPlaylist()
-                                        addPressed = true
-                                    },
-                                    modifier = Modifier
-                                        .size(48.dp)
-                                        .graphicsLayer {
-                                            scaleX = addScale
-                                            scaleY = addScale
-                                        },
-                                    colors = IconButtonDefaults.filledIconButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                ) {
-                                    Icon(
-                                        imageVector = RhythmIcons.Add,
-                                        contentDescription = "Add songs",
-                                        modifier = Modifier.size(26.dp)
-                                    )
-                                }
-                                
-                                // Delete/Select Songs button
-                                var deletePressed by remember { mutableStateOf(false) }
-                                val deleteScale by animateFloatAsState(
-                                        targetValue = if (deletePressed) 0.92f else 1f,
-                                        animationSpec = spring(dampingRatio = Spring.DampingRatioHighBouncy),
-                                        label = "deleteScale"
-                                    )
-                                    LaunchedEffect(deletePressed) {
-                                        if (deletePressed) {
-                                            delay(120)
-                                            deletePressed = false
-                                        }
-                                    }
-                                    FilledIconButton(
-                                        onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                            isMultiSelectMode = !isMultiSelectMode
-                                            if (isMultiSelectMode) {
-                                                isReorderMode = false
-                                            } else {
-                                                selectedSongs = emptySet()
-                                            }
-                                            deletePressed = true
-                                        },
-                                        modifier = Modifier
-                                            .size(48.dp)
-                                            .graphicsLayer {
-                                                scaleX = deleteScale
-                                                scaleY = deleteScale
-                                            },
-                                        colors = IconButtonDefaults.filledIconButtonColors(
-                                            containerColor = if (isMultiSelectMode) 
-                                                MaterialTheme.colorScheme.errorContainer
-                                            else 
-                                                MaterialTheme.colorScheme.secondaryContainer,
-                                            contentColor = if (isMultiSelectMode) 
-                                                MaterialTheme.colorScheme.onErrorContainer
-                                            else 
-                                                MaterialTheme.colorScheme.onSecondaryContainer
-                                        )
-                                    ) {
-                                        Icon(
-                                            imageVector = if (isMultiSelectMode) Icons.Default.Close else Icons.Default.CheckBox,
-                                            contentDescription = if (isMultiSelectMode) "Cancel selection" else "Select songs",
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                    }
-                            }
-                            
-                            // Center Play All button (pill-shaped)
-                            var playPressed by remember { mutableStateOf(false) }
-                            val playScale by animateFloatAsState(
-                                targetValue = if (playPressed) 0.92f else 1f,
-                                animationSpec = spring(dampingRatio = Spring.DampingRatioHighBouncy),
-                                label = "playScale"
-                            )
-                            LaunchedEffect(playPressed) {
-                                if (playPressed) {
-                                    delay(120)
-                                    playPressed = false
-                                }
-                            }
-                            Button(
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                    onPlayAll()
-                                    playPressed = true
-                                },
-                                modifier = Modifier
-                                    .weight(1.5f)
-                                    .height(56.dp)
-                                    .graphicsLayer {
-                                        scaleX = playScale
-                                        scaleY = playScale
-                                    },
-                                shape = RoundedCornerShape(28.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary,
-                                    contentColor = MaterialTheme.colorScheme.onPrimary
-                                ),
-                                contentPadding = PaddingValues(horizontal = 20.dp)
-                            ) {
-                                Icon(
-                                    imageVector = RhythmIcons.Play,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Play All",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                            
-                            // Right side buttons group
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                // Shuffle button
-                                var shufflePressed by remember { mutableStateOf(false) }
-                                val shuffleScale by animateFloatAsState(
-                                    targetValue = if (shufflePressed) 0.92f else 1f,
-                                    animationSpec = spring(dampingRatio = Spring.DampingRatioHighBouncy),
-                                    label = "shuffleScale"
-                                )
-                                LaunchedEffect(shufflePressed) {
-                                    if (shufflePressed) {
-                                        delay(120)
-                                        shufflePressed = false
-                                    }
-                                }
-                                FilledIconButton(
-                                    onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                        onShufflePlay()
-                                        shufflePressed = true
-                                    },
-                                    modifier = Modifier
-                                        .size(48.dp)
-                                        .graphicsLayer {
-                                            scaleX = shuffleScale
-                                            scaleY = shuffleScale
-                                        },
-                                    colors = IconButtonDefaults.filledIconButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                    )
-                                ) {
-                                    Icon(
-                                        imageVector = RhythmIcons.Shuffle,
-                                        contentDescription = "Shuffle",
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-                                
-                                // Search button
                                 var searchPressed by remember { mutableStateOf(false) }
                                 val searchScale by animateFloatAsState(
                                     targetValue = if (searchPressed) 0.92f else 1f,
-                                    animationSpec = spring(dampingRatio = Spring.DampingRatioHighBouncy),
+                                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
                                     label = "searchScale"
                                 )
                                 LaunchedEffect(searchPressed) {
                                     if (searchPressed) {
-                                        delay(120)
+                                        delay(100)
                                         searchPressed = false
                                     }
                                 }
@@ -1708,6 +1720,106 @@ fun PlaylistDetailScreen(
                                     )
                                 }
                             }
+                            
+                            // Center - Add Songs button (Primary)
+                            var addPressed by remember { mutableStateOf(false) }
+                            val addScale by animateFloatAsState(
+                                targetValue = if (addPressed) 0.94f else 1f,
+                                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                                label = "addScale"
+                            )
+                            LaunchedEffect(addPressed) {
+                                if (addPressed) {
+                                    delay(120)
+                                    addPressed = false
+                                }
+                            }
+                            Button(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    onAddSongsToPlaylist()
+                                    addPressed = true
+                                },
+                                modifier = Modifier
+                                    .weight(1.2f)
+                                    .height(48.dp)
+                                    .graphicsLayer {
+                                        scaleX = addScale
+                                        scaleY = addScale
+                                    },
+                                shape = RoundedCornerShape(24.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                ),
+                                contentPadding = PaddingValues(horizontal = 16.dp)
+                            ) {
+                                Icon(
+                                    imageVector = RhythmIcons.Add,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Add",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            
+                            // Right side - Select button
+                            Row(
+                                horizontalArrangement = Arrangement.End,
+                                modifier = Modifier.weight(1f),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                var selectPressed by remember { mutableStateOf(false) }
+                                val selectScale by animateFloatAsState(
+                                    targetValue = if (selectPressed) 0.92f else 1f,
+                                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                                    label = "selectScale"
+                                )
+                                LaunchedEffect(selectPressed) {
+                                    if (selectPressed) {
+                                        delay(100)
+                                        selectPressed = false
+                                    }
+                                }
+                                FilledIconButton(
+                                    onClick = {
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                        isMultiSelectMode = !isMultiSelectMode
+                                        if (isMultiSelectMode) {
+                                            isReorderMode = false
+                                        } else {
+                                            selectedSongs = emptySet()
+                                        }
+                                        selectPressed = true
+                                    },
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .graphicsLayer {
+                                            scaleX = selectScale
+                                            scaleY = selectScale
+                                        },
+                                    colors = IconButtonDefaults.filledIconButtonColors(
+                                        containerColor = if (isMultiSelectMode) 
+                                            MaterialTheme.colorScheme.errorContainer
+                                        else 
+                                            MaterialTheme.colorScheme.secondaryContainer,
+                                        contentColor = if (isMultiSelectMode) 
+                                            MaterialTheme.colorScheme.onErrorContainer
+                                        else 
+                                            MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
+                                ) {
+                                    Icon(
+                                        imageVector = if (isMultiSelectMode) Icons.Default.Close else Icons.Default.CheckBox,
+                                        contentDescription = if (isMultiSelectMode) "Cancel selection" else "Select songs",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
                         }
                     },
                     scrollBehavior = exitAlwaysScrollBehavior
@@ -1737,6 +1849,7 @@ fun PlaylistDetailScreen(
                 }
             }
 
+            // LazyColumn - placed first so sticky header appears on top
             LazyColumn(
                 state = listState,
                 modifier = Modifier
@@ -1744,58 +1857,10 @@ fun PlaylistDetailScreen(
                     .padding(horizontal = 16.dp)
                     .nestedScroll(exitAlwaysScrollBehavior),
                 contentPadding = PaddingValues(
+                    top = if (playlist.songs.isNotEmpty()) 90.dp else 16.dp,
                     bottom = (LocalMiniPlayerPadding.current.calculateBottomPadding() + 20.dp).coerceAtLeast(120.dp)
                 )
             ) {
-            // Removed playlist artwork and action buttons - now in floating toolbar
-
-                item {
-                    Column {
-                    AnimatedVisibility(
-                        visible = showSearchBar,
-                        enter = expandVertically(
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessMedium
-                            )
-                        ) + fadeIn(
-                            animationSpec = tween(durationMillis = 300)
-                        ),
-                        exit = shrinkVertically(
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessMedium
-                            )
-                        ) + fadeOut(
-                            animationSpec = tween(durationMillis = 200)
-                        )
-                    ) {
-                        OutlinedTextField(
-                            value = searchQuery,
-                            onValueChange = { searchQuery = it },
-                            label = { Text("Search songs") },
-                            singleLine = true,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            shape = RoundedCornerShape(24.dp),
-                            trailingIcon = {
-                                if (searchQuery.isNotEmpty()) {
-                                    IconButton(onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                        searchQuery = ""
-                                    }) {
-                                        Icon(
-                                            imageVector = RhythmIcons.Close,
-                                            contentDescription = "Clear search"
-                                        )
-                                    }
-                                }
-                            }
-                        )
-                    }
-                    }
-                }
 
                 // Song count and total time header
                 if (filteredSongs.isNotEmpty()) {
@@ -2092,7 +2157,7 @@ fun PlaylistDetailScreen(
                                         }
                                     }
                                 },
-                                onRemove = if (isReorderMode || isMultiSelectMode) null else { message -> onRemoveSong(song, message) },
+                                onRemove = { message -> onRemoveSong(song, message) },
                                 currentSong = currentSong,
                                 isPlaying = isPlaying,
                                 useHoursFormat = useHoursFormat,
@@ -2112,7 +2177,11 @@ fun PlaylistDetailScreen(
                                     }
                                 } else null,
                                 isMultiSelectMode = isMultiSelectMode,
-                                isSelected = selectedSongs.contains(song.id)
+                                isSelected = selectedSongs.contains(song.id),
+                                onMoreClick = {
+                                    selectedSongForOptions = song
+                                    showSongOptionsSheet = true
+                                }
                             )
                         }
                     }
@@ -2122,14 +2191,200 @@ fun PlaylistDetailScreen(
                 }
             }
             
-            // Floating Toolbar with hide on scroll
+            // Sticky header section for search and play/shuffle buttons - layered on top
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(horizontal = 16.dp)
+                    .graphicsLayer { 
+                        shadowElevation = 4f
+                        clip = false
+                    }
+            ) {
+                AnimatedVisibility(
+                    visible = showSearchBar,
+                    enter = expandVertically(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium
+                        )
+                    ) + fadeIn(
+                        animationSpec = tween(durationMillis = 300)
+                    ),
+                    exit = shrinkVertically(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium
+                        )
+                    ) + fadeOut(
+                        animationSpec = tween(durationMillis = 200)
+                    )
+                ) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        label = { Text("Search songs") },
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    searchQuery = ""
+                                }) {
+                                    Icon(
+                                        imageVector = RhythmIcons.Close,
+                                        contentDescription = "Clear search"
+                                    )
+                                }
+                            }
+                        }
+                    )
+                }
+                
+                // Button Group for Play All and Shuffle - Sticky (hidden when empty)
+                AnimatedVisibility(
+                    visible = playlist.songs.isNotEmpty(),
+                    enter = expandVertically(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium
+                        )
+                    ) + fadeIn(
+                        animationSpec = tween(durationMillis = 300)
+                    ),
+                    exit = shrinkVertically(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium
+                        )
+                    ) + fadeOut(
+                        animationSpec = tween(durationMillis = 200)
+                    )
+                ) {
+                var shufflePressed by remember { mutableStateOf(false) }
+                var playAllPressed by remember { mutableStateOf(false) }
+                
+                val shuffleScale by animateFloatAsState(
+                    targetValue = if (shufflePressed) 0.96f else 1f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    ),
+                    label = "shuffleScale"
+                )
+                
+                val playAllScale by animateFloatAsState(
+                    targetValue = if (playAllPressed) 0.96f else 1f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    ),
+                    label = "playAllScale"
+                )
+                
+                LaunchedEffect(shufflePressed) {
+                    if (shufflePressed) {
+                        delay(150)
+                        shufflePressed = false
+                    }
+                }
+                
+                LaunchedEffect(playAllPressed) {
+                    if (playAllPressed) {
+                        delay(150)
+                        playAllPressed = false
+                    }
+                }
+                
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    // Play All Button - Equal sizing with text
+                    Button(
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            playAllPressed = true
+                            onPlayAll()
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(52.dp)
+                            .graphicsLayer {
+                                scaleX = playAllScale
+                                scaleY = playAllScale
+                            },
+                        shape = ButtonGroupDefaults.connectedLeadingButtonShapes().shape,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        contentPadding = PaddingValues(horizontal = 16.dp)
+                    ) {
+                        Icon(
+                            imageVector = RhythmIcons.Play,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Play All",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    
+                    // Shuffle Button - Equal sizing with text
+                    FilledTonalButton(
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            shufflePressed = true
+                            onShufflePlay()
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(52.dp)
+                            .graphicsLayer {
+                                scaleX = shuffleScale
+                                scaleY = shuffleScale
+                            },
+                        shape = ButtonGroupDefaults.connectedTrailingButtonShapes().shape,
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        ),
+                        contentPadding = PaddingValues(horizontal = 16.dp)
+                    ) {
+                        Icon(
+                            imageVector = RhythmIcons.Shuffle,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Shuffle",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+                }
+            }
+            
+            // Floating Toolbar with hide on scroll - Redesigned with Add in center
             if (playlist.songs.isNotEmpty()) {
-                val isDefault = playlist.id == "1" || playlist.id == "2" || playlist.id == "3"
                 HorizontalFloatingToolbar(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(horizontal = 16.dp)
-                        .padding(bottom = (LocalMiniPlayerPadding.current.calculateBottomPadding() + 20.dp).coerceAtLeast(80.dp))
+                        .padding(bottom = LocalMiniPlayerPadding.current.calculateBottomPadding() + 12.dp)
                         .offset(y = -ScreenOffset),
                     expanded = true,
                     content = {
@@ -2137,237 +2392,156 @@ fun PlaylistDetailScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(6.dp),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Left side buttons group
-                            Surface(
-                                shape = RoundedCornerShape(100.dp),
-                                color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(2.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(4.dp)
-                                ) {
-                                    // Add Songs button
-                                    var addPressed by remember { mutableStateOf(false) }
-                                    val addScale by animateFloatAsState(
-                                        targetValue = if (addPressed) 0.90f else 1f,
-                                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-                                        label = "addScale"
-                                    )
-                                    LaunchedEffect(addPressed) {
-                                        if (addPressed) {
-                                            delay(100)
-                                            addPressed = false
-                                        }
-                                    }
-                                    IconButton(
-                                        onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                            onAddSongsToPlaylist()
-                                            addPressed = true
-                                        },
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .aspectRatio(1f)
-                                            .graphicsLayer {
-                                                scaleX = addScale
-                                                scaleY = addScale
-                                            }
-                                    ) {
-                                        Icon(
-                                            imageVector = RhythmIcons.Add,
-                                            contentDescription = "Add songs",
-                                            modifier = Modifier.size(24.dp),
-                                            tint = MaterialTheme.colorScheme.onSurface
-                                        )
-                                    }
-                                    
-                                    // Delete/Select Songs button
-                                    var deletePressed by remember { mutableStateOf(false) }
-                                    val deleteScale by animateFloatAsState(
-                                            targetValue = if (deletePressed) 0.90f else 1f,
-                                            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-                                            label = "deleteScale"
-                                        )
-                                        LaunchedEffect(deletePressed) {
-                                            if (deletePressed) {
-                                                delay(100)
-                                                deletePressed = false
-                                            }
-                                        }
-                                        IconButton(
-                                            onClick = {
-                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                                isMultiSelectMode = !isMultiSelectMode
-                                                if (isMultiSelectMode) {
-                                                    isReorderMode = false
-                                                } else {
-                                                    selectedSongs = emptySet()
-                                                }
-                                                deletePressed = true
-                                            },
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .aspectRatio(1f)
-                                                .graphicsLayer {
-                                                    scaleX = deleteScale
-                                                    scaleY = deleteScale
-                                                }
-                                        ) {
-                                            Icon(
-                                                imageVector = if (isMultiSelectMode) Icons.Default.Close else Icons.Default.CheckBox,
-                                                contentDescription = if (isMultiSelectMode) "Cancel selection" else "Select songs",
-                                                modifier = Modifier.size(22.dp),
-                                                tint = if (isMultiSelectMode) 
-                                                    MaterialTheme.colorScheme.error
-                                                else 
-                                                    MaterialTheme.colorScheme.onSurface
-                                            )
-                                        }
+                            // Left: Remove button
+                            var removePressed by remember { mutableStateOf(false) }
+                            val removeScale by animateFloatAsState(
+                                targetValue = if (removePressed) 0.88f else 1f,
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessMedium
+                                ),
+                                label = "removeScale"
+                            )
+                            LaunchedEffect(removePressed) {
+                                if (removePressed) {
+                                    delay(120)
+                                    removePressed = false
                                 }
                             }
+                            FilledIconButton(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    isMultiSelectMode = !isMultiSelectMode
+                                    if (isMultiSelectMode) {
+                                        isReorderMode = false
+                                    } else {
+                                        selectedSongs = emptySet()
+                                    }
+                                    removePressed = true
+                                },
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .graphicsLayer {
+                                        scaleX = removeScale
+                                        scaleY = removeScale
+                                    },
+                                colors = IconButtonDefaults.filledIconButtonColors(
+                                    containerColor = if (isMultiSelectMode)
+                                        MaterialTheme.colorScheme.errorContainer
+                                    else
+                                        MaterialTheme.colorScheme.secondaryContainer,
+                                    contentColor = if (isMultiSelectMode)
+                                        MaterialTheme.colorScheme.onErrorContainer
+                                    else
+                                        MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = if (isMultiSelectMode) Icons.Default.Close else Icons.Default.DeleteSweep,
+                                    contentDescription = if (isMultiSelectMode) "Cancel" else "Remove",
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
                             
-                            // Center Play All button (pill-shaped)
-                            var playPressed by remember { mutableStateOf(false) }
-                            val playScale by animateFloatAsState(
-                                targetValue = if (playPressed) 0.95f else 1f,
-                                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-                                label = "playScale"
+                            // Center: Add button (Primary Pill)
+                            var addPressed by remember { mutableStateOf(false) }
+                            val addScale by animateFloatAsState(
+                                targetValue = if (addPressed) 0.94f else 1f,
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessMedium
+                                ),
+                                label = "addScale"
                             )
-                            LaunchedEffect(playPressed) {
-                                if (playPressed) {
-                                    delay(100)
-                                    playPressed = false
+                            LaunchedEffect(addPressed) {
+                                if (addPressed) {
+                                    delay(120)
+                                    addPressed = false
                                 }
                             }
                             Button(
                                 onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                    onPlayAll()
-                                    playPressed = true
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    onAddSongsToPlaylist()
+                                    addPressed = true
                                 },
                                 modifier = Modifier
-                                    .weight(1.6f)
-                                    .height(52.dp)
+                                    .weight(1f)
+                                    .height(48.dp)
                                     .graphicsLayer {
-                                        scaleX = playScale
-                                        scaleY = playScale
+                                        scaleX = addScale
+                                        scaleY = addScale
                                     },
                                 shape = RoundedCornerShape(100.dp),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = MaterialTheme.colorScheme.primary,
                                     contentColor = MaterialTheme.colorScheme.onPrimary
                                 ),
-                                elevation = ButtonDefaults.buttonElevation(
-                                    defaultElevation = 2.dp,
-                                    pressedElevation = 4.dp
-                                ),
-                                contentPadding = PaddingValues(horizontal = 24.dp)
+                                contentPadding = PaddingValues(horizontal = 20.dp)
                             ) {
                                 Icon(
-                                    imageVector = RhythmIcons.Play,
+                                    imageVector = RhythmIcons.Add,
                                     contentDescription = null,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(22.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "Play All",
+                                    text = "Add Songs",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
                             
-                            // Right side buttons group
-                            Surface(
-                                shape = RoundedCornerShape(100.dp),
-                                color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(2.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(4.dp)
-                                ) {
-                                    // Shuffle button
-                                    var shufflePressed by remember { mutableStateOf(false) }
-                                    val shuffleScale by animateFloatAsState(
-                                        targetValue = if (shufflePressed) 0.90f else 1f,
-                                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-                                        label = "shuffleScale"
-                                    )
-                                    LaunchedEffect(shufflePressed) {
-                                        if (shufflePressed) {
-                                            delay(100)
-                                            shufflePressed = false
-                                        }
-                                    }
-                                    IconButton(
-                                        onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                            onShufflePlay()
-                                            shufflePressed = true
-                                        },
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .aspectRatio(1f)
-                                            .graphicsLayer {
-                                                scaleX = shuffleScale
-                                                scaleY = shuffleScale
-                                            }
-                                    ) {
-                                        Icon(
-                                            imageVector = RhythmIcons.Shuffle,
-                                            contentDescription = "Shuffle",
-                                            modifier = Modifier.size(22.dp),
-                                            tint = MaterialTheme.colorScheme.onSurface
-                                        )
-                                    }
-                                    
-                                    // Search button
-                                    var searchPressed by remember { mutableStateOf(false) }
-                                    val searchScale by animateFloatAsState(
-                                        targetValue = if (searchPressed) 0.90f else 1f,
-                                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-                                        label = "searchScale"
-                                    )
-                                    LaunchedEffect(searchPressed) {
-                                        if (searchPressed) {
-                                            delay(100)
-                                            searchPressed = false
-                                        }
-                                    }
-                                    IconButton(
-                                        onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                            showSearchBar = !showSearchBar
-                                            if (!showSearchBar) {
-                                                searchQuery = ""
-                                            }
-                                            searchPressed = true
-                                        },
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .aspectRatio(1f)
-                                            .graphicsLayer {
-                                                scaleX = searchScale
-                                                scaleY = searchScale
-                                            }
-                                    ) {
-                                        Icon(
-                                            imageVector = if (showSearchBar) RhythmIcons.Close else RhythmIcons.Search,
-                                            contentDescription = if (showSearchBar) "Close search" else "Search",
-                                            modifier = Modifier.size(22.dp),
-                                            tint = if (showSearchBar) 
-                                                MaterialTheme.colorScheme.primary
-                                            else 
-                                                MaterialTheme.colorScheme.onSurface
-                                        )
-                                    }
+                            // Right: Search button
+                            var searchPressed by remember { mutableStateOf(false) }
+                            val searchScale by animateFloatAsState(
+                                targetValue = if (searchPressed) 0.88f else 1f,
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessMedium
+                                ),
+                                label = "searchScale"
+                            )
+                            LaunchedEffect(searchPressed) {
+                                if (searchPressed) {
+                                    delay(120)
+                                    searchPressed = false
                                 }
+                            }
+                            FilledIconButton(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    showSearchBar = !showSearchBar
+                                    if (!showSearchBar) {
+                                        searchQuery = ""
+                                    }
+                                    searchPressed = true
+                                },
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .graphicsLayer {
+                                        scaleX = searchScale
+                                        scaleY = searchScale
+                                    },
+                                colors = IconButtonDefaults.filledIconButtonColors(
+                                    containerColor = if (showSearchBar)
+                                        MaterialTheme.colorScheme.primaryContainer
+                                    else
+                                        MaterialTheme.colorScheme.tertiaryContainer,
+                                    contentColor = if (showSearchBar)
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else
+                                        MaterialTheme.colorScheme.onTertiaryContainer
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = if (showSearchBar) RhythmIcons.Close else RhythmIcons.Search,
+                                    contentDescription = if (showSearchBar) "Close search" else "Search",
+                                    modifier = Modifier.size(24.dp)
+                                )
                             }
                         }
                     },
@@ -2430,7 +2604,8 @@ fun PlaylistSongItem(
     onMoveUp: (() -> Unit)? = null,
     onMoveDown: (() -> Unit)? = null,
     isMultiSelectMode: Boolean = false,
-    isSelected: Boolean = false
+    isSelected: Boolean = false,
+    onMoreClick: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     var showRemoveDialog by remember { mutableStateOf(false) }
@@ -2669,11 +2844,11 @@ fun PlaylistSongItem(
                     text = formatDuration(song.duration, useHoursFormat),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    modifier = Modifier.padding(end = 12.dp)
+                    modifier = Modifier.padding(end = 4.dp)
                 )
             }
             
-            // Show reorder buttons or remove button depending on mode
+            // Show reorder buttons, remove button, or 3-dot menu depending on mode
             if (isReorderMode) {
                 // Reorder buttons
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -2715,11 +2890,11 @@ fun PlaylistSongItem(
                         )
                     }
                 }
-            } else if (onRemove != null) {
-                // Enhanced remove button with confirmation
+            } else if (isMultiSelectMode && onRemove != null) {
+                // Remove button only shown in multi-select mode
                 FilledIconButton(
                     onClick = {
-                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove) // Use captured haptics
+                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
                         showRemoveDialog = true
                     },
                     colors = IconButtonDefaults.filledIconButtonColors(
@@ -2734,7 +2909,328 @@ fun PlaylistSongItem(
                         modifier = Modifier.size(20.dp)
                     )
                 }
+            } else {
+                // 3-dot menu button matching SearchSongItem style
+                FilledIconButton(
+                    onClick = {
+                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                        onMoreClick?.invoke()
+                    },
+                    modifier = Modifier.size(36.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                ) {
+                    Icon(
+                        imageVector = RhythmIcons.More,
+                        contentDescription = "More options",
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PlaylistSongOptionsBottomSheet(
+    song: Song,
+    onDismiss: () -> Unit,
+    onRemoveFromPlaylist: () -> Unit,
+    onPlayNext: () -> Unit,
+    onAddToQueue: () -> Unit,
+    onAddToPlaylist: () -> Unit,
+    onShowSongInfo: () -> Unit,
+    onGoToAlbum: () -> Unit,
+    onGoToArtist: () -> Unit,
+    onShare: () -> Unit,
+    haptics: androidx.compose.ui.hapticfeedback.HapticFeedback
+) {
+    val context = LocalContext.current
+    var showContent by remember { mutableStateOf(false) }
+    
+    val contentAlpha by animateFloatAsState(
+        targetValue = if (showContent) 1f else 0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "contentAlpha"
+    )
+    
+    val contentTranslation by animateFloatAsState(
+        targetValue = if (showContent) 0f else 50f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "contentTranslation"
+    )
+
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(100)
+        showContent = true
+    }
+    
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        dragHandle = {
+            BottomSheetDefaults.DragHandle(
+                color = MaterialTheme.colorScheme.primary
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        contentColor = MaterialTheme.colorScheme.onBackground,
+        tonalElevation = 0.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+        ) {
+            // Header with song info
+            AnimatedVisibility(
+                visible = showContent,
+                enter = fadeIn() + slideInVertically { it },
+                exit = fadeOut() + slideOutVertically { it }
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 16.dp)
+                ) {
+                    Text(
+                        text = "Song options",
+                        style = MaterialTheme.typography.displayMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    
+                    Spacer(modifier = Modifier.height(18.dp))
+                    
+                    // Song title and artist
+                    Text(
+                        text = song.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = song.artist,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+            
+            // Actions section with grid layout
+            AnimatedVisibility(
+                visible = showContent,
+                enter = fadeIn() + slideInVertically { it },
+                exit = fadeOut() + slideOutVertically { it }
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Row 1: Play next, Add to queue
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            SongOptionGridItem(
+                                icon = Icons.Rounded.SkipNext,
+                                text = "Play next",
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    onPlayNext()
+                                }
+                            )
+                        }
+                        Box(modifier = Modifier.weight(1f)) {
+                            SongOptionGridItem(
+                                icon = RhythmIcons.Queue,
+                                text = "Add to queue",
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    onAddToQueue()
+                                }
+                            )
+                        }
+                    }
+                    
+                    // Row 2: Add to playlist, Go to album
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            SongOptionGridItem(
+                                icon = RhythmIcons.AddToPlaylist,
+                                text = "Add to playlist",
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    onAddToPlaylist()
+                                }
+                            )
+                        }
+                        Box(modifier = Modifier.weight(1f)) {
+                            SongOptionGridItem(
+                                icon = RhythmIcons.Album,
+                                text = "Go to album",
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    onGoToAlbum()
+                                }
+                            )
+                        }
+                    }
+                    
+                    // Row 3: Go to artist, Song info
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            SongOptionGridItem(
+                                icon = RhythmIcons.Artist,
+                                text = "Go to artist",
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    onGoToArtist()
+                                }
+                            )
+                        }
+                        Box(modifier = Modifier.weight(1f)) {
+                            SongOptionGridItem(
+                                icon = Icons.Rounded.Info,
+                                text = "Song info",
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                    onShowSongInfo()
+                                }
+                            )
+                        }
+                    }
+                    
+                    // Row 4: Share (full width)
+                    SongOptionGridItem(
+                        icon = Icons.Rounded.Share,
+                        text = "Share",
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            onShare()
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    // Row 5: Remove from playlist (full width, error color)
+                    SongOptionGridItem(
+                        icon = RhythmIcons.Remove,
+                        text = "Remove from playlist",
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        iconColor = MaterialTheme.colorScheme.error,
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            onRemoveFromPlaylist()
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SongOptionGridItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    text: String,
+    containerColor: Color,
+    iconColor: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        onClick = onClick,
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            // Icon with colored background
+            Surface(
+                modifier = Modifier.size(44.dp),
+                shape = CircleShape,
+                color = containerColor.copy(alpha = 0.3f),
+                tonalElevation = 0.dp
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            brush = androidx.compose.ui.graphics.Brush.radialGradient(
+                                colors = listOf(
+                                    containerColor.copy(alpha = 0.15f),
+                                    containerColor.copy(alpha = 0.05f)
+                                ),
+                                radius = 22f
+                            )
+                        )
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = iconColor,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 2,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }
