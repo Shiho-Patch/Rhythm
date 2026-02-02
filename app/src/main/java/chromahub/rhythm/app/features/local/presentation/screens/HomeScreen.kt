@@ -194,6 +194,7 @@ import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AddToPlaylistBottomSheet
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.SongInfoBottomSheet
 import chromahub.rhythm.app.util.ImageUtils
+import chromahub.rhythm.app.util.M3ImageUtils
 import chromahub.rhythm.app.shared.presentation.viewmodel.AppUpdaterViewModel
 import chromahub.rhythm.app.shared.presentation.viewmodel.AppVersion
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
@@ -1721,26 +1722,12 @@ private fun ModernRecentSongCard(
                 .padding(16.dp), // More padding
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Enhanced artwork with more rounded corners
-            Surface(
-                shape = ExpressiveShapes.Medium, // More rounded
-                modifier = Modifier.size(52.dp), // Slightly larger
-                color = MaterialTheme.colorScheme.surfaceVariant
-            ) {
-                AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .apply(ImageUtils.buildImageRequest(
-                            song.artworkUri,
-                            song.title,
-                            context.cacheDir,
-                            M3PlaceholderType.TRACK
-                        ))
-                        .build(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
+            // Track artwork with expressive shape from settings
+            M3ImageUtils.TrackImage(
+                imageUrl = song.artworkUri,
+                trackName = song.title,
+                modifier = Modifier.size(52.dp)
+            )
             
             Spacer(modifier = Modifier.width(12.dp))
             
@@ -2101,18 +2088,10 @@ private fun androidx.compose.material3.carousel.CarouselItemScope.HeroCarouselCa
         )
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            // Album artwork background
-            AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .apply(ImageUtils.buildImageRequest(
-                        album.artworkUri,
-                        album.title,
-                        context.cacheDir,
-                        M3PlaceholderType.ALBUM
-                    ))
-                    .build(),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
+            // Album artwork background - use M3ImageUtils.AlbumArt
+            M3ImageUtils.AlbumArt(
+                imageUrl = album.artworkUri,
+                albumName = album.title,
                 modifier = Modifier.fillMaxSize()
             )
             
@@ -2349,43 +2328,12 @@ private fun ModernArtistCard(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(modifier = Modifier.size(cardSize)) {
-            ExpressiveElevatedCard(
-                modifier = Modifier.fillMaxSize(),
-                shape = ExpressiveShapes.SquircleExtraLarge,  // Squircle shape for modern artist cards
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                )
-            ) {
-                if (artist.artworkUri != null) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(context)
-                            .apply(
-                                ImageUtils.buildImageRequest(
-                                    artist.artworkUri,
-                                    artist.name,
-                                    context.cacheDir,
-                                    M3PlaceholderType.ARTIST
-                                )
-                            )
-                            .build(),
-                        contentDescription = context.getString(R.string.cd_artist, artist.name),
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = RhythmIcons.Artist,
-                            contentDescription = context.getString(R.string.cd_artist, artist.name),
-                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                            modifier = Modifier.size(48.dp)
-                        )
-                    }
-                }
-            }
+            // Use M3ImageUtils.ArtistImage which applies expressive shape from settings
+            M3ImageUtils.ArtistImage(
+                imageUrl = artist.artworkUri,
+                artistName = artist.name,
+                modifier = Modifier.fillMaxSize()
+            )
             
             ExpressiveFilledIconButton(
                 onClick = {
@@ -2480,48 +2428,25 @@ private fun ModernAlbumCard(
                 else -> 12.dp
             }
         )) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .clip(ExpressiveShapes.SquircleMedium) // More rounded squircle artwork for modern feel
-            ) {
-                // Background gradient for depth
-                Box(
+            // Album artwork - use M3ImageUtils.AlbumArt with expressive shape from settings
+            Box {
+                M3ImageUtils.AlbumArt(
+                    imageUrl = album.artworkUri,
+                    albumName = album.title,
                     modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.surfaceVariant,
-                                    MaterialTheme.colorScheme.surfaceContainerHigh
-                                )
-                            )
-                        )
+                        .fillMaxWidth()
+                        .aspectRatio(1f)
                 )
                 
-                AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .apply(ImageUtils.buildImageRequest(
-                            album.artworkUri,
-                            album.title,
-                            context.cacheDir,
-                            M3PlaceholderType.ALBUM
-                        ))
-                        .build(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-                
+                // Play button overlay
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(
                             when (widthSizeClass) {
                                 WindowWidthSizeClass.Compact -> 12.dp
-                                WindowWidthSizeClass.Medium -> 16.dp  // More padding for tablets
-                                WindowWidthSizeClass.Expanded -> 20.dp // Even more padding for large tablets
+                                WindowWidthSizeClass.Medium -> 16.dp
+                                WindowWidthSizeClass.Expanded -> 20.dp
                                 else -> 12.dp
                             }
                         )
@@ -2534,8 +2459,8 @@ private fun ModernAlbumCard(
                         modifier = Modifier.size(
                             when (widthSizeClass) {
                                 WindowWidthSizeClass.Compact -> 40.dp
-                                WindowWidthSizeClass.Medium -> 48.dp  // Larger button for tablets
-                                WindowWidthSizeClass.Expanded -> 52.dp // Even larger button for large tablets
+                                WindowWidthSizeClass.Medium -> 48.dp
+                                WindowWidthSizeClass.Expanded -> 52.dp
                                 else -> 40.dp
                             }
                         ),
@@ -2550,8 +2475,8 @@ private fun ModernAlbumCard(
                             modifier = Modifier.size(
                                 when (widthSizeClass) {
                                     WindowWidthSizeClass.Compact -> 20.dp
-                                    WindowWidthSizeClass.Medium -> 24.dp  // Larger icon for tablets
-                                    WindowWidthSizeClass.Expanded -> 26.dp // Even larger icon for large tablets
+                                    WindowWidthSizeClass.Medium -> 24.dp
+                                    WindowWidthSizeClass.Expanded -> 26.dp
                                     else -> 20.dp
                                 }
                             )
@@ -2661,30 +2586,9 @@ private fun ModernSongCard(
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     // Background gradient for better aesthetics
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                Brush.radialGradient(
-                                    colors = listOf(
-                                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
-                                        MaterialTheme.colorScheme.surfaceVariant
-                                    )
-                                )
-                            )
-                    )
-                    
-                    AsyncImage(
-                        model = ImageRequest.Builder(context)
-                            .apply(ImageUtils.buildImageRequest(
-                                song.artworkUri,
-                                song.title,
-                                context.cacheDir,
-                                M3PlaceholderType.TRACK
-                            ))
-                            .build(),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
+                    M3ImageUtils.TrackImage(
+                        imageUrl = song.artworkUri,
+                        trackName = song.title,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -3355,24 +3259,11 @@ private fun RecommendedSongItem(
             .padding(vertical = 12.dp), // Increased vertical padding
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Surface(
-            shape = ExpressiveShapes.Small,
+        M3ImageUtils.TrackImage(
+            imageUrl = song.artworkUri,
+            trackName = song.title,
             modifier = Modifier.size(52.dp)
-        ) {
-            AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .apply(ImageUtils.buildImageRequest(
-                        song.artworkUri,
-                        song.title,
-                        context.cacheDir,
-                        M3PlaceholderType.TRACK
-                    ))
-                    .build(),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
+        )
         
         Spacer(modifier = Modifier.width(16.dp))
         

@@ -5789,46 +5789,12 @@ private fun ArtistGridCard(
             Box(
                 modifier = Modifier.size(120.dp)
             ) {
-                // Artist circular image
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.surfaceContainer,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(CircleShape),
-                    shadowElevation = 0.dp
-                ) {
-                    if (artist.artworkUri != null) {
-                        AsyncImage(
-                            model = ImageRequest.Builder(context)
-                                .apply(
-                                    ImageUtils.buildImageRequest(
-                                        artist.artworkUri,
-                                        artist.name,
-                                        context.cacheDir,
-                                        M3PlaceholderType.ARTIST
-                                    )
-                                )
-                                .build(),
-                            contentDescription = "Artist ${artist.name}",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        // Fallback to a placeholder if artwork is null
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = RhythmIcons.Artist,
-                                contentDescription = "Artist ${artist.name}",
-                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                                modifier = Modifier.size(48.dp)
-                            )
-                        }
-                    }
-                }
+                // Artist image with expressive shape from settings
+                M3ImageUtils.ArtistImage(
+                    imageUrl = artist.artworkUri,
+                    artistName = artist.name,
+                    modifier = Modifier.fillMaxSize()
+                )
                 
                 // Play button overlay positioned at bottom right
                 Surface(
@@ -5968,44 +5934,12 @@ private fun ArtistListCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Artist circular image
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.surfaceContainer,
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape),
-                shadowElevation = 0.dp
-            ) {
-                if (artist.artworkUri != null) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(context)
-                            .apply(ImageUtils.buildImageRequest(
-                                artist.artworkUri,
-                                artist.name,
-                                context.cacheDir,
-                                M3PlaceholderType.ARTIST
-                            ))
-                            .build(),
-                        contentDescription = "Artist ${artist.name}",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    // Fallback to a placeholder if artwork is null
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = RhythmIcons.Artist,
-                            contentDescription = "Artist ${artist.name}",
-                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                            modifier = Modifier.size(48.dp)
-                        )
-                    }
-                }
-            }
+            // Artist image with expressive shape from settings
+            M3ImageUtils.ArtistImage(
+                imageUrl = artist.artworkUri,
+                artistName = artist.name,
+                modifier = Modifier.size(64.dp)
+            )
 
             Spacer(modifier = Modifier.width(16.dp))
 

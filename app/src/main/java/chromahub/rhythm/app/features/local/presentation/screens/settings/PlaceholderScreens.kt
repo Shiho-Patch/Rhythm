@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 
 package chromahub.rhythm.app.features.local.presentation.screens.settings
 
@@ -43,6 +43,8 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
+import androidx.compose.material3.CircularWavyProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Slider
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
@@ -89,7 +91,6 @@ import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHea
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.StandardBottomSheetHeader
 import chromahub.rhythm.app.shared.presentation.components.common.StyledProgressBar
-import chromahub.rhythm.app.shared.presentation.components.common.CircularStyledProgressBar
 import chromahub.rhythm.app.shared.presentation.components.common.ProgressStyle
 import chromahub.rhythm.app.shared.presentation.components.common.ThumbStyle
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.LicensesBottomSheet
@@ -112,7 +113,6 @@ import android.widget.TextView
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.core.text.HtmlCompat
-import chromahub.rhythm.app.shared.presentation.components.common.M3CircularWaveProgressIndicator
 import chromahub.rhythm.app.shared.presentation.components.common.M3FourColorCircularLoader
 import chromahub.rhythm.app.features.local.presentation.components.player.PlayingEqIcon
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog
@@ -8220,18 +8220,10 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                     modifier = Modifier.fillMaxWidth(),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    CircularStyledProgressBar(
-                                        progress = 0.45f,
-                                        style = previewStyle,
-                                        modifier = Modifier.size(40.dp),
-                                        progressColor = MaterialTheme.colorScheme.primary,
-                                        trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                                        strokeWidth = 3.dp,
-                                        isPlaying = true,
-                                        cornerRadius = 50.dp
-                                    ) {
-                                        // Empty content - just preview the progress ring
-                                    }
+                                    CircularWavyProgressIndicator(
+                                        progress = { 0.45f },
+                                        modifier = Modifier.size(40.dp)
+                                    )
                                 }
                             } else {
                                 Text(
@@ -8265,17 +8257,19 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             toggleState = miniPlayerUseCircularProgress,
                             onToggleChange = { appSettings.setMiniPlayerUseCircularProgress(it) }
                         )
-                        // Show progress style for both linear and circular modes
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 20.dp),
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                        )
-                        SettingRow(
-                            icon = Icons.Default.LinearScale,
-                            title = "Progress Style",
-                            description = miniPlayerProgressStyle.lowercase().replaceFirstChar { it.uppercase() },
-                            onClick = { showMiniPlayerProgressStyleSheet = true }
-                        )
+                        // Show progress style only for linear mode (circular always uses Material 3 wavy style)
+                        if (!miniPlayerUseCircularProgress) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 20.dp),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                            )
+                            SettingRow(
+                                icon = Icons.Default.LinearScale,
+                                title = "Progress Style",
+                                description = miniPlayerProgressStyle.lowercase().replaceFirstChar { it.uppercase() },
+                                onClick = { showMiniPlayerProgressStyleSheet = true }
+                            )
+                        }
                     }
                 }
             }
@@ -14409,6 +14403,662 @@ private fun HomeSettingsSliderRow(
     }
 }
 
+// ============================================================================
+// EXPRESSIVE SHAPES SETTINGS SCREEN
+// ============================================================================
+
+/**
+ * Data class for shape option display
+ */
+private data class ShapeOption(
+    val id: String,
+    val displayName: String,
+    val description: String,
+    val category: String
+)
+
+/**
+ * Data class for shape preset display
+ */
+private data class PresetOption(
+    val id: String,
+    val displayName: String,
+    val description: String,
+    val icon: ImageVector
+)
+
+/**
+ * Settings screen for configuring Material 3 Expressive Shapes
+ * Allows users to customize organic shapes for different UI components
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
+    val context = LocalContext.current
+    val appSettings = AppSettings.getInstance(context)
+    val haptic = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
+    
+    // Collect settings states
+    val expressiveShapesEnabled by appSettings.expressiveShapesEnabled.collectAsState()
+    val currentPreset by appSettings.expressiveShapePreset.collectAsState()
+    val shapeAlbumArt by appSettings.expressiveShapeAlbumArt.collectAsState()
+    val shapeFab by appSettings.expressiveShapeFab.collectAsState()
+    val shapeCards by appSettings.expressiveShapeCards.collectAsState()
+    val shapeButtons by appSettings.expressiveShapeButtons.collectAsState()
+    val shapeChips by appSettings.expressiveShapeChips.collectAsState()
+    val shapePlayerControls by appSettings.expressiveShapePlayerControls.collectAsState()
+    val shapeMiniPlayer by appSettings.expressiveShapeMiniPlayer.collectAsState()
+    val shapeNavIndicator by appSettings.expressiveShapeNavIndicator.collectAsState()
+    
+    // Dialog states
+    var showPresetDialog by remember { mutableStateOf(false) }
+    var showShapePickerDialog by remember { mutableStateOf<String?>(null) } // Target ID
+    
+    // Define presets
+    val presets = remember {
+        listOf(
+            PresetOption("DEFAULT", "Default", "Standard rounded shapes", Icons.Default.RadioButtonUnchecked),
+            PresetOption("PLAYFUL", "Playful", "Fun and expressive shapes", Icons.Default.Celebration),
+            PresetOption("ORGANIC", "Organic", "Nature-inspired shapes", Icons.Default.Park),
+            PresetOption("GEOMETRIC", "Geometric", "Clean and modern shapes", Icons.Default.Category),
+            PresetOption("RETRO", "Retro", "Pixelated nostalgic shapes", Icons.Default.Gamepad),
+            PresetOption("CUSTOM", "Custom", "Your personalized selection", Icons.Default.Tune)
+        )
+    }
+    
+    // Define available shapes grouped by category
+    val allShapes = remember {
+        listOf(
+            // Basic Shapes
+            ShapeOption("CIRCLE", "Circle", "A perfect circle", "Basic"),
+            ShapeOption("SQUARE", "Square", "Rounded square", "Basic"),
+            ShapeOption("OVAL", "Oval", "Elongated oval", "Basic"),
+            ShapeOption("PILL", "Pill", "Capsule shape", "Basic"),
+            ShapeOption("DIAMOND", "Diamond", "Diamond shape", "Basic"),
+            ShapeOption("TRIANGLE", "Triangle", "Rounded triangle", "Basic"),
+            ShapeOption("PENTAGON", "Pentagon", "Five-sided polygon", "Basic"),
+            // Organic Shapes
+            ShapeOption("FLOWER", "Flower", "Flower with petals", "Organic"),
+            ShapeOption("CLOVER_4_LEAF", "4-Leaf Clover", "Four-leaf clover", "Organic"),
+            ShapeOption("CLOVER_8_LEAF", "8-Leaf Clover", "Eight-leaf clover", "Organic"),
+            ShapeOption("HEART", "Heart", "Heart shape", "Organic"),
+            // Playful Shapes
+            ShapeOption("BOOM", "Boom", "Explosion shape", "Playful"),
+            ShapeOption("SOFT_BOOM", "Soft Boom", "Softer explosion", "Playful"),
+            ShapeOption("BURST", "Burst", "Starburst shape", "Playful"),
+            ShapeOption("SOFT_BURST", "Soft Burst", "Softer starburst", "Playful"),
+            ShapeOption("SUNNY", "Sunny", "Sun with rays", "Playful"),
+            ShapeOption("VERY_SUNNY", "Very Sunny", "Sun with more rays", "Playful"),
+            // Cookie Shapes
+            ShapeOption("COOKIE_4", "Cookie 4", "4-sided cookie", "Cookie"),
+            ShapeOption("COOKIE_6", "Cookie 6", "6-sided cookie", "Cookie"),
+            ShapeOption("COOKIE_7", "Cookie 7", "7-sided cookie", "Cookie"),
+            ShapeOption("COOKIE_9", "Cookie 9", "9-sided cookie", "Cookie"),
+            ShapeOption("COOKIE_12", "Cookie 12", "12-sided cookie", "Cookie"),
+            // Whimsical Shapes
+            ShapeOption("GHOSTISH", "Ghostish", "Ghost-like shape", "Whimsical"),
+            ShapeOption("PUFFY", "Puffy", "Cloud-like shape", "Whimsical"),
+            ShapeOption("PUFFY_DIAMOND", "Puffy Diamond", "Puffy diamond", "Whimsical"),
+            ShapeOption("BUN", "Bun", "Bun/bread shape", "Whimsical"),
+            ShapeOption("FAN", "Fan", "Fan shape", "Whimsical"),
+            ShapeOption("ARROW", "Arrow", "Arrow pointer", "Whimsical"),
+            // Special Shapes
+            ShapeOption("ARCH", "Arch", "Arch shape", "Special"),
+            ShapeOption("CLAM_SHELL", "Clam Shell", "Shell shape", "Special"),
+            ShapeOption("GEM", "Gem", "Gemstone shape", "Special"),
+            ShapeOption("SEMI_CIRCLE", "Semi Circle", "Half circle", "Special"),
+            ShapeOption("SLANTED", "Slanted", "Slanted square", "Special"),
+            // Pixel Shapes
+            ShapeOption("PIXEL_CIRCLE", "Pixel Circle", "Pixelated circle", "Pixel"),
+            ShapeOption("PIXEL_TRIANGLE", "Pixel Triangle", "Pixelated triangle", "Pixel")
+        )
+    }
+    
+    // Define shape targets with current values
+    val shapeTargets = remember(shapeAlbumArt, shapeFab, shapeCards, shapeButtons, shapeChips, shapePlayerControls, shapeMiniPlayer, shapeNavIndicator) {
+        listOf(
+            Triple("ALBUM_ART", "Album Artwork" to "Shape for album artwork on player", shapeAlbumArt),
+            Triple("FAB", "Floating Action Button" to "Shape for FAB buttons", shapeFab),
+            Triple("CARDS", "Cards" to "Shape for cards and containers", shapeCards),
+            Triple("BUTTONS", "Buttons" to "Shape for action buttons", shapeButtons),
+            Triple("CHIPS", "Chips & Tags" to "Shape for chips and tags", shapeChips),
+            Triple("PLAYER_CONTROLS", "Player Controls" to "Shape for player control buttons", shapePlayerControls),
+            Triple("MINI_PLAYER", "Mini Player" to "Shape for mini player artwork", shapeMiniPlayer),
+            Triple("NAV_INDICATOR", "Navigation Indicator" to "Shape for nav bar indicator", shapeNavIndicator)
+        )
+    }
+    
+    CollapsibleHeaderScreen(
+        title = "Expressive Shapes",
+        showBackButton = true,
+        onBackClick = onBackClick
+    ) { modifier ->
+        LazyColumn(
+            modifier = modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(horizontal = 24.dp)
+        ) {
+            // Enable/Disable Section
+            item(key = "expressive_shapes_toggle") {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Material 3 Expressive",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    TunerSettingRow(
+                        item = SettingItem(
+                            Icons.Default.AutoAwesome,
+                            "Enable Expressive Shapes",
+                            if (expressiveShapesEnabled) "Using organic Material 3 shapes" else "Using standard rounded shapes",
+                            toggleState = expressiveShapesEnabled,
+                            onToggleChange = {
+                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                appSettings.setExpressiveShapesEnabled(it)
+                            }
+                        )
+                    )
+                }
+            }
+            
+            // Info Card about M3 Expressive
+            item(key = "expressive_info_card") {
+                Spacer(modifier = Modifier.height(16.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Lightbulb,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "About Expressive Shapes",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Material 3 Expressive introduces organic, playful shapes like flowers, hearts, cookies, and more. These shapes create a unique, expressive experience that makes your music app feel more personal and fun.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f),
+                            lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.2f
+                        )
+                    }
+                }
+            }
+            
+            // Only show customization options if enabled
+            if (expressiveShapesEnabled) {
+                // Preset Selection
+                item(key = "preset_section") {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = "Quick Presets",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                    )
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        TunerSettingRow(
+                            item = SettingItem(
+                                Icons.Default.Style,
+                                "Shape Preset",
+                                presets.find { it.id == currentPreset }?.displayName ?: "Default",
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    showPresetDialog = true
+                                }
+                            )
+                        )
+                    }
+                }
+                
+                // Preset Preview Row (horizontal scroll)
+                item(key = "preset_preview") {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(horizontal = 0.dp)
+                    ) {
+                        items(presets.filter { it.id != "CUSTOM" }) { preset ->
+                            val isSelected = preset.id == currentPreset
+                            Card(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    appSettings.applyExpressiveShapePreset(preset.id)
+                                },
+                                modifier = Modifier
+                                    .width(100.dp)
+                                    .height(90.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (isSelected)
+                                        MaterialTheme.colorScheme.primaryContainer
+                                    else
+                                        MaterialTheme.colorScheme.surfaceContainerHigh
+                                ),
+                                border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(12.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        imageVector = preset.icon,
+                                        contentDescription = preset.displayName,
+                                        modifier = Modifier.size(28.dp),
+                                        tint = if (isSelected)
+                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = preset.displayName,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (isSelected)
+                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Individual Shape Customization
+                item(key = "individual_shapes_header") {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = "Individual Shape Settings",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                    )
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column {
+                            shapeTargets.forEachIndexed { index, (targetId, namePair, currentShape) ->
+                                val (targetName, targetDesc) = namePair
+                                val currentShapeName = allShapes.find { it.id == currentShape }?.displayName ?: currentShape
+                                
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                            showShapePickerDialog = targetId
+                                        }
+                                        .padding(horizontal = 18.dp, vertical = 16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    // Shape preview with actual MaterialShape
+                                    Surface(
+                                        modifier = Modifier.size(44.dp),
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                                    ) {
+                                        Box(
+                                            contentAlignment = Alignment.Center,
+                                            modifier = Modifier.fillMaxSize()
+                                        ) {
+                                            // Simple shape preview icon
+                                            Icon(
+                                                imageVector = when (targetId) {
+                                                    "ALBUM_ART" -> Icons.Default.Album
+                                                    "FAB" -> Icons.Default.Add
+                                                    "CARDS" -> Icons.Default.CreditCard
+                                                    "BUTTONS" -> Icons.Default.RadioButtonChecked
+                                                    "CHIPS" -> Icons.Default.Label
+                                                    "PLAYER_CONTROLS" -> Icons.Default.PlayCircle
+                                                    "MINI_PLAYER" -> Icons.Default.MusicNote
+                                                    "NAV_INDICATOR" -> Icons.Default.Navigation
+                                                    else -> Icons.Default.Category
+                                                },
+                                                contentDescription = targetName,
+                                                modifier = Modifier.size(24.dp),
+                                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                            )
+                                        }
+                                    }
+                                    
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = targetName,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = currentShapeName,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                    
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                                        contentDescription = "Change shape",
+                                        modifier = Modifier.size(18.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                    )
+                                }
+                                
+                                if (index < shapeTargets.lastIndex) {
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(horizontal = 20.dp),
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Bottom spacer
+            item(key = "bottom_spacer") {
+                Spacer(modifier = Modifier.height(100.dp))
+            }
+        }
+    }
+    
+    // Preset Selection Bottom Sheet
+    if (showPresetDialog) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        
+        ModalBottomSheet(
+            onDismissRequest = { showPresetDialog = false },
+            sheetState = sheetState,
+            dragHandle = {
+                BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.primary)
+            },
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+            ) {
+                Text(
+                    text = "Choose a Preset",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Text(
+                    text = "Select a shape theme to quickly apply to all components",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 20.dp)
+                )
+                
+                presets.forEach { preset ->
+                    val isSelected = preset.id == currentPreset
+                    Card(
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            appSettings.applyExpressiveShapePreset(preset.id)
+                            showPresetDialog = false
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isSelected)
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
+                                MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                modifier = Modifier.size(48.dp),
+                                shape = CircleShape,
+                                color = if (isSelected)
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.surfaceVariant
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    Icon(
+                                        imageVector = preset.icon,
+                                        contentDescription = preset.displayName,
+                                        modifier = Modifier.size(24.dp),
+                                        tint = if (isSelected)
+                                            MaterialTheme.colorScheme.onPrimary
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            
+                            Spacer(modifier = Modifier.width(16.dp))
+                            
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = preset.displayName,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (isSelected)
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = preset.description,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (isSelected)
+                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                    else
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Filled.CheckCircle,
+                                    contentDescription = "Selected",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Individual Shape Picker Bottom Sheet
+    showShapePickerDialog?.let { targetId ->
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val targetName = shapeTargets.find { it.first == targetId }?.second?.first ?: targetId
+        val currentShapeForTarget = when (targetId) {
+            "ALBUM_ART" -> shapeAlbumArt
+            "FAB" -> shapeFab
+            "CARDS" -> shapeCards
+            "BUTTONS" -> shapeButtons
+            "CHIPS" -> shapeChips
+            "PLAYER_CONTROLS" -> shapePlayerControls
+            "MINI_PLAYER" -> shapeMiniPlayer
+            "NAV_INDICATOR" -> shapeNavIndicator
+            else -> "CIRCLE"
+        }
+        
+        // Group shapes by category
+        val groupedShapes = allShapes.groupBy { it.category }
+        
+        ModalBottomSheet(
+            onDismissRequest = { showShapePickerDialog = null },
+            sheetState = sheetState,
+            dragHandle = {
+                BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.primary)
+            },
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+            ) {
+                Text(
+                    text = "Shape for $targetName",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(400.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    groupedShapes.forEach { (category, shapes) ->
+                        item(key = "category_$category") {
+                            Text(
+                                text = category,
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(top = 12.dp, bottom = 8.dp)
+                            )
+                        }
+                        
+                        items(
+                            items = shapes,
+                            key = { "shape_${it.id}" }
+                        ) { shape ->
+                            val isSelected = shape.id == currentShapeForTarget
+                            Card(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    when (targetId) {
+                                        "ALBUM_ART" -> appSettings.setExpressiveShapeAlbumArt(shape.id)
+                                        "FAB" -> appSettings.setExpressiveShapeFab(shape.id)
+                                        "CARDS" -> appSettings.setExpressiveShapeCards(shape.id)
+                                        "BUTTONS" -> appSettings.setExpressiveShapeButtons(shape.id)
+                                        "CHIPS" -> appSettings.setExpressiveShapeChips(shape.id)
+                                        "PLAYER_CONTROLS" -> appSettings.setExpressiveShapePlayerControls(shape.id)
+                                        "MINI_PLAYER" -> appSettings.setExpressiveShapeMiniPlayer(shape.id)
+                                        "NAV_INDICATOR" -> appSettings.setExpressiveShapeNavIndicator(shape.id)
+                                    }
+                                    showShapePickerDialog = null
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (isSelected)
+                                        MaterialTheme.colorScheme.primaryContainer
+                                    else
+                                        MaterialTheme.colorScheme.surfaceContainerHigh
+                                ),
+                                border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = shape.displayName,
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = if (isSelected)
+                                                MaterialTheme.colorScheme.onPrimaryContainer
+                                            else
+                                                MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            text = shape.description,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = if (isSelected)
+                                                MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                            else
+                                                MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    
+                                    if (isSelected) {
+                                        Icon(
+                                            imageVector = Icons.Filled.CheckCircle,
+                                            contentDescription = "Selected",
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 
 

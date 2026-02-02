@@ -113,6 +113,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.material.icons.filled.AutoGraph
 import androidx.compose.material.icons.filled.Gesture
+import androidx.compose.material.icons.filled.Interests
 import androidx.compose.material.icons.filled.LensBlur
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlayCircleFilled
@@ -153,6 +154,7 @@ object SettingsRoutes {
     const val HOME_SCREEN = "home_screen_settings"
     const val GESTURES = "gestures_settings"
     const val LISTENING_STATS = "listening_stats"
+    const val EXPRESSIVE_SHAPES = "expressive_shapes_settings"
 }
 
 data class SettingItem(
@@ -225,6 +227,7 @@ fun SettingsScreen(
                 title = context.getString(R.string.settings_section_appearance),
                 items = buildList {
                     add(SettingItem(Icons.Default.Palette, context.getString(R.string.settings_theme_customization), context.getString(R.string.settings_theme_customization_desc), onClick = { onNavigateTo(SettingsRoutes.THEME_CUSTOMIZATION) }))
+                    add(SettingItem(Icons.Default.Interests, "Expressive Shapes", "Customize Material 3 expressive shapes for UI elements", onClick = { onNavigateTo(SettingsRoutes.EXPRESSIVE_SHAPES) }))
                     // Local-only customizations
                     if (appMode == "LOCAL") {
                         add(SettingItem(Icons.Default.Home, context.getString(R.string.settings_home_customization), context.getString(R.string.settings_home_customization_desc), onClick = { onNavigateTo(SettingsRoutes.HOME_SCREEN) }))
@@ -997,6 +1000,7 @@ fun SettingsScreenWrapper(
                         SettingsRoutes.WIDGET -> WidgetSettingsScreen(onBackClick = { currentRoute = null })
                         SettingsRoutes.HOME_SCREEN -> HomeScreenCustomizationSettingsScreen(onBackClick = { currentRoute = null })
                         SettingsRoutes.GESTURES -> GesturesSettingsScreen(onBackClick = { currentRoute = null })
+                        SettingsRoutes.EXPRESSIVE_SHAPES -> ExpressiveShapesSettingsScreen(onBackClick = { currentRoute = null })
                         else -> PlaceholderSettingsScreen()
                     }
                 }
@@ -1107,6 +1111,7 @@ fun SettingsScreenWrapper(
                 SettingsRoutes.WIDGET -> WidgetSettingsScreen(onBackClick = { currentRoute = null })
                 SettingsRoutes.HOME_SCREEN -> HomeScreenCustomizationSettingsScreen(onBackClick = { currentRoute = null })
                 SettingsRoutes.GESTURES -> GesturesSettingsScreen(onBackClick = { currentRoute = null })
+                SettingsRoutes.EXPRESSIVE_SHAPES -> ExpressiveShapesSettingsScreen(onBackClick = { currentRoute = null })
                 else -> SettingsScreen(
                     onBackClick = handleBack,
                     onNavigateTo = onNavigateToSubsetting,

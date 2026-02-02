@@ -102,7 +102,8 @@ import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.shared.presentation.components.common.ShimmerBox
 import chromahub.rhythm.app.shared.presentation.components.common.StyledProgressBar
 import chromahub.rhythm.app.shared.presentation.components.common.ProgressStyle
-import chromahub.rhythm.app.shared.presentation.components.common.CircularStyledProgressBar
+import androidx.compose.material3.CircularWavyProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import chromahub.rhythm.app.shared.data.model.AppSettings
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalConfiguration
@@ -117,7 +118,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShap
  * Adapted for tablet UI with responsive layout
  * Uses M3 Expressive design with organic shapes and bouncy animations
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MiniPlayer(
     song: Song?,
@@ -546,16 +547,14 @@ fun MiniPlayer(
                         ) {
                             // Circular progress ring around artwork
                             if (song != null && miniPlayerShowProgress && miniPlayerUseCircularProgress) {
-                                CircularStyledProgressBar(
-                                    progress = animatedProgress,
-                                    style = try { ProgressStyle.valueOf(miniPlayerProgressStyle) } catch (e: Exception) { ProgressStyle.NORMAL },
+                                Box(
                                     modifier = Modifier.size(if (isLargeHeight) 152.dp else 132.dp),
-                                    progressColor = MaterialTheme.colorScheme.primary,
-                                    trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                                    strokeWidth = 3.dp,
-                                    isPlaying = isPlaying,
-                                    cornerRadius = miniPlayerCornerRadius.dp
+                                    contentAlignment = Alignment.Center
                                 ) {
+                                    CircularWavyProgressIndicator(
+                                        progress = { animatedProgress },
+                                        modifier = Modifier.size(if (isLargeHeight) 152.dp else 132.dp)
+                                    )
                                     // Artwork inside the progress ring
                                     Surface(
                                         modifier = Modifier.size(if (isLargeHeight) 140.dp else 120.dp),
@@ -990,18 +989,16 @@ fun MiniPlayer(
                 ) {
                     // Play/pause button with optional circular progress border
                     if (song != null && miniPlayerUseCircularProgress) {
-                        // Circular progress as border around play/pause button
-                        // Corner radius adapts to button shape: circle when paused, rounded rect when playing
-                        CircularStyledProgressBar(
-                            progress = animatedProgress,
-                            style = try { ProgressStyle.valueOf(miniPlayerProgressStyle) } catch (e: Exception) { ProgressStyle.NORMAL },
+                        // Circular progress as border around play/pause button using official Material 3 Expressive
+                        Box(
                             modifier = Modifier.size(if (isCompactHeight) 44.dp else 52.dp),
-                            progressColor = MaterialTheme.colorScheme.primary,
-                            trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                            strokeWidth = if (isCompactHeight) 2.dp else 3.dp,
-                            isPlaying = isPlaying,
-                            cornerRadius = if (isPlaying) 20.dp else 50.dp // Adapt to button shape
+                            contentAlignment = Alignment.Center
                         ) {
+                            CircularWavyProgressIndicator(
+                                progress = { animatedProgress },
+                                modifier = Modifier.size(if (isCompactHeight) 44.dp else 52.dp)
+                            )
+                            
                             // Expressive play/pause with bouncy animation
                             val phonePlayInteractionSource = remember { MutableInteractionSource() }
                             val isPhonePlayPressed by phonePlayInteractionSource.collectIsPressedAsState()

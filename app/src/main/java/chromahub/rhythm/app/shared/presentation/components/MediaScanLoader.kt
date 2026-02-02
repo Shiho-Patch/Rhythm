@@ -61,8 +61,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.material3.LinearWavyProgressIndicator
 import chromahub.rhythm.app.R
-import chromahub.rhythm.app.shared.presentation.components.common.M3ExpressiveLinearIndicator
 import chromahub.rhythm.app.shared.presentation.components.common.MediaScanningLoader
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
@@ -300,11 +300,9 @@ fun MediaScanLoader(
                         Spacer(modifier = Modifier.height(24.dp))
                         
                         // Progress bar
-                        M3ExpressiveLinearIndicator(
-                            progress = animatedProgress,
-                            modifier = Modifier.fillMaxWidth(),
-                            primaryColor = MaterialTheme.colorScheme.primary,
-//                            trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                        LinearWavyProgressIndicator(
+                            progress = { animatedProgress },
+                            modifier = Modifier.fillMaxWidth()
                         )
                         
                         Spacer(modifier = Modifier.height(16.dp))

@@ -138,6 +138,7 @@ import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AlbumBottomSheet
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.SongInfoBottomSheet
 import chromahub.rhythm.app.util.ImageUtils
+import chromahub.rhythm.app.util.M3ImageUtils
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType
 
@@ -1647,26 +1648,12 @@ fun SearchSongItem(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Album art with reduced size
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                tonalElevation = 2.dp,
+            // Album art - use M3ImageUtils.TrackImage with expressive shape from settings
+            M3ImageUtils.TrackImage(
+                imageUrl = song.artworkUri,
+                trackName = song.title,
                 modifier = Modifier.size(48.dp)
-            ) {
-                AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .apply(ImageUtils.buildImageRequest(
-                            song.artworkUri,
-                            song.title,
-                            context.cacheDir,
-                            M3PlaceholderType.TRACK
-                        ))
-                        .build(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
+            )
             
             // Song info with reduced spacing and font sizes
             Column(
@@ -1739,27 +1726,14 @@ fun SearchAlbumItem(
         Column(
             modifier = Modifier.padding(8.dp)
         ) {
-            // Album cover
-            Box(
+            // Album cover - use M3ImageUtils.AlbumArt with expressive shape from settings
+            M3ImageUtils.AlbumArt(
+                imageUrl = album.artworkUri,
+                albumName = album.title,
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(16.dp))
-            ) {
-                AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .apply(ImageUtils.buildImageRequest(
-                            album.artworkUri,
-                            album.title,
-                            context.cacheDir,
-                            M3PlaceholderType.ALBUM
-                        ))
-                        .build(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
+            )
             
             Spacer(modifier = Modifier.height(8.dp))
             
@@ -1807,30 +1781,14 @@ fun SearchArtistItem(
             modifier = Modifier.padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Artist image
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.surfaceVariant,
+            // Artist image with expressive shape from settings
+            M3ImageUtils.ArtistImage(
+                imageUrl = artist.artworkUri,
+                artistName = artist.name,
                 modifier = Modifier
                     .size(96.dp)
                     .padding(4.dp)
-            ) {
-                AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .apply(ImageUtils.buildImageRequest(
-                            artist.artworkUri,
-                            artist.name,
-                            context.cacheDir,
-                            M3PlaceholderType.ARTIST
-                        ))
-                        .build(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(CircleShape)
-                )
-            }
+            )
             
             Spacer(modifier = Modifier.height(12.dp))
             
@@ -1908,42 +1866,30 @@ fun SearchPlaylistItem(
             modifier = Modifier.padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Playlist artwork
-            Surface( // Use Surface for better elevation and shape control
-                modifier = Modifier.size(68.dp), // Increased size
-                shape = RoundedCornerShape(25.dp), // Increased radius
-                color = MaterialTheme.colorScheme.primaryContainer // Use primary container color
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            if (playlist.artworkUri != null) Color.Transparent
-                            else MaterialTheme.colorScheme.primaryContainer
-                        ),
-                    contentAlignment = Alignment.Center
+            // Playlist artwork - use M3ImageUtils.PlaylistImage with expressive shape from settings
+            if (playlist.artworkUri != null) {
+                M3ImageUtils.PlaylistImage(
+                    imageUrl = playlist.artworkUri,
+                    playlistName = playlist.name,
+                    modifier = Modifier.size(68.dp),
+                    shape = RoundedCornerShape(25.dp)
+                )
+            } else {
+                // Placeholder when no artwork
+                Surface(
+                    modifier = Modifier.size(68.dp),
+                    shape = RoundedCornerShape(25.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer
                 ) {
-                    if (playlist.artworkUri != null) {
-                        AsyncImage(
-                            model = ImageRequest.Builder(context)
-                                .apply(ImageUtils.buildImageRequest(
-                                    playlist.artworkUri,
-                                    playlist.name,
-                                    context.cacheDir,
-                                    M3PlaceholderType.PLAYLIST
-                                ))
-                                .build(),
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        // Use proper playlist icon from RhythmIcons
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Icon(
-                            imageVector = RhythmIcons.PlaylistFilled, // Using the proper playlist icon
+                            imageVector = RhythmIcons.PlaylistFilled,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer, // Use onPrimaryContainer color
-                            modifier = Modifier.size(44.dp) // Increased icon size
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(44.dp)
                         )
                     }
                 }

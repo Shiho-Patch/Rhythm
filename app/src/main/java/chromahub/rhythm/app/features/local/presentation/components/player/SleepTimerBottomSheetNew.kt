@@ -1,12 +1,13 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 
 package chromahub.rhythm.app.features.local.presentation.components.player
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.CircularWavyProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -259,40 +260,14 @@ fun SleepTimerBottomSheetNew(
                                 modifier = Modifier.size(120.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                // Progress circle - show elapsed time, not remaining time
+                                // Progress circle - show elapsed time using official Material 3 Expressive
                                 val elapsedSeconds = totalTimerDuration - remainingSeconds
                                 val progress = if (totalTimerDuration > 0) elapsedSeconds.toFloat() / totalTimerDuration else 0f
                                 
-                                val primaryColor = MaterialTheme.colorScheme.primary
-                                val backgroundColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f)
-                                
-                                Canvas(modifier = Modifier.fillMaxSize()) {
-                                    val strokeWidth = 8.dp.toPx()
-                                    val radius = (size.minDimension - strokeWidth) / 2
-                                    val center = Offset(size.width / 2, size.height / 2)
-                                    
-                                    // Background circle
-                                    drawCircle(
-                                        color = backgroundColor,
-                                        radius = radius,
-                                        center = center,
-                                        style = Stroke(width = strokeWidth)
-                                    )
-                                    
-                                    // Progress arc
-                                    drawArc(
-                                        color = primaryColor,
-                                        startAngle = -90f,
-                                        sweepAngle = progress * 360f,
-                                        useCenter = false,
-                                        style = Stroke(
-                                            width = strokeWidth,
-                                            cap = StrokeCap.Round
-                                        ),
-                                        size = androidx.compose.ui.geometry.Size(radius * 2, radius * 2),
-                                        topLeft = Offset(center.x - radius, center.y - radius)
-                                    )
-                                }
+                                CircularWavyProgressIndicator(
+                                    progress = { progress },
+                                    modifier = Modifier.fillMaxSize()
+                                )
                                 
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally

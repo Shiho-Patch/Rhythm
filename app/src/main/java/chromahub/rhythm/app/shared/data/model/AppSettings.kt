@@ -373,6 +373,18 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_GESTURE_PLAYER_SWIPE_TRACKS = "gesture_player_swipe_tracks" // Swipe left/right to change tracks in full player
         private const val KEY_GESTURE_ARTWORK_DOUBLE_TAP = "gesture_artwork_double_tap" // Double tap on artwork to play/pause
         
+        // Expressive MaterialShapes Settings (M3 Expressive API)
+        private const val KEY_EXPRESSIVE_SHAPES_ENABLED = "expressive_shapes_enabled" // Master toggle for expressive shapes
+        private const val KEY_EXPRESSIVE_SHAPE_PRESET = "expressive_shape_preset" // Preset: DEFAULT, PLAYFUL, ORGANIC, GEOMETRIC, RETRO, CUSTOM
+        private const val KEY_EXPRESSIVE_SHAPE_ALBUM_ART = "expressive_shape_album_art" // Shape for album artwork
+        private const val KEY_EXPRESSIVE_SHAPE_FAB = "expressive_shape_fab" // Shape for FAB
+        private const val KEY_EXPRESSIVE_SHAPE_CARDS = "expressive_shape_cards" // Shape for cards
+        private const val KEY_EXPRESSIVE_SHAPE_BUTTONS = "expressive_shape_buttons" // Shape for buttons
+        private const val KEY_EXPRESSIVE_SHAPE_CHIPS = "expressive_shape_chips" // Shape for chips
+        private const val KEY_EXPRESSIVE_SHAPE_PLAYER_CONTROLS = "expressive_shape_player_controls" // Shape for player controls
+        private const val KEY_EXPRESSIVE_SHAPE_MINI_PLAYER = "expressive_shape_mini_player" // Shape for mini player
+        private const val KEY_EXPRESSIVE_SHAPE_NAV_INDICATOR = "expressive_shape_nav_indicator" // Shape for nav indicator
+        
         @Volatile
         private var INSTANCE: AppSettings? = null
         
@@ -3449,5 +3461,177 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     fun setAlbumBottomSheetGradientBlur(value: Boolean) {
         _albumBottomSheetGradientBlur.value = value
         prefs.edit().putBoolean(KEY_ALBUM_BOTTOM_SHEET_GRADIENT_BLUR, value).apply()
+    }
+    
+    // ==================== Expressive MaterialShapes Settings ====================
+    
+    // Master toggle for expressive shapes feature
+    private val _expressiveShapesEnabled = MutableStateFlow(prefs.getBoolean(KEY_EXPRESSIVE_SHAPES_ENABLED, false))
+    val expressiveShapesEnabled: StateFlow<Boolean> = _expressiveShapesEnabled.asStateFlow()
+    fun setExpressiveShapesEnabled(value: Boolean) {
+        _expressiveShapesEnabled.value = value
+        prefs.edit().putBoolean(KEY_EXPRESSIVE_SHAPES_ENABLED, value).apply()
+    }
+    
+    // Shape preset selection
+    private val _expressiveShapePreset = MutableStateFlow(prefs.getString(KEY_EXPRESSIVE_SHAPE_PRESET, "DEFAULT") ?: "DEFAULT")
+    val expressiveShapePreset: StateFlow<String> = _expressiveShapePreset.asStateFlow()
+    fun setExpressiveShapePreset(value: String) {
+        _expressiveShapePreset.value = value
+        prefs.edit().putString(KEY_EXPRESSIVE_SHAPE_PRESET, value).apply()
+    }
+    
+    // Individual shape settings for each target
+    private val _expressiveShapeAlbumArt = MutableStateFlow(prefs.getString(KEY_EXPRESSIVE_SHAPE_ALBUM_ART, "SQUARE") ?: "SQUARE")
+    val expressiveShapeAlbumArt: StateFlow<String> = _expressiveShapeAlbumArt.asStateFlow()
+    fun setExpressiveShapeAlbumArt(value: String) {
+        _expressiveShapeAlbumArt.value = value
+        prefs.edit().putString(KEY_EXPRESSIVE_SHAPE_ALBUM_ART, value).apply()
+        // Auto-switch to custom preset when individual shape is changed
+        if (_expressiveShapePreset.value != "CUSTOM") {
+            setExpressiveShapePreset("CUSTOM")
+        }
+    }
+    
+    private val _expressiveShapeFab = MutableStateFlow(prefs.getString(KEY_EXPRESSIVE_SHAPE_FAB, "CIRCLE") ?: "CIRCLE")
+    val expressiveShapeFab: StateFlow<String> = _expressiveShapeFab.asStateFlow()
+    fun setExpressiveShapeFab(value: String) {
+        _expressiveShapeFab.value = value
+        prefs.edit().putString(KEY_EXPRESSIVE_SHAPE_FAB, value).apply()
+        if (_expressiveShapePreset.value != "CUSTOM") {
+            setExpressiveShapePreset("CUSTOM")
+        }
+    }
+    
+    private val _expressiveShapeCards = MutableStateFlow(prefs.getString(KEY_EXPRESSIVE_SHAPE_CARDS, "SQUARE") ?: "SQUARE")
+    val expressiveShapeCards: StateFlow<String> = _expressiveShapeCards.asStateFlow()
+    fun setExpressiveShapeCards(value: String) {
+        _expressiveShapeCards.value = value
+        prefs.edit().putString(KEY_EXPRESSIVE_SHAPE_CARDS, value).apply()
+        if (_expressiveShapePreset.value != "CUSTOM") {
+            setExpressiveShapePreset("CUSTOM")
+        }
+    }
+    
+    private val _expressiveShapeButtons = MutableStateFlow(prefs.getString(KEY_EXPRESSIVE_SHAPE_BUTTONS, "CIRCLE") ?: "CIRCLE")
+    val expressiveShapeButtons: StateFlow<String> = _expressiveShapeButtons.asStateFlow()
+    fun setExpressiveShapeButtons(value: String) {
+        _expressiveShapeButtons.value = value
+        prefs.edit().putString(KEY_EXPRESSIVE_SHAPE_BUTTONS, value).apply()
+        if (_expressiveShapePreset.value != "CUSTOM") {
+            setExpressiveShapePreset("CUSTOM")
+        }
+    }
+    
+    private val _expressiveShapeChips = MutableStateFlow(prefs.getString(KEY_EXPRESSIVE_SHAPE_CHIPS, "PILL") ?: "PILL")
+    val expressiveShapeChips: StateFlow<String> = _expressiveShapeChips.asStateFlow()
+    fun setExpressiveShapeChips(value: String) {
+        _expressiveShapeChips.value = value
+        prefs.edit().putString(KEY_EXPRESSIVE_SHAPE_CHIPS, value).apply()
+        if (_expressiveShapePreset.value != "CUSTOM") {
+            setExpressiveShapePreset("CUSTOM")
+        }
+    }
+    
+    private val _expressiveShapePlayerControls = MutableStateFlow(prefs.getString(KEY_EXPRESSIVE_SHAPE_PLAYER_CONTROLS, "CIRCLE") ?: "CIRCLE")
+    val expressiveShapePlayerControls: StateFlow<String> = _expressiveShapePlayerControls.asStateFlow()
+    fun setExpressiveShapePlayerControls(value: String) {
+        _expressiveShapePlayerControls.value = value
+        prefs.edit().putString(KEY_EXPRESSIVE_SHAPE_PLAYER_CONTROLS, value).apply()
+        if (_expressiveShapePreset.value != "CUSTOM") {
+            setExpressiveShapePreset("CUSTOM")
+        }
+    }
+    
+    private val _expressiveShapeMiniPlayer = MutableStateFlow(prefs.getString(KEY_EXPRESSIVE_SHAPE_MINI_PLAYER, "SQUARE") ?: "SQUARE")
+    val expressiveShapeMiniPlayer: StateFlow<String> = _expressiveShapeMiniPlayer.asStateFlow()
+    fun setExpressiveShapeMiniPlayer(value: String) {
+        _expressiveShapeMiniPlayer.value = value
+        prefs.edit().putString(KEY_EXPRESSIVE_SHAPE_MINI_PLAYER, value).apply()
+        if (_expressiveShapePreset.value != "CUSTOM") {
+            setExpressiveShapePreset("CUSTOM")
+        }
+    }
+    
+    private val _expressiveShapeNavIndicator = MutableStateFlow(prefs.getString(KEY_EXPRESSIVE_SHAPE_NAV_INDICATOR, "CIRCLE") ?: "CIRCLE")
+    val expressiveShapeNavIndicator: StateFlow<String> = _expressiveShapeNavIndicator.asStateFlow()
+    fun setExpressiveShapeNavIndicator(value: String) {
+        _expressiveShapeNavIndicator.value = value
+        prefs.edit().putString(KEY_EXPRESSIVE_SHAPE_NAV_INDICATOR, value).apply()
+        if (_expressiveShapePreset.value != "CUSTOM") {
+            setExpressiveShapePreset("CUSTOM")
+        }
+    }
+    
+    /**
+     * Apply a preset to all shape targets
+     */
+    fun applyExpressiveShapePreset(preset: String) {
+        when (preset) {
+            "DEFAULT" -> {
+                _expressiveShapeAlbumArt.value = "SQUARE"
+                _expressiveShapeFab.value = "CIRCLE"
+                _expressiveShapeCards.value = "SQUARE"
+                _expressiveShapeButtons.value = "CIRCLE"
+                _expressiveShapeChips.value = "PILL"
+                _expressiveShapePlayerControls.value = "CIRCLE"
+                _expressiveShapeMiniPlayer.value = "SQUARE"
+                _expressiveShapeNavIndicator.value = "CIRCLE"
+            }
+            "PLAYFUL" -> {
+                _expressiveShapeAlbumArt.value = "FLOWER"
+                _expressiveShapeFab.value = "SOFT_BURST"
+                _expressiveShapeCards.value = "COOKIE_6"
+                _expressiveShapeButtons.value = "PUFFY"
+                _expressiveShapeChips.value = "BUN"
+                _expressiveShapePlayerControls.value = "SUNNY"
+                _expressiveShapeMiniPlayer.value = "SQUARE"
+                _expressiveShapeNavIndicator.value = "HEART"
+            }
+            "ORGANIC" -> {
+                _expressiveShapeAlbumArt.value = "CLOVER_4_LEAF"
+                _expressiveShapeFab.value = "FLOWER"
+                _expressiveShapeCards.value = "PUFFY"
+                _expressiveShapeButtons.value = "OVAL"
+                _expressiveShapeChips.value = "PILL"
+                _expressiveShapePlayerControls.value = "CIRCLE"
+                _expressiveShapeMiniPlayer.value = "COOKIE_4"
+                _expressiveShapeNavIndicator.value = "CLOVER_4_LEAF"
+            }
+            "GEOMETRIC" -> {
+                _expressiveShapeAlbumArt.value = "SQUARE"
+                _expressiveShapeFab.value = "DIAMOND"
+                _expressiveShapeCards.value = "SQUARE"
+                _expressiveShapeButtons.value = "PENTAGON"
+                _expressiveShapeChips.value = "DIAMOND"
+                _expressiveShapePlayerControls.value = "CIRCLE"
+                _expressiveShapeMiniPlayer.value = "SQUARE"
+                _expressiveShapeNavIndicator.value = "DIAMOND"
+            }
+            "RETRO" -> {
+                _expressiveShapeAlbumArt.value = "PIXEL_CIRCLE"
+                _expressiveShapeFab.value = "PIXEL_CIRCLE"
+                _expressiveShapeCards.value = "SQUARE"
+                _expressiveShapeButtons.value = "PIXEL_CIRCLE"
+                _expressiveShapeChips.value = "PIXEL_TRIANGLE"
+                _expressiveShapePlayerControls.value = "PIXEL_CIRCLE"
+                _expressiveShapeMiniPlayer.value = "SQUARE"
+                _expressiveShapeNavIndicator.value = "PIXEL_CIRCLE"
+            }
+            // CUSTOM - don't change individual shapes
+        }
+        // Save all shape values to preferences
+        prefs.edit().apply {
+            putString(KEY_EXPRESSIVE_SHAPE_PRESET, preset)
+            putString(KEY_EXPRESSIVE_SHAPE_ALBUM_ART, _expressiveShapeAlbumArt.value)
+            putString(KEY_EXPRESSIVE_SHAPE_FAB, _expressiveShapeFab.value)
+            putString(KEY_EXPRESSIVE_SHAPE_CARDS, _expressiveShapeCards.value)
+            putString(KEY_EXPRESSIVE_SHAPE_BUTTONS, _expressiveShapeButtons.value)
+            putString(KEY_EXPRESSIVE_SHAPE_CHIPS, _expressiveShapeChips.value)
+            putString(KEY_EXPRESSIVE_SHAPE_PLAYER_CONTROLS, _expressiveShapePlayerControls.value)
+            putString(KEY_EXPRESSIVE_SHAPE_MINI_PLAYER, _expressiveShapeMiniPlayer.value)
+            putString(KEY_EXPRESSIVE_SHAPE_NAV_INDICATOR, _expressiveShapeNavIndicator.value)
+        }.apply()
+        _expressiveShapePreset.value = preset
     }
 }
