@@ -38,6 +38,7 @@ import chromahub.rhythm.app.util.PlaylistImportExportUtils
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -45,6 +46,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -188,7 +190,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         val whitelistedIds = flows[4] as List<String>
         val whitelistedFolders = flows[5] as List<String>
         filterSongsAsync(songs, mode, blacklistedIds, blacklistedFolders, whitelistedIds, whitelistedFolders)
-    }.flowOn(Dispatchers.IO).stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Lazily, emptyList())
+    }.flowOn(Dispatchers.IO).stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, emptyList())
     
     private suspend fun filterSongsAsync(
         songs: List<Song>,
@@ -326,7 +328,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             // Include album if it has at least one non-blacklisted song
             filteredSongs.any { song -> song.album == album.title && song.artist == album.artist }
         }
-    }.stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Lazily, emptyList())
+    }.stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, emptyList())
 
     private val _artists = MutableStateFlow<List<Artist>>(emptyList())
     val artists: StateFlow<List<Artist>> = _artists.asStateFlow()
@@ -360,7 +362,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
         }
-    }.stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Lazily, emptyList())
+    }.stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.Eagerly, emptyList())
 
     private val _playlists = MutableStateFlow<List<Playlist>>(emptyList())
     val playlists: StateFlow<List<Playlist>> = _playlists.asStateFlow()
@@ -595,6 +597,7 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     init {
         Log.d(TAG, "Initializing MusicViewModel")
         
+        // Single coroutine for main initialization to ensure proper ordering
         viewModelScope.launch {
             try {
                 initializeViewModelSafely()
@@ -604,24 +607,8 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
         
-        // Initialize non-blocking components asynchronously
-        viewModelScope.launch {
-            try {
-                // Initialize audio device manager but don't start continuous monitoring
-                // Device monitoring will be started when needed (player screen, etc.)
-                
-                // Start tracking session (async)
-                startListeningTimeTracking()
-                
-                // Sleep timer initialization removed - now using direct ViewModel state
-                
-                Log.d(TAG, "Async initialization completed")
-            } catch (e: Exception) {
-                Log.e(TAG, "Error in async initialization", e)
-            }
-        }
-        
         // Listen for blacklist/whitelist changes and refresh playlists accordingly
+        // This runs independently but only acts after initialization completes
         viewModelScope.launch {
             combine(
                 appSettings.blacklistedSongs,
@@ -643,57 +630,92 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     
     private suspend fun initializeViewModelSafely() {
         Log.d(TAG, "Starting safe data initialization")
+        val initStartTime = System.currentTimeMillis()
         
-        // Step 1: Load core music data with error handling
-        val initializationResults = initializeCoreData()
+        // Step 1: Load core music data with PARALLEL loading for better performance
+        val initializationResults = initializeCoreDataParallel()
         if (!initializationResults.success) {
             throw Exception("Failed to load core music data: ${initializationResults.error}")
         }
         
-        Log.d(TAG, "Loaded ${_songs.value.size} songs, ${_albums.value.size} albums, ${_artists.value.size} artists")
+        Log.d(TAG, "Loaded ${_songs.value.size} songs, ${_albums.value.size} albums, ${_artists.value.size} artists in ${System.currentTimeMillis() - initStartTime}ms")
 
-        // Step 2: Load settings and persisted data
+        // Step 2: Load settings and persisted data (can run in parallel with some tasks)
         val settingsLoaded = loadAllSettings()
         if (!settingsLoaded) {
             Log.w(TAG, "Some settings failed to load, continuing with defaults")
         }
 
-        // Step 3: Initialize components with validation
-        val componentsInitialized = initializeComponents()
-        if (!componentsInitialized) {
-            Log.w(TAG, "Some components failed to initialize")
+        // Step 3: Initialize media controller (non-blocking, will connect async)
+        try {
+            initializeController()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error initializing media controller", e)
         }
 
-        // Step 4: Populate playlists safely
+        // Step 4: Initialize from persistence (needs songs to be loaded)
+        try {
+            initializeFromPersistence()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error initializing from persistence", e)
+        }
+
+        // Step 5: Start progress updates
+        try {
+            startProgressUpdates()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error starting progress updates", e)
+        }
+        
+        // Step 6: Wait for filteredSongs to be ready and populate playlists
         populateDefaultPlaylistsSafely()
 
-        // Step 5: Initialize queue state properly
+        // Step 7: Initialize queue state
         initializeQueueState()
 
-        // Step 6: Start background tasks
-        startBackgroundTasks()
-
-        // Step 7: Mark as initialized
+        // Step 8: Mark as initialized BEFORE starting background tasks
+        // This allows UI to render immediately
         _isInitialized.value = true
-        Log.d(TAG, "Data initialization complete successfully")
+        val initTime = System.currentTimeMillis() - initStartTime
+        Log.d(TAG, "Core initialization complete in ${initTime}ms")
+        
+        // Step 9: Start non-critical background tasks AFTER marking initialized
+        // This defers heavy work until after UI is responsive
+        startBackgroundTasksDeferred()
     }
     
     private data class InitializationResult(val success: Boolean, val error: String? = null)
     
-    private suspend fun initializeCoreData(): InitializationResult {
+    /**
+     * Load core data in parallel for faster initialization
+     */
+    private suspend fun initializeCoreDataParallel(): InitializationResult {
         return try {
-            val songs = repository.loadSongs(
-                allowedFormats = allowedFormats.value,
-                minimumBitrate = minimumBitrate.value,
-                minimumDuration = minimumDuration.value
-            )
-            val albums = repository.loadAlbums()
-            val artists = repository.loadArtists()
+            // Load songs, albums, and artists in parallel using coroutines
+            val songsDeferred = viewModelScope.async(Dispatchers.IO) {
+                repository.loadSongs(
+                    allowedFormats = allowedFormats.value,
+                    minimumBitrate = minimumBitrate.value,
+                    minimumDuration = minimumDuration.value
+                )
+            }
+            val albumsDeferred = viewModelScope.async(Dispatchers.IO) {
+                repository.loadAlbums()
+            }
+            val artistsDeferred = viewModelScope.async(Dispatchers.IO) {
+                repository.loadArtists()
+            }
+            
+            // Await all results
+            val songs = songsDeferred.await()
+            val albums = albumsDeferred.await()
+            val artists = artistsDeferred.await()
             
             if (songs.isEmpty() && albums.isEmpty() && artists.isEmpty()) {
                 Log.w(TAG, "No media found, but this might be normal on first run")
             }
             
+            // Update state atomically
             _songs.value = songs
             _albums.value = albums
             _artists.value = artists
@@ -732,38 +754,35 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         return allSuccess
     }
     
-    private suspend fun initializeComponents(): Boolean {
-        var allSuccess = true
-        
-        try {
-            initializeController()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error initializing media controller", e)
-            allSuccess = false
-        }
-        
-        try {
-            initializeFromPersistence()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error initializing from persistence", e)
-            allSuccess = false
-        }
-        
-        try {
-            startProgressUpdates()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error starting progress updates", e)
-            allSuccess = false
-        }
-        
-        return allSuccess
-    }
-    
     private suspend fun populateDefaultPlaylistsSafely() {
         // Only populate if default playlists are enabled
         if (!appSettings.defaultPlaylistsEnabled.value) {
             Log.d(TAG, "Default playlists are disabled, skipping population")
             return
+        }
+        
+        // If no songs loaded, nothing to populate
+        if (_songs.value.isEmpty()) {
+            Log.d(TAG, "No songs loaded, skipping playlist population")
+            return
+        }
+        
+        // Wait for filteredSongs flow to emit a value with data
+        // Since we use Eagerly, this should happen quickly after _songs.value is set
+        Log.d(TAG, "Waiting for filteredSongs to be ready (songs: ${_songs.value.size})")
+        
+        // Poll with small delays until filteredSongs has data or timeout
+        val startTime = System.currentTimeMillis()
+        val timeoutMs = 5000L
+        while (filteredSongs.value.isEmpty() && (System.currentTimeMillis() - startTime) < timeoutMs) {
+            delay(50) // Small delay to allow flow to compute
+        }
+        
+        val filteredCount = filteredSongs.value.size
+        if (filteredCount == 0 && _songs.value.isNotEmpty()) {
+            Log.w(TAG, "Timeout waiting for filteredSongs (${System.currentTimeMillis() - startTime}ms), using songs directly")
+        } else {
+            Log.d(TAG, "filteredSongs ready with $filteredCount songs in ${System.currentTimeMillis() - startTime}ms")
         }
         
         try {
@@ -933,6 +952,82 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
+    /**
+     * Start background tasks with appropriate delays to allow UI to settle first.
+     * This is called AFTER _isInitialized is set to true, so UI is already responsive.
+     */
+    private fun startBackgroundTasksDeferred() {
+        // Start listening time tracking (lightweight, can start immediately)
+        viewModelScope.launch {
+            try {
+                startListeningTimeTracking()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error starting listening time tracking", e)
+            }
+        }
+        
+        // Register ContentObserver for automatic MediaStore updates
+        repository.registerMediaStoreObserver {
+            Log.d(TAG, "MediaStore changed, scheduling incremental scan")
+            viewModelScope.launch {
+                delay(2000) // Debounce - wait for changes to settle
+                performIncrementalScan()
+            }
+        }
+        
+        // Start artwork fetching in background after a delay
+        viewModelScope.launch {
+            delay(1500) // Wait 1.5 seconds for UI to fully settle
+            try {
+                _isFetchingArtwork.value = true
+                fetchArtworkFromInternet()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error fetching artwork from internet", e)
+            } finally {
+                _isFetchingArtwork.value = false
+            }
+        }
+
+        // Start background genre detection after a longer delay
+        viewModelScope.launch {
+            delay(3000) // Wait 3 seconds after app load before starting genre detection
+            try {
+                // Check if songs actually have genres, not just if detection completed before
+                val songsWithGenres = songs.value.count { 
+                    !it.genre.isNullOrBlank() && it.genre.lowercase() != "unknown" 
+                }
+                val hasGenresInSongs = songsWithGenres > 0
+                
+                if (!appSettings.genreDetectionCompleted.value || !hasGenresInSongs) {
+                    // Run detection if never completed OR if songs don't have genres
+                    Log.d(TAG, "Starting genre detection (completed: ${appSettings.genreDetectionCompleted.value}, songsWithGenres: $songsWithGenres/${songs.value.size})")
+                    detectGenresInBackground()
+                } else {
+                    Log.d(TAG, "Genre detection already completed and songs have genres ($songsWithGenres/${songs.value.size}), skipping")
+                    _isGenreDetectionComplete.value = true
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error starting background genre detection", e)
+                // Mark as complete on error to prevent infinite loading
+                _isGenreDetectionComplete.value = true
+            }
+        }
+        
+        // Start background audio metadata extraction after an even longer delay
+        viewModelScope.launch {
+            delay(5000) // Wait 5 seconds after app load before starting metadata extraction
+            try {
+                _isExtractingMetadata.value = true
+                extractAudioMetadataInBackground()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error starting background audio metadata extraction", e)
+            } finally {
+                _isExtractingMetadata.value = false
+            }
+        }
+    }
+    
+    // Keep old method for library refresh which needs immediate execution
     private suspend fun startBackgroundTasks() {
         // Register ContentObserver for automatic MediaStore updates
         repository.registerMediaStoreObserver {
@@ -3318,77 +3413,73 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
      * Populates the "Recently Added" playlist with songs from current year's albums.
      * Only includes songs that pass the blacklist/whitelist filters.
      */
-    private fun populateRecentlyAddedPlaylist() {
-        viewModelScope.launch {
-            val recentlyAddedPlaylist = _playlists.value.find { it.id == "2" && it.name == "Recently Added" }
-            if (recentlyAddedPlaylist == null) {
-                Log.e(TAG, "Recently Added playlist not found, cannot populate.")
-                return@launch
-            }
-
-            val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-            val currentYearAlbums = _albums.value.filter { it.year == currentYear }
-                .ifEmpty {
-                    // Fallback to most recent albums if no current year albums are available
-                    _albums.value.sortedByDescending { it.year }.take(4)
-                }
-
-            val songsToAdd = mutableSetOf<Song>()
-            currentYearAlbums.forEach { album ->
-                val albumSongs = repository.getSongsForAlbumLocal(album.id)
-                songsToAdd.addAll(albumSongs)
-            }
-
-            // Filter songs using the same blacklist/whitelist logic as filteredSongs
-            val currentFilteredSongs = filteredSongs.value.toSet()
-            val filteredSongsToAdd = songsToAdd.filter { it in currentFilteredSongs }
-
-            // Add songs to the playlist, avoiding duplicates and respecting filters
-            val updatedSongs = (recentlyAddedPlaylist.songs.toSet() + filteredSongsToAdd).toList()
-                .filter { it in currentFilteredSongs } // Remove any previously added songs that are now filtered
-            
-            _playlists.value = _playlists.value.map { playlist ->
-                if (playlist.id == "2") {
-                    playlist.copy(songs = updatedSongs, dateModified = System.currentTimeMillis())
-                } else {
-                    playlist
-                }
-            }
-            savePlaylists()
-            Log.d(TAG, "Populated Recently Added playlist with ${filteredSongsToAdd.size} new filtered songs (${songsToAdd.size - filteredSongsToAdd.size} filtered out).")
+    private suspend fun populateRecentlyAddedPlaylist() {
+        val recentlyAddedPlaylist = _playlists.value.find { it.id == "2" && it.name == "Recently Added" }
+        if (recentlyAddedPlaylist == null) {
+            Log.e(TAG, "Recently Added playlist not found, cannot populate.")
+            return
         }
+
+        val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+        val currentYearAlbums = _albums.value.filter { it.year == currentYear }
+            .ifEmpty {
+                // Fallback to most recent albums if no current year albums are available
+                _albums.value.sortedByDescending { it.year }.take(4)
+            }
+
+        val songsToAdd = mutableSetOf<Song>()
+        currentYearAlbums.forEach { album ->
+            val albumSongs = repository.getSongsForAlbumLocal(album.id)
+            songsToAdd.addAll(albumSongs)
+        }
+
+        // Filter songs using the same blacklist/whitelist logic as filteredSongs
+        val currentFilteredSongs = filteredSongs.value.toSet()
+        val filteredSongsToAdd = songsToAdd.filter { it in currentFilteredSongs }
+
+        // Add songs to the playlist, avoiding duplicates and respecting filters
+        val updatedSongs = (recentlyAddedPlaylist.songs.toSet() + filteredSongsToAdd).toList()
+            .filter { it in currentFilteredSongs } // Remove any previously added songs that are now filtered
+        
+        _playlists.value = _playlists.value.map { playlist ->
+            if (playlist.id == "2") {
+                playlist.copy(songs = updatedSongs, dateModified = System.currentTimeMillis())
+            } else {
+                playlist
+            }
+        }
+        savePlaylists()
+        Log.d(TAG, "Populated Recently Added playlist with ${filteredSongsToAdd.size} new filtered songs (${songsToAdd.size - filteredSongsToAdd.size} filtered out).")
     }
 
     /**
      * Populates the "Most Played" playlist based on song play counts.
      */
-    private fun populateMostPlayedPlaylist() {
-        viewModelScope.launch {
-            val mostPlayedPlaylist = _playlists.value.find { it.id == "3" && it.name == "Most Played" }
-            if (mostPlayedPlaylist == null) {
-                Log.e(TAG, "Most Played playlist not found, cannot populate.")
-                return@launch
-            }
-
-            // Use filteredSongs to respect whitelist/blacklist mode
-            val sortedSongsByPlayCount = filteredSongs.value.sortedByDescending { song ->
-                _songPlayCounts.value[song.id] ?: 0
-            }
-
-            // Take top 50 most played songs
-            val topSongs = sortedSongsByPlayCount.take(50)
-
-            // Add these songs to the playlist, replacing existing ones to keep it fresh
-            _playlists.value = _playlists.value.map { playlist ->
-                if (playlist.id == "3") {
-                    playlist.copy(songs = topSongs, dateModified = System.currentTimeMillis())
-                } else {
-                    playlist
-                }
-            }
-            savePlaylists()
-            Log.d(TAG, "Populated Most Played playlist with ${topSongs.size} songs.")
+    private suspend fun populateMostPlayedPlaylist() {
+        val mostPlayedPlaylist = _playlists.value.find { it.id == "3" && it.name == "Most Played" }
+        if (mostPlayedPlaylist == null) {
+            Log.e(TAG, "Most Played playlist not found, cannot populate.")
+            return
         }
+
+        // Use filteredSongs to respect whitelist/blacklist mode
+        val sortedSongsByPlayCount = filteredSongs.value.sortedByDescending { song ->
+            _songPlayCounts.value[song.id] ?: 0
+        }
+
+        // Take top 50 most played songs
+        val topSongs = sortedSongsByPlayCount.take(50)
+
+        // Add these songs to the playlist, replacing existing ones to keep it fresh
+        _playlists.value = _playlists.value.map { playlist ->
+            if (playlist.id == "3") {
+                playlist.copy(songs = topSongs, dateModified = System.currentTimeMillis())
+            } else {
+                playlist
+            }
+        }
+        savePlaylists()
+        Log.d(TAG, "Populated Most Played playlist with ${topSongs.size} songs.")
     }
 
     // New functions for playlist management

@@ -6611,12 +6611,6 @@ fun SingleCardExplorerContent(
                                         contentDescription = null,
                                         modifier = Modifier.size(18.dp)
                                     )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = context.getString(R.string.action_play),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
                                 }
                                 
                                 ExpressiveGroupButton(
