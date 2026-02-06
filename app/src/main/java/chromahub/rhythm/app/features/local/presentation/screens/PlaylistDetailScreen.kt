@@ -1821,7 +1821,7 @@ fun PlaylistDetailScreen(
                             }
                         }
                     },
-                    scrollBehavior = exitAlwaysScrollBehavior
+                    scrollBehavior = if (LocalMiniPlayerPadding.current.calculateBottomPadding() > 0.dp) exitAlwaysScrollBehavior else null
                 )
             }
             }
@@ -2383,7 +2383,7 @@ fun PlaylistDetailScreen(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(horizontal = 16.dp)
-                        .padding(bottom = LocalMiniPlayerPadding.current.calculateBottomPadding() + 12.dp)
+                        .padding(bottom = if (LocalMiniPlayerPadding.current.calculateBottomPadding() > 0.dp) 20.dp else 28.dp)
                         .offset(y = -ScreenOffset),
                     expanded = true,
                     content = {
@@ -2544,7 +2544,7 @@ fun PlaylistDetailScreen(
                             }
                         }
                     },
-                    scrollBehavior = exitAlwaysScrollBehavior
+                    scrollBehavior = if (LocalMiniPlayerPadding.current.calculateBottomPadding() > 0.dp) exitAlwaysScrollBehavior else null
                 )
             }
             }
