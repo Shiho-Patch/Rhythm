@@ -117,6 +117,8 @@ import chromahub.rhythm.app.util.M3ImageUtils
 import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
 import chromahub.rhythm.app.features.local.presentation.components.player.formatDuration
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.PlaylistSongOptionsBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.SongInfoBottomSheet
 import kotlinx.coroutines.delay // Import delay
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -647,11 +649,19 @@ fun PlaylistDetailScreen(
                 onGoToArtist(selectedSongForOptions!!)
                 showSongOptionsSheet = false
             },
-            onShare = {
-                onShare(selectedSongForOptions!!)
-                showSongOptionsSheet = false
-            },
             haptics = haptics
+        )
+    }
+
+    // Song Info Bottom Sheet
+    if (showSongInfo && selectedSongForInfo != null) {
+        SongInfoBottomSheet(
+            song = selectedSongForInfo,
+            onDismiss = {
+                showSongInfo = false
+                selectedSongForInfo = null
+            },
+            appSettings = appSettings
         )
     }
 
@@ -2924,308 +2934,6 @@ fun PlaylistSongItem(
                     )
                 }
             }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun PlaylistSongOptionsBottomSheet(
-    song: Song,
-    onDismiss: () -> Unit,
-    onRemoveFromPlaylist: () -> Unit,
-    onPlayNext: () -> Unit,
-    onAddToQueue: () -> Unit,
-    onAddToPlaylist: () -> Unit,
-    onShowSongInfo: () -> Unit,
-    onGoToAlbum: () -> Unit,
-    onGoToArtist: () -> Unit,
-    onShare: () -> Unit,
-    haptics: androidx.compose.ui.hapticfeedback.HapticFeedback
-) {
-    val context = LocalContext.current
-    var showContent by remember { mutableStateOf(false) }
-    
-    val contentAlpha by animateFloatAsState(
-        targetValue = if (showContent) 1f else 0f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
-        label = "contentAlpha"
-    )
-    
-    val contentTranslation by animateFloatAsState(
-        targetValue = if (showContent) 0f else 50f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
-        label = "contentTranslation"
-    )
-
-    LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(100)
-        showContent = true
-    }
-    
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        dragHandle = {
-            BottomSheetDefaults.DragHandle(
-                color = MaterialTheme.colorScheme.primary
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        contentColor = MaterialTheme.colorScheme.onBackground,
-        tonalElevation = 0.dp
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-        ) {
-            // Header with song info
-            AnimatedVisibility(
-                visible = showContent,
-                enter = fadeIn() + slideInVertically { it },
-                exit = fadeOut() + slideOutVertically { it }
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 16.dp)
-                ) {
-                    Text(
-                        text = "Song options",
-                        style = MaterialTheme.typography.displayMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    
-                    Spacer(modifier = Modifier.height(18.dp))
-                    
-                    // Song title and artist
-                    Text(
-                        text = song.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = song.artist,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-            
-            // Actions section with grid layout
-            AnimatedVisibility(
-                visible = showContent,
-                enter = fadeIn() + slideInVertically { it },
-                exit = fadeOut() + slideOutVertically { it }
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    // Row 1: Play next, Add to queue
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Box(modifier = Modifier.weight(1f)) {
-                            SongOptionGridItem(
-                                icon = Icons.Rounded.SkipNext,
-                                text = "Play next",
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                    onPlayNext()
-                                }
-                            )
-                        }
-                        Box(modifier = Modifier.weight(1f)) {
-                            SongOptionGridItem(
-                                icon = RhythmIcons.Queue,
-                                text = "Add to queue",
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                    onAddToQueue()
-                                }
-                            )
-                        }
-                    }
-                    
-                    // Row 2: Add to playlist, Go to album
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Box(modifier = Modifier.weight(1f)) {
-                            SongOptionGridItem(
-                                icon = RhythmIcons.AddToPlaylist,
-                                text = "Add to playlist",
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                iconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                    onAddToPlaylist()
-                                }
-                            )
-                        }
-                        Box(modifier = Modifier.weight(1f)) {
-                            SongOptionGridItem(
-                                icon = RhythmIcons.Album,
-                                text = "Go to album",
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                    onGoToAlbum()
-                                }
-                            )
-                        }
-                    }
-                    
-                    // Row 3: Go to artist, Song info
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Box(modifier = Modifier.weight(1f)) {
-                            SongOptionGridItem(
-                                icon = RhythmIcons.Artist,
-                                text = "Go to artist",
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                    onGoToArtist()
-                                }
-                            )
-                        }
-                        Box(modifier = Modifier.weight(1f)) {
-                            SongOptionGridItem(
-                                icon = Icons.Rounded.Info,
-                                text = "Song info",
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                    onShowSongInfo()
-                                }
-                            )
-                        }
-                    }
-                    
-                    // Row 4: Share (full width)
-                    SongOptionGridItem(
-                        icon = Icons.Rounded.Share,
-                        text = "Share",
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                            onShare()
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    
-                    // Row 5: Remove from playlist (full width, error color)
-                    SongOptionGridItem(
-                        icon = RhythmIcons.Remove,
-                        text = "Remove from playlist",
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        iconColor = MaterialTheme.colorScheme.error,
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                            onRemoveFromPlaylist()
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun SongOptionGridItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    text: String,
-    containerColor: Color,
-    iconColor: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        onClick = onClick,
-        modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            // Icon with colored background
-            Surface(
-                modifier = Modifier.size(44.dp),
-                shape = CircleShape,
-                color = containerColor.copy(alpha = 0.3f),
-                tonalElevation = 0.dp
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            brush = androidx.compose.ui.graphics.Brush.radialGradient(
-                                colors = listOf(
-                                    containerColor.copy(alpha = 0.15f),
-                                    containerColor.copy(alpha = 0.05f)
-                                ),
-                                radius = 22f
-                            )
-                        )
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = iconColor,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 2,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurface
-            )
         }
     }
 }

@@ -14558,113 +14558,100 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
             modifier = modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Enable/Disable Section
+            // Enable/Disable Card - Equalizer style
             item(key = "expressive_shapes_toggle") {
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    text = "Material 3 Expressive",
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
-                )
+                Spacer(modifier = Modifier.height(8.dp))
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                ) {
-                    TunerSettingRow(
-                        item = SettingItem(
-                            Icons.Default.AutoAwesome,
-                            "Enable Expressive Shapes",
-                            if (expressiveShapesEnabled) "Using organic Material 3 shapes" else "Using standard rounded shapes",
-                            toggleState = expressiveShapesEnabled,
-                            onToggleChange = {
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                appSettings.setExpressiveShapesEnabled(it)
-                            }
-                        )
-                    )
-                }
-            }
-            
-            // Info Card about M3 Expressive
-            item(key = "expressive_info_card") {
-                Spacer(modifier = Modifier.height(16.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-                    )
+                        containerColor = if (expressiveShapesEnabled)
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                        else
+                            MaterialTheme.colorScheme.surfaceContainer
+                    ),
+                    shape = RoundedCornerShape(40.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Lightbulb,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
+                        Icon(
+                            imageVector = Icons.Default.AutoAwesome,
+                            contentDescription = null,
+                            tint = if (expressiveShapesEnabled) MaterialTheme.colorScheme.primary
+                                   else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "About Expressive Shapes",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                text = when {
+                                    expressiveShapesEnabled -> "Active"
+                                    else -> "Disabled"
+                                },
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
                             )
                         }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "Material 3 Expressive introduces organic, playful shapes like flowers, hearts, cookies, and more. These shapes create a unique, expressive experience that makes your music app feel more personal and fun.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f),
-                            lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.2f
+                        TunerAnimatedSwitch(
+                            checked = expressiveShapesEnabled,
+                            onCheckedChange = { enabled ->
+                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                                appSettings.setExpressiveShapesEnabled(enabled)
+                            }
                         )
                     }
                 }
             }
             
-            // Only show customization options if enabled
-            if (expressiveShapesEnabled) {
-                // Preset Selection
-                item(key = "preset_section") {
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Text(
-                        text = "Quick Presets",
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
-                    )
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(18.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                    ) {
-                        TunerSettingRow(
-                            item = SettingItem(
-                                Icons.Default.Style,
-                                "Shape Preset",
-                                presets.find { it.id == currentPreset }?.displayName ?: "Default",
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                    showPresetDialog = true
-                                }
-                            )
+            // Preset Selection with animation
+            item(key = "preset_section") {
+                AnimatedVisibility(
+                    visible = expressiveShapesEnabled,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    Column {
+                        Text(
+                            text = "Quick Presets",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
                         )
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(18.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                        ) {
+                            TunerSettingRow(
+                                item = SettingItem(
+                                    Icons.Default.Style,
+                                    "Shape Preset",
+                                    presets.find { it.id == currentPreset }?.displayName ?: "Default",
+                                    onClick = {
+                                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                        showPresetDialog = true
+                                    }
+                                )
+                            )
+                        }
                     }
                 }
-                
-                // Preset Preview Row (horizontal scroll)
-                item(key = "preset_preview") {
-                    Spacer(modifier = Modifier.height(16.dp))
+            }
+            
+            // Preset Preview Row with animation
+            item(key = "preset_preview") {
+                AnimatedVisibility(
+                    visible = expressiveShapesEnabled,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
                     LazyRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -14722,10 +14709,16 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                         }
                     }
                 }
-                
-                // Individual Shape Customization
-                item(key = "individual_shapes_header") {
-                    Spacer(modifier = Modifier.height(24.dp))
+            }
+            
+            // Individual Shape Customization with animation
+            item(key = "individual_shapes_header") {
+                AnimatedVisibility(
+                    visible = expressiveShapesEnabled,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    Column {
                     Text(
                         text = "Individual Shape Settings",
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
@@ -14816,9 +14809,50 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                             }
                         }
                     }
-                }
+                    } // Column
+                } // AnimatedVisibility
             }
             
+            // Info/Tip Card about M3 Expressive
+            item(key = "expressive_info_card") {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Lightbulb,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "About Expressive Shapes",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Material 3 Expressive introduces organic, playful shapes like flowers, hearts, cookies, and more. These shapes create a unique, expressive experience that makes your music app feel more personal and fun.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f),
+                            lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.2f
+                        )
+                    }
+                }
+            }
+
             // Bottom spacer
             item(key = "bottom_spacer") {
                 Spacer(modifier = Modifier.height(100.dp))

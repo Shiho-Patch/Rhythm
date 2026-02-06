@@ -80,6 +80,9 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_CUSTOM_FONT_PATH = "custom_font_path" // Path to imported font file
         private const val KEY_CUSTOM_FONT_FAMILY = "custom_font_family" // Display name of custom font
         
+        // Player Theme Settings
+        private const val KEY_PLAYER_THEME_ID = "player_theme_id" // ID of the selected player theme (default, compact, large, minimal)
+        
         // Library Settings
         private const val KEY_ALBUM_VIEW_TYPE = "album_view_type"
         private const val KEY_ARTIST_VIEW_TYPE = "artist_view_type"
@@ -482,6 +485,10 @@ class AppSettings private constructor(context: Context) {
     
     private val _customFontFamily = MutableStateFlow(prefs.getString(KEY_CUSTOM_FONT_FAMILY, "System") ?: "System")
     val customFontFamily: StateFlow<String> = _customFontFamily.asStateFlow()
+    
+    // Player Theme Settings
+    private val _playerThemeId = MutableStateFlow(prefs.getString(KEY_PLAYER_THEME_ID, "default") ?: "default")
+    val playerThemeId: StateFlow<String> = _playerThemeId.asStateFlow()
     
     // Library Settings
     private val _albumViewType = MutableStateFlow(
@@ -1286,6 +1293,12 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     fun setCustomFontFamily(family: String) {
         prefs.edit().putString(KEY_CUSTOM_FONT_FAMILY, family).apply()
         _customFontFamily.value = family
+    }
+    
+    // Player Theme Settings Methods
+    fun setPlayerThemeId(themeId: String) {
+        prefs.edit().putString(KEY_PLAYER_THEME_ID, themeId).apply()
+        _playerThemeId.value = themeId
     }
     
     // Library Settings Methods

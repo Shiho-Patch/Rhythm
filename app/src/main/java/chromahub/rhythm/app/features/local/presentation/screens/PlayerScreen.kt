@@ -74,6 +74,7 @@ import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Lyrics
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -212,6 +213,7 @@ import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import chromahub.rhythm.app.features.local.presentation.components.player.formatDuration
 import chromahub.rhythm.app.features.local.presentation.components.lyrics.WordByWordLyricsView
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.CastBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.ExtraControlBottomSheet
 import androidx.navigation.NavController
 
 // Experimental API opt-ins required for:
@@ -624,6 +626,7 @@ fun PlayerScreen(
     var showArtistSheet by remember { mutableStateOf(false) }
     var selectedAlbum by remember { mutableStateOf<Album?>(null) }
     var selectedArtist by remember { mutableStateOf<Artist?>(null) }
+    var showCompactChipsSheet by remember { mutableStateOf(false) }
 
     // AutoEQ Suggestion Dialog state
     var showAutoEQSuggestion by remember { mutableStateOf(false) }
@@ -997,6 +1000,30 @@ fun PlayerScreen(
         )
     }
 
+    // Compact Mode Filter Chips Bottom Sheet
+    if (showCompactChipsSheet) {
+        val compactChipsSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        
+        ExtraControlBottomSheet(
+            onDismiss = { showCompactChipsSheet = false },
+            sheetState = compactChipsSheetState,
+            hiddenChips = hiddenChips,
+            equalizerEnabled = equalizerEnabled,
+            sleepTimerActive = sleepTimerActive,
+            sleepTimerRemainingSeconds = sleepTimerRemainingSeconds,
+            lyrics = lyrics,
+            onAddToPlaylist = onAddToPlaylist,
+            onPlaybackSpeed = { showPlaybackSpeedDialog = true },
+            onEqualizer = { navController.navigate(Screen.Equalizer.route) },
+            onSleepTimer = { showSleepTimerBottomSheet = true },
+            onLyricsEditor = { showLyricsEditorDialog = true },
+            onSongInfo = { showSongInfoSheet = true },
+            haptic = haptic,
+            isExtraSmallWidth = isExtraSmallWidth,
+            isCompactWidth = isCompactWidth
+        )
+    }
+
     FixedHeaderScreen(
         title = "Player",
         showBackButton = true,
@@ -1012,13 +1039,13 @@ fun PlayerScreen(
                     horizontalAlignment = Alignment.End,
                     modifier = Modifier
                         .padding(
-                            end = if (isExtraSmallWidth) 4.dp else 8.dp
+                            end = if (isExtraSmallWidth) 2.dp else if (isCompactWidth) 4.dp else 8.dp
                         )
                         .width(
                             when {
-                                isExtraSmallWidth -> 120.dp
-                                isCompactWidth -> 140.dp
-                                else -> 200.dp
+                                isExtraSmallWidth -> 100.dp
+                                isCompactWidth -> 120.dp
+                                else -> 180.dp
                             }
                         )
                 ) {
@@ -2486,22 +2513,22 @@ fun PlayerScreen(
 
                         Spacer(modifier = Modifier.height(if (isExtraSmallWidth) 12.dp else 20.dp))
 
-                        // Arrow button to show chips or chips themselves
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(
-                                    horizontal = when {
-                                        isExtraSmallWidth -> 12.dp
-                                        isCompactWidth -> 16.dp
-                                        else -> 24.dp
-                                    }
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            // Up arrow button (shown when chips are hidden)
-                            androidx.compose.animation.AnimatedVisibility(
-                                visible = !showChips,
+                        // Arrow button to show chips or chips themselves (hidden in compact mode)
+                        if (!isCompactWidth) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(
+                                        horizontal = when {
+                                            isExtraSmallWidth -> 12.dp
+                                            else -> 24.dp
+                                        }
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                // Up arrow button (shown when chips are hidden)
+                                androidx.compose.animation.AnimatedVisibility(
+                                    visible = !showChips,
                                 enter = fadeIn(
                                     animationSpec = tween(
                                         300,
@@ -3290,6 +3317,77 @@ fun PlayerScreen(
                             }
                             Spacer(modifier = Modifier.height(if (isTablet) 32.dp else 32.dp))
                         }
+                    } else {
+                        // Compact mode: Show button to open chips bottom sheet
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(
+                                    vertical = when {
+                                        isExtraSmallWidth -> 8.dp
+                                        isCompactWidth -> 10.dp
+                                        else -> 12.dp
+                                    }
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            FilledTonalButton(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(
+                                        context,
+                                        haptic,
+                                        HapticFeedbackType.LongPress
+                                    )
+                                    showCompactChipsSheet = true
+                                },
+                                shape = RoundedCornerShape(
+                                    when {
+                                        isExtraSmallWidth -> 20.dp
+                                        isCompactWidth -> 22.dp
+                                        else -> 24.dp
+                                    }
+                                ),
+                                modifier = Modifier.height(
+                                    when {
+                                        isExtraSmallWidth -> 36.dp
+                                        isCompactWidth -> 38.dp
+                                        else -> 40.dp
+                                    }
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.MoreVert,
+                                    contentDescription = "More controls",
+                                    modifier = Modifier.size(
+                                        when {
+                                            isExtraSmallWidth -> 18.dp
+                                            isCompactWidth -> 19.dp
+                                            else -> 20.dp
+                                        }
+                                    )
+                                )
+                                Spacer(
+                                    modifier = Modifier.width(
+                                        when {
+                                            isExtraSmallWidth -> 6.dp
+                                            isCompactWidth -> 7.dp
+                                            else -> 8.dp
+                                        }
+                                    )
+                                )
+                                Text(
+                                    "More Controls",
+                                    style = MaterialTheme.typography.labelLarge.copy(
+                                        fontSize = when {
+                                            isExtraSmallWidth -> 13.sp
+                                            isCompactWidth -> 14.sp
+                                            else -> 15.sp
+                                        }
+                                    )
+                                )
+                            }
+                        }
+                    }
                         Spacer(modifier = Modifier.height(if (isTablet) 12.dp else 22.dp))
                     }
                 }
@@ -3315,172 +3413,218 @@ fun PlayerScreen(
                                 ),
                             horizontalArrangement = Arrangement.spacedBy(
                                 if (isExtraSmallWidth) 4.dp else if (isCompactWidth) 6.dp else 8.dp
-                            )
+                            ),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                        // Device Output button - expressive style
-                        Surface(
-                            onClick = {
-                                HapticUtils.performHapticFeedback(
-                                    context,
-                                    haptic,
-                                    HapticFeedbackType.LongPress
-                                )
-                                showDeviceOutputSheet = true
-                            },
-                            shape = RoundedCornerShape(28.dp),
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                            tonalElevation = 0.dp,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(
-                                        vertical = if (isCompactHeight) 8.dp else 12.dp,
-                                        horizontal = if (isCompactWidth) 8.dp else 12.dp
-                                    ),
-                                verticalAlignment = Alignment.CenterVertically
+                            // Device Output button - expressive style
+                            Surface(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(
+                                        context,
+                                        haptic,
+                                        HapticFeedbackType.LongPress
+                                    )
+                                    showDeviceOutputSheet = true
+                                },
+                                shape = RoundedCornerShape(28.dp),
+                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                tonalElevation = 0.dp,
+                                modifier = Modifier.weight(1f)
                             ) {
-                                // Icon with background
-                                val icon = when {
-                                    location?.id?.startsWith("bt_") == true -> RhythmIcons.BluetoothFilled
-                                    location?.id == "wired_headset" -> RhythmIcons.HeadphonesFilled
-                                    location?.id == "speaker" -> RhythmIcons.SpeakerFilled
-                                    else -> RhythmIcons.Location
-                                }
-                                
-                                Surface(
-                                    shape = CircleShape,
-                                    color = MaterialTheme.colorScheme.secondary,
-                                    modifier = Modifier.size(if (isCompactHeight) 36.dp else 40.dp)
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(
+                                            vertical = if (isCompactHeight) 8.dp else 12.dp,
+                                            horizontal = if (isCompactWidth) 8.dp else 12.dp
+                                        ),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = if (isCompactWidth) Arrangement.Center else Arrangement.Start
                                 ) {
-                                    Box(
-                                        contentAlignment = Alignment.Center,
-                                        modifier = Modifier.fillMaxSize()
-                                    ) {
-                                        Icon(
-                                            imageVector = icon,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onSecondary,
-                                            modifier = Modifier.size(if (isCompactHeight) 20.dp else 24.dp)
-                                        )
-                                    }
-                                }
-
-                                if (!isCompactWidth) {
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Column(
-                                        modifier = Modifier.weight(1f),
-                                        horizontalAlignment = Alignment.Start
-                                    ) {
-                                        Text(
-                                            text = location?.name ?: "Device Output",
-                                            style = MaterialTheme.typography.titleSmall,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                        val displayVolume = if (useSystemVolume) systemVolume else volume
-                                        val volumeText = if (useSystemVolume) "System" else "App"
-                                        Text(
-                                            text = "${(displayVolume * 100).toInt()}% $volumeText",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
+                                    // Icon with background
+                                    val icon = when {
+                                        location?.id?.startsWith("bt_") == true -> RhythmIcons.BluetoothFilled
+                                        location?.id == "wired_headset" -> RhythmIcons.HeadphonesFilled
+                                        location?.id == "speaker" -> RhythmIcons.SpeakerFilled
+                                        else -> RhythmIcons.Location
                                     }
                                     
-                                    Icon(
-                                        imageVector = RhythmIcons.ArrowRight,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(20.dp)
-                                    )
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = MaterialTheme.colorScheme.secondary,
+                                        modifier = Modifier.size(if (isCompactHeight) 36.dp else 40.dp)
+                                    ) {
+                                        Box(
+                                            contentAlignment = Alignment.Center,
+                                            modifier = Modifier.fillMaxSize()
+                                        ) {
+                                            Icon(
+                                                imageVector = icon,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.onSecondary,
+                                                modifier = Modifier.size(if (isCompactHeight) 20.dp else 24.dp)
+                                            )
+                                        }
+                                    }
+
+                                    if (!isCompactWidth) {
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Column(
+                                            modifier = Modifier.weight(1f),
+                                            horizontalAlignment = Alignment.Start
+                                        ) {
+                                            Text(
+                                                text = location?.name ?: "Device Output",
+                                                style = MaterialTheme.typography.titleSmall,
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            val displayVolume = if (useSystemVolume) systemVolume else volume
+                                            val volumeText = if (useSystemVolume) "System" else "App"
+                                            Text(
+                                                text = "${(displayVolume * 100).toInt()}% $volumeText",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                        
+                                        Icon(
+                                            imageVector = RhythmIcons.ArrowRight,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
                                 }
                             }
-                        }
 
-                        // Queue button - expressive style
-                        Surface(
-                            onClick = {
-                                HapticUtils.performHapticFeedback(
-                                    context,
-                                    haptic,
-                                    HapticFeedbackType.LongPress
-                                )
-                                if (song != null) {
-                                    showQueueSheet = true
-                                } else {
-                                    onQueueClick()
-                                }
-                            },
-                            shape = RoundedCornerShape(28.dp),
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                            tonalElevation = 0.dp,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(
-                                        vertical = if (isCompactHeight) 8.dp else 12.dp,
-                                        horizontal = if (isCompactWidth) 8.dp else 12.dp
-                                    ),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                // Icon with background
-                                Surface(
-                                    shape = CircleShape,
-                                    color = MaterialTheme.colorScheme.secondary,
-                                    modifier = Modifier.size(if (isCompactHeight) 36.dp else 40.dp)
+                            // Arrow button - positioned between buttons in compact mode
+                            if (isCompactWidth) {
+                                androidx.compose.animation.AnimatedVisibility(
+                                    visible = !showChips,
+                                    enter = fadeIn(
+                                        animationSpec = tween(
+                                            300,
+                                            delayMillis = 200
+                                        )
+                                    ) + scaleIn(animationSpec = tween(300, delayMillis = 200)),
+                                    exit = fadeOut(animationSpec = tween(200)) + scaleOut(
+                                        animationSpec = tween(
+                                            200
+                                        )
+                                    )
                                 ) {
-                                    Box(
-                                        contentAlignment = Alignment.Center,
-                                        modifier = Modifier.fillMaxSize()
+                                    IconButton(
+                                        onClick = {
+                                            HapticUtils.performHapticFeedback(
+                                                context,
+                                                haptic,
+                                                HapticFeedbackType.LongPress
+                                            )
+                                            showCompactChipsSheet = true
+                                        },
+                                        modifier = Modifier
+                                            .width(if (isExtraSmallWidth) 48.dp else 56.dp)
+                                            .height(if (isCompactHeight) 36.dp else 40.dp)
+                                            .background(
+                                                color = MaterialTheme.colorScheme.tertiaryContainer,
+                                                shape = RoundedCornerShape(20.dp)
+                                            )
                                     ) {
                                         Icon(
-                                            imageVector = RhythmIcons.Queue,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onSecondary,
-                                            modifier = Modifier.size(if (isCompactHeight) 20.dp else 24.dp)
+                                            imageVector = Icons.Default.KeyboardArrowUp,
+                                            contentDescription = "Show actions",
+                                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                            modifier = Modifier.size(if (isCompactHeight) 18.dp else 20.dp)
                                         )
                                     }
-                                }
-
-                                if (!isCompactWidth) {
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Column(
-                                        modifier = Modifier.weight(1f),
-                                        horizontalAlignment = Alignment.Start
-                                    ) {
-                                        Text(
-                                            text = context.getString(R.string.player_queue),
-                                            style = MaterialTheme.typography.titleSmall,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                        Text(
-                                            text = "$queuePosition of $queueTotal",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    }
-                                    
-                                    Icon(
-                                        imageVector = RhythmIcons.ArrowRight,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(20.dp)
-                                    )
                                 }
                             }
-                        }
-                    }
-                }
+
+                            // Queue button - expressive style
+                            Surface(
+                                onClick = {
+                                    HapticUtils.performHapticFeedback(
+                                        context,
+                                        haptic,
+                                        HapticFeedbackType.LongPress
+                                    )
+                                    if (song != null) {
+                                        showQueueSheet = true
+                                    } else {
+                                        onQueueClick()
+                                    }
+                                },
+                                shape = RoundedCornerShape(28.dp),
+                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                tonalElevation = 0.dp,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(
+                                            vertical = if (isCompactHeight) 8.dp else 12.dp,
+                                            horizontal = if (isCompactWidth) 8.dp else 12.dp
+                                        ),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = if (isCompactWidth) Arrangement.Center else Arrangement.Start
+                                ) {
+                                    // Icon with background
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = MaterialTheme.colorScheme.secondary,
+                                        modifier = Modifier.size(if (isCompactHeight) 36.dp else 40.dp)
+                                    ) {
+                                        Box(
+                                            contentAlignment = Alignment.Center,
+                                            modifier = Modifier.fillMaxSize()
+                                        ) {
+                                            Icon(
+                                                imageVector = RhythmIcons.Queue,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.onSecondary,
+                                                modifier = Modifier.size(if (isCompactHeight) 20.dp else 24.dp)
+                                            )
+                                        }
+                                    }
+
+                                    if (!isCompactWidth) {
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Column(
+                                            modifier = Modifier.weight(1f),
+                                            horizontalAlignment = Alignment.Start
+                                        ) {
+                                            Text(
+                                                text = context.getString(R.string.player_queue),
+                                                style = MaterialTheme.typography.titleSmall,
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            Text(
+                                                text = "$queuePosition of $queueTotal",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                        
+                                        Icon(
+                                            imageVector = RhythmIcons.ArrowRight,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }  // Close Row for buttons
+                    }  // Close AnimatedVisibility
             }
             
             // Adaptive Layout Logic
@@ -3536,7 +3680,7 @@ fun PlayerScreen(
                 }
             }
         }
-        }
+    }
     
     if (showPlaybackSpeedDialog) {
         PlaybackSpeedDialog(

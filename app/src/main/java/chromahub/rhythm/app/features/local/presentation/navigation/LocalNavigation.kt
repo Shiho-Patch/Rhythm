@@ -61,6 +61,7 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.rememberModalBottomSheetState
 import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveFilledIconButton
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapes
@@ -92,6 +93,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AddToPlaylistBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AlbumBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.ArtistBottomSheet
 import chromahub.rhythm.app.features.local.presentation.screens.AddToPlaylistScreen
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.QueueActionDialog
@@ -1851,6 +1854,15 @@ private fun LocalNavigationContent(
                     val playlistId = backStackEntry.arguments?.getString("playlistId") ?: ""
                     val playlist = playlists.find { it.id == playlistId }
 
+                    // Album/Artist data for bottom sheets
+                    val allAlbums by viewModel.albums.collectAsState()
+                    val allArtists by viewModel.artists.collectAsState()
+                    var selectedAlbumForSheet by remember { mutableStateOf<chromahub.rhythm.app.shared.data.model.Album?>(null) }
+                    var showAlbumSheet by remember { mutableStateOf(false) }
+                    var selectedArtistForSheet by remember { mutableStateOf<chromahub.rhythm.app.shared.data.model.Artist?>(null) }
+                    var showArtistSheet by remember { mutableStateOf(false) }
+                    val playlistHaptics = LocalHapticFeedback.current
+
                     if (playlist != null) {
                         PlaylistDetailScreen(
                             playlist = playlist,
@@ -1903,7 +1915,68 @@ private fun LocalNavigationContent(
                             },
                             onUpdatePlaylistSongs = { newSongList ->
                                 viewModel.updatePlaylistSongs(playlistId, newSongList)
+                            },
+                            onPlayNext = { song ->
+                                viewModel.playNext(song)
+                            },
+                            onAddToQueue = { song ->
+                                viewModel.addSongToQueue(song)
+                            },
+                            onGoToAlbum = { song ->
+                                val album = allAlbums.find { it.title == song.album }
+                                if (album != null) {
+                                    selectedAlbumForSheet = album
+                                    showAlbumSheet = true
+                                }
+                            },
+                            onGoToArtist = { song ->
+                                val artist = allArtists.find { it.name == song.artist }
+                                if (artist != null) {
+                                    selectedArtistForSheet = artist
+                                    showArtistSheet = true
+                                }
                             }
+                        )
+                    }
+
+                    // Album Bottom Sheet
+                    if (showAlbumSheet && selectedAlbumForSheet != null) {
+                        val albumSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+                        AlbumBottomSheet(
+                            album = selectedAlbumForSheet!!,
+                            onDismiss = { showAlbumSheet = false; selectedAlbumForSheet = null },
+                            onSongClick = onPlaySong,
+                            onPlayAll = { songs -> viewModel.playSongs(songs) },
+                            onShufflePlay = { songs -> viewModel.playShuffled(songs) },
+                            onAddToQueue = { song -> viewModel.addSongToQueue(song) },
+                            onAddSongToPlaylist = { },
+                            onPlayerClick = { navController.navigate(Screen.Player.route) },
+                            sheetState = albumSheetState,
+                            haptics = playlistHaptics,
+                            onPlayNext = { song -> viewModel.playNext(song) },
+                            currentSong = currentSong,
+                            isPlaying = isPlaying
+                        )
+                    }
+
+                    // Artist Bottom Sheet
+                    if (showArtistSheet && selectedArtistForSheet != null) {
+                        val artistSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+                        ArtistBottomSheet(
+                            artist = selectedArtistForSheet!!,
+                            onDismiss = { showArtistSheet = false; selectedArtistForSheet = null },
+                            onSongClick = onPlaySong,
+                            onAlbumClick = { album -> selectedAlbumForSheet = album; showAlbumSheet = true },
+                            onPlayAll = { songs -> viewModel.playSongs(songs) },
+                            onShufflePlay = { songs -> viewModel.playShuffled(songs) },
+                            onAddToQueue = { song -> viewModel.addSongToQueue(song) },
+                            onAddSongToPlaylist = { },
+                            onPlayerClick = { navController.navigate(Screen.Player.route) },
+                            sheetState = artistSheetState,
+                            haptics = playlistHaptics,
+                            onPlayNext = { song -> viewModel.playNext(song) },
+                            currentSong = currentSong,
+                            isPlaying = isPlaying
                         )
                     }
                 }

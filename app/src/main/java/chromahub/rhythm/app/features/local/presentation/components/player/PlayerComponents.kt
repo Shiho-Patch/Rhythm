@@ -1016,12 +1016,12 @@ fun MiniPlayer(
                     if (song != null && miniPlayerUseCircularProgress) {
                         // Circular progress as border around play/pause button using official Material 3 Expressive
                         Box(
-                            modifier = Modifier.size(if (isCompactHeight) 44.dp else 52.dp),
+                            modifier = Modifier.size(if (isCompactHeight) 50.dp else 60.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             CircularWavyProgressIndicator(
                                 progress = { animatedProgress },
-                                modifier = Modifier.size(if (isCompactHeight) 44.dp else 52.dp)
+                                modifier = Modifier.size(if (isCompactHeight) 50.dp else 60.dp)
                             )
                             
                             // Expressive play/pause with bouncy animation
