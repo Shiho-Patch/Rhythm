@@ -9680,17 +9680,93 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
     val festiveShowSnowfall by appSettings.festiveShowSnowfall.collectAsState()
     var showFestivalSelectionDialog by remember { mutableStateOf(false) }
     
-    // Handle navigation to Expressive Shapes screen
-    if (navigateToExpressiveShapes) {
-        ExpressiveShapesSettingsScreen(onBackClick = { navigateToExpressiveShapes = false })
-        return
-    }
-
-    CollapsibleHeaderScreen(
-        title = "Theme",
-        showBackButton = true,
-        onBackClick = onBackClick
-    ) { modifier ->
+    // Handle navigation to Expressive Shapes screen with proper animation
+    AnimatedContent(
+        targetState = navigateToExpressiveShapes,
+        transitionSpec = {
+            if (targetState) {
+                // Slide in from right when navigating to Expressive Shapes
+                slideInHorizontally(
+                    initialOffsetX = { it },
+                    animationSpec = tween(
+                        durationMillis = 400,
+                        easing = EaseOutCubic
+                    )
+                ) + fadeIn(
+                    animationSpec = tween(
+                        durationMillis = 350,
+                        delayMillis = 50
+                    )
+                ) + scaleIn(
+                    initialScale = 0.92f,
+                    animationSpec = tween(
+                        durationMillis = 400,
+                        easing = EaseOutCubic
+                    )
+                ) togetherWith
+                slideOutHorizontally(
+                    targetOffsetX = { -it / 4 },
+                    animationSpec = tween(
+                        durationMillis = 350,
+                        easing = EaseInCubic
+                    )
+                ) + fadeOut(
+                    animationSpec = tween(durationMillis = 250)
+                ) + scaleOut(
+                    targetScale = 0.95f,
+                    animationSpec = tween(
+                        durationMillis = 350,
+                        easing = EaseInCubic
+                    )
+                )
+            } else {
+                // Slide in from left when going back to Theme
+                slideInHorizontally(
+                    initialOffsetX = { -it / 4 },
+                    animationSpec = tween(
+                        durationMillis = 400,
+                        easing = EaseOutCubic
+                    )
+                ) + fadeIn(
+                    animationSpec = tween(
+                        durationMillis = 350,
+                        delayMillis = 50
+                    )
+                ) + scaleIn(
+                    initialScale = 0.95f,
+                    animationSpec = tween(
+                        durationMillis = 400,
+                        easing = EaseOutCubic
+                    )
+                ) togetherWith
+                slideOutHorizontally(
+                    targetOffsetX = { it },
+                    animationSpec = tween(
+                        durationMillis = 350,
+                        easing = EaseInCubic
+                    )
+                ) + fadeOut(
+                    animationSpec = tween(durationMillis = 250)
+                ) + scaleOut(
+                    targetScale = 0.92f,
+                    animationSpec = tween(
+                        durationMillis = 350,
+                        easing = EaseInCubic
+                    )
+                )
+            }
+        },
+        label = "theme_to_shapes_navigation",
+        contentKey = { it }
+    ) { isNavigatingToShapes ->
+        if (isNavigatingToShapes) {
+            ExpressiveShapesSettingsScreen(onBackClick = { navigateToExpressiveShapes = false })
+        } else {
+            CollapsibleHeaderScreen(
+                title = "Theme",
+                showBackButton = true,
+                onBackClick = onBackClick
+            ) { modifier ->
         val settingGroups = listOf(
             SettingGroup(
                 title = "Display Mode",
@@ -9982,6 +10058,8 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                 }
             }
         }
+        }  // End of CollapsibleHeaderScreen else block
+        }  // End of AnimatedContent
     }
 
     // Dialogs
@@ -14561,7 +14639,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Enable/Disable Card - Equalizer style
+            // Enable/Disable Card 
             item(key = "expressive_shapes_toggle") {
                 Spacer(modifier = Modifier.height(8.dp))
                 Card(
@@ -14863,6 +14941,12 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
     // Preset Selection Bottom Sheet
     if (showPresetDialog) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        var showPresetContent by remember { mutableStateOf(false) }
+        
+        LaunchedEffect(Unit) {
+            delay(100)
+            showPresetContent = true
+        }
         
         ModalBottomSheet(
             onDismissRequest = { showPresetDialog = false },
@@ -14876,39 +14960,38 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
                     .padding(bottom = 24.dp)
             ) {
-                Text(
-                    text = "Choose a Preset",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                Text(
-                    text = "Select a shape theme to quickly apply to all components",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 20.dp)
+                // Header with animation
+                StandardBottomSheetHeader(
+                    title = "Choose a Preset",
+                    subtitle = "Select a theme for all components",
+                    visible = showPresetContent
                 )
                 
-                presets.forEach { preset ->
-                    val isSelected = preset.id == currentPreset
-                    Card(
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                            appSettings.applyExpressiveShapePreset(preset.id)
-                            showPresetDialog = false
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (isSelected)
-                                MaterialTheme.colorScheme.primaryContainer
-                            else
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                ) {
+                    presets.forEach { preset ->
+                        val isSelected = preset.id == currentPreset
+                        Card(
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                appSettings.applyExpressiveShapePreset(preset.id)
+                                showPresetDialog = false
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isSelected)
+                                    MaterialTheme.colorScheme.primaryContainer
+                                else
                                 MaterialTheme.colorScheme.surfaceContainerHigh
                         ),
                         border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
@@ -14977,6 +15060,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
+            }
         }
     }
     
@@ -14984,6 +15068,13 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
     showShapePickerDialog?.let { targetId ->
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         val targetName = shapeTargets.find { it.first == targetId }?.second?.first ?: targetId
+        var showShapeContent by remember { mutableStateOf(false) }
+        
+        LaunchedEffect(Unit) {
+            delay(100)
+            showShapeContent = true
+        }
+        
         val currentShapeForTarget = when (targetId) {
             "ALBUM_ART" -> shapeAlbumArt
             "PLAYER_ART" -> shapePlayerArt
@@ -15010,21 +15101,22 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
                     .padding(bottom = 24.dp)
             ) {
-                Text(
-                    text = "Shape for $targetName",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                // Header with animation
+                StandardBottomSheetHeader(
+                    title = "Shape for $targetName",
+                    subtitle = "Choose an expressive shape",
+                    visible = showShapeContent
                 )
+                
+                Spacer(modifier = Modifier.height(16.dp))
                 
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(400.dp),
+                        .padding(horizontal = 24.dp)
+                        .heightIn(max = 400.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     groupedShapes.forEach { (category, shapes) ->
