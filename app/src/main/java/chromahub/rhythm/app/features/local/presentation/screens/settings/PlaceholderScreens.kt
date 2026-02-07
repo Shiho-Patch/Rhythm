@@ -14659,7 +14659,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                             .padding(20.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.AutoAwesome,
+                            imageVector = Icons.Default.Interests,
                             contentDescription = null,
                             tint = if (expressiveShapesEnabled) MaterialTheme.colorScheme.primary
                                    else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -14695,6 +14695,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                     exit = fadeOut() + shrinkVertically()
                 ) {
                     Column {
+                    Spacer(modifier = Modifier.height(24.dp))
                         Text(
                             text = "Quick Presets",
                             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
@@ -14797,6 +14798,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                     exit = fadeOut() + shrinkVertically()
                 ) {
                     Column {
+                    Spacer(modifier = Modifier.height(24.dp))
                     Text(
                         text = "Individual Shape Settings",
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),

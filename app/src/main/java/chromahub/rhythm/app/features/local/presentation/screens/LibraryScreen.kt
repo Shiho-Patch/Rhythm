@@ -4864,6 +4864,15 @@ fun SingleCardArtistsContent(
         return
     }
     
+    // Check for empty state
+    if (sortedArtists.isEmpty()) {
+        EmptyState(
+            message = "No artists yet",
+            icon = RhythmIcons.Artist
+        )
+        return
+    }
+    
     if (isGridView) {
         // Grid view using LazyVerticalGrid as main container
         LazyVerticalGrid(
@@ -4925,10 +4934,6 @@ fun SingleCardArtistsContent(
                         }
                     }
                 }
-            } else {
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    EmptyArtistsState()
-                }
             }
         }
     } else {
@@ -4989,10 +4994,6 @@ fun SingleCardArtistsContent(
                             )
                         }
                     }
-                }
-            } else {
-                item {
-                    EmptyArtistsState()
                 }
             }
         }
@@ -5113,41 +5114,6 @@ private fun ArtistSectionHeader(
                 shape = RoundedCornerShape(1.dp),
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f)
             ) {}
-        }
-    }
-}
-
-@Composable
-private fun EmptyArtistsState() {
-    val context = LocalContext.current
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(300.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = RhythmIcons.Artist,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(64.dp)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = context.getString(R.string.library_no_artists),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = context.getString(R.string.library_no_artists_desc),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 4.dp)
-            )
         }
     }
 }

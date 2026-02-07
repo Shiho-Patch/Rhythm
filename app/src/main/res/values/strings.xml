@@ -25,7 +25,7 @@
     
     <!-- Widget Settings -->
     <string name="settings_widget">Widget</string>
-    <string name="settings_widget_desc">Customize home screen widgets</string>
+    <string name="settings_widget_desc">Home screen widgets</string>
     <string name="widget_preview_title">Widget Preview</string>
     <string name="widget_preview_desc">Changes will be applied to all active widgets on your home screen. Long-press the widget to resize it and see different layouts.</string>
     <string name="widget_refresh_all">Refresh All Widgets</string>
@@ -1162,50 +1162,50 @@
     <string name="settings_title">Settings</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_theme_customization">Theme</string>
-    <string name="settings_theme_customization_desc">Customize colors, fonts, and appearance</string>
+    <string name="settings_theme_customization_desc">Dark mode, accent colors</string>
     <string name="settings_library_tab_order">Library Tab Order</string>
-    <string name="settings_library_tab_order_desc">Reorder tabs in the library</string>
+    <string name="settings_library_tab_order_desc">Tab arrangement</string>
     <string name="settings_section_user_interface">User Interface</string>
     <string name="settings_language">Language</string>
-    <string name="settings_language_desc">Change app language</string>
+    <string name="settings_language_desc">English, Spanish</string>
     <string name="settings_haptic_feedback">Haptic Feedback</string>
-    <string name="settings_haptic_feedback_desc">Vibrate when tapping buttons</string>
+    <string name="settings_haptic_feedback_desc">Tap feedback</string>
     <string name="settings_section_audio_playback">Audio &amp; Playback</string>
     <string name="settings_system_volume">System Volume</string>
-    <string name="settings_system_volume_desc">Use device volume for playback</string>
+    <string name="settings_system_volume_desc">System audio</string>
     <string name="settings_show_lyrics">Show Lyrics</string>
-    <string name="settings_show_lyrics_desc">Display lyrics when available</string>
+    <string name="settings_show_lyrics_desc">Lyrics display</string>
     <string name="settings_queue_playback_title">Queue &amp; Playback</string>
-    <string name="settings_queue_playback_desc">Configure queue and playback behavior</string>
+    <string name="settings_queue_playback_desc">Auto-add, repeat</string>
     <string name="settings_equalizer_title">Equalizer</string>
-    <string name="settings_equalizer_desc">Adjust audio frequencies and effects</string>
+    <string name="settings_equalizer_desc">Bass, treble</string>
     <string name="settings_sleep_timer_title">Sleep Timer</string>
-    <string name="settings_sleep_timer_desc">Auto-stop playback after set time</string>
+    <string name="settings_sleep_timer_desc">Auto-stop playback</string>
     <string name="settings_section_library_content">Library &amp; Content</string>
     <string name="settings_group_by_album_artist">Group by Album Artist</string>
-    <string name="settings_group_by_album_artist_desc">Show collaboration albums under main artist</string>
+    <string name="settings_group_by_album_artist_desc">Collaboration albums</string>
     <string name="settings_media_scan_title">Media Scan</string>
-    <string name="settings_media_scan_desc">Manage blacklist and media scanning</string>
+    <string name="settings_media_scan_desc">Scan folders</string>
     <string name="settings_playlists_title">Playlists</string>
-    <string name="settings_playlists_desc">Manage your playlists</string>
+    <string name="settings_playlists_desc">Create, import</string>
     <string name="settings_section_storage_data">Storage &amp; Data</string>
     <string name="settings_cache_management_title">Cache Management</string>
-    <string name="settings_cache_management_desc">Control cache size and clearing</string>
+    <string name="settings_cache_management_desc">Images, lyrics</string>
     <string name="settings_backup_restore_title">Backup &amp; Restore</string>
-    <string name="settings_backup_restore_desc">Safeguard settings and playlists</string>
+    <string name="settings_backup_restore_desc">Export, import</string>
     <string name="settings_section_services">Services</string>
     <string name="settings_api_management">Integrations</string>
-    <string name="settings_api_management_desc">Configure APIs, scrobbling, and DRP</string>
+    <string name="settings_api_management_desc">Last.fm, Discord</string>
     <string name="settings_section_updates_info">Updates &amp; Info</string>
     <string name="settings_updates_title">Updates</string>
-    <string name="settings_updates_desc">Check for app updates</string>
+    <string name="settings_updates_desc">App updates</string>
     <string name="settings_about_title">About</string>
-    <string name="settings_about_desc">App version and info</string>
+    <string name="settings_about_desc">Version info</string>
     <string name="settings_section_advanced">Advanced</string>
     <string name="settings_crash_log_history">Crash Log History</string>
-    <string name="settings_crash_log_history_desc">View and manage crash reports</string>
+    <string name="settings_crash_log_history_desc">Crash reports</string>
     <string name="settings_experimental_features">Experimental Features</string>
-    <string name="settings_experimental_features_desc">Try out cutting-edge features</string>
+    <string name="settings_experimental_features_desc">Cutting-edge features</string>
     <string name="settings_select_option">Rhythm Settings</string>
     <string name="settings_select_option_desc">Choose a setting from the list to configure</string>
     
@@ -1576,21 +1576,21 @@
     
     <!-- Settings Screen - Complete -->
     <string name="settings_home_customization">Home</string>
-    <string name="settings_home_customization_desc">Customize home screen sections and layout</string>
+    <string name="settings_home_customization_desc">Quick actions, recent music</string>
     <string name="settings_player_customization">Player</string>
-    <string name="settings_player_customization_desc">Customize player controls and chips</string>
+    <string name="settings_player_customization_desc">Skip buttons, progress bar</string>
     <string name="settings_miniplayer_customization">Mini Player</string>
-    <string name="settings_miniplayer_customization_desc">Customize compact player appearance</string>
+    <string name="settings_miniplayer_customization_desc">Background, controls</string>
     <string name="settings_album_bottom_sheet_gradient_blur">Album Gradient/Blur</string>
-    <string name="settings_album_bottom_sheet_gradient_blur_desc">Show gradient and blur effects on albums</string>
+    <string name="settings_album_bottom_sheet_gradient_blur_desc">Background effects</string>
     <string name="settings_gestures">Gestures</string>
-    <string name="settings_gestures_desc">Configure swipe and touch gestures</string>
+    <string name="settings_gestures_desc">Swipe to skip</string>
     <string name="settings_ignore_mediastore_covers">Ignore MediaStore Covers</string>
-    <string name="settings_ignore_mediastore_covers_desc">Read embedded album art directly from files</string>
+    <string name="settings_ignore_mediastore_covers_desc">Embedded album art</string>
     <string name="settings_artist_parsing">Artists</string>
-    <string name="settings_artist_parsing_desc">Configure multi-artist detection and display</string>
+    <string name="settings_artist_parsing_desc">Separators, display</string>
     <string name="settings_rhythm_stats">Rhythm Stats</string>
-    <string name="settings_rhythm_stats_desc">View your listening history and insights</string>
+    <string name="settings_rhythm_stats_desc">Play count, trends</string>
     
     <!-- Rhythm Stats Screen -->
     <string name="stats_title">Rhythm Stats</string>
@@ -1991,7 +1991,7 @@
     <string name="settings_about_lyrics">About Lyrics Sources</string>
     <string name="settings_adjust_decorations">Adjust the amount of festive decorations shown</string>
     <string name="settings_artwork_corner_radius">Adjusts the roundness of album artwork corners</string>
-    <string name="settings_canvas_backgrounds_desc">Canvas backgrounds add animated visuals to supported songs</string>
+    <string name="settings_canvas_backgrounds_desc">Animated visuals</string>
     <string name="settings_choose_header">Choose what to show in header</string>
     <string name="settings_customize_compact_player">Customize the compact player that appears at the bottom of your screen.</string>
     <string name="settings_enable_auto_scroll">Enable Auto-scroll</string>
