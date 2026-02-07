@@ -206,13 +206,13 @@ fun CollapsibleHeaderScreen(
                                     modifier = Modifier
                                         .size(40.dp) // Adjust size as needed
                                         .clip(RoundedCornerShape(50))
-                                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)), // Circular background
+                                        .background(MaterialTheme.colorScheme.surfaceContainerHigh), // Circular background 
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                         contentDescription = "Back",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        tint = MaterialTheme.colorScheme.onSurface
                                     )
                                 }
                             }
@@ -318,13 +318,13 @@ fun FixedHeaderScreen(
                                     modifier = Modifier
                                         .size(40.dp)
                                         .clip(RoundedCornerShape(50))
-                                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
+                                        .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                         contentDescription = "Back",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        tint = MaterialTheme.colorScheme.onSurface
                                     )
                                 }
                             }
