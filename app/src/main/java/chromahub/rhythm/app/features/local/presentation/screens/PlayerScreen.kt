@@ -57,6 +57,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
@@ -3492,7 +3493,7 @@ fun PlayerScreen(
                                         }
                                         
                                         Icon(
-                                            imageVector = RhythmIcons.ArrowRight,
+                                            imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                                             contentDescription = null,
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.size(20.dp)
@@ -3615,7 +3616,7 @@ fun PlayerScreen(
                                         }
                                         
                                         Icon(
-                                            imageVector = RhythmIcons.ArrowRight,
+                                            imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                                             contentDescription = null,
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.size(20.dp)

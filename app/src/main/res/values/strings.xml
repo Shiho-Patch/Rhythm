@@ -589,7 +589,7 @@
     <string name="onboarding_media_scan_whitelist">Whitelist Mode: Show only songs from selected folders</string>
     <string name="onboarding_media_scan_configure_in_tuner">Configure scanning in Settings > Media Scan</string>
     <string name="onboarding_storage_title">Storage Management</string>
-    <string name="onboarding_storage_desc">Manage cache size and storage in Settings > Cache Management</string>
+    <string name="onboarding_storage_desc">Manage cache size and storage in Settings > Cache</string>
     
     <string name="onboarding_complete_title">You\'re All Set!</string>
     <string name="onboarding_complete_desc">Rhythm is ready to play! Your music library is being scanned in the background. Here\'s what\'s configured:</string>
@@ -939,7 +939,7 @@
     <string name="playlist_create_first">Create your first playlist to add songs</string>
     
     <!-- Components: Cache Management (Bottom Sheet) -->
-    <string name="cache_management">Cache Management</string>
+    <string name="cache_management">Cache</string>
     <string name="cache_manage_desc">Manage cached data including images, temporary files, and other app data.</string>
     
     <!-- Components: Beta Program -->
@@ -1189,13 +1189,13 @@
     <string name="settings_playlists_title">Playlists</string>
     <string name="settings_playlists_desc">Create, import</string>
     <string name="settings_section_storage_data">Storage &amp; Data</string>
-    <string name="settings_cache_management_title">Cache Management</string>
+    <string name="settings_cache_management_title">Cache</string>
     <string name="settings_cache_management_desc">Images, lyrics</string>
     <string name="settings_backup_restore_title">Backup &amp; Restore</string>
     <string name="settings_backup_restore_desc">Export, import</string>
     <string name="settings_section_services">Services</string>
     <string name="settings_api_management">Integrations</string>
-    <string name="settings_api_management_desc">Last.fm, Discord</string>
+    <string name="settings_api_management_desc">API, Scrobbling</string>
     <string name="settings_section_updates_info">Updates &amp; Info</string>
     <string name="settings_updates_title">Updates</string>
     <string name="settings_updates_desc">App updates</string>

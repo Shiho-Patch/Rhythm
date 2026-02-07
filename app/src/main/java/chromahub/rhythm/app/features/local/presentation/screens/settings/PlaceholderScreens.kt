@@ -6315,7 +6315,7 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
     }
 
     CollapsibleHeaderScreen(
-        title = "Cache Management",
+        title = "Cache",
         showBackButton = true,
         onBackClick = onBackClick
     ) { modifier ->
@@ -14942,7 +14942,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
     
     // Preset Selection Bottom Sheet
     if (showPresetDialog) {
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
         var showPresetContent by remember { mutableStateOf(false) }
         
         LaunchedEffect(Unit) {
@@ -15068,7 +15068,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
     
     // Individual Shape Picker Bottom Sheet
     showShapePickerDialog?.let { targetId ->
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
         val targetName = shapeTargets.find { it.first == targetId }?.second?.first ?: targetId
         var showShapeContent by remember { mutableStateOf(false) }
         
@@ -15117,8 +15117,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
-                        .heightIn(max = 400.dp),
+                        .padding(horizontal = 24.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     groupedShapes.forEach { (category, shapes) ->

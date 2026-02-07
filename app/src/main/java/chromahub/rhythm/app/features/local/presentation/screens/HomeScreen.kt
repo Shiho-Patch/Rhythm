@@ -2654,11 +2654,11 @@ private fun ModernListeningStatsSection(
         (statsSummary?.uniqueArtists ?: 0).toString()
     }
 
-    // Enhanced stats card with expressive elevated design
-    ExpressiveElevatedCard(
+    // Enhanced stats card with expressive design 
+    ExpressiveCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.elevatedCardColors(
+        colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
         shape = ExpressiveShapes.SquircleLarge
@@ -2762,24 +2762,15 @@ private fun EnhancedStatItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Icon with accent color background and squircle shape
-        Surface(
-            shape = ExpressiveShapes.SquircleMedium,
-            color = accentColor.copy(alpha = 0.15f),
-            modifier = Modifier.size(64.dp) // Slightly larger
-        ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = accentColor,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-        }
+        // Icon without background shape
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = accentColor,
+            modifier = Modifier.size(28.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(8.dp)) // Add spacing where the surface was
         
         // Value with emphasis
         Text(
