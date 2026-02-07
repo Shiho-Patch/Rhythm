@@ -3809,6 +3809,14 @@ fun AboutScreen(
                             )
 
                             CommunityMember(
+                                name = "theovilardo",
+                                role = "Collab & Project PixelPlayer's Lead Dev",
+                                githubUsername = "theovilardo",
+                                avatarUrl = "https://github.com/theovilardo.png",
+                                context = context
+                            )
+
+                            CommunityMember(
                                 name = "Alex",
                                 role = "Spotify Canvas API Integration",
                                 githubUsername = "Paxsenix0",
@@ -3900,13 +3908,6 @@ fun AboutScreen(
                         Column(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            CommunityMember(
-                                name = "Xiaomiraphealin",
-                                role = "Sponsor",
-                                githubUsername = "Xiaomiraphealin",
-                                avatarUrl = "https://github.com/Xiaomiraphealin.png",
-                                context = context
-                            )
 
                             CommunityMember(
                                 name = "HyXeny",
