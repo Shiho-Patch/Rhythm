@@ -258,6 +258,7 @@ fun LibraryScreen(
     onArtistClick: (Artist) -> Unit,
     onAlbumShufflePlay: (Album) -> Unit = { _ -> },
     onPlayQueue: (List<Song>) -> Unit = { _ -> }, // Added for playing a list of songs with queue replacement
+    onPlayQueueFromIndex: (List<Song>, Int) -> Unit = { _, _ -> }, // Added for playing from specific index
     onShuffleQueue: (List<Song>) -> Unit = { _ -> }, // Added for shuffling and playing a list of songs
     onAlbumBottomSheetClick: (Album) -> Unit = { _ -> }, // Added for opening album bottom sheet
     onSort: () -> Unit = {},
@@ -1149,123 +1150,141 @@ fun LibraryScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Horizontal Scrollable Navigation Buttons
-            LazyRow(
-                state = tabRowState,
+            // Horizontal Scrollable Navigation Buttons - Stats screen style
+            Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(horizontal = 4.dp)
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 0.dp
             ) {
-                items(
-                    count = tabs.size,
-                    key = { index -> tabOrder.getOrNull(index) ?: "tab_$index" }
-                ) { index ->
-                    val isSelected = selectedTabIndex == index
-                    val animatedScale by animateFloatAsState(
-                        targetValue = if (isSelected) 1.05f else 1f,
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessLow
-                        ),
-                        label = "buttonScale"
-                    )
-                    
-                    val animatedContainerColor by animateColorAsState(
-                        targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh,
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessLow
-                        ),
-                        label = "buttonContainerColor"
-                    )
-                    
-                    val animatedContentColor by animateColorAsState(
-                        targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessLow
-                        ),
-                        label = "buttonContentColor"
-                    )
+                LazyRow(
+                    state = tabRowState,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(horizontal = 4.dp)
+                ) {
+                    items(
+                        count = tabs.size,
+                        key = { index -> tabOrder.getOrNull(index) ?: "tab_$index" }
+                    ) { index ->
+                        val isSelected = selectedTabIndex == index
+                        val animatedScale by animateFloatAsState(
+                            targetValue = if (isSelected) 1.05f else 1f,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessLow
+                            ),
+                            label = "buttonScale"
+                        )
+                        
+                        val animatedContainerColor by animateColorAsState(
+                            targetValue = if (isSelected) 
+                                MaterialTheme.colorScheme.primary 
+                            else 
+                                MaterialTheme.colorScheme.surfaceContainer,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessLow
+                            ),
+                            label = "buttonContainerColor"
+                        )
+                        
+                        val animatedContentColor by animateColorAsState(
+                            targetValue = if (isSelected) 
+                                MaterialTheme.colorScheme.onPrimary 
+                            else 
+                                MaterialTheme.colorScheme.onSurface,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessLow
+                            ),
+                            label = "buttonContentColor"
+                        )
 
-                    Button(
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                            selectedTabIndex = index
-                            scope.launch {
-                                pagerState.animateScrollToPage(index)
-                                tabRowState.animateScrollToItem(index)
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = animatedContainerColor,
-                            contentColor = animatedContentColor
-                        ),
-                        shape = RoundedCornerShape(24.dp),
-                        modifier = Modifier
-                            .graphicsLayer {
+                        Button(
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                selectedTabIndex = index
+                                scope.launch {
+                                    pagerState.animateScrollToPage(index)
+                                    tabRowState.animateScrollToItem(index)
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = animatedContainerColor,
+                                contentColor = animatedContentColor
+                            ),
+                            shape = RoundedCornerShape(20.dp),
+                            modifier = Modifier.graphicsLayer {
                                 scaleX = animatedScale
                                 scaleY = animatedScale
                             },
-                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                            elevation = ButtonDefaults.buttonElevation(
+                                defaultElevation = 0.dp,
+                                pressedElevation = 0.dp
+                            )
                         ) {
-                            // Get the actual tab ID from the visible tabs list
-                            val currentTabId = visibleTabIds.getOrNull(index)
-                            Icon(
-                                imageVector = when (currentTabId) {
-                                    "SONGS" -> RhythmIcons.Relax
-                                    "PLAYLISTS" -> RhythmIcons.PlaylistFilled
-                                    "ALBUMS" -> RhythmIcons.Music.Album
-                                    "ARTISTS" -> RhythmIcons.Artist
-                                    "EXPLORER" -> Icons.Default.Folder
-                                    else -> RhythmIcons.Music.Song
-                                },
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Text(
-                                text = tabs[index],
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                // Get the actual tab ID from the visible tabs list
+                                val currentTabId = visibleTabIds.getOrNull(index)
+                                Icon(
+                                    imageVector = when (currentTabId) {
+                                        "SONGS" -> RhythmIcons.Relax
+                                        "PLAYLISTS" -> RhythmIcons.PlaylistFilled
+                                        "ALBUMS" -> RhythmIcons.Music.Album
+                                        "ARTISTS" -> RhythmIcons.Artist
+                                        "EXPLORER" -> Icons.Default.Folder
+                                        else -> RhythmIcons.Music.Song
+                                    },
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Text(
+                                    text = tabs[index],
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                )
+                            }
                         }
                     }
-                }
-                
-                // Edit button at the end to open LibraryTabReorderBottomSheet
-                item {
-                    var showLibraryTabOrderSheet by remember { mutableStateOf(false) }
                     
-                    FilledTonalIconButton(
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                            showLibraryTabOrderSheet = true
-                        },
-                        colors = IconButtonDefaults.filledTonalIconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                        ),
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = "Reorder tabs",
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    
-                    if (showLibraryTabOrderSheet) {
-                        LibraryTabOrderBottomSheet(
-                            onDismiss = { showLibraryTabOrderSheet = false },
-                            appSettings = appSettings,
-                            haptics = haptics
-                        )
+                    // Edit button at the end to open LibraryTabReorderBottomSheet
+                    item {
+                        var showLibraryTabOrderSheet by remember { mutableStateOf(false) }
+                        
+                        FilledTonalIconButton(
+                            onClick = {
+                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                showLibraryTabOrderSheet = true
+                            },
+                            colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                            ),
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Reorder tabs",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        
+                        if (showLibraryTabOrderSheet) {
+                            LibraryTabOrderBottomSheet(
+                                onDismiss = { showLibraryTabOrderSheet = false },
+                                appSettings = appSettings,
+                                haptics = haptics
+                            )
+                        }
                     }
                 }
             }
@@ -1436,6 +1455,7 @@ fun LibraryScreen(
                                 appSettings.addToBlacklist(song.id)
                             },
                             onPlayQueue = onPlayQueue,
+                            onPlayQueueFromIndex = onPlayQueueFromIndex,
                             onShuffleQueue = onShuffleQueue,
                             currentSong = currentSong,
                             isPlaying = isPlaying,
@@ -1779,6 +1799,7 @@ fun SingleCardSongsContent(
     onShowSongInfo: (Song) -> Unit,
     onAddToBlacklist: (Song) -> Unit,
     onPlayQueue: (List<Song>) -> Unit = { _ -> },
+    onPlayQueueFromIndex: (List<Song>, Int) -> Unit = { _, _ -> }, // New parameter for playing from specific index
     onShuffleQueue: (List<Song>) -> Unit = { _ -> },
     currentSong: Song? = null, // Add current song parameter
     isPlaying: Boolean = false, // Add playing state
@@ -2238,40 +2259,24 @@ fun SingleCardSongsContent(
                                 )
                             }
 
-                            // Play/Shuffle Button Group
+                            // Shuffle Button Only
                             if (filteredSongs.isNotEmpty()) {
-                                ExpressiveButtonGroup(
-                                    style = ButtonGroupStyle.Tonal
+                                FilledIconButton(
+                                    onClick = {
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        onShuffleQueue(filteredSongs)
+                                    },
+                                    modifier = Modifier.size(40.dp),
+                                    colors = IconButtonDefaults.filledIconButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
                                 ) {
-                                    ExpressiveGroupButton(
-                                        onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                            onPlayQueue(filteredSongs)
-                                        },
-                                        isStart = true,
-                                        isEnd = false
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.PlayArrow,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
-                                    
-                                    ExpressiveGroupButton(
-                                        onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                            onShuffleQueue(filteredSongs)
-                                        },
-                                        isStart = false,
-                                        isEnd = true
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.Shuffle,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
+                                    Icon(
+                                        imageVector = Icons.Rounded.Shuffle,
+                                        contentDescription = context.getString(R.string.cd_shuffle),
+                                        modifier = Modifier.size(20.dp)
+                                    )
                                 }
                             }
                         }
@@ -2390,7 +2395,15 @@ fun SingleCardSongsContent(
                     AnimateIn(modifier = Modifier.animateItem()) {
                         LibrarySongItemWrapper(
                             song = song,
-                            onClick = { onSongClick(song) },
+                            onClick = {
+                                // Load all filtered songs to queue and play from tapped index
+                                val songIndex = filteredSongs.indexOf(song)
+                                if (songIndex >= 0) {
+                                    onPlayQueueFromIndex(filteredSongs, songIndex)
+                                } else {
+                                    onSongClick(song)
+                                }
+                            },
                             onMoreClick = { onAddToPlaylist(song) },
                             onAddToQueue = { onAddToQueue(song) },
                             onPlayNext = { onPlayNext(song) },
@@ -2642,6 +2655,13 @@ fun SingleCardPlaylistsContent(
                                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                             )
                         }
+                        Surface(
+                                modifier = Modifier
+                                    .height(2.dp)
+                                    .width(60.dp),
+                                shape = RoundedCornerShape(1.dp),
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f)
+                        ) {}
                     }
                 }
             }
@@ -2782,46 +2802,29 @@ fun SingleCardAlbumsContent(
                                 )
                             }
 
-                            // Play/Shuffle Button Group
+                            Spacer(modifier = Modifier.weight(0.1f))
+
+                            // Shuffle Button Only
                             if (preparedAlbums.isNotEmpty()) {
-                                ExpressiveButtonGroup(
-                                    style = ButtonGroupStyle.Tonal
+                                FilledIconButton(
+                                    onClick = {
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        val allSongs = preparedAlbums.flatMap { it.songs }
+                                        if (allSongs.isNotEmpty()) {
+                                            onShuffleQueue(allSongs)
+                                        }
+                                    },
+                                    modifier = Modifier.size(40.dp),
+                                    colors = IconButtonDefaults.filledIconButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
                                 ) {
-                                    ExpressiveGroupButton(
-                                        onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                            val allSongs = preparedAlbums.flatMap { it.songs }
-                                            if (allSongs.isNotEmpty()) {
-                                                onPlayQueue(allSongs)
-                                            }
-                                        },
-                                        isStart = true,
-                                        isEnd = false
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.PlayArrow,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
-                                    
-                                    ExpressiveGroupButton(
-                                        onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                            val allSongs = preparedAlbums.flatMap { it.songs }
-                                            if (allSongs.isNotEmpty()) {
-                                                onShuffleQueue(allSongs)
-                                            }
-                                        },
-                                        isStart = false,
-                                        isEnd = true
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.Shuffle,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
+                                    Icon(
+                                        imageVector = Icons.Rounded.Shuffle,
+                                        contentDescription = context.getString(R.string.cd_shuffle),
+                                        modifier = Modifier.size(20.dp)
+                                    )
                                 }
                             }
                         }
@@ -2898,54 +2901,33 @@ fun SingleCardAlbumsContent(
                                 )
                             }
 
-                            // Play/Shuffle Button Group
+                            Spacer(modifier = Modifier.weight(0.1f))
+
+                            // Shuffle Button Only
                             if (preparedAlbums.isNotEmpty()) {
-                                ExpressiveButtonGroup(
-                                    style = ButtonGroupStyle.Tonal
+                                FilledIconButton(
+                                    onClick = {
+                                        HapticUtils.performHapticFeedback(
+                                            context,
+                                            haptics,
+                                            HapticFeedbackType.LongPress
+                                        )
+                                        val allSongs = preparedAlbums.flatMap { it.songs }
+                                        if (allSongs.isNotEmpty()) {
+                                            onShuffleQueue(allSongs)
+                                        }
+                                    },
+                                    modifier = Modifier.size(40.dp),
+                                    colors = IconButtonDefaults.filledIconButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
                                 ) {
-                                    ExpressiveGroupButton(
-                                        onClick = {
-                                            HapticUtils.performHapticFeedback(
-                                                context,
-                                                haptics,
-                                                HapticFeedbackType.LongPress
-                                            )
-                                            val allSongs = preparedAlbums.flatMap { it.songs }
-                                            if (allSongs.isNotEmpty()) {
-                                                onPlayQueue(allSongs)
-                                            }
-                                        },
-                                        isStart = true,
-                                        isEnd = false
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.PlayArrow,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
-                                    
-                                    ExpressiveGroupButton(
-                                        onClick = {
-                                            HapticUtils.performHapticFeedback(
-                                                context,
-                                                haptics,
-                                                HapticFeedbackType.LongPress
-                                            )
-                                            val allSongs = preparedAlbums.flatMap { it.songs }
-                                            if (allSongs.isNotEmpty()) {
-                                                onShuffleQueue(allSongs)
-                                            }
-                                        },
-                                        isStart = false,
-                                        isEnd = true
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.Shuffle,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
+                                    Icon(
+                                        imageVector = Icons.Rounded.Shuffle,
+                                        contentDescription = context.getString(R.string.cd_shuffle),
+                                        modifier = Modifier.size(20.dp)
+                                    )
                                 }
                             }
                         }
@@ -2972,635 +2954,6 @@ fun SingleCardAlbumsContent(
     }
 }
 
-@Composable
-@Deprecated("Use SingleCardSongsContent instead")
-fun SongsTab(
-    songs: List<Song>,
-    albums: List<Album> = emptyList(),
-    artists: List<Artist> = emptyList(),
-    onSongClick: (Song) -> Unit,
-    onAddToPlaylist: (Song) -> Unit,
-    onAddToQueue: (Song) -> Unit,
-    onPlayNext: (Song) -> Unit = {},
-    onToggleFavorite: (Song) -> Unit = {},
-    favoriteSongs: Set<String> = emptySet(),
-    onGoToArtist: (Artist) -> Unit = {},
-    onGoToAlbum: (Album) -> Unit = {},
-    onShowSongInfo: (Song) -> Unit,
-    onAddToBlacklist: (Song) -> Unit,
-    haptics: androidx.compose.ui.hapticfeedback.HapticFeedback,
-    onPlayQueue: (List<Song>) -> Unit = { _ -> },
-    onShuffleQueue: (List<Song>) -> Unit = { _ -> },
-    currentSong: Song? = null, // Add current song parameter
-    isPlaying: Boolean = false, // Add playing state
-    enableRatingSystem: Boolean = true // Add rating system enabled flag
-) {
-    val context = LocalContext.current
-    val appSettings = remember { AppSettings.getInstance(context) }
-    val groupByAlbumArtist by appSettings.groupByAlbumArtist.collectAsState()
-    var selectedCategory by remember { mutableStateOf("All") }
-    
-    // Helper function to split artist names
-    val splitArtistNames: (String) -> List<String> = remember {
-        { artistName ->
-            val separators = listOf(
-                " & ", " and ", ", ", " feat. ", " feat ", " ft. ", " ft ",
-                " featuring ", " x ", " X ", " vs ", " vs. ", " with "
-            )
-            var names = listOf(artistName)
-            for (separator in separators) {
-                names = names.flatMap { it.split(separator, ignoreCase = true) }
-            }
-            names.map { it.trim() }.filter { it.isNotBlank() }
-        }
-    }
-    
-    // Helper functions for quality detection (needed for this deprecated function)
-    fun isLosslessAudio(song: Song): Boolean {
-        val codec = song.codec?.uppercase() ?: ""
-
-        // If we have cached codec data, use it
-        if (codec.isNotEmpty()) {
-            return codec == "FLAC" ||
-                   codec == "ALAC" ||
-                   codec == "APE" ||
-                   codec == "WAV" ||
-                   codec == "AIFF" ||
-                   codec == "WV" ||  // WavPack
-                   codec == "TAK" || // TAK lossless
-                   codec == "TTA" || // True Audio
-                   codec.contains("PCM") ||
-                   codec.contains("LOSSLESS")
-        }
-
-        // Fallback: Check file extension for known lossless formats
-        val uri = song.uri.toString()
-        val isLosslessExtension = uri.endsWith(".flac", ignoreCase = true) ||
-                                  uri.endsWith(".alac", ignoreCase = true) ||
-                                  uri.endsWith(".ape", ignoreCase = true) ||
-                                  uri.endsWith(".wav", ignoreCase = true) ||
-                                  uri.endsWith(".aiff", ignoreCase = true) ||
-                                  uri.endsWith(".wv", ignoreCase = true) ||
-                                  uri.endsWith(".tak", ignoreCase = true) ||
-                                  uri.endsWith(".tta", ignoreCase = true) ||
-                                  (uri.endsWith(".m4a", ignoreCase = true) && (song.bitrate ?: 0) >= 700000)
-
-        if (isLosslessExtension) return true
-
-        return false
-    }
-
-    fun isHiResLossless(song: Song): Boolean {
-        if (!isLosslessAudio(song)) {
-            return false
-        }
-
-        val sampleRate = song.sampleRate ?: 0
-        val bitrate = song.bitrate ?: 0
-        val channels = song.channels ?: 2
-
-        // Hi-Res Lossless requires ≥48kHz sample rate
-        if (sampleRate < 48000) {
-            return false
-        }
-
-        // For known Hi-Res sample rates, consider them Hi-Res even without bitrate calculation
-        if (sampleRate >= 88200) {
-            return true
-        }
-
-        // Calculate bit depth using improved AudioFormatDetector logic
-        if (bitrate > 0 && sampleRate > 0 && channels > 0) {
-            val bitsPerSample = bitrate.toDouble() / (sampleRate.toDouble() * channels.toDouble())
-            if (bitsPerSample >= 18) {  // Lowered threshold from 20 to 18 for calculation variance
-                return true
-            }
-        }
-
-        // Fallback: High bitrate lossless at 48kHz or higher is likely Hi-Res
-        if (bitrate >= 2000000 && sampleRate >= 48000) {
-            return true
-        }
-
-        return false
-    }
-    
-    fun isRegularLossless(song: Song): Boolean {
-        // Regular Lossless = Lossless but NOT Hi-Res
-        val lossless = isLosslessAudio(song)
-        if (!lossless) return false
-        
-        // IMPORTANT: Check if it's Hi-Res and exclude it
-        val hiRes = isHiResLossless(song)
-        if (hiRes) {
-            return false
-        }
-        
-        return true
-    }
-    
-    // Helper function to determine if a song is Dolby/Surround
-    fun isDolbyOrSurround(song: Song): Boolean {
-        val codec = song.codec?.uppercase() ?: ""
-        return (song.channels ?: 2) > 2 || // Multi-channel audio
-               codec.contains("AC-3") ||
-               codec.contains("E-AC-3") ||
-               codec.contains("DOLBY") ||
-               codec.contains("TRUEHD") ||
-               codec.contains("ATMOS") ||
-               codec.contains("DTS")
-    }
-    
-    // Define categories based on song properties with audio quality filters
-    var ratingsTrigger by remember { mutableStateOf(0) }  // Trigger for rating changes
-    
-    LaunchedEffect(Unit) {
-        // Monitor rating changes by checking periodically
-        while (true) {
-            kotlinx.coroutines.delay(500)
-            val newRatingCount = appSettings.getRatingDistribution().values.sum()
-            if (newRatingCount != ratingsTrigger) {
-                ratingsTrigger = newRatingCount
-            }
-        }
-    }
-    
-    val categories = remember(songs, favoriteSongs, ratingsTrigger) {
-        val allCategories = mutableListOf("All")
-        
-        android.util.Log.d("SongsTab", "Recomputing categories for ${songs.size} songs")
-        
-        // Favorites filter - show if there are any favorite songs
-        val favoriteSongsList = songs.filter { it.id in favoriteSongs }
-        if (favoriteSongsList.isNotEmpty()) {
-            allCategories.add("❤️ Favorites")
-        }
-        
-        // Audio Quality Filters (Mutually Exclusive) - Most specific first
-        val hiResLosslessSongs = songs.filter { isHiResLossless(it) && !isDolbyOrSurround(it) }
-        android.util.Log.d("SongsTab", "Found ${hiResLosslessSongs.size} Hi-Res Lossless songs")
-        if (hiResLosslessSongs.isNotEmpty()) {
-            hiResLosslessSongs.take(3).forEach { song ->
-                android.util.Log.d("SongsTab", "Hi-Res Lossless: ${song.title} - codec=${song.codec}, sampleRate=${song.sampleRate}, bitrate=${song.bitrate}")
-            }
-            allCategories.add("Hi-Res Lossless")
-        }
-        
-        // Regular Lossless (CD quality: 44.1kHz/16-bit or 48kHz/16-bit)
-        val regularLosslessSongs = songs.filter { isRegularLossless(it) && !isDolbyOrSurround(it) }
-        android.util.Log.d("SongsTab", "Found ${regularLosslessSongs.size} Lossless (CD Quality) songs")
-        if (regularLosslessSongs.isNotEmpty()) {
-            regularLosslessSongs.take(3).forEach { song ->
-                android.util.Log.d("SongsTab", "Regular Lossless: ${song.title} - codec=${song.codec}, sampleRate=${song.sampleRate}, bitrate=${song.bitrate}")
-            }
-            allCategories.add("Lossless")
-        }
-        
-        // Dolby (includes AC-3, E-AC-3/D+, TrueHD, Atmos, DTS in 5.1, 7.1, etc.)
-        val dolbySongs = songs.filter { isDolbyOrSurround(it) }
-        android.util.Log.d("SongsTab", "Found ${dolbySongs.size} Dolby/Surround songs")
-        if (dolbySongs.isNotEmpty()) allCategories.add("Dolby")
-        
-        val stereoSongs = songs.filter { song ->
-            (song.channels ?: 2) == 2 && !isDolbyOrSurround(song)
-        }
-        android.util.Log.d("SongsTab", "Found ${stereoSongs.size} Stereo songs")
-        // if (stereoSongs.isNotEmpty()) allCategories.add("Stereo")  // HIDDEN - user requested to hide stereo filter
-        
-        val monoSongs = songs.filter { song ->
-            (song.channels ?: 2) == 1
-        }
-        android.util.Log.d("SongsTab", "Found ${monoSongs.size} Mono songs")
-        if (monoSongs.isNotEmpty()) allCategories.add("Mono")
-        
-        // Rating-based categories (5★ = Absolute Favorite, 4★ = Loved, 3★ = Great, 2★ = Good, 1★ = Liked)
-        // Only show if rating system is enabled
-        if (enableRatingSystem) {
-            val appSettings = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context)
-            val ratingDistribution = appSettings.getRatingDistribution()
-            
-            if ((ratingDistribution[5] ?: 0) > 0) {
-                allCategories.add("⭐⭐⭐⭐⭐ Absolute Favorites")
-            }
-            if ((ratingDistribution[4] ?: 0) > 0) {
-                allCategories.add("⭐⭐⭐⭐ Loved")
-            }
-            if ((ratingDistribution[3] ?: 0) > 0) {
-                allCategories.add("⭐⭐⭐ Great")
-            }
-            if ((ratingDistribution[2] ?: 0) > 0) {
-                allCategories.add("⭐⭐ Good")
-            }
-            if ((ratingDistribution[1] ?: 0) > 0) {
-                allCategories.add("⭐ Liked")
-            }
-        }
-        
-        // Log sample metadata for debugging
-        if (songs.isNotEmpty()) {
-            val sampleSong = songs.first()
-            android.util.Log.d("SongsTab", "Sample song metadata: ${sampleSong.title} - bitrate=${sampleSong.bitrate}, sampleRate=${sampleSong.sampleRate}, channels=${sampleSong.channels}, codec=${sampleSong.codec}")
-        }
-        
-        // Quality-based categories for lossy audio
-        val highQualitySongs = songs.filter { song ->
-            val bitrate = song.bitrate ?: 0
-            bitrate >= 320000 && !isLosslessAudio(song) && !isDolbyOrSurround(song)
-        }
-        if (highQualitySongs.isNotEmpty()) allCategories.add("High Quality")
-        
-        val standardSongs = songs.filter { song ->
-            val bitrate = song.bitrate ?: 0
-            bitrate in 128000..319999 && !isLosslessAudio(song) && !isDolbyOrSurround(song)
-        }
-        if (standardSongs.isNotEmpty()) allCategories.add("Standard")
-        
-        // Duration-based categories
-        val shortSongs = songs.filter { it.duration < 3 * 60 * 1000 }
-        if (shortSongs.isNotEmpty()) allCategories.add("Short (< 3 min)")
-        
-        val mediumSongs = songs.filter { it.duration in (3 * 60 * 1000)..(5 * 60 * 1000) }
-        if (mediumSongs.isNotEmpty()) allCategories.add("Medium (3-5 min)")
-        
-        val longSongs = songs.filter { it.duration > 5 * 60 * 1000 }
-        if (longSongs.isNotEmpty()) allCategories.add("Long (> 5 min)")
-        
-        allCategories
-    }
-    
-    // Filter songs based on selected category
-    val filteredSongs = remember(songs, selectedCategory, favoriteSongs) {
-        when (selectedCategory) {
-            "All" -> songs
-            "❤️ Favorites" -> songs.filter { it.id in favoriteSongs }
-            
-            // Rating-based filters
-            "⭐⭐⭐⭐⭐ Absolute Favorites" -> {
-                val ratedSongIds = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context).getSongsByRating(5)
-                songs.filter { it.id in ratedSongIds }
-            }
-            "⭐⭐⭐⭐ Loved" -> {
-                val ratedSongIds = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context).getSongsByRating(4)
-                songs.filter { it.id in ratedSongIds }
-            }
-            "⭐⭐⭐ Great" -> {
-                val ratedSongIds = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context).getSongsByRating(3)
-                songs.filter { it.id in ratedSongIds }
-            }
-            "⭐⭐ Good" -> {
-                val ratedSongIds = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context).getSongsByRating(2)
-                songs.filter { it.id in ratedSongIds }
-            }
-            "⭐ Liked" -> {
-                val ratedSongIds = chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context).getSongsByRating(1)
-                songs.filter { it.id in ratedSongIds }
-            }
-            
-            "Short (< 3 min)" -> songs.filter { it.duration < 3 * 60 * 1000 }
-            "Medium (3-5 min)" -> songs.filter { it.duration in (3 * 60 * 1000)..(5 * 60 * 1000) }
-            "Long (> 5 min)" -> songs.filter { it.duration > 5 * 60 * 1000 }
-            
-            // Audio Quality Filters (Mutually Exclusive)
-            "Hi-Res Lossless" -> songs.filter { isHiResLossless(it) && !isDolbyOrSurround(it) }
-            "Lossless" -> songs.filter { isRegularLossless(it) && !isDolbyOrSurround(it) }
-            "Dolby" -> songs.filter { isDolbyOrSurround(it) }
-            
-            "Stereo" -> songs.filter { song ->
-                (song.channels ?: 2) == 2 && !isDolbyOrSurround(song)
-            }
-            
-            "Mono" -> songs.filter { song ->
-                (song.channels ?: 2) == 1
-            }
-            
-            "High Quality" -> songs.filter { song ->
-                val bitrate = song.bitrate ?: 0
-                bitrate >= 320000 && !isLosslessAudio(song) && !isDolbyOrSurround(song)
-            }
-
-            "Standard" -> songs.filter { song ->
-                val bitrate = song.bitrate ?: 0
-                bitrate in 128000..319999 && !isLosslessAudio(song) && !isDolbyOrSurround(song)
-            }
-
-            else -> songs // Default to showing all songs for any unrecognized category
-        }
-    }
-    
-    // Alphabet bar settings
-    val showAlphabetBar by appSettings.showAlphabetBar.collectAsState()
-    val showScrollToTop by appSettings.showScrollToTop.collectAsState()
-    
-    // Scroll state and tracking
-    val listState = rememberLazyListState()
-    val showScrollToTopButton by remember {
-        derivedStateOf { listState.firstVisibleItemIndex > 2 }
-    }
-    
-    // Generate alphabet letters based on filtered songs
-    val alphabetLetters = remember(filteredSongs) {
-        filteredSongs
-            .mapNotNull { song ->
-                // Get first letter from title
-                val firstChar = song.title.firstOrNull()?.uppercaseChar()
-                if (firstChar?.isLetter() == true) firstChar.toString() else "#"
-            }
-            .distinct()
-            .sortedWith(compareBy { if (it == "#") "~" else it }) // Put # at end
-    }
-    
-    // Map letters to song indices for quick navigation
-    val letterToIndexMap = remember(filteredSongs) {
-        val map = mutableMapOf<String, Int>()
-        filteredSongs.forEachIndexed { index, song ->
-            val firstChar = song.title.firstOrNull()?.uppercaseChar()
-            val letter = if (firstChar?.isLetter() == true) firstChar.toString() else "#"
-            if (!map.containsKey(letter)) {
-                map[letter] = index + 2 // +2 to account for header and chips items
-            }
-        }
-        map
-    }
-    
-    val coroutineScope = rememberCoroutineScope()
-    var selectedLetter by remember { mutableStateOf<String?>(null) }
-    
-    if (songs.isEmpty()) {
-        EmptyState(
-            message = "No songs yet",
-            icon = RhythmIcons.Music.Song
-        )
-    } else {
-        Box(modifier = Modifier.fillMaxSize()) {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    start = 20.dp,
-                    top = 8.dp,
-                    end = 20.dp,
-                    bottom = 16.dp
-                ),
-                verticalArrangement = Arrangement.spacedBy(0.dp)
-            ) {
-            // Enhanced Songs Section Header (Scrollable)
-            item {
-                Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(20.dp)
-                ) {
-                    Surface(
-                        modifier = Modifier.size(48.dp),
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary,
-                        shadowElevation = 0.dp
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = RhythmIcons.Relax,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = context.getString(R.string.library_your_music),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-
-                        Text(
-                            text = "${filteredSongs.size} of ${songs.size} tracks",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                        )
-                    }
-
-                    // Play/Shuffle Button Group
-                    if (filteredSongs.isNotEmpty()) {
-                        ExpressiveButtonGroup(
-                            style = ButtonGroupStyle.Tonal
-                        ) {
-                            ExpressiveGroupButton(
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                    onPlayQueue(filteredSongs)
-                                },
-                                isStart = true,
-                                isEnd = false
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.PlayArrow,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = context.getString(R.string.action_play),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
-                            
-                            ExpressiveGroupButton(
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                    onShuffleQueue(filteredSongs)
-                                },
-                                isStart = false,
-                                isEnd = true
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Shuffle,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-            }
-
-            // Category chips
-            if (categories.size > 1) {
-                item {
-                    LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp), // Added horizontal padding
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    items(
-                        items = categories,
-                        key = { it }
-                    ) { category ->
-                        val isSelected = selectedCategory == category
-
-                        val containerColor by animateColorAsState(
-                            targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerLow,
-                            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
-                            label = "chipContainerColor"
-                        )
-                        val labelColor by animateColorAsState(
-                            targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
-                            label = "chipLabelColor"
-                        )
-                        val borderColor by animateColorAsState(
-                            targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.6f),
-                            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
-                            label = "chipBorderColor"
-                        )
-                        val borderWidth by animateDpAsState(
-                            targetValue = if (isSelected) 2.dp else 1.dp,
-                            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
-                            label = "chipBorderWidth"
-                        )
-                        val scale by animateFloatAsState(
-                            targetValue = if (isSelected) 1.05f else 1f,
-                            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
-                            label = "chipScale"
-                        )
-
-                        FilterChip(
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                selectedCategory = category
-                            },
-                            label = {
-                                Text(
-                                    text = category,
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
-                                )
-                            },
-                            selected = isSelected,
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = containerColor,
-                                selectedLabelColor = labelColor,
-                                containerColor = containerColor,
-                                labelColor = labelColor
-                            ),
-                            border = FilterChipDefaults.filterChipBorder(
-                                enabled = true,
-                                selected = isSelected,
-                                borderColor = borderColor,
-                                selectedBorderColor = borderColor,
-                                borderWidth = borderWidth
-                            ),
-                            shape = RoundedCornerShape(50.dp), // More rounded corners
-                            modifier = Modifier.graphicsLayer {
-                                scaleX = scale
-                                scaleY = scale
-                            }
-                        )
-                    }
-                }
-                }
-            }
-
-            // Songs Items
-            items(
-                items = filteredSongs,
-                key = { "song_${it.id}_${it.uri}" }
-            ) { song ->
-                AnimateIn {
-                    LibrarySongItemWrapper(
-                        song = song,
-                        onClick = { onSongClick(song) },
-                        onMoreClick = { onAddToPlaylist(song) },
-                        onAddToQueue = { onAddToQueue(song) },
-                        onPlayNext = { onPlayNext(song) },
-                        onToggleFavorite = { onToggleFavorite(song) },
-                        isFavorite = favoriteSongs.contains(song.id),
-                        onGoToArtist = { 
-                            // Find the artist from the list - respect groupByAlbumArtist setting
-                            val artist = if (groupByAlbumArtist) {
-                                // When grouping by album artist, match against albumArtist (with fallback to artist)
-                                val songArtistName = (song.albumArtist?.takeIf { it.isNotBlank() } ?: song.artist).trim()
-                                artists.find { it.name.equals(songArtistName, ignoreCase = true) }
-                            } else {
-                                // When not grouping, check if any split artist name matches
-                                val songArtistNames = splitArtistNames(song.artist)
-                                artists.find { artist ->
-                                    songArtistNames.any { it.equals(artist.name, ignoreCase = true) }
-                                }
-                            }
-                            artist?.let { onGoToArtist(it) }
-                        },
-                        onGoToAlbum = { 
-                            // Find the album from the list
-                            val album = albums.find { 
-                                it.title.equals(song.album, ignoreCase = true) && 
-                                it.artist.equals(song.artist, ignoreCase = true)
-                            }
-                            album?.let { onGoToAlbum(it) }
-                        },
-                        onShowSongInfo = { onShowSongInfo(song) },
-                        onAddToBlacklist = { onAddToBlacklist(song) },
-                        currentSong = currentSong,
-                        isPlaying = isPlaying,
-                        haptics = haptics,
-                        enableRatingSystem = enableRatingSystem
-                    )
-                }
-            }
-            }
-            
-            // Alphabet bar overlay
-            if (showAlphabetBar && alphabetLetters.isNotEmpty()) {
-                AlphabetBar(
-                    letters = alphabetLetters,
-                    selectedLetter = selectedLetter,
-                    onLetterSelected = { letter ->
-                        selectedLetter = letter
-                        letterToIndexMap[letter]?.let { index ->
-                            coroutineScope.launch {
-                                listState.animateScrollToItem(index)
-                            }
-                        }
-                    },
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .padding(end = 8.dp),
-                    haptics = haptics
-                )
-            }
-            
-            // Scroll to top button
-            if (showScrollToTop && showScrollToTopButton) {
-                ScrollToTopButton(
-                    visible = showScrollToTopButton,
-                    onClick = {
-                        coroutineScope.launch {
-                            listState.animateScrollToItem(0)
-                        }
-                    },
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(bottom = 16.dp, end = 16.dp),
-                    haptics = haptics
-                )
-            }
-        }
-    }
-}
 
 
 @Composable
@@ -5753,6 +5106,13 @@ private fun ArtistSectionHeader(
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                 )
             }
+            Surface(
+                modifier = Modifier
+                .height(2.dp)
+                .width(60.dp),
+                shape = RoundedCornerShape(1.dp),
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f)
+            ) {}
         }
     }
 }

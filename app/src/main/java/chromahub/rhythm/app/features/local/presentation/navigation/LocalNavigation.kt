@@ -1477,6 +1477,10 @@ private fun LocalNavigationContent(
                             // Play queue with proper replacement
                             viewModel.playQueue(songs)
                         },
+                        onPlayQueueFromIndex = { songs, startIndex ->
+                            // Play queue from specific index
+                            viewModel.playQueue(songs, startIndex = startIndex)
+                        },
                         onShuffleQueue = { songs ->
                             // Shuffle using playShuffled to respect settings
                             viewModel.playShuffled(songs)
