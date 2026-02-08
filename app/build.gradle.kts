@@ -106,6 +106,7 @@ android {
         }
     }
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -146,6 +147,9 @@ android {
 }
 
 dependencies {
+    // Desugaring library
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+
     // Core Android dependencies
     implementation(libs.androidx.core.ktx)
     implementation("androidx.core:core:1.17.0") // Downgrade core dependency for compatibility
@@ -170,6 +174,7 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer-dash:1.9.2")
     implementation("androidx.media3:media3-ui:1.9.2")
     implementation("androidx.media3:media3-session:1.9.2")
+    implementation("org.jellyfin.media3:media3-ffmpeg-decoder:1.2.1+1")
     
     // Icons
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
