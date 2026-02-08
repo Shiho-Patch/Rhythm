@@ -28,6 +28,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -88,6 +89,8 @@ import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import kotlin.system.exitProcess
 import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveScrollBar
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButtonGroup
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.StandardBottomSheetHeader
 import chromahub.rhythm.app.shared.presentation.components.common.StyledProgressBar
@@ -2070,8 +2073,59 @@ fun MediaScanSettingsScreen(onBackClick: () -> Unit) {
         ) {
             // Main overview content
             item { Spacer(modifier = Modifier.height(8.dp)) }
+            
+            // Mode Selection with ExpressiveButtonGroup
+            item {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = context.getString(R.string.settings_mode_selection),
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                    )
+                    
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            ExpressiveButtonGroup(
+                                items = listOf(
+                                    context.getString(R.string.settings_blacklist_mode),
+                                    context.getString(R.string.settings_whitelist_mode)
+                                ),
+                                selectedIndex = if (currentMode == chromahub.rhythm.app.shared.presentation.components.MediaScanMode.BLACKLIST) 0 else 1,
+                                onItemClick = { index ->
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    currentMode = if (index == 0) {
+                                        appSettings.setMediaScanMode("blacklist")
+                                        chromahub.rhythm.app.shared.presentation.components.MediaScanMode.BLACKLIST
+                                    } else {
+                                        appSettings.setMediaScanMode("whitelist")
+                                        chromahub.rhythm.app.shared.presentation.components.MediaScanMode.WHITELIST
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            
+                            Spacer(modifier = Modifier.height(12.dp))
+                            
+                            Text(
+                                text = if (currentMode == chromahub.rhythm.app.shared.presentation.components.MediaScanMode.BLACKLIST)
+                                    context.getString(R.string.settings_blacklist_mode_desc)
+                                else
+                                    context.getString(R.string.settings_whitelist_mode_desc),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
 
-            settingGroups.forEach { group ->
+            settingGroups.drop(1).forEach { group ->
                 item {
                     Text(
                         text = group.title,
