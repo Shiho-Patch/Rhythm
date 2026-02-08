@@ -581,20 +581,20 @@ fun QueuePlaybackSettingsScreen(onBackClick: () -> Unit) {
                     )
                 )
             ),
-//            SettingGroup(
-//                title = context.getString(R.string.settings_audio_effects),
-//                items = listOf(
-//                    SettingItem(
-//                        RhythmIcons.Tune,
-//                        context.getString(R.string.settings_crossfade),
-//                        context.getString(R.string.settings_crossfade_desc),
-//                        toggleState = crossfadeEnabled,
-//                        onToggleChange = { appSettings.setCrossfade(it) },
-//                        // Pass the crossfade duration as extra data for rendering
-//                        data = if (crossfadeEnabled) crossfadeDuration else null
-//                    )
-//                )
-//            ),
+            SettingGroup(
+                title = context.getString(R.string.settings_audio_effects),
+                items = listOf(
+                    SettingItem(
+                        RhythmIcons.Tune,
+                        context.getString(R.string.settings_crossfade),
+                        context.getString(R.string.settings_crossfade_desc),
+                        toggleState = crossfadeEnabled,
+                        onToggleChange = { appSettings.setCrossfade(it) },
+                        // Pass the crossfade duration as extra data for rendering
+                        data = if (crossfadeEnabled) crossfadeDuration else null
+                    )
+                )
+            ),
             SettingGroup(
                 title = context.getString(R.string.settings_time_display),
                 items = listOf(

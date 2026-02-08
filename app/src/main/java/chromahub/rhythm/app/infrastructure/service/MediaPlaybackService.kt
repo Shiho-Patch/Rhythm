@@ -31,6 +31,8 @@ import androidx.media3.session.DefaultMediaNotificationProvider
 import chromahub.rhythm.app.activities.MainActivity
 import chromahub.rhythm.app.shared.data.model.AppSettings
 import chromahub.rhythm.app.shared.data.model.Song
+import chromahub.rhythm.app.infrastructure.service.player.RhythmPlayerEngine
+import chromahub.rhythm.app.infrastructure.service.player.TransitionController
 import chromahub.rhythm.app.infrastructure.widget.WidgetUpdater
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
@@ -65,10 +67,9 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     // Debounce custom layout updates to prevent flickering
     private var updateLayoutJob: Job? = null
     
-    // Crossfade functionality
-    private var crossfadeJob: Job? = null
-    private var isCrossfading: Boolean = false
-    private var crossfadeNextPending: Boolean = false
+    // Rhythm player engine (dual-player crossfade) and transition controller
+    private lateinit var rhythmPlayerEngine: RhythmPlayerEngine
+    private lateinit var transitionController: TransitionController
     
     // Sleep Timer functionality
     private var sleepTimerJob: Job? = null
@@ -340,41 +341,39 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     }
     
     private fun initializePlayer() {
-        // Configure load control optimized for local audio files
-        // Note: Local files don't need massive buffers like streaming does
-        val loadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(
-                15_000,  // 15 seconds minimum buffer (sufficient for local files)
-                30_000,  // 30 seconds maximum buffer (reasonable for gapless playback)
-                1_500,   // 1.5 seconds buffer before starting playback (quick start)
-                2_500    // 2.5 seconds buffer before resuming after rebuffer
-            )
-            .setPrioritizeTimeOverSizeThresholds(true) // Better for audio streaming
-            .build()
+        // Initialize RhythmPlayerEngine for crossfade support
+        rhythmPlayerEngine = RhythmPlayerEngine(this)
+        rhythmPlayerEngine.initialize()
         
-        // Configure renderers for better codec support and hardware acceleration
-        val renderersFactory = DefaultRenderersFactory(this).apply {
-            // Prefer extension renderers when available for better format support
-            setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
+        // The master player is exposed to MediaSession and used everywhere
+        player = rhythmPlayerEngine.masterPlayer as ExoPlayer
+        
+        // Register player swap listener for crossfade transitions
+        rhythmPlayerEngine.addPlayerSwapListener { newPlayer ->
+            Log.d(TAG, "Player swapped during crossfade transition")
+            val oldPlayer = player
+            player = newPlayer as ExoPlayer
+            
+            // Move the service-level player listener to the new player
+            playerListener?.let { listener ->
+                oldPlayer.removeListener(listener)
+                newPlayer.addListener(listener)
+            }
+            
+            // Update the MediaSession to use the new player
+            mediaSession?.player = newPlayer
+            
+            // Force custom layout update for the new player
+            scheduleCustomLayoutUpdate(50)
+            
+            // Update widget with current song info
+            updateWidgetFromMediaItem(newPlayer.currentMediaItem)
+            
+            // Reinitialize audio effects with new session ID
+            if (newPlayer.audioSessionId != 0) {
+                initializeAudioEffects()
+            }
         }
-        
-        // Build the player with enhanced settings for maximum format support
-        player = ExoPlayer.Builder(this)
-            .setRenderersFactory(renderersFactory) // Enhanced codec support
-            .setLoadControl(loadControl) // Optimized buffering for large files
-            .setAudioAttributes(
-                ExoAudioAttributes.Builder()
-                    .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
-                    .setUsage(C.USAGE_MEDIA)
-                    .build(),
-                true // Handle audio focus automatically
-            )
-            .setHandleAudioBecomingNoisy(true) // Pause on headphone disconnect
-            .setWakeMode(C.WAKE_MODE_LOCAL) // Keep CPU awake during playback
-            // NOTE: Wake lock handling is enabled by default in Media3 1.9.0
-            // This prevents buffering issues during background playback
-            .setSkipSilenceEnabled(false) // Don't skip silence (preserves artist intent)
-            .build()
             
         // Add listener to initialize audio effects when session ID is ready and handle errors
         // Store reference for proper cleanup in onDestroy
@@ -493,8 +492,9 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         }
         playerListener?.let { player.addListener(it) }
         
-        // Start crossfade position monitoring if crossfade is enabled
-        startCrossfadeMonitoring()
+        // Initialize transition controller for crossfade scheduling
+        transitionController = TransitionController(rhythmPlayerEngine, appSettings)
+        transitionController.initialize()
         
         // Apply current settings
         applyPlayerSettings()
@@ -835,15 +835,11 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             }
         }
 
-        // Update crossfade monitoring based on setting
-        if (appSettings.crossfade.value) {
-            val durationMs = (appSettings.crossfadeDuration.value * 1000).toLong()
-            Log.d(TAG, "Crossfade enabled with duration: ${durationMs}ms - starting monitor")
-            startCrossfadeMonitoring()
-        } else {
-            Log.d(TAG, "Crossfade disabled - stopping monitor")
-            stopCrossfadeMonitoring()
-        }
+        // Apply gapless playback setting
+        rhythmPlayerEngine.setGaplessPlayback(appSettings.gaplessPlayback.value)
+
+        // Crossfade is now managed by TransitionController + RhythmPlayerEngine
+        // Settings are read reactively from AppSettings by the controller
 
         Log.d(TAG, "Applied player settings: " +
                 "HQ Audio=${appSettings.highQualityAudio.value}, " +
@@ -853,123 +849,9 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                 "ReplayGain=${appSettings.replayGain.value}")
     }
     
-    // ===== CROSSFADE IMPLEMENTATION =====
-    
-    private var crossfadeMonitorJob: Job? = null
-    private var lastCrossfadeTriggeredForIndex: Int = -1
-    
-    /**
-     * Start monitoring playback position to trigger crossfade near track end.
-     * Uses a polling approach to detect when we're approaching the end of the current track.
-     */
-    private fun startCrossfadeMonitoring() {
-        crossfadeMonitorJob?.cancel()
-        
-        crossfadeMonitorJob = serviceScope.launch {
-            while (isActive) {
-                try {
-                    if (appSettings.crossfade.value && player.isPlaying && !isCrossfading) {
-                        val duration = player.duration
-                        val position = player.currentPosition
-                        val crossfadeDurationMs = (appSettings.crossfadeDuration.value * 1000).toLong()
-                        
-                        // Check if we're within crossfade window and there's a next track
-                        if (duration > 0 && 
-                            position > 0 &&
-                            duration - position <= crossfadeDurationMs &&
-                            player.hasNextMediaItem() &&
-                            player.currentMediaItemIndex != lastCrossfadeTriggeredForIndex) {
-                            
-                            // Trigger crossfade
-                            Log.d(TAG, "Crossfade triggered: position=$position, duration=$duration, " +
-                                    "remaining=${duration - position}ms, crossfadeDuration=${crossfadeDurationMs}ms")
-                            lastCrossfadeTriggeredForIndex = player.currentMediaItemIndex
-                            performCrossfade(crossfadeDurationMs, duration - position)
-                        }
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error in crossfade monitoring", e)
-                }
-                
-                // Check every 100ms for responsiveness
-                delay(100)
-            }
-        }
-    }
-    
-    private fun stopCrossfadeMonitoring() {
-        crossfadeMonitorJob?.cancel()
-        crossfadeMonitorJob = null
-    }
-    
-    /**
-     * Perform a crossfade transition to the next track.
-     * This fades out the current track while seeking to next, then fades in.
-     * 
-     * @param totalDurationMs Total crossfade duration in milliseconds
-     * @param remainingMs Time remaining on current track
-     */
-    private fun performCrossfade(totalDurationMs: Long, remainingMs: Long) {
-        crossfadeJob?.cancel()
-        
-        crossfadeJob = serviceScope.launch {
-            isCrossfading = true
-            val fadeOutDuration = remainingMs.coerceAtMost(totalDurationMs)
-            val fadeInDuration = (totalDurationMs - fadeOutDuration).coerceAtLeast(200)
-            val stepMs = 20L
-            val originalVolume = player.volume
-            
-            Log.d(TAG, "Starting crossfade: fadeOut=${fadeOutDuration}ms, fadeIn=${fadeInDuration}ms")
-            
-            try {
-                // Phase 1: Fade out current track
-                var elapsed = 0L
-                while (elapsed < fadeOutDuration && isActive && player.isPlaying) {
-                    val progress = elapsed.toFloat() / fadeOutDuration
-                    val newVolume = originalVolume * (1f - progress)
-                    player.volume = newVolume.coerceAtLeast(0f)
-                    
-                    delay(stepMs)
-                    elapsed += stepMs
-                }
-                
-                // Ensure volume is at 0 before switching
-                player.volume = 0f
-                
-                // Phase 2: Skip to next track (seamless with Media3)
-                if (player.hasNextMediaItem()) {
-                    player.seekToNextMediaItem()
-                    
-                    // Wait a tiny bit for the next track to start buffering
-                    delay(50)
-                    
-                    // Phase 3: Fade in new track
-                    elapsed = 0L
-                    while (elapsed < fadeInDuration && isActive) {
-                        val progress = elapsed.toFloat() / fadeInDuration
-                        val newVolume = originalVolume * progress
-                        player.volume = newVolume.coerceAtMost(originalVolume)
-                        
-                        delay(stepMs)
-                        elapsed += stepMs
-                    }
-                }
-                
-                // Restore full volume
-                player.volume = originalVolume
-                Log.d(TAG, "Crossfade completed successfully")
-                
-            } catch (e: Exception) {
-                Log.e(TAG, "Error during crossfade", e)
-                // Restore volume on error
-                player.volume = originalVolume
-            } finally {
-                isCrossfading = false
-            }
-        }
-    }
-    
-    // ===== END CROSSFADE IMPLEMENTATION =====
+    // Crossfade is now handled by RhythmPlayerEngine + TransitionController
+    // See: infrastructure/service/player/RhythmPlayerEngine.kt
+    // See: infrastructure/service/player/TransitionController.kt
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(TAG, "Service started with command: ${intent?.action}")
@@ -1234,9 +1116,11 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         // Cancel all coroutines and pending jobs
         updateLayoutJob?.cancel()
         sleepTimerJob?.cancel()
-        crossfadeJob?.cancel()
-        crossfadeMonitorJob?.cancel()
         serviceScope.cancel()
+        
+        // Release crossfade engine and transition controller
+        transitionController.release()
+        rhythmPlayerEngine.release()
         
         // Release audio effects
         releaseAudioEffects()
@@ -1469,16 +1353,6 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
         super.onMediaItemTransition(mediaItem, reason)
         Log.d(TAG, "Media item transitioned: ${mediaItem?.mediaMetadata?.title}, reason=$reason")
-        
-        // Reset crossfade trigger when user manually seeks or selects a different track
-        if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_SEEK || 
-            reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED) {
-            lastCrossfadeTriggeredForIndex = -1
-            crossfadeJob?.cancel()
-            isCrossfading = false
-            // Restore volume in case crossfade was interrupted
-            player.volume = 1.0f
-        }
         
         // Update custom layout when song changes to reflect correct favorite state
         scheduleCustomLayoutUpdate(50) // Shorter delay for song transitions
