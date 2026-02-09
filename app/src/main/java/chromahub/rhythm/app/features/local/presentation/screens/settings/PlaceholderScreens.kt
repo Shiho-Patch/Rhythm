@@ -3872,9 +3872,17 @@ fun AboutScreen(
 
                             CommunityMember(
                                 name = "Alex",
-                                role = "Spotify Canvas API Integration",
+                                role = "Spotify Canvas API",
                                 githubUsername = "Paxsenix0",
                                 avatarUrl = "https://github.com/Paxsenix0.png",
+                                context = context
+                            )
+
+                            CommunityMember(
+                                name = "nikutow",
+                                role = "Contributor",
+                                githubUsername = "nikutow",
+                                avatarUrl = "https://github.com/nikutow.png",
                                 context = context
                             )
                         }

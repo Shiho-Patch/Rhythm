@@ -291,6 +291,42 @@ fun LicensesBottomSheet(
                 )
                 
                 LicenseSheetItem(
+                    name = "LeakCanary",
+                    description = "Memory leak detection library for Android (debug builds only)",
+                    license = "Apache License 2.0",
+                    url = "https://square.github.io/leakcanary/",
+                    context = context,
+                    haptic = haptic
+                )
+                
+                LicenseSheetItem(
+                    name = "Desugar JDK Libs",
+                    description = "Allows using newer Java language APIs on older Android versions",
+                    license = "Apache License 2.0",
+                    url = "https://github.com/google/desugar_jdk_libs",
+                    context = context,
+                    haptic = haptic
+                )
+                
+                LicenseSheetItem(
+                    name = "Media3 FFmpeg Decoder",
+                    description = "FFmpeg-based decoder for Media3, enabling additional audio/video formats",
+                    license = "Apache License 2.0",
+                    url = "https://github.com/androidx/media",
+                    context = context,
+                    haptic = haptic
+                )
+                
+                LicenseSheetItem(
+                    name = "Room",
+                    description = "SQLite object mapping library that provides local data persistence",
+                    license = "Apache License 2.0",
+                    url = "https://developer.android.com/jetpack/androidx/releases/room",
+                    context = context,
+                    haptic = haptic
+                )
+                
+                LicenseSheetItem(
                     name = "Geom Font",
                     description = "Modern, clean sans-serif typeface from Google Fonts",
                     license = "SIL Open Font License 1.1",

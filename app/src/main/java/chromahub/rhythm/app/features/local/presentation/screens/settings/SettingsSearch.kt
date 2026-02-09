@@ -719,6 +719,46 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
             route = SettingsRoutes.QUEUE_PLAYBACK,
             parentScreen = "Queue & Playback"
         ))
+        add(SearchableSettingItem(
+            id = "crossfade",
+            title = context.getString(R.string.settings_crossfade),
+            description = context.getString(R.string.settings_crossfade_desc),
+            keywords = listOf("crossfade", "transition", "fade", "overlap", "smooth", "songs", "playback"),
+            icon = Icons.Default.LinearScale,
+            route = SettingsRoutes.QUEUE_PLAYBACK,
+            parentScreen = "Queue & Playback",
+            settingKey = "crossfade"
+        ))
+        add(SearchableSettingItem(
+            id = "crossfade_duration",
+            title = context.getString(R.string.settings_crossfade_duration),
+            description = context.getString(R.string.settings_crossfade_duration_desc, 4.0f),
+            keywords = listOf("crossfade", "duration", "seconds", "time", "length", "transition"),
+            icon = Icons.Default.LinearScale,
+            route = SettingsRoutes.QUEUE_PLAYBACK,
+            parentScreen = "Queue & Playback",
+            settingKey = "crossfadeDuration"
+        ))
+        add(SearchableSettingItem(
+            id = "queue_persistence",
+            title = "Remember Queue",
+            description = "Save and restore queue when restarting app",
+            keywords = listOf("queue", "remember", "save", "restore", "persistence", "restart", "app"),
+            icon = RhythmIcons.Queue,
+            route = SettingsRoutes.QUEUE_PLAYBACK,
+            parentScreen = "Queue & Playback",
+            settingKey = "queuePersistenceEnabled"
+        ))
+        add(SearchableSettingItem(
+            id = "playlist_action_dialog",
+            title = "Playlist Action Dialog",
+            description = "Choose what happens when clicking playlist items",
+            keywords = listOf("playlist", "action", "dialog", "click", "behavior", "load", "play"),
+            icon = Icons.Default.QueueMusic,
+            route = SettingsRoutes.QUEUE_PLAYBACK,
+            parentScreen = "Queue & Playback",
+            settingKey = "playlistClickBehavior"
+        ))
         
         // ======================== EXPERIMENTAL FEATURES SCREEN ========================
         add(SearchableSettingItem(
@@ -841,6 +881,98 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
             icon = Icons.Default.Notifications,
             route = SettingsRoutes.NOTIFICATIONS,
             parentScreen = "Notifications"
+        ))
+        
+        // ======================== EXPRESSIVE SHAPES SCREEN ========================
+        add(SearchableSettingItem(
+            id = "expressive_shapes_enabled",
+            title = "Expressive Shapes",
+            description = "Enable custom shapes for UI elements",
+            keywords = listOf("shapes", "expressive", "custom", "ui", "design", "artwork", "corners"),
+            icon = Icons.Default.Palette,
+            route = SettingsRoutes.EXPRESSIVE_SHAPES,
+            parentScreen = "Settings",
+            settingKey = "expressiveShapesEnabled"
+        ))
+        add(SearchableSettingItem(
+            id = "shape_preset",
+            title = "Shape Preset",
+            description = "Choose from predefined shape collections",
+            keywords = listOf("preset", "shapes", "collection", "playful", "organic", "geometric", "retro", "custom"),
+            icon = Icons.Default.ColorLens,
+            route = SettingsRoutes.EXPRESSIVE_SHAPES,
+            parentScreen = "Shapes",
+            settingKey = "expressiveShapePreset"
+        ))
+        add(SearchableSettingItem(
+            id = "shape_album_art",
+            title = "Album Artwork Shape",
+            description = "Shape for album artwork displays",
+            keywords = listOf("album", "artwork", "shape", "cover", "image", "display"),
+            icon = Icons.Default.Album,
+            route = SettingsRoutes.EXPRESSIVE_SHAPES,
+            parentScreen = "Shapes",
+            settingKey = "expressiveShapeAlbumArt"
+        ))
+        add(SearchableSettingItem(
+            id = "shape_player_art",
+            title = "Player Artwork Shape",
+            description = "Shape for player screen artwork",
+            keywords = listOf("player", "artwork", "shape", "screen", "display", "now playing"),
+            icon = Icons.Default.PlayCircleFilled,
+            route = SettingsRoutes.EXPRESSIVE_SHAPES,
+            parentScreen = "Shapes",
+            settingKey = "expressiveShapePlayerArt"
+        ))
+        add(SearchableSettingItem(
+            id = "shape_song_art",
+            title = "Song Artwork Shape",
+            description = "Shape for song artwork in lists",
+            keywords = listOf("song", "artwork", "shape", "list", "thumbnail", "image"),
+            icon = Icons.Default.MusicNote,
+            route = SettingsRoutes.EXPRESSIVE_SHAPES,
+            parentScreen = "Shapes",
+            settingKey = "expressiveShapeSongArt"
+        ))
+        add(SearchableSettingItem(
+            id = "shape_playlist_art",
+            title = "Playlist Artwork Shape",
+            description = "Shape for playlist covers",
+            keywords = listOf("playlist", "artwork", "shape", "cover", "collection"),
+            icon = Icons.Default.PlaylistAddCheckCircle,
+            route = SettingsRoutes.EXPRESSIVE_SHAPES,
+            parentScreen = "Shapes",
+            settingKey = "expressiveShapePlaylistArt"
+        ))
+        add(SearchableSettingItem(
+            id = "shape_artist_art",
+            title = "Artist Artwork Shape",
+            description = "Shape for artist images",
+            keywords = listOf("artist", "artwork", "shape", "image", "profile", "photo"),
+            icon = Icons.Default.Person,
+            route = SettingsRoutes.EXPRESSIVE_SHAPES,
+            parentScreen = "Shapes",
+            settingKey = "expressiveShapeArtistArt"
+        ))
+        add(SearchableSettingItem(
+            id = "shape_player_controls",
+            title = "Player Controls Shape",
+            description = "Shape for player control buttons",
+            keywords = listOf("player", "controls", "shape", "buttons", "play", "pause", "skip"),
+            icon = Icons.Default.PlayCircleFilled,
+            route = SettingsRoutes.EXPRESSIVE_SHAPES,
+            parentScreen = "Shapes",
+            settingKey = "expressiveShapePlayerControls"
+        ))
+        add(SearchableSettingItem(
+            id = "shape_mini_player",
+            title = "Mini Player Shape",
+            description = "Shape for mini player artwork",
+            keywords = listOf("mini player", "artwork", "shape", "compact", "bottom bar"),
+            icon = Icons.Default.PlayCircleFilled,
+            route = SettingsRoutes.EXPRESSIVE_SHAPES,
+            parentScreen = "Shapes",
+            settingKey = "expressiveShapeMiniPlayer"
         ))
     }
 }

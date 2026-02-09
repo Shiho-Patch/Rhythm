@@ -740,15 +740,6 @@ fun LibraryScreen(
                     }
                 }
             },
-            onShareAll = {
-                // Share selected songs - implement this in the future
-                Toast.makeText(context, "Share ${selectedSongs.size} songs", Toast.LENGTH_SHORT).show()
-            },
-            onShowSongInfo = {
-                // Show info for first selected song
-                selectedSong = selectedSongs.firstOrNull()
-                showSongInfoSheet = true
-            },
             onAddToBlacklist = {
                 // Add first selected song to blacklist
                 selectedSongs.firstOrNull()?.let { song ->
@@ -2311,116 +2302,132 @@ fun SingleCardSongsContent(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                        .padding(horizontal = 20.dp, vertical = 8.dp)
+                        .animateContentSize(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessLow
+                            )
+                        ),
                         shape = RoundedCornerShape(20.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = if (isSelectionMode) 
-                                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.9f) 
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
                             else 
                                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
                         ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = if (isSelectionMode) 3.dp else 0.dp)
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
                         Column {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(20.dp)
-                            ) {
-                                // Selection Mode: Show Close button and selection count
-                                if (isSelectionMode) {
-                                    FilledTonalIconButton(
-                                        onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                            multiSelectionState?.clearSelection()
-                                        },
-                                        shape = rememberExpressiveShapeFor(ExpressiveShapeTarget.PLAYER_CONTROLS),
-                                        modifier = Modifier.size(48.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.Close,
-                                            contentDescription = "Clear selection"
-                                        )
-                                    }
-
-                                    Spacer(modifier = Modifier.width(16.dp))
-
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = "${selectedSongs.size} selected",
-                                            style = MaterialTheme.typography.titleLarge,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                                        )
-                                        Text(
-                                            text = "from ${filteredSongs.size} tracks",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
-                                        )
-                                    }
-                                } else {
-                                    // Normal Mode: Show icon and track count
-                                    Surface(
-                                        modifier = Modifier.size(48.dp),
-                                        shape = CircleShape,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        shadowElevation = 0.dp
-                                    ) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Icon(
-                                                imageVector = RhythmIcons.Relax,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.onPrimary,
-                                                modifier = Modifier.size(24.dp)
-                                            )
-                                        }
-                                    }
-
-                                    Spacer(modifier = Modifier.width(16.dp))
-
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = context.getString(R.string.library_your_music),
-                                            style = MaterialTheme.typography.titleLarge,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                                        )
-                                        Text(
-                                            text = "${filteredSongs.size} of ${preparedSongs.size} tracks",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                                        )
-                                    }
-
-                                    // Shuffle Button Only (normal mode)
-                                    if (filteredSongs.isNotEmpty()) {
-                                        FilledIconButton(
+                            AnimatedContent(
+                                targetState = isSelectionMode,
+                                transitionSpec = {
+                                    fadeIn(animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessLow
+                                    )) togetherWith
+                                    fadeOut(animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessLow
+                                    ))
+                                },
+                                label = "SectionHeaderAnimation"
+                            ) { isInSelectionMode ->
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(20.dp)
+                                ) {
+                                    if (isInSelectionMode) {
+                                        // Selection Mode: Show Close button and selection count
+                                        FilledTonalIconButton(
                                             onClick = {
-                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                                onShuffleQueue(filteredSongs)
+                                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                                multiSelectionState?.clearSelection()
                                             },
-                                            modifier = Modifier.size(40.dp),
-                                            colors = IconButtonDefaults.filledIconButtonColors(
-                                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                            )
+                                            shape = rememberExpressiveShapeFor(ExpressiveShapeTarget.PLAYER_CONTROLS),
+                                            modifier = Modifier.size(48.dp)
                                         ) {
                                             Icon(
-                                                imageVector = Icons.Rounded.Shuffle,
-                                                contentDescription = context.getString(R.string.cd_shuffle),
+                                                imageVector = Icons.Rounded.Close,
+                                                contentDescription = "Clear selection"
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.width(16.dp))
+
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = "${selectedSongs.size} selected",
+                                                style = MaterialTheme.typography.titleLarge,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                            )
+                                            Text(
+                                                text = "from ${filteredSongs.size} tracks",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                            )
+                                        }
+                                    } else {
+                                        // Normal Mode: Show icon and track count
+                                        Surface(
+                                            modifier = Modifier.size(48.dp),
+                                            shape = rememberExpressiveShapeFor(ExpressiveShapeTarget.PLAYER_CONTROLS),
+                                            color = MaterialTheme.colorScheme.primary,
+                                            shadowElevation = 0.dp
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Icon(
+                                                    imageVector = RhythmIcons.Relax,
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                                    modifier = Modifier.size(24.dp)
+                                                )
+                                            }
+                                        }
+
+                                        Spacer(modifier = Modifier.width(16.dp))
+
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = context.getString(R.string.library_your_music),
+                                                style = MaterialTheme.typography.titleLarge,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                            )
+                                            Text(
+                                                text = "${filteredSongs.size} of ${preparedSongs.size} tracks",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                            )
+                                        }
+
+                                        // Shuffle Button Only (normal mode)
+                                        if (filteredSongs.isNotEmpty()) {
+                                            FilledIconButton(
+                                                onClick = {
+                                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                                    onShuffleQueue(filteredSongs)
+                                                },
+                                                modifier = Modifier.size(40.dp),
+                                                colors = IconButtonDefaults.filledIconButtonColors(
+                                                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                                )
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Shuffle,
+                                                    contentDescription = context.getString(R.string.cd_shuffle),
                                                 modifier = Modifier.size(20.dp)
                                             )
                                         }
                                     }
                                 }
                             }
+                            }
                             
                             // Selection Mode Actions: Show ExpressiveButtonGroup with quick actions
                             if (isSelectionMode && selectedSongs.isNotEmpty()) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(horizontal = 16.dp),
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.2f)
-                                )
-                                
                                 // Quick Actions using ExpressiveButtonGroup
                                 Row(
                                     modifier = Modifier
@@ -2461,16 +2468,16 @@ fun SingleCardSongsContent(
                                         ExpressiveGroupButton(
                                             onClick = {
                                                 HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                                // Add all to queue
-                                                selectedSongs.forEach { onAddToQueue(it) }
+                                                // Shuffle all selected
+                                                onShuffleQueue(selectedSongs)
                                                 multiSelectionState?.clearSelection()
                                             },
                                             isStart = false,
                                             isEnd = true
                                         ) {
                                             Icon(
-                                                imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
-                                                contentDescription = "Add to queue",
+                                                imageVector = Icons.Rounded.Shuffle,
+                                                contentDescription = "Shuffle selected",
                                                 modifier = Modifier.size(20.dp)
                                             )
                                         }
@@ -2790,7 +2797,7 @@ fun SingleCardPlaylistsContent(
                         ) {
                             Surface(
                                 modifier = Modifier.size(48.dp),
-                                shape = CircleShape,
+                                shape = rememberExpressiveShapeFor(ExpressiveShapeTarget.PLAYER_CONTROLS),
                                 color = MaterialTheme.colorScheme.primary,
                                 shadowElevation = 0.dp
                             ) {
@@ -2872,7 +2879,7 @@ fun SingleCardPlaylistsContent(
                     ) {
                         Surface(
                             modifier = Modifier.size(48.dp),
-                            shape = CircleShape,
+                            shape = rememberExpressiveShapeFor(ExpressiveShapeTarget.PLAYER_CONTROLS),
                             color = MaterialTheme.colorScheme.primary,
                             shadowElevation = 0.dp
                         ) {
@@ -3018,7 +3025,7 @@ fun SingleCardAlbumsContent(
                         ) {
                             Surface(
                                 modifier = Modifier.size(48.dp),
-                                shape = CircleShape,
+                                shape = rememberExpressiveShapeFor(ExpressiveShapeTarget.PLAYER_CONTROLS),
                                 color = MaterialTheme.colorScheme.primary,
                                 shadowElevation = 0.dp
                             ) {
@@ -3117,7 +3124,7 @@ fun SingleCardAlbumsContent(
                         ) {
                             Surface(
                                 modifier = Modifier.size(48.dp),
-                                shape = CircleShape,
+                                shape = rememberExpressiveShapeFor(ExpressiveShapeTarget.PLAYER_CONTROLS),
                                 color = MaterialTheme.colorScheme.primary,
                                 shadowElevation = 0.dp
                             ) {
@@ -3238,7 +3245,7 @@ fun PlaylistsTab(
                 ) {
                     Surface(
                         modifier = Modifier.size(48.dp),
-                        shape = CircleShape,
+                        shape = rememberExpressiveShapeFor(ExpressiveShapeTarget.PLAYER_CONTROLS),
                         color = MaterialTheme.colorScheme.primary,
                         shadowElevation = 0.dp
                     ) {
@@ -3354,7 +3361,7 @@ fun AlbumsTab(
                 ) {
                     Surface(
                         modifier = Modifier.size(48.dp),
-                        shape = CircleShape,
+                        shape = rememberExpressiveShapeFor(ExpressiveShapeTarget.PLAYER_CONTROLS),
                         color = MaterialTheme.colorScheme.primary,
                         shadowElevation = 0.dp
                     ) {
@@ -5418,7 +5425,7 @@ private fun ArtistSectionHeader(
         ) {
             Surface(
                 modifier = Modifier.size(48.dp),
-                shape = CircleShape,
+                shape = rememberExpressiveShapeFor(ExpressiveShapeTarget.PLAYER_CONTROLS),
                 color = MaterialTheme.colorScheme.primary,
                 shadowElevation = 0.dp
             ) {
@@ -6204,7 +6211,7 @@ fun SingleCardExplorerContent(
                     ) {
                         Surface(
                             modifier = Modifier.size(48.dp),
-                            shape = CircleShape,
+                            shape = rememberExpressiveShapeFor(ExpressiveShapeTarget.PLAYER_CONTROLS),
                             color = MaterialTheme.colorScheme.primary,
                             shadowElevation = 0.dp
                         ) {

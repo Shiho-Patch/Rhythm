@@ -129,6 +129,8 @@ fun PlaybackBottomSheet(
     val clearQueueOnNewSong by appSettings.clearQueueOnNewSong.collectAsState()
     val queuePersistenceEnabled by appSettings.queuePersistenceEnabled.collectAsState()
     val useSystemVolume by appSettings.useSystemVolume.collectAsState()
+    val crossfadeEnabled by appSettings.crossfade.collectAsState()
+    val crossfadeDuration by appSettings.crossfadeDuration.collectAsState()
     
     val contentAlpha by animateFloatAsState(
         targetValue = if (showContent) 1f else 0f,
@@ -251,20 +253,6 @@ fun PlaybackBottomSheet(
                     }
                 }
                 
-                // Playback Speed Section
-                item {
-                    AnimateIn {
-                        PlaybackSpeedCard(
-                            currentSpeed = playbackSpeed,
-                            onSpeedChange = { speed ->
-                                musicViewModel.setPlaybackSpeed(speed)
-                            },
-                            haptics = haptics,
-                            context = context
-                        )
-                    }
-                }
-                
                 // Playback Settings Section
                 item {
                     AnimateIn {
@@ -278,6 +266,8 @@ fun PlaybackBottomSheet(
                             lyricsSourcePreference = lyricsSourcePreference,
                             useSystemVolume = useSystemVolume,
                             queuePersistenceEnabled = queuePersistenceEnabled,
+                            crossfadeEnabled = crossfadeEnabled,
+                            crossfadeDuration = crossfadeDuration,
                             onGaplessPlaybackChange = {
                                 musicViewModel.setGaplessPlayback(it)
                             },
@@ -289,6 +279,22 @@ fun PlaybackBottomSheet(
                             onLyricsSourcePreferenceChange = { appSettings.setLyricsSourcePreference(it) },
                             onUseSystemVolumeChange = { appSettings.setUseSystemVolume(it) },
                             onQueuePersistenceEnabledChange = { appSettings.setQueuePersistenceEnabled(it) },
+                            onCrossfadeEnabledChange = { appSettings.setCrossfade(it) },
+                            onCrossfadeDurationChange = { appSettings.setCrossfadeDuration(it) },
+                            haptics = haptics,
+                            context = context
+                        )
+                    }
+                }
+                
+                // Playback Speed Section
+                item {
+                    AnimateIn {
+                        PlaybackSpeedCard(
+                            currentSpeed = playbackSpeed,
+                            onSpeedChange = { speed ->
+                                musicViewModel.setPlaybackSpeed(speed)
+                            },
                             haptics = haptics,
                             context = context
                         )
@@ -1013,6 +1019,8 @@ private fun PlaybackSettingsCard(
     lyricsSourcePreference: LyricsSourcePreference,
     useSystemVolume: Boolean,
     queuePersistenceEnabled: Boolean,
+    crossfadeEnabled: Boolean,
+    crossfadeDuration: Float,
     onGaplessPlaybackChange: (Boolean) -> Unit,
     onShuffleUsesExoplayerChange: (Boolean) -> Unit,
     onAutoAddToQueueChange: (Boolean) -> Unit,
@@ -1022,6 +1030,8 @@ private fun PlaybackSettingsCard(
     onLyricsSourcePreferenceChange: (LyricsSourcePreference) -> Unit,
     onUseSystemVolumeChange: (Boolean) -> Unit,
     onQueuePersistenceEnabledChange: (Boolean) -> Unit,
+    onCrossfadeEnabledChange: (Boolean) -> Unit,
+    onCrossfadeDurationChange: (Float) -> Unit,
     haptics: androidx.compose.ui.hapticfeedback.HapticFeedback,
     context: Context,
     modifier: Modifier = Modifier
@@ -1097,6 +1107,19 @@ private fun PlaybackSettingsCard(
                 onToggle = {
                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                     onGaplessPlaybackChange(it)
+                }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Crossfade
+            AudioSettingRow(
+                title = "Crossfade",
+                description = "Fade between songs for smooth transitions",
+                enabled = crossfadeEnabled,
+                onToggle = {
+                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                    onCrossfadeEnabledChange(it)
                 }
             )
 

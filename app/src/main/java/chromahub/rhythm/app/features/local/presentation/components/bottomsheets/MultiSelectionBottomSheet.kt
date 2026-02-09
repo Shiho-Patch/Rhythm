@@ -82,10 +82,8 @@ import chromahub.rhythm.app.util.M3ImageUtils
  * @param onPlayNext Add all to play next
  * @param onAddToPlaylist Open playlist picker for batch add
  * @param onToggleLikeAll Toggle like status - if all are liked, unlike all; otherwise like all
- * @param onShareAll Share all selected songs
  * @param onGoToAlbum Navigate to album (first selected song's album)
  * @param onGoToArtist Navigate to artist (first selected song's artist)
- * @param onShowSongInfo Show information for first selected song
  * @param onAddToBlacklist Add all selected songs to blacklist
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -99,10 +97,8 @@ fun MultiSelectionBottomSheet(
     onPlayNext: () -> Unit,
     onAddToPlaylist: () -> Unit,
     onToggleLikeAll: (shouldLike: Boolean) -> Unit,
-    onShareAll: () -> Unit,
     onGoToAlbum: (() -> Unit)? = null,
     onGoToArtist: (() -> Unit)? = null,
-    onShowSongInfo: (() -> Unit)? = null,
     onAddToBlacklist: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
@@ -236,12 +232,12 @@ fun MultiSelectionBottomSheet(
                         }
                     }
                     
-                    // Row 3: Toggle favorite, Share
+                    // Row 3: Toggle favorite
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Box(modifier = Modifier.weight(1f)) {
+                        Box(modifier = Modifier.fillMaxWidth()) {
                             SongOptionGridItem(
                                 icon = if (allAreLiked) Icons.Rounded.HeartBroken else Icons.Filled.Favorite,
                                 text = if (allAreLiked) "Remove from favorites" else "Add to favorites",
@@ -250,19 +246,6 @@ fun MultiSelectionBottomSheet(
                                 onClick = {
                                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                                     onToggleLikeAll(!allAreLiked)
-                                    onDismiss()
-                                }
-                            )
-                        }
-                        Box(modifier = Modifier.weight(1f)) {
-                            SongOptionGridItem(
-                                icon = Icons.Rounded.Share,
-                                text = "Share songs",
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                onClick = {
-                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                    onShareAll()
                                     onDismiss()
                                 }
                             )
@@ -313,31 +296,13 @@ fun MultiSelectionBottomSheet(
                         }
                     }
                     
-                    // Row 5: Song info, Add to blacklist
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        if (onShowSongInfo != null) {
-                            Box(modifier = Modifier.weight(1f)) {
-                                SongOptionGridItem(
-                                    icon = Icons.Rounded.Info,
-                                    text = "Song info",
-                                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                    iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                        onShowSongInfo()
-                                        onDismiss()
-                                    }
-                                )
-                            }
-                        } else {
-                            Spacer(modifier = Modifier.weight(1f))
-                        }
-                        
-                        if (onAddToBlacklist != null) {
-                            Box(modifier = Modifier.weight(1f)) {
+                    // Row 5: Add to blacklist
+                    if (onAddToBlacklist != null) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Box(modifier = Modifier.fillMaxWidth()) {
                                 SongOptionGridItem(
                                     icon = Icons.Rounded.Block,
                                     text = "Add to blacklist",
@@ -350,8 +315,6 @@ fun MultiSelectionBottomSheet(
                                     }
                                 )
                             }
-                        } else {
-                            Spacer(modifier = Modifier.weight(1f))
                         }
                     }
                     

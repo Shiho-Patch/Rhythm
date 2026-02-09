@@ -16,8 +16,8 @@ android {
         applicationId = "chromahub.rhythm.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 41321881
-        versionName = "4.1.321.881 Beta"
+        versionCode = 41322882
+        versionName = "4.1.322.882 Beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -148,7 +148,7 @@ android {
 
 dependencies {
     // Desugaring library
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 
     // Core Android dependencies
     implementation(libs.androidx.core.ktx)
@@ -174,7 +174,7 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer-dash:1.9.2")
     implementation("androidx.media3:media3-ui:1.9.2")
     implementation("androidx.media3:media3-session:1.9.2")
-    implementation("org.jellyfin.media3:media3-ffmpeg-decoder:1.2.1+1")
+    implementation("org.jellyfin.media3:media3-ffmpeg-decoder:1.9.0+1")
     
     // Icons
     implementation("androidx.compose.material:material-icons-extended:1.7.8")

@@ -407,10 +407,10 @@ class AppSettings private constructor(context: Context) {
     private val _gaplessPlayback = MutableStateFlow(prefs.getBoolean(KEY_GAPLESS_PLAYBACK, true))
     val gaplessPlayback: StateFlow<Boolean> = _gaplessPlayback.asStateFlow()
     
-    private val _crossfade = MutableStateFlow(prefs.getBoolean(KEY_CROSSFADE, false))
+    private val _crossfade = MutableStateFlow(prefs.getBoolean(KEY_CROSSFADE, true))
     val crossfade: StateFlow<Boolean> = _crossfade.asStateFlow()
     
-    private val _crossfadeDuration = MutableStateFlow(prefs.getFloat(KEY_CROSSFADE_DURATION, 2f))
+    private val _crossfadeDuration = MutableStateFlow(prefs.getFloat(KEY_CROSSFADE_DURATION, 4f))
     val crossfadeDuration: StateFlow<Float> = _crossfadeDuration.asStateFlow()
     
     private val _audioNormalization = MutableStateFlow(prefs.getBoolean(KEY_AUDIO_NORMALIZATION, true))
