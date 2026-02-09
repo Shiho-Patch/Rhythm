@@ -1410,119 +1410,8 @@ fun PlaylistDetailScreen(
                                     }
                                 )
                             }
-                            
-                            // Button Group for Play All and Shuffle (Tablet)
-                            var shufflePressed by remember { mutableStateOf(false) }
-                            var playAllPressed by remember { mutableStateOf(false) }
-                            
-                            val shuffleScale by animateFloatAsState(
-                                targetValue = if (shufflePressed) 0.96f else 1f,
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessMedium
-                                ),
-                                label = "shuffleScale"
-                            )
-                            
-                            val playAllScale by animateFloatAsState(
-                                targetValue = if (playAllPressed) 0.96f else 1f,
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessMedium
-                                ),
-                                label = "playAllScale"
-                            )
-                            
-                            LaunchedEffect(shufflePressed) {
-                                if (shufflePressed) {
-                                    delay(150)
-                                    shufflePressed = false
-                                }
-                            }
-                            
-                            LaunchedEffect(playAllPressed) {
-                                if (playAllPressed) {
-                                    delay(150)
-                                    playAllPressed = false
-                                }
-                            }
-                            
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 12.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                // Play All Button - Equal sizing with text
-                                Button(
-                                    onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                        playAllPressed = true
-                                        onPlayAll()
-                                    },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(52.dp)
-                                        .graphicsLayer {
-                                            scaleX = playAllScale
-                                            scaleY = playAllScale
-                                        },
-                                    shape = ButtonGroupDefaults.connectedLeadingButtonShapes().shape,
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.primary,
-                                        contentColor = MaterialTheme.colorScheme.onPrimary
-                                    ),
-                                    contentPadding = PaddingValues(horizontal = 16.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = RhythmIcons.Play,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        "Play All",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                                
-                                // Shuffle Button - Equal sizing with text
-                                FilledTonalButton(
-                                    onClick = {
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                        shufflePressed = true
-                                        onShufflePlay()
-                                    },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(52.dp)
-                                        .graphicsLayer {
-                                            scaleX = shuffleScale
-                                            scaleY = shuffleScale
-                                        },
-                                    shape = ButtonGroupDefaults.connectedTrailingButtonShapes().shape,
-                                    colors = ButtonDefaults.filledTonalButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                    ),
-                                    contentPadding = PaddingValues(horizontal = 16.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = RhythmIcons.Shuffle,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        "Shuffle",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            }
-                            }
                         }
+                    }
 
                         // Song count and total time header
                         if (filteredSongs.isNotEmpty()) {
@@ -1662,7 +1551,7 @@ fun PlaylistDetailScreen(
             }
             
             // New Floating Toolbar with hide on scroll
-            if (playlist.songs.isNotEmpty()) {
+            if (playlist.songs.isNotEmpty() && !isTablet) {
                 val isDefault = playlist.id == "1" || playlist.id == "2" || playlist.id == "3"
                 HorizontalFloatingToolbar(
                     modifier = Modifier

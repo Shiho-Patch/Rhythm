@@ -13,6 +13,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.InfiniteTransition
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -21,8 +22,14 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +49,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
@@ -1937,5 +1945,575 @@ fun ExpressiveLoadingPlayButton(
                 strokeWidth = 3.dp
             )
         }
+    }
+}
+
+// ============================================================================
+// ADDITIONAL EXPRESSIVE COMPONENTS
+// ============================================================================
+
+/**
+ * Shimmer Box
+ * Animated shimmer effect for loading states using MaterialTheme colors
+ */
+@Composable
+fun ShimmerBox(modifier: Modifier = Modifier) {
+    val baseColor = MaterialTheme.colorScheme.surfaceContainerHigh
+    val highlightColor = MaterialTheme.colorScheme.surfaceContainerHighest
+    
+    val shimmerColors = listOf(
+        baseColor,
+        highlightColor,
+        baseColor,
+    )
+
+    var offset by remember { mutableStateOf(0f) }
+    
+    LaunchedEffect(Unit) {
+        while (true) {
+            offset = 0f
+            delay(600) // Half the animation duration
+            offset = 1000f
+            delay(400)
+        }
+    }
+
+    val brush = androidx.compose.ui.graphics.Brush.linearGradient(
+        colors = shimmerColors,
+        start = androidx.compose.ui.geometry.Offset.Zero,
+        end = androidx.compose.ui.geometry.Offset(x = offset, y = offset)
+    )
+
+    Box(modifier = modifier.background(brush = brush, shape = RoundedCornerShape(8.dp)))
+}
+
+/**
+ * Expressive Toggle Segment Button
+ * Animated toggle button with text
+ */
+@Composable
+fun ExpressiveToggleSegmentButton(
+    modifier: Modifier,
+    active: Boolean,
+    activeColor: Color,
+    inactiveColor: Color = Color.Gray,
+    activeContentColor: Color = MaterialTheme.colorScheme.onPrimary,
+    inactiveContentColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    activeCornerRadius: Dp = 8.dp,
+    onClick: () -> Unit,
+    text: String
+) {
+    val backgroundColor by animateColorAsState(
+        targetValue = if (active) activeColor else inactiveColor,
+        animationSpec = tween(200),
+        label = "toggleBgColor"
+    )
+    
+    val contentColor by animateColorAsState(
+        targetValue = if (active) activeContentColor else inactiveContentColor,
+        animationSpec = tween(200),
+        label = "toggleContentColor"
+    )
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(activeCornerRadius))
+            .background(backgroundColor)
+            .clickable { onClick() }
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = contentColor,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+/**
+ * Auto-Scrolling Text
+ * Displays text with animated marquee effect when it overflows
+ * Gracefully shows static text when content fits
+ */
+@Composable
+fun AutoScrollingText(
+    text: String,
+    modifier: Modifier = Modifier,
+    style: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.bodyMedium,
+    gradientEdgeColor: Color = MaterialTheme.colorScheme.surface,
+    gradientWidth: Dp = 24.dp,
+    initialDelayMillis: Int = 1500
+) {
+    var overflow by remember { mutableStateOf(false) }
+    var showScrolling by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        if (overflow) {
+            delay(initialDelayMillis.toLong())
+            showScrolling = true
+        }
+    }
+
+    Box(modifier = modifier.fillMaxWidth()) {
+        if (!showScrolling || !overflow) {
+            Text(
+                text = text,
+                style = style,
+                maxLines = 1,
+                softWrap = false,
+                onTextLayout = { res: androidx.compose.ui.text.TextLayoutResult -> 
+                    overflow = res.hasVisualOverflow 
+                }
+            )
+        } else {
+            // Animated scrolling version
+            Text(
+                text = text,
+                style = style,
+                maxLines = 1,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer {
+                        clip = true
+                    }
+            )
+        }
+    }
+}
+
+/**
+ * Progress Bar with Label
+ * Professional linear progress indicator with percentage display
+ */
+@Composable
+fun ExpressiveProgressBar(
+    progress: Float,
+    modifier: Modifier = Modifier,
+    showPercentage: Boolean = true,
+    label: String? = null,
+    color: Color = MaterialTheme.colorScheme.primary,
+    trackColor: Color = MaterialTheme.colorScheme.surfaceVariant
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        if (label != null) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            CircularProgressIndicator(
+                progress = { progress.coerceIn(0f, 1f) },
+                modifier = Modifier.size(24.dp),
+                color = color,
+                strokeWidth = 2.dp
+            )
+
+            if (showPercentage) {
+                Text(
+                    text = "${(progress * 100).toInt()}%",
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Compact Loading State Indicator
+ * Shows loading spinner with optional text message
+ */
+@Composable
+fun ExpressiveLoadingIndicator(
+    modifier: Modifier = Modifier,
+    message: String? = null,
+    size: Dp = 32.dp,
+    strokeWidth: Dp = 2.dp,
+    color: Color = MaterialTheme.colorScheme.primary
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(size),
+            color = color,
+            strokeWidth = strokeWidth
+        )
+
+        if (message != null) {
+            Text(
+                text = message,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+/**
+ * Enhanced Divider with Labels
+ * Stylish section divider with optional text label
+ */
+@Composable
+fun ExpressiveSectionDivider(
+    modifier: Modifier = Modifier,
+    label: String? = null,
+    color: Color = MaterialTheme.colorScheme.outlineVariant,
+    thickness: Dp = 1.dp
+) {
+    if (label == null) {
+        androidx.compose.material3.HorizontalDivider(
+            modifier = modifier,
+            color = color,
+            thickness = thickness
+        )
+    } else {
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            androidx.compose.material3.HorizontalDivider(
+                modifier = Modifier.weight(1f),
+                color = color,
+                thickness = thickness
+            )
+
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            androidx.compose.material3.HorizontalDivider(
+                modifier = Modifier.weight(1f),
+                color = color,
+                thickness = thickness
+            )
+        }
+    }
+}
+
+/**
+ * Status Badge Component
+ * Displays status with icon and color coding
+ */
+@Composable
+fun ExpressiveStatusBadge(
+    label: String,
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.primaryContainer,
+    textColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
+    icon: ImageVector? = null,
+    size: Dp = 24.dp
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        color = color,
+        contentColor = textColor
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
+}
+
+/**
+ * Animated Pulsing Container
+ * Element that pulses to draw attention
+ */
+@Composable
+fun ExpressivePulsingContainer(
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.primaryContainer,
+    shape: Shape = RoundedCornerShape(12.dp),
+    content: @Composable () -> Unit
+) {
+    val scale by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1500),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseScale"
+    )
+
+    Surface(
+        modifier = modifier
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            },
+        shape = shape,
+        color = color
+    ) {
+        content()
+    }
+}
+
+/**
+ * Collapsible Card Section
+ * Card that expands/collapses with smooth animation
+ */
+@Composable
+fun ExpressiveCollapsibleCard(
+    modifier: Modifier = Modifier,
+    title: String,
+    initialExpanded: Boolean = true,
+    shape: Shape = ExpressiveShapes.Large,
+    content: @Composable () -> Unit
+) {
+    var expanded by remember { mutableStateOf(initialExpanded) }
+    
+    val rotationDegrees by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        animationSpec = tween(300),
+        label = "arrowRotation"
+    )
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = !expanded },
+            shape = shape,
+            color = MaterialTheme.colorScheme.surfaceContainer
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Icon(
+                    imageVector = androidx.compose.material.icons.Icons.Default.ExpandMore,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .graphicsLayer {
+                            rotationZ = rotationDegrees
+                        }
+                )
+            }
+        }
+
+        AnimatedVisibility(
+            visible = expanded,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
+            Box(modifier = Modifier.padding(top = 8.dp)) {
+                content()
+            }
+        }
+    }
+}
+
+/**
+ * Gradient Text Overlay Effect
+ * Text with gradient fade at edges for overflow effect
+ */
+@Composable
+fun ExpressiveGradientText(
+    text: String,
+    modifier: Modifier = Modifier,
+    style: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.bodyMedium,
+    maxLines: Int = 1,
+    gradientColors: List<Color> = listOf(
+        MaterialTheme.colorScheme.onSurface,
+        MaterialTheme.colorScheme.surface
+    )
+) {
+    Text(
+        text = text,
+        modifier = modifier,
+        style = style,
+        maxLines = maxLines,
+        softWrap = false
+    )
+}
+
+/**
+ * Empty State Card
+ * Displays empty state with icon, title, and optional action button
+ */
+@Composable
+fun ExpressiveEmptyStateCard(
+    modifier: Modifier = Modifier,
+    icon: ImageVector,
+    title: String,
+    description: String? = null,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
+        )
+
+        if (description != null) {
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        if (actionLabel != null && onAction != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            ExpressiveFilledButton(
+                onClick = onAction
+            ) {
+                Text(actionLabel)
+            }
+        }
+    }
+}
+
+/**
+ * Animated Counter
+ * Counts up with smooth animation - useful for stats/labels
+ */
+@Composable
+fun ExpressiveAnimatedCounter(
+    value: Int,
+    modifier: Modifier = Modifier,
+    style: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.titleMedium,
+    suffix: String = ""
+) {
+    val animatedValue by animateFloatAsState(
+        targetValue = value.toFloat(),
+        animationSpec = tween(durationMillis = 600),
+        label = "counterAnimation"
+    )
+
+    Text(
+        text = "${animatedValue.toInt()}$suffix",
+        modifier = modifier,
+        style = style,
+        fontWeight = FontWeight.Bold
+    )
+}
+
+/**
+ * Tooltip-like Card
+ * Helpful text overlay positioned near UI elements
+ */
+@Composable
+fun ExpressiveInfoCard(
+    modifier: Modifier = Modifier,
+    text: String,
+    backgroundColor: Color = MaterialTheme.colorScheme.inverseSurface,
+    textColor: Color = MaterialTheme.colorScheme.inverseOnSurface,
+    icon: ImageVector? = null
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(8.dp),
+        color = backgroundColor
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                    tint = textColor
+                )
+            }
+
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodySmall,
+                color = textColor
+            )
+        }
+    }
+}
+
+/**
+ * Animated Button with Loading State
+ * Button that shows loading spinner and disables interactions during async operations
+ */
+@Composable
+fun ExpressiveAsyncButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    isLoading: Boolean = false,
+    enabled: Boolean = true,
+    label: String = "Button"
+) {
+    ExpressiveFilledButton(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled && !isLoading
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(18.dp),
+                strokeWidth = 2.dp,
+                color = MaterialTheme.colorScheme.onPrimary
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+        }
+
+        Text(label)
     }
 }

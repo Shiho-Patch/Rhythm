@@ -17,6 +17,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -517,83 +518,89 @@ fun LyricsEditorBottomSheet(
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp)
                 ) {
-                    OutlinedTextField(
-                        value = editedLyrics,
-                        onValueChange = { editedLyrics = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(450.dp),
-                        placeholder = {
-                            Text(
-                                text = context.getString(R.string.lyrics_placeholder),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                            )
-                        },
-                        textStyle = MaterialTheme.typography.bodyMedium,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f),
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.3f)
-                        ),
-                        shape = RoundedCornerShape(16.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Action Buttons Row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        // Load File Button
-                        OutlinedButton(
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
-                                loadLyricsLauncher.launch(arrayOf("text/plain", "text/*", "*/*"))
+                    BoxWithConstraints {
+                        val maxHeight = maxOf(minOf(maxHeight * 0.4f, 350.dp), 200.dp)
+                        
+                        OutlinedTextField(
+                            value = editedLyrics,
+                            onValueChange = { editedLyrics = it },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(maxHeight),
+                            placeholder = {
+                                Text(
+                                    text = context.getString(R.string.lyrics_placeholder),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                )
                             },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = MaterialTheme.colorScheme.primary
-                            )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.FileOpen,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(context.getString(R.string.bottomsheet_lyrics_load))
-                        }
-
-                        // Save File Button
-                        FilledTonalButton(
-                            onClick = {
-                                HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
-                                if (editedLyrics.isNotBlank()) {
-                                    val sanitizedTitle = songTitle.replace(Regex("[^a-zA-Z0-9._-]"), "_")
-                                    saveLyricsLauncher.launch("$sanitizedTitle.lrc")
-                                }
-                            },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(16.dp),
-                            enabled = editedLyrics.isNotBlank(),
-                            colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
-                            )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Save,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(context.getString(R.string.bottomsheet_lyrics_save))
-                        }
+                            textStyle = MaterialTheme.typography.bodyMedium,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f),
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.3f)
+                            ),
+                            shape = RoundedCornerShape(16.dp)
+                        )
                     }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Action Buttons Row (sticky at bottom like LibraryTabOrderBottomSheet)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Load File Button
+                OutlinedButton(
+                    onClick = {
+                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                        loadLyricsLauncher.launch(arrayOf("text/plain", "text/*", "*/*"))
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.FileOpen,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(context.getString(R.string.bottomsheet_lyrics_load))
+                }
+
+                // Save File Button
+                FilledTonalButton(
+                    onClick = {
+                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
+                        if (editedLyrics.isNotBlank()) {
+                            val sanitizedTitle = songTitle.replace(Regex("[^a-zA-Z0-9._-]"), "_")
+                            saveLyricsLauncher.launch("$sanitizedTitle.lrc")
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(16.dp),
+                    enabled = editedLyrics.isNotBlank(),
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Save,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(context.getString(R.string.bottomsheet_lyrics_save))
                 }
             }
 
