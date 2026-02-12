@@ -297,6 +297,7 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_WIDGET_SHOW_ALBUM = "widget_show_album"
         private const val KEY_WIDGET_CORNER_RADIUS = "widget_corner_radius"
         private const val KEY_WIDGET_AUTO_UPDATE = "widget_auto_update"
+        private const val KEY_WIDGET_SHOW_FAVORITE_BUTTON = "widget_show_favorite_button"
         
         // Global Header Settings
         private const val KEY_HEADER_COLLAPSE_BEHAVIOR = "header_collapse_behavior" // 0=Normal, 1=Always Collapsed (applies to all screens)
@@ -2989,8 +2990,9 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _widgetShowAlbumArt.value = prefs.getBoolean(KEY_WIDGET_SHOW_ALBUM_ART, true)
         _widgetShowArtist.value = prefs.getBoolean(KEY_WIDGET_SHOW_ARTIST, true)
         _widgetShowAlbum.value = prefs.getBoolean(KEY_WIDGET_SHOW_ALBUM, true)
-        _widgetCornerRadius.value = prefs.getInt(KEY_WIDGET_CORNER_RADIUS, 24)
+        _widgetCornerRadius.value = prefs.getInt(KEY_WIDGET_CORNER_RADIUS, 28)
         _widgetAutoUpdate.value = prefs.getBoolean(KEY_WIDGET_AUTO_UPDATE, true)
+        _widgetShowFavoriteButton.value = prefs.getBoolean(KEY_WIDGET_SHOW_FAVORITE_BUTTON, true)
         
         // Player Screen Customization Settings
         _playerShowGradientOverlay.value = prefs.getBoolean(KEY_PLAYER_SHOW_GRADIENT_OVERLAY, true)
@@ -3024,10 +3026,10 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         prefs.edit().putBoolean(KEY_WIDGET_SHOW_ALBUM, value).apply()
     }
     
-    private val _widgetCornerRadius = MutableStateFlow(prefs.getInt(KEY_WIDGET_CORNER_RADIUS, 24))
+    private val _widgetCornerRadius = MutableStateFlow(prefs.getInt(KEY_WIDGET_CORNER_RADIUS, 28))
     val widgetCornerRadius: StateFlow<Int> = _widgetCornerRadius.asStateFlow()
     fun setWidgetCornerRadius(value: Int) {
-        if (value in 0..40) {
+        if (value in 0..60) {
             _widgetCornerRadius.value = value
             prefs.edit().putInt(KEY_WIDGET_CORNER_RADIUS, value).apply()
         }
@@ -3038,6 +3040,13 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     fun setWidgetAutoUpdate(value: Boolean) {
         _widgetAutoUpdate.value = value
         prefs.edit().putBoolean(KEY_WIDGET_AUTO_UPDATE, value).apply()
+    }
+    
+    private val _widgetShowFavoriteButton = MutableStateFlow(prefs.getBoolean(KEY_WIDGET_SHOW_FAVORITE_BUTTON, true))
+    val widgetShowFavoriteButton: StateFlow<Boolean> = _widgetShowFavoriteButton.asStateFlow()
+    fun setWidgetShowFavoriteButton(value: Boolean) {
+        _widgetShowFavoriteButton.value = value
+        prefs.edit().putBoolean(KEY_WIDGET_SHOW_FAVORITE_BUTTON, value).apply()
     }
     
     // ==================== Global Header Settings ====================

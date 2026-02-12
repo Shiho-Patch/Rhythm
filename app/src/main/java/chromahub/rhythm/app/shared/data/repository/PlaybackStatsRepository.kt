@@ -56,7 +56,7 @@ enum class StatsTimeRange(val displayName: String, val daysBack: Int) {
 
 /**
  * Repository for tracking and analyzing playback statistics
- * Inspired by PixelPlayer's comprehensive stats tracking
+ * Provides comprehensive stats tracking for songs and listening habits
  */
 class PlaybackStatsRepository private constructor(private val context: Context) {
     

@@ -32,7 +32,8 @@ object GlanceWidgetUpdater {
         song: Song?,
         isPlaying: Boolean,
         hasPrevious: Boolean = false,
-        hasNext: Boolean = false
+        hasNext: Boolean = false,
+        isFavorite: Boolean = false
     ) {
         // Update SharedPreferences for legacy widget
         val prefs = context.getSharedPreferences("widget_prefs", Context.MODE_PRIVATE)
@@ -43,14 +44,15 @@ object GlanceWidgetUpdater {
                 putString(RhythmMusicWidget.KEY_ALBUM_NAME, song.album)
                 putString(RhythmMusicWidget.KEY_ARTWORK_URI, song.artworkUri?.toString())
             } else {
-                putString(RhythmMusicWidget.KEY_SONG_TITLE, "No song playing")
-                putString(RhythmMusicWidget.KEY_ARTIST_NAME, "Unknown artist")
+                putString(RhythmMusicWidget.KEY_SONG_TITLE, "Rhythm")
+                putString(RhythmMusicWidget.KEY_ARTIST_NAME, "")
                 putString(RhythmMusicWidget.KEY_ALBUM_NAME, "")
                 remove(RhythmMusicWidget.KEY_ARTWORK_URI)
             }
             putBoolean(RhythmMusicWidget.KEY_IS_PLAYING, isPlaying)
             putBoolean(RhythmMusicWidget.KEY_HAS_PREVIOUS, hasPrevious)
             putBoolean(RhythmMusicWidget.KEY_HAS_NEXT, hasNext)
+            putBoolean(RhythmMusicWidget.KEY_IS_FAVORITE, isFavorite)
             apply() // Use apply for async write
         }
         
@@ -70,13 +72,15 @@ object GlanceWidgetUpdater {
                                 prefs[stringPreferencesKey(RhythmMusicWidget.KEY_ARTWORK_URI)] = it.toString()
                             }
                         } else {
-                            prefs[stringPreferencesKey(RhythmMusicWidget.KEY_SONG_TITLE)] = "No song playing"
-                            prefs[stringPreferencesKey(RhythmMusicWidget.KEY_ARTIST_NAME)] = "Unknown artist"
+                            prefs[stringPreferencesKey(RhythmMusicWidget.KEY_SONG_TITLE)] = "Rhythm"
+                            prefs[stringPreferencesKey(RhythmMusicWidget.KEY_ARTIST_NAME)] = ""
                             prefs[stringPreferencesKey(RhythmMusicWidget.KEY_ALBUM_NAME)] = ""
+                            prefs.remove(stringPreferencesKey(RhythmMusicWidget.KEY_ARTWORK_URI))
                         }
                         prefs[booleanPreferencesKey(RhythmMusicWidget.KEY_IS_PLAYING)] = isPlaying
                         prefs[booleanPreferencesKey(RhythmMusicWidget.KEY_HAS_PREVIOUS)] = hasPrevious
                         prefs[booleanPreferencesKey(RhythmMusicWidget.KEY_HAS_NEXT)] = hasNext
+                        prefs[booleanPreferencesKey(RhythmMusicWidget.KEY_IS_FAVORITE)] = isFavorite
                     }
                 }
                 

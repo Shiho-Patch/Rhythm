@@ -2,10 +2,11 @@ package chromahub.rhythm.app.features.local.presentation.viewmodel
 
 import android.app.Activity
 import android.app.Application
-
+import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 
 import android.os.Build
 import android.media.audiofx.AudioEffect
@@ -31,6 +32,7 @@ import chromahub.rhythm.app.shared.data.model.Playlist
 import chromahub.rhythm.app.shared.data.model.Queue
 import chromahub.rhythm.app.shared.data.model.Song
 import chromahub.rhythm.app.infrastructure.service.MediaPlaybackService
+import chromahub.rhythm.app.infrastructure.widget.WidgetUpdater
 import chromahub.rhythm.app.util.AudioDeviceManager
 import chromahub.rhythm.app.util.EqualizerUtils
 import chromahub.rhythm.app.util.GsonUtils
@@ -162,6 +164,113 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     private var currentPlaybackAccumulatedTime: Long = 0L
     private var currentPlaybackSongId: String? = null
     private var isCurrentlyPlaying: Boolean = false
+
+    // Broadcast receiver for favorite changes from service
+    private val favoriteChangeReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                "chromahub.rhythm.app.action.FAVORITE_CHANGED" -> {
+                    Log.d(TAG, "Received favorite change notification from service")
+                    // Refresh favorite songs from settings
+                    refreshFavoriteSongs()
+                }
+                "chromahub.rhythm.app.action.WIDGET_TOGGLE_FAVORITE" -> {
+                    Log.d(TAG, "Received favorite toggle from widget")
+                    // Toggle favorite for current song
+                    _currentSong.value?.let { song ->
+                        viewModelScope.launch {
+                            toggleFavorite(song)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Refresh favorite songs from app settings
+    private fun refreshFavoriteSongs() {
+        viewModelScope.launch {
+            try {
+                // Add a small delay to ensure AppSettings StateFlow has updated
+                delay(50)
+                
+                val favoriteSongsJson = appSettings.favoriteSongs.value
+                if (favoriteSongsJson != null) {
+                    val type = object : TypeToken<Set<String>>() {}.type
+                    val newFavorites = GsonUtils.gson.fromJson<Set<String>>(favoriteSongsJson, type)
+                    _favoriteSongs.value = newFavorites
+                    Log.d(TAG, "Refreshed favorite songs: ${newFavorites.size} favorites")
+                    
+                    // Update current song favorite status if needed
+                    currentSong.value?.let { song ->
+                        val newIsFavorite = newFavorites.contains(song.id)
+                        if (_isFavorite.value != newIsFavorite) {
+                            _isFavorite.value = newIsFavorite
+                            Log.d(TAG, "Updated current song favorite status to: $newIsFavorite")
+                        }
+                    }
+                    
+                    // Sync the Liked playlist with the favorite IDs
+                    // This is needed because the service can't add songs to the playlist (only has IDs, not Song objects)
+                    syncLikedPlaylistWithFavorites(newFavorites)
+                    
+                    // Also refresh playlists from AppSettings to sync the Liked playlist
+                    refreshPlaylistsFromSettings()
+                } else {
+                    _favoriteSongs.value = emptySet()
+                    _isFavorite.value = false
+                    refreshPlaylistsFromSettings()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to refresh favorite songs", e)
+            }
+        }
+    }
+    
+    // Sync the Liked playlist with the current favorite song IDs
+    private suspend fun syncLikedPlaylistWithFavorites(favoriteIds: Set<String>) {
+        try {
+            // Get all songs and filter to favorites
+            val allSongs = _songs.value
+            val favoriteSongsList = allSongs.filter { favoriteIds.contains(it.id) }
+            
+            Log.d(TAG, "Syncing Liked playlist: ${favoriteIds.size} favorite IDs, ${favoriteSongsList.size} songs found")
+            
+            // Update the Liked playlist
+            _playlists.value = _playlists.value.map { playlist ->
+                if (playlist.id == "1" && playlist.name == "Liked") {
+                    playlist.copy(
+                        songs = favoriteSongsList,
+                        dateModified = System.currentTimeMillis()
+                    )
+                } else {
+                    playlist
+                }
+            }
+            
+            // Save updated playlists to appSettings
+            savePlaylists()
+            
+            Log.d(TAG, "Liked playlist synced successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to sync Liked playlist with favorites", e)
+        }
+    }
+    
+    // Helper to refresh playlists from AppSettings
+    private suspend fun refreshPlaylistsFromSettings() {
+        try {
+            val playlistsJson = appSettings.playlists.value
+            if (playlistsJson != null) {
+                val type = object : TypeToken<List<Playlist>>() {}.type
+                val playlists = GsonUtils.gson.fromJson<List<Playlist>>(playlistsJson, type)
+                _playlists.value = playlists
+                Log.d(TAG, "Refreshed playlists from settings")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to refresh playlists from settings", e)
+        }
+    }
 
     // Main music data
     private val _songs = MutableStateFlow<List<Song>>(emptyList())
@@ -625,6 +734,17 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                     refreshPlaylists()
                 }
             }
+        }
+        
+        // Register broadcast receiver for favorite changes from service and widget
+        val filter = IntentFilter().apply {
+            addAction("chromahub.rhythm.app.action.FAVORITE_CHANGED")
+            addAction("chromahub.rhythm.app.action.WIDGET_TOGGLE_FAVORITE")
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            getApplication<Application>().registerReceiver(favoriteChangeReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            getApplication<Application>().registerReceiver(favoriteChangeReceiver, filter)
         }
     }
     
@@ -3180,6 +3300,22 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         
         // Notify MediaPlaybackService about favorite state change
         notifyMediaServiceFavoriteChange()
+        
+        // Update widget with new favorite state after a brief delay to ensure state is saved
+        if (_currentSong.value?.id == songId) {
+            viewModelScope.launch {
+                delay(100) // Brief delay to ensure state is saved
+                val isFavorite = currentFavorites.contains(songId)
+                WidgetUpdater.updateWidget(
+                    getApplication(),
+                    song,
+                    _isPlaying.value,
+                    mediaController?.hasPreviousMediaItem() ?: false,
+                    mediaController?.hasNextMediaItem() ?: false,
+                    isFavorite
+                )
+            }
+        }
     }
     
     /**
@@ -5879,6 +6015,13 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
     override fun onCleared() {
         super.onCleared()
         Log.d(TAG, "ViewModel clearing, cleaning up resources")
+        
+        // Unregister broadcast receiver
+        try {
+            getApplication<Application>().unregisterReceiver(favoriteChangeReceiver)
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to unregister favorite change receiver", e)
+        }
         
         // Save current queue state before cleanup
         saveQueueToPersistence()

@@ -12,7 +12,8 @@ object WidgetUpdater {
         song: Song?,
         isPlaying: Boolean,
         hasPrevious: Boolean = false,
-        hasNext: Boolean = false
+        hasNext: Boolean = false,
+        isFavorite: Boolean = false
     ) {
         val prefs = context.getSharedPreferences("widget_prefs", Context.MODE_PRIVATE)
         val editor = prefs.edit()
@@ -23,20 +24,23 @@ object WidgetUpdater {
             editor.putString("album_name", song.album)
             editor.putString("artwork_uri", song.artworkUri?.toString())
         } else {
-            editor.putString("song_title", "No song playing")
-            editor.putString("artist_name", "Unknown artist")
+            editor.putString("song_title", "Rhythm")
+            editor.putString("artist_name", "")
             editor.putString("album_name", "")
             editor.remove("artwork_uri")
         }
         
         editor.putBoolean("is_playing", isPlaying)
+        editor.putBoolean("has_previous", hasPrevious)
+        editor.putBoolean("has_next", hasNext)
+        editor.putBoolean("is_favorite", isFavorite)
         editor.apply() // Use apply for async write to prevent ANR
         
         // Update legacy RemoteViews widget
         MusicWidgetProvider.updateWidgets(context)
         
         // Update modern Glance widget
-        GlanceWidgetUpdater.updateWidget(context, song, isPlaying, hasPrevious, hasNext)
+        GlanceWidgetUpdater.updateWidget(context, song, isPlaying, hasPrevious, hasNext, isFavorite)
     }
     
     fun clearWidget(context: Context) {

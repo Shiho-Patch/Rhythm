@@ -42,6 +42,7 @@ fun WidgetSettingsScreen(
     val showAlbumArt by appSettings.widgetShowAlbumArt.collectAsState()
     val showArtist by appSettings.widgetShowArtist.collectAsState()
     val showAlbum by appSettings.widgetShowAlbum.collectAsState()
+    val showFavoriteButton by appSettings.widgetShowFavoriteButton.collectAsState()
     val cornerRadius by appSettings.widgetCornerRadius.collectAsState()
     val autoUpdate by appSettings.widgetAutoUpdate.collectAsState()
     
@@ -176,6 +177,22 @@ fun WidgetSettingsScreen(
                                 }
                             )
                         )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        TunerSettingRow(
+                            item = SettingItem(
+                                Icons.Default.Favorite,
+                                "Show Favorite Button",
+                                "Display favorite toggle on large widgets",
+                                toggleState = showFavoriteButton,
+                                onToggleChange = { 
+                                    appSettings.setWidgetShowFavoriteButton(it)
+                                    updateAllWidgets(context)
+                                }
+                            )
+                        )
                     }
                 }
             }
@@ -269,11 +286,11 @@ fun WidgetSettingsScreen(
                         
                         WidgetTipItem(
                             icon = Icons.Default.Apps,
-                            text = "Rhythm supports multiple widget sizes from 2x1 to 5x5"
+                            text = "Rhythm uses Material 3 Expressive design with dynamic colors"
                         )
                         WidgetTipItem(
                             icon = Icons.Default.Widgets,
-                            text = "Both legacy and modern Glance widgets are available"
+                            text = "Widget adapts from 1x1 play button to 5x5+ full layout"
                         )
                         WidgetTipItem(
                             icon = Icons.Default.TouchApp,
@@ -281,7 +298,7 @@ fun WidgetSettingsScreen(
                         )
                         WidgetTipItem(
                             icon = Icons.Default.GridOn,
-                            text = "Long-press and resize for different layouts"
+                            text = "Long-press and resize for different expressive layouts"
                         )
                     }
                 }
@@ -354,8 +371,8 @@ fun WidgetSettingsScreen(
                             appSettings.setWidgetCornerRadius(tempRadius)
                             updateAllWidgets(context)
                         },
-                        valueRange = 0f..40f,
-                        steps = 39,
+                        valueRange = 0f..60f,
+                        steps = 59,
                         colors = SliderDefaults.colors(
                             thumbColor = MaterialTheme.colorScheme.primary,
                             activeTrackColor = MaterialTheme.colorScheme.primary

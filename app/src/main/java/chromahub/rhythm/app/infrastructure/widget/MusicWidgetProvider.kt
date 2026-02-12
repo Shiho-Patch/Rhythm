@@ -131,8 +131,8 @@ class MusicWidgetProvider : AppWidgetProvider() {
         
         // Get current playback state from SharedPreferences
         val prefs = context.getSharedPreferences("widget_prefs", Context.MODE_PRIVATE)
-        val songTitle = prefs.getString("song_title", "No song playing") ?: "No song playing"
-        val artistName = prefs.getString("artist_name", "Unknown artist") ?: "Unknown artist"
+        val songTitle = prefs.getString("song_title", "Rhythm") ?: "Rhythm"
+        val artistName = prefs.getString("artist_name", "") ?: ""
         val albumName = prefs.getString("album_name", "") ?: ""
         val artworkUriString = prefs.getString("artwork_uri", null)
         val isPlaying = prefs.getBoolean("is_playing", false)

@@ -96,8 +96,10 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             when (intent?.action) {
                 "chromahub.rhythm.app.action.FAVORITE_CHANGED" -> {
                     Log.d(TAG, "Received favorite change notification from ViewModel")
-                    // Use debounced update to prevent conflicts with other updates
+                    // Update notification custom layout
                     scheduleCustomLayoutUpdate(250) // Longer delay for external changes
+                    // Also update widget
+                    updateWidgetFromMediaItem(player.currentMediaItem)
                 }
             }
         }
@@ -183,6 +185,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         const val ACTION_PLAY_PAUSE = "chromahub.rhythm.app.action.PLAY_PAUSE"
         const val ACTION_SKIP_NEXT = "chromahub.rhythm.app.action.SKIP_NEXT"
         const val ACTION_SKIP_PREVIOUS = "chromahub.rhythm.app.action.SKIP_PREVIOUS"
+        const val ACTION_TOGGLE_FAVORITE = "chromahub.rhythm.app.action.TOGGLE_FAVORITE"
         
         // Broadcast actions for status updates
         const val BROADCAST_SLEEP_TIMER_STATUS = "chromahub.rhythm.app.broadcast.SLEEP_TIMER_STATUS"
@@ -692,6 +695,11 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                     // Also need to update the favorites playlist to stay in sync
                     updateFavoritesPlaylist(songId, !wasRemoving)
                     
+                    // Notify ViewModel about favorite change
+                    val notifyIntent = Intent("chromahub.rhythm.app.action.FAVORITE_CHANGED")
+                    sendBroadcast(notifyIntent)
+                    Log.d(TAG, "Sent FAVORITE_CHANGED broadcast to notify ViewModel")
+                    
                     // Schedule custom layout update with debouncing
                     scheduleCustomLayoutUpdate(200) // Longer delay for favorite changes
                     
@@ -990,6 +998,15 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                 // Update widget immediately after action
                 serviceScope.launch {
                     kotlinx.coroutines.delay(100) // Small delay for track change
+                    updateWidgetFromMediaItem(player.currentMediaItem)
+                }
+            }
+            ACTION_TOGGLE_FAVORITE -> {
+                Log.d(TAG, "Widget toggle favorite action")
+                toggleCurrentSongFavorite()
+                // Update widget immediately after favorite toggle
+                serviceScope.launch {
+                    kotlinx.coroutines.delay(150) // Small delay for state update
                     updateWidgetFromMediaItem(player.currentMediaItem)
                 }
             }
@@ -1397,7 +1414,10 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         if (mediaItem != null) {
             val song = convertMediaItemToSong(mediaItem)
             if (song != null) {
-                WidgetUpdater.updateWidget(this, song, player.isPlaying)
+                val isFavorite = isCurrentSongFavorite()
+                val hasPrevious = player.hasPreviousMediaItem()
+                val hasNext = player.hasNextMediaItem()
+                WidgetUpdater.updateWidget(this, song, player.isPlaying, hasPrevious, hasNext, isFavorite)
             } else {
                 WidgetUpdater.updateWidget(this, null, false)
             }

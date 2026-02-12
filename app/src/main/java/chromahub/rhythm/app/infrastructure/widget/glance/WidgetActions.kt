@@ -68,3 +68,24 @@ class SkipPreviousAction : ActionCallback {
         RhythmMusicWidget().updateAll(context)
     }
 }
+
+/**
+ * Toggle favorite action callback for widget
+ */
+class ToggleFavoriteAction : ActionCallback {
+    override suspend fun onAction(
+        context: Context,
+        glanceId: GlanceId,
+        parameters: ActionParameters
+    ) {
+        // Send action to MediaPlaybackService to toggle favorite
+        val intent = Intent(context, MediaPlaybackService::class.java).apply {
+            action = MediaPlaybackService.ACTION_TOGGLE_FAVORITE
+        }
+        context.startService(intent)
+        
+        // Trigger immediate widget update after short delay for state change
+        delay(200)
+        RhythmMusicWidget().updateAll(context)
+    }
+}

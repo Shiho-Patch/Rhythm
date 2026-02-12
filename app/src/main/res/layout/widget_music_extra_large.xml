@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 4x4 Extra Large Widget - Premium Layout with Maximum Detail -->
+<!-- 4x4 Extra Large Widget - Premium Material 3 Design -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
-    android:padding="26dp">
+    android:padding="20dp">
 
     <!-- Main Content -->
     <LinearLayout
@@ -14,7 +14,7 @@
         android:orientation="vertical"
         android:gravity="center">
 
-        <!-- Album Art Section - Large and Prominent -->
+        <!-- Album Art Section - Premium and Prominent -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -28,17 +28,17 @@
                 android:scaleType="centerCrop"
                 android:contentDescription="@string/album_art"
                 android:background="@drawable/album_art_background"
-                android:layout_margin="14dp"
+                android:layout_margin="10dp"
                 android:clipToOutline="true"
                 android:elevation="4dp" />
         </FrameLayout>
 
-        <!-- Song Info Section -->
+        <!-- Song Info Section with Enhanced Typography -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="20dp"
             android:gravity="center"
             android:paddingHorizontal="10dp">
 
@@ -88,19 +88,19 @@
                 android:alpha="0.8" />
         </LinearLayout>
 
-        <!-- Controls Section - Large and Easy to Tap -->
+        <!-- Premium Controls Section -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center"
-            android:layout_marginTop="26dp"
+            android:layout_marginTop="24dp"
             android:paddingBottom="6dp">
 
             <ImageButton
                 android:id="@+id/widget_previous"
-                android:layout_width="64dp"
-                android:layout_height="64dp"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
                 android:src="@drawable/ic_skip_previous"
                 android:background="@drawable/widget_button_background"
                 android:contentDescription="@string/skip_previous"
@@ -110,21 +110,21 @@
 
             <ImageButton
                 android:id="@+id/widget_play_pause"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
+                android:layout_width="76dp"
+                android:layout_height="76dp"
                 android:src="@drawable/ic_play_arrow"
                 android:background="@drawable/widget_button_background_primary"
                 android:contentDescription="@string/play_pause"
                 android:scaleType="centerInside"
                 android:padding="18dp"
-                android:layout_marginStart="26dp"
-                android:layout_marginEnd="26dp"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
                 android:elevation="4dp" />
 
             <ImageButton
                 android:id="@+id/widget_next"
-                android:layout_width="64dp"
-                android:layout_height="64dp"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
                 android:src="@drawable/ic_skip_next"
                 android:background="@drawable/widget_button_background"
                 android:contentDescription="@string/skip_next"

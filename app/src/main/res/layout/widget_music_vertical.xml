@@ -65,7 +65,7 @@
                 android:alpha="0.9" />
         </LinearLayout>
 
-        <!-- Controls Section - Vertical Stack -->
+        <!-- Controls Section - Vertical Stack with Fixed Sizes -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -74,38 +74,38 @@
 
             <ImageButton
                 android:id="@+id/widget_previous"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
                 android:src="@drawable/ic_skip_previous"
                 android:background="@drawable/widget_button_background"
                 android:contentDescription="@string/skip_previous"
                 android:scaleType="centerInside"
-                android:padding="12dp"
-                android:elevation="1dp"
-                android:layout_marginBottom="8dp" />
+                android:padding="13dp"
+                android:elevation="2dp"
+                android:layout_marginBottom="10dp" />
 
             <ImageButton
                 android:id="@+id/widget_play_pause"
-                android:layout_width="64dp"
-                android:layout_height="64dp"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
                 android:src="@drawable/ic_play_arrow"
                 android:background="@drawable/widget_button_background_primary"
                 android:contentDescription="@string/play_pause"
                 android:scaleType="centerInside"
-                android:padding="16dp"
+                android:padding="15dp"
                 android:elevation="3dp"
-                android:layout_marginBottom="8dp" />
+                android:layout_marginBottom="10dp" />
 
             <ImageButton
                 android:id="@+id/widget_next"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
                 android:src="@drawable/ic_skip_next"
                 android:background="@drawable/widget_button_background"
                 android:contentDescription="@string/skip_next"
                 android:scaleType="centerInside"
-                android:padding="12dp"
-                android:elevation="1dp" />
+                android:padding="13dp"
+                android:elevation="2dp" />
         </LinearLayout>
-    </LinearLayout>
+        </LinearLayout>
 </FrameLayout>
