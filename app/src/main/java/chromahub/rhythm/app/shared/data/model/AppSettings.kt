@@ -61,6 +61,7 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_CROSSFADE_DURATION = "crossfade_duration"
         private const val KEY_AUDIO_NORMALIZATION = "audio_normalization"
         private const val KEY_REPLAY_GAIN = "replay_gain"
+        private const val KEY_BIT_PERFECT_MODE = "bit_perfect_mode"
         
         // Lyrics Settings
         private const val KEY_SHOW_LYRICS = "show_lyrics"
@@ -418,6 +419,9 @@ class AppSettings private constructor(context: Context) {
     
     private val _replayGain = MutableStateFlow(prefs.getBoolean(KEY_REPLAY_GAIN, false))
     val replayGain: StateFlow<Boolean> = _replayGain.asStateFlow()
+    
+    private val _bitPerfectMode = MutableStateFlow(prefs.getBoolean(KEY_BIT_PERFECT_MODE, false))
+    val bitPerfectMode: StateFlow<Boolean> = _bitPerfectMode.asStateFlow()
     
     // Lyrics Settings
     private val _showLyrics = MutableStateFlow(prefs.getBoolean(KEY_SHOW_LYRICS, true))
@@ -1196,6 +1200,12 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         } else {
             Log.w("AppSettings", "Invalid crossfade duration: $duration, keeping current value")
         }
+    }
+    
+    fun setBitPerfectMode(enable: Boolean) {
+        prefs.edit().putBoolean(KEY_BIT_PERFECT_MODE, enable).apply()
+        _bitPerfectMode.value = enable
+        Log.d("AppSettings", "Bit-perfect mode ${if (enable) "enabled" else "disabled"} - audio will be output at native sample rate")
     }
     
     fun setAudioNormalization(enable: Boolean) {

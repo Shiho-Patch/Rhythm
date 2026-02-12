@@ -13,6 +13,8 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import chromahub.rhythm.app.infrastructure.audio.BitPerfectRenderersFactory
+import chromahub.rhythm.app.infrastructure.audio.BitPerfectAudioSink
 import chromahub.rhythm.app.shared.data.model.TransitionSettings
 import chromahub.rhythm.app.util.envelope
 import kotlinx.coroutines.CoroutineScope
@@ -36,6 +38,7 @@ import kotlinx.coroutines.launch
 @OptIn(UnstableApi::class)
 class RhythmPlayerEngine(
     private val context: Context,
+    private val bitPerfectMode: Boolean = false
 ) {
     companion object {
         private const val TAG = "RhythmPlayerEngine"
@@ -96,6 +99,23 @@ class RhythmPlayerEngine(
                 }
             }
         }
+        
+        override fun onAudioSessionIdChanged(audioSessionId: Int) {
+            _activeAudioSessionId.value = audioSessionId
+            Log.d(TAG, "Audio session ID changed: $audioSessionId")
+        }
+        
+        override fun onTracksChanged(tracks: androidx.media3.common.Tracks) {
+            if (bitPerfectMode) {
+                // Log the current audio format for bit-perfect playback
+                val audioTrack = tracks.groups
+                    .firstOrNull { it.type == C.TRACK_TYPE_AUDIO && it.isSelected }
+                if (audioTrack != null && audioTrack.length > 0) {
+                    val format = audioTrack.getTrackFormat(0)
+                    BitPerfectAudioSink.logPlaybackFormat(format)
+                }
+            }
+        }
     }
 
     fun addPlayerSwapListener(listener: (Player) -> Unit) {
@@ -134,7 +154,7 @@ class RhythmPlayerEngine(
         _activeAudioSessionId.value = playerA.audioSessionId
 
         isReleased = false
-        Log.d(TAG, "RhythmPlayerEngine initialized. SessionA=${playerA.audioSessionId}")
+        Log.d(TAG, "RhythmPlayerEngine initialized. SessionA=${playerA.audioSessionId}, BitPerfect=$bitPerfectMode")
     }
 
     private fun requestAudioFocus() {
@@ -172,8 +192,14 @@ class RhythmPlayerEngine(
             .setPrioritizeTimeOverSizeThresholds(true)
             .build()
 
-        val renderersFactory = DefaultRenderersFactory(context).apply {
-            setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
+        val renderersFactory = if (bitPerfectMode) {
+            Log.d(TAG, "Using BitPerfectRenderersFactory")
+            BitPerfectRenderersFactory(context, enableBitPerfect = true)
+        } else {
+            Log.d(TAG, "Using DefaultRenderersFactory")
+            DefaultRenderersFactory(context).apply {
+                setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
+            }
         }
 
         val audioAttributes = AudioAttributes.Builder()

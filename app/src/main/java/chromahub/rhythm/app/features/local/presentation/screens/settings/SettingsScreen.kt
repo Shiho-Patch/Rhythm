@@ -188,6 +188,7 @@ fun SettingsScreen(
     val updatesEnabled by appSettings.updatesEnabled.collectAsState()
     val hapticFeedbackEnabled by appSettings.hapticFeedbackEnabled.collectAsState()
     val useSystemVolume by appSettings.useSystemVolume.collectAsState()
+    val bitPerfectMode by appSettings.bitPerfectMode.collectAsState()
     val showLyrics by appSettings.showLyrics.collectAsState()
     val groupByAlbumArtist by appSettings.groupByAlbumArtist.collectAsState()
     val ignoreMediaStoreCovers by appSettings.ignoreMediaStoreCovers.collectAsState()
@@ -276,6 +277,13 @@ fun SettingsScreen(
                         context.getString(R.string.settings_system_volume_desc), 
                         toggleState = useSystemVolume,
                         onToggleChange = { appSettings.setUseSystemVolume(it) }
+                    ))
+                    add(SettingItem(
+                        Icons.Default.GraphicEq,
+                        "Bit-Perfect Mode",
+                        "Output audio at its native sample rate without resampling. Requires app restart.",
+                        toggleState = bitPerfectMode,
+                        onToggleChange = { appSettings.setBitPerfectMode(it) }
                     ))
                     add(SettingItem(Icons.Default.Lyrics, context.getString(R.string.lyrics_source_priority), context.getString(R.string.playback_lyrics_priority_desc), onClick = { 
                         HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
