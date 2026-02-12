@@ -761,6 +761,19 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
         ))
         
         // ======================== EXPERIMENTAL FEATURES SCREEN ========================
+        
+        // Bit-Perfect Audio
+        add(SearchableSettingItem(
+            id = "bit_perfect_mode",
+            title = "Bit-Perfect Mode",
+            description = "Output audio at its native sample rate without resampling (e.g., 44.1kHz for CD, 96kHz for Hi-Res). Requires app restart.",
+            keywords = listOf("bit perfect", "bit-perfect", "audio", "sample rate", "resampling", "hi-res", "quality", "lossless", "44.1khz", "48khz", "96khz", "192khz", "native", "dac"),
+            icon = Icons.Default.HighQuality,
+            route = SettingsRoutes.EXPERIMENTAL_FEATURES,
+            parentScreen = "Experimental",
+            settingKey = "bitPerfectMode"
+        ))
+        
         add(SearchableSettingItem(
             id = "exp_music_mode",
             title = "Music Mode",

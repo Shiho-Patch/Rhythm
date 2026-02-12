@@ -5489,6 +5489,7 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
     val ignoreMediaStoreCovers by appSettings.ignoreMediaStoreCovers.collectAsState()
     val appMode by appSettings.appMode.collectAsState()
     val allowCellularStreaming by appSettings.allowCellularStreaming.collectAsState()
+    val bitPerfectMode by appSettings.bitPerfectMode.collectAsState()
     val haptic = LocalHapticFeedback.current
     
     val updaterViewModel: AppUpdaterViewModel = viewModel()
@@ -5528,8 +5529,24 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                 )
             )
             
-            // Album Art Extraction (Local mode only)
+            // Audio Quality Settings (Local mode only)
             if (appMode == "LOCAL") {
+                add(
+                    SettingGroup(
+                        title = "Audio Quality",
+                        items = listOf(
+                            SettingItem(
+                                Icons.Default.GraphicEq,
+                                "Bit-Perfect Mode",
+                                "Output audio at its native sample rate without resampling. Requires app restart.",
+                                toggleState = bitPerfectMode,
+                                onToggleChange = { appSettings.setBitPerfectMode(it) }
+                            )
+                        )
+                    )
+                )
+            
+                // Album Art Extraction
                 add(
                     SettingGroup(
                         title = "Album Art",

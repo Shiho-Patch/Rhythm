@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,13 +36,14 @@ fun UpdateBottomSheet(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var isDownloading by remember { mutableStateOf(false) }
 
     // Collect update data from the view model
     val latestVersion by updaterViewModel.latestVersion.collectAsState()
     val updateAvailable by updaterViewModel.updateAvailable.collectAsState()
     val downloadProgress by updaterViewModel.downloadProgress.collectAsState()
-    val isDownloadingFromVM by updaterViewModel.isDownloading.collectAsState()
+    val isDownloading by updaterViewModel.isDownloading.collectAsState()
+    val downloadedFile by updaterViewModel.downloadedFile.collectAsState()
+    val error by updaterViewModel.error.collectAsState()
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -213,17 +215,24 @@ fun UpdateBottomSheet(
             item {
                 ElevatedCard(
                     onClick = {
-                        if (!isDownloading) {
-                            isDownloading = true
+                        if (!isDownloading && downloadedFile == null) {
                             HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            updaterViewModel.downloadUpdate()
                             onUpdateClick(false)
+                        } else if (downloadedFile != null) {
+                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                            updaterViewModel.installDownloadedApk()
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.elevatedCardColors(
-                        containerColor = MaterialTheme.colorScheme.primary
+                        containerColor = if (downloadedFile != null) 
+                            MaterialTheme.colorScheme.tertiary 
+                        else 
+                            MaterialTheme.colorScheme.primary
                     ),
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(16.dp),
+                    enabled = !isDownloading || downloadedFile != null
                 ) {
                     Row(
                         modifier = Modifier
@@ -233,27 +242,42 @@ fun UpdateBottomSheet(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = if (isDownloading) 
-                                context.getString(R.string.update_downloading) 
-                            else 
-                                context.getString(R.string.update_now),
+                            text = when {
+                                downloadedFile != null -> context.getString(R.string.updates_install_update)
+                                isDownloading -> "${context.getString(R.string.updates_downloading)} ${downloadProgress.toInt()}%"
+                                else -> context.getString(R.string.update_now)
+                            },
                             style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onPrimary,
+                            color = if (downloadedFile != null) 
+                                MaterialTheme.colorScheme.onTertiary
+                            else 
+                                MaterialTheme.colorScheme.onPrimary,
                             fontWeight = FontWeight.Bold
                         )
                         
-                        if (isDownloading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                strokeWidth = 3.dp,
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
-                                contentDescription = "Update",
-                                tint = MaterialTheme.colorScheme.onPrimary
-                            )
+                        when {
+                            downloadedFile != null -> {
+                                Icon(
+                                    imageVector = Icons.Filled.CheckCircle,
+                                    contentDescription = "Install",
+                                    tint = MaterialTheme.colorScheme.onTertiary
+                                )
+                            }
+                            isDownloading -> {
+                                CircularProgressIndicator(
+                                    progress = { downloadProgress / 100f },
+                                    modifier = Modifier.size(24.dp),
+                                    strokeWidth = 3.dp,
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                            }
+                            else -> {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                                    contentDescription = "Update",
+                                    tint = MaterialTheme.colorScheme.onPrimary
+                                )
+                            }
                         }
                     }
                 }

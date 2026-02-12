@@ -157,7 +157,7 @@ class AppUpdaterViewModel(application: Application) : AndroidViewModel(applicati
         AppVersion(
             versionName = BuildConfig.VERSION_NAME,
             versionCode = BuildConfig.VERSION_CODE,
-            releaseDate = "2026-02-09", // Update manually with each release
+            releaseDate = "2026-02-12", // Update manually with each release
             whatsNew = emptyList(),
             knownIssues = emptyList(),
             downloadUrl = "",
@@ -1227,8 +1227,33 @@ class AppUpdaterViewModel(application: Application) : AndroidViewModel(applicati
         _isDownloading.value = false
         _error.value = null
         
-        // Save current state before cancelling to allow resume
-        saveDownloadState()
+        // Delete partial download file
+        try {
+            val context = getApplication<Application>()
+            val downloadDir = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+            } else {
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            }
+            
+            activeDownload?.let { downloadState ->
+                downloadDir?.let { dir ->
+                    val file = File(dir, downloadState.fileName)
+                    if (file.exists()) {
+                        val deleted = file.delete()
+                        Log.d(TAG, "Deleted partial download file: ${file.absolutePath}, success: $deleted")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error deleting partial download file", e)
+        }
+        
+        // Clear download state
+        activeDownload = null
+        _downloadState.value = null
+        _downloadProgress.value = 0f
+        clearDownloadState()
     }
     
     /**

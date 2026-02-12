@@ -278,13 +278,6 @@ fun SettingsScreen(
                         toggleState = useSystemVolume,
                         onToggleChange = { appSettings.setUseSystemVolume(it) }
                     ))
-                    add(SettingItem(
-                        Icons.Default.GraphicEq,
-                        "Bit-Perfect Mode",
-                        "Output audio at its native sample rate without resampling. Requires app restart.",
-                        toggleState = bitPerfectMode,
-                        onToggleChange = { appSettings.setBitPerfectMode(it) }
-                    ))
                     add(SettingItem(Icons.Default.Lyrics, context.getString(R.string.lyrics_source_priority), context.getString(R.string.playback_lyrics_priority_desc), onClick = { 
                         HapticUtils.performHapticFeedback(context, hapticFeedback, HapticFeedbackType.TextHandleMove)
                         showLyricsSourceDialog = true 
