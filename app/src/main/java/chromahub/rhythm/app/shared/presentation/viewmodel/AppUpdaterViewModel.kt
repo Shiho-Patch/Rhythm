@@ -179,6 +179,10 @@ class AppUpdaterViewModel(application: Application) : AndroidViewModel(applicati
     private val _updateAvailable = MutableStateFlow(false)
     val updateAvailable: StateFlow<Boolean> = _updateAvailable.asStateFlow()
     
+    // Force update trigger for testing
+    private val _forceUpdateTrigger = MutableStateFlow(0L)
+    val forceUpdateTrigger: StateFlow<Long> = _forceUpdateTrigger.asStateFlow()
+    
     // Error state
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
@@ -633,6 +637,37 @@ class AppUpdaterViewModel(application: Application) : AndroidViewModel(applicati
      */
     fun clearError() {
         _error.value = null
+    }
+    
+    /**
+     * Force update available state for testing/debugging purposes
+     * This is useful for testing update UI without waiting for actual updates
+     */
+    fun forceUpdateAvailable(available: Boolean) {
+        _updateAvailable.value = available
+        _forceUpdateTrigger.value = System.currentTimeMillis() // Trigger change
+        if (available) {
+            // Create a mock latest version for testing
+            _latestVersion.value = AppVersion(
+                versionName = "2.0.0",
+                versionCode = 200,
+                releaseDate = System.currentTimeMillis().toString(),
+                whatsNew = listOf(
+                    "New update system with bottom sheet",
+                    "Improved UI and performance",
+                    "Bug fixes and optimizations"
+                ),
+                knownIssues = emptyList(),
+                downloadUrl = "https://github.com/cromaguy/Rhythm/releases",
+                apkAssetName = "rhythm-release.apk",
+                apkSize = 0,
+                releaseNotes = "Test update",
+                isPreRelease = false,
+                buildNumber = 200
+            )
+        } else {
+            _latestVersion.value = null
+        }
     }
     
     /**

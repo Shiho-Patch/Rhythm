@@ -88,10 +88,9 @@ fun HomeSectionOrderBottomSheet(
     val showRecentlyAdded by appSettings.homeShowRecentlyAdded.collectAsState()
     val showRecommended by appSettings.homeShowRecommended.collectAsState()
     val showListeningStats by appSettings.homeShowListeningStats.collectAsState()
-    val showMoodSections by appSettings.homeShowMoodSections.collectAsState()
     
     // Greeting should always be first and not reorderable
-    var reorderableList by remember { mutableStateOf(sectionOrder.filter { it != "GREETING" }.toList()) }
+    var reorderableList by remember { mutableStateOf(sectionOrder.filter { it != "GREETING" && it != "MOOD" }.toList()) }
     var visibilityMap by remember {
         mutableStateOf(
             mapOf(
@@ -101,8 +100,7 @@ fun HomeSectionOrderBottomSheet(
                 "NEW_RELEASES" to showNewReleases,
                 "RECENTLY_ADDED" to showRecentlyAdded,
                 "RECOMMENDED" to showRecommended,
-                "STATS" to showListeningStats,
-                "MOOD" to showMoodSections
+                "STATS" to showListeningStats
             )
         )
     }
@@ -121,7 +119,6 @@ fun HomeSectionOrderBottomSheet(
             "RECENTLY_ADDED" -> Pair("Recently Added", RhythmIcons.Music.Album)
             "RECOMMENDED" -> Pair("Recommended", Icons.Default.Recommend)
             "STATS" -> Pair("Listening Stats", Icons.Default.InsertChart)
-            "MOOD" -> Pair("Mood Sections", Icons.Default.EmojiEmotions)
             else -> Pair(sectionId, RhythmIcons.Music.Song)
         }
     }
@@ -352,7 +349,7 @@ fun HomeSectionOrderBottomSheet(
                         HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                         val defaultOrder = listOf(
                             "RECENTLY_PLAYED", "DISCOVER", "ARTISTS", 
-                            "NEW_RELEASES", "RECENTLY_ADDED", "RECOMMENDED", "STATS", "MOOD"
+                            "NEW_RELEASES", "RECENTLY_ADDED", "RECOMMENDED", "STATS"
                         )
                         reorderableList = defaultOrder
                         visibilityMap = mapOf(
@@ -362,8 +359,7 @@ fun HomeSectionOrderBottomSheet(
                             "NEW_RELEASES" to true,
                             "RECENTLY_ADDED" to true,
                             "RECOMMENDED" to true,
-                            "STATS" to true,
-                            "MOOD" to true
+                            "STATS" to true
                         )
                         Toast.makeText(context, "Section order and visibility reset to default", Toast.LENGTH_SHORT).show()
                     },
@@ -396,7 +392,6 @@ fun HomeSectionOrderBottomSheet(
                         appSettings.setHomeShowRecentlyAdded(visibilityMap["RECENTLY_ADDED"] ?: true)
                         appSettings.setHomeShowRecommended(visibilityMap["RECOMMENDED"] ?: true)
                         appSettings.setHomeShowListeningStats(visibilityMap["STATS"] ?: true)
-                        appSettings.setHomeShowMoodSections(visibilityMap["MOOD"] ?: true)
                         
                         Toast.makeText(context, "Home section order and visibility saved", Toast.LENGTH_SHORT).show()
                         scope.launch {

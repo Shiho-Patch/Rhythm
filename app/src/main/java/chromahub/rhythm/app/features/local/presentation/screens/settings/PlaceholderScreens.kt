@@ -97,6 +97,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.StyledProgress
 import chromahub.rhythm.app.shared.presentation.components.common.ProgressStyle
 import chromahub.rhythm.app.shared.presentation.components.common.ThumbStyle
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.LicensesBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.UpdateBottomSheet
 import chromahub.rhythm.app.ui.utils.LazyListStateSaver
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import chromahub.rhythm.app.shared.presentation.viewmodel.AppUpdaterViewModel
@@ -5489,6 +5490,9 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
     val appMode by appSettings.appMode.collectAsState()
     val allowCellularStreaming by appSettings.allowCellularStreaming.collectAsState()
     val haptic = LocalHapticFeedback.current
+    
+    val updaterViewModel: AppUpdaterViewModel = viewModel()
+    val latestVersion by updaterViewModel.latestVersion.collectAsState()
 
     var showAppModeDialog by remember { mutableStateOf(false) }
 
@@ -5566,6 +5570,18 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                             "Launch Onboarding",
                             "Reset and relaunch the onboarding experience",
                             onClick = { appSettings.setOnboardingCompleted(false) }
+                        ),
+                        SettingItem(
+                            Icons.Default.CloudDownload,
+                            "Force Update Available",
+                            "Trigger update available state (bottom sheet will appear automatically)",
+                            onClick = { updaterViewModel.forceUpdateAvailable(true) }
+                        ),
+                        SettingItem(
+                            Icons.Default.Cancel,
+                            "Clear Update Available",
+                            "Clear the forced update available state",
+                            onClick = { updaterViewModel.forceUpdateAvailable(false) }
                         )
                     )
                 )
@@ -5832,6 +5848,8 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
             }
         }
     }
+    
+    // Show update bottomsheet - removed, now handled globally in LocalNavigation
 }
 
 /**
@@ -13410,7 +13428,6 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
     val showRecentlyAdded by appSettings.homeShowRecentlyAdded.collectAsState()
     val showRecommended by appSettings.homeShowRecommended.collectAsState()
     val showListeningStats by appSettings.homeShowListeningStats.collectAsState()
-    val showMoodSections by appSettings.homeShowMoodSections.collectAsState()
     val discoverAutoScroll by appSettings.homeDiscoverAutoScroll.collectAsState()
     val discoverAutoScrollInterval by appSettings.homeDiscoverAutoScrollInterval.collectAsState()
     val discoverItemCount by appSettings.homeDiscoverItemCount.collectAsState()
@@ -15280,9 +15297,6 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
         }
     }
 }
-
-
-
 
 @Composable
 fun PlaceholderSettingsScreen() {

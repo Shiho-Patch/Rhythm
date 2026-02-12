@@ -316,7 +316,6 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_HOME_SHOW_RECENTLY_ADDED = "home_show_recently_added"
         private const val KEY_HOME_SHOW_RECOMMENDED = "home_show_recommended"
         private const val KEY_HOME_SHOW_LISTENING_STATS = "home_show_listening_stats"
-        private const val KEY_HOME_SHOW_MOOD_SECTIONS = "home_show_mood_sections"
         
         // Home Screen Customization Settings - Discover Widget
         private const val KEY_HOME_DISCOVER_AUTO_SCROLL = "home_discover_auto_scroll"
@@ -3135,13 +3134,6 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     fun setHomeShowListeningStats(value: Boolean) {
         _homeShowListeningStats.value = value
         prefs.edit().putBoolean(KEY_HOME_SHOW_LISTENING_STATS, value).apply()
-    }
-    
-    private val _homeShowMoodSections = MutableStateFlow(prefs.getBoolean(KEY_HOME_SHOW_MOOD_SECTIONS, true))
-    val homeShowMoodSections: StateFlow<Boolean> = _homeShowMoodSections.asStateFlow()
-    fun setHomeShowMoodSections(value: Boolean) {
-        _homeShowMoodSections.value = value
-        prefs.edit().putBoolean(KEY_HOME_SHOW_MOOD_SECTIONS, value).apply()
     }
     
     // ==================== Player Screen Customization Settings ====================

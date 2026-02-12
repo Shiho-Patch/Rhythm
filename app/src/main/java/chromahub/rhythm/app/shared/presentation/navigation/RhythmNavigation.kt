@@ -39,6 +39,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -71,7 +72,9 @@ import androidx.compose.ui.platform.LocalContext
 fun RhythmNavigation(
     musicViewModel: MusicViewModel = viewModel(),
     themeViewModel: ThemeViewModel = viewModel(),
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    navigateToSettingsTrigger: Boolean = false,
+    onSettingsNavigationComplete: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val appSettings = remember { AppSettings.getInstance(context) }
@@ -79,6 +82,14 @@ fun RhythmNavigation(
     
     // Create a NavHostController that can be passed to both local and streaming navigation
     val rootNavController = rememberNavController()
+    
+    // Navigate to settings when triggered
+    LaunchedEffect(navigateToSettingsTrigger) {
+        if (navigateToSettingsTrigger) {
+            rootNavController.navigate("settings")
+            onSettingsNavigationComplete?.invoke()
+        }
+    }
     
     // Settings navigation callback that works for both modes
     val navigateToSettings: () -> Unit = {

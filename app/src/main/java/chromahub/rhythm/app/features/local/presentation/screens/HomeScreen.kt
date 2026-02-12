@@ -197,7 +197,6 @@ import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.SongInfoBottomSheet
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.util.M3ImageUtils
-import chromahub.rhythm.app.shared.presentation.viewmodel.AppUpdaterViewModel
 import chromahub.rhythm.app.shared.presentation.viewmodel.AppVersion
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog
@@ -233,14 +232,12 @@ fun HomeScreen(
     onSkipNext: () -> Unit = {},
     onSearchClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
-    onAppUpdateClick: (autoDownload: Boolean) -> Unit = { onSettingsClick() },
     onNavigateToLibrary: () -> Unit = {},
     onAddToQueue: (Song) -> Unit = {},
     onAddSongToPlaylist: (Song, String) -> Unit = { _, _ -> },
     onNavigateToPlaylist: (String) -> Unit = {},
     onCreatePlaylist: (String) -> Unit = { _ -> },
-    onNavigateToStats: () -> Unit = {},
-    updaterViewModel: AppUpdaterViewModel = viewModel()
+    onNavigateToStats: () -> Unit = {}
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val coroutineScope = rememberCoroutineScope()
@@ -298,11 +295,6 @@ fun HomeScreen(
                 albums.sortedByDescending { it.year }.take(6) // Increased count
             }
     }
-
-    // Enhanced mood-based content
-    val moodBasedSongs = songs.takeLast(15) // Increased for variety
-    val energeticSongs = songs.take(12)
-    val relaxingSongs = songs.drop(12).take(12)
 
     // Enhanced recently added songs
     val recentlyAddedSongs = remember(songs) {
@@ -588,9 +580,6 @@ fun HomeScreen(
             recentlyAddedSongs = recentlyAddedSongs,
             recentlyAddedAlbums = recentlyAddedAlbums,
             recentlyPlayed = recentlyPlayed,
-            moodBasedSongs = moodBasedSongs,
-            energeticSongs = energeticSongs,
-            relaxingSongs = relaxingSongs,
             songs = songs,
             onSongClick = onSongClick,
             onAlbumClick = { album: Album ->
@@ -606,11 +595,9 @@ fun HomeScreen(
             onViewAllArtists = onViewAllArtists,
             onSearchClick = onSearchClick,
             onSettingsClick = onSettingsClick,
-            onAppUpdateClick = onAppUpdateClick,
             onNavigateToLibrary = onNavigateToLibrary,
             onNavigateToPlaylist = onNavigateToPlaylist,
             onNavigateToStats = onNavigateToStats,
-            updaterViewModel = updaterViewModel,
             musicViewModel = musicViewModel,
             coroutineScope = coroutineScope
         )
@@ -628,9 +615,6 @@ private fun ModernScrollableContent(
     recentlyAddedSongs: List<Song>,
     recentlyAddedAlbums: List<Album>,
     recentlyPlayed: List<Song>,
-    moodBasedSongs: List<Song>,
-    energeticSongs: List<Song>,
-    relaxingSongs: List<Song>,
     songs: List<Song>,
     onSongClick: (Song) -> Unit,
     onAlbumClick: (Album) -> Unit,
@@ -640,11 +624,9 @@ private fun ModernScrollableContent(
     onViewAllArtists: () -> Unit,
     onSearchClick: () -> Unit,
     onSettingsClick: () -> Unit = {},
-    onAppUpdateClick: (Boolean) -> Unit = { onSettingsClick() },
     onNavigateToLibrary: () -> Unit = {},
     onNavigateToPlaylist: (String) -> Unit = {},
     onNavigateToStats: () -> Unit = {},
-    updaterViewModel: AppUpdaterViewModel = viewModel(),
     musicViewModel: chromahub.rhythm.app.viewmodel.MusicViewModel,
     coroutineScope: CoroutineScope
 ) {
@@ -668,7 +650,6 @@ private fun ModernScrollableContent(
     val showRecentlyAdded by appSettings.homeShowRecentlyAdded.collectAsState()
     val showRecommended by appSettings.homeShowRecommended.collectAsState()
     val showListeningStats by appSettings.homeShowListeningStats.collectAsState()
-    val showMoodSections by appSettings.homeShowMoodSections.collectAsState()
     val discoverAutoScroll by appSettings.homeDiscoverAutoScroll.collectAsState()
     val discoverAutoScrollInterval by appSettings.homeDiscoverAutoScrollInterval.collectAsState()
     val discoverItemCount by appSettings.homeDiscoverItemCount.collectAsState()
@@ -782,38 +763,6 @@ private fun ModernScrollableContent(
         }
     }
     
-    // Enhanced mood content
-    val enhancedMoodContent = remember(allSongs) {
-        val focusSongs = allSongs
-            .filter { it.duration > 3 * 60 * 1000 }
-            .take(15) // Increased count
-            .ifEmpty { moodBasedSongs }
-        
-        val energeticKeywords = listOf("rock", "dance", "pop", "party", "beat", "energy", "fast", "upbeat", "electronic")
-        val betterEnergeticSongs = allSongs
-            .filter { song ->
-                energeticKeywords.any { keyword ->
-                    song.title.contains(keyword, ignoreCase = true) || 
-                    song.artist.contains(keyword, ignoreCase = true)
-                }
-            }
-            .take(12)
-            .ifEmpty { energeticSongs }
-        
-        val relaxingKeywords = listOf("chill", "relax", "ambient", "piano", "sleep", "calm", "soft", "peaceful", "acoustic")
-        val betterRelaxingSongs = allSongs
-            .filter { song ->
-                relaxingKeywords.any { keyword ->
-                    song.title.contains(keyword, ignoreCase = true) || 
-                    song.artist.contains(keyword, ignoreCase = true)
-                }
-            }
-            .take(12)
-            .ifEmpty { relaxingSongs }
-        
-        Triple(focusSongs, betterEnergeticSongs, betterRelaxingSongs)
-    }
-    
     // Get festive theme settings (using appSettings already declared above)
     val festiveEnabled by appSettings.festiveThemeEnabled.collectAsState()
     val festiveTypeString by appSettings.festiveThemeType.collectAsState()
@@ -856,12 +805,6 @@ private fun ModernScrollableContent(
             }
         }
     }
-    
-    // Update information
-    val updateAvailable by updaterViewModel.updateAvailable.collectAsState()
-    val latestVersion by updaterViewModel.latestVersion.collectAsState()
-    val error by updaterViewModel.error.collectAsState()
-    val updatesEnabled by updaterViewModel.appSettings.updatesEnabled.collectAsState(initial = false)
     
     // Enhanced auto-scroll for featured carousel with smooth animations
     LaunchedEffect(carouselItemCount, discoverAutoScroll, discoverAutoScrollInterval) {
@@ -932,29 +875,13 @@ private fun ModernScrollableContent(
             }),
             contentPadding = PaddingValues(bottom = 24.dp) // No top padding to connect with topbar
         ) {
-            // Update section (preserved as requested)
-            item(key = "section_update", contentType = "update") {
-                AnimatedVisibility(
-                    visible = updateAvailable && latestVersion != null && error == null && updatesEnabled,
-                    enter = slideInVertically() + fadeIn(),
-                    exit = slideOutVertically() + fadeOut()
-                ) {
-                    latestVersion?.let { version ->
-                        ModernUpdateSection(
-                            latestVersion = version,
-                            onUpdateClick = onAppUpdateClick
-                        )
-                    }
-                }
-            }
-
             // Render sections dynamically based on sectionOrder
             sectionOrder.forEach { sectionId ->
                 when (sectionId) {
                     "GREETING" -> {
                         if (showGreeting) {
                             item(key = "section_greeting") {
-                                if (!updateAvailable || latestVersion == null || error != null || !updatesEnabled) {
+                                Box(modifier = Modifier.padding(top = 16.dp)) {
                                     ModernWelcomeSection(
                                         greeting = greeting,
                                         festiveTheme = activeFestiveTheme,
@@ -1296,18 +1223,6 @@ private fun ModernScrollableContent(
                             }
                         }
                     }
-                    "MOOD" -> {
-                        if (showMoodSections) {
-                            item(key = "section_mood") {
-                                ModernMoodSection(
-                                    moodBasedSongs = enhancedMoodContent.first,
-                                    energeticSongs = enhancedMoodContent.second,
-                                    relaxingSongs = enhancedMoodContent.third,
-                                    onSongClick = onSongClick
-                                )
-                            }
-                        }
-                    }
                 }
             }
 
@@ -1455,7 +1370,7 @@ private fun ModernWelcomeSection(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp) // Reduced padding for more compact design
+                    .padding(24.dp) 
             ) {
                 // Main greeting
                 Row(
@@ -2852,341 +2767,7 @@ private fun ModernStatCard(
     }
 }
 
-@Composable
-private fun ModernMoodSection(
-    moodBasedSongs: List<Song>,
-    energeticSongs: List<Song>,
-    relaxingSongs: List<Song>,
-    onSongClick: (Song) -> Unit
-) {
-    val context = LocalContext.current
-    val viewModel = viewModel<chromahub.rhythm.app.viewmodel.MusicViewModel>()
-    val haptic = LocalHapticFeedback.current
-    
-    Column {
-        ModernSectionTitle(
-            title = context.getString(R.string.home_mood_title),
-            subtitle = context.getString(R.string.home_mood_subtitle)
-        )
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Remember lazy row state for scroll position preservation (Compose 1.10)
-        val moodListState = rememberLazyListState()
-        LazyRow(
-            state = moodListState,
-            contentPadding = PaddingValues(horizontal = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item(key = "mood_energize", contentType = "mood_card") {
-                ModernMoodCard(
-                    title = context.getString(R.string.home_mood_energize),
-                    description = context.getString(R.string.home_mood_energize_desc),
-                    songs = energeticSongs,
-                    backgroundColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    icon = RhythmIcons.Energy,
-                    songCount = energeticSongs.size,
-                    onPlayClick = {
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
-                        if (energeticSongs.isNotEmpty()) {
-                            // Play all energetic songs shuffled
-                            viewModel.playQueue(energeticSongs.shuffled())
-                            onSongClick(energeticSongs.first())
-                        }
-                    }
-                )
-            }
-            
-            item(key = "mood_relax", contentType = "mood_card") {
-                ModernMoodCard(
-                    title = context.getString(R.string.home_mood_relax),
-                    description = context.getString(R.string.home_mood_relax_desc),
-                    songs = relaxingSongs,
-                    backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    icon = RhythmIcons.Relax,
-                    songCount = relaxingSongs.size,
-                    onPlayClick = {
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
-                        if (relaxingSongs.isNotEmpty()) {
-                            // Play all relaxing songs in order
-                            viewModel.playQueue(relaxingSongs)
-                            onSongClick(relaxingSongs.first())
-                        }
-                    }
-                )
-            }
-            
-            item(key = "mood_focus", contentType = "mood_card") {
-                ModernMoodCard(
-                    title = context.getString(R.string.home_mood_focus),
-                    description = context.getString(R.string.home_mood_focus_desc),
-                    songs = moodBasedSongs,
-                    backgroundColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                    icon = RhythmIcons.Focus,
-                    songCount = moodBasedSongs.size,
-                    onPlayClick = {
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
-                        if (moodBasedSongs.isNotEmpty()) {
-                            // Play all focus songs in order
-                            viewModel.playQueue(moodBasedSongs)
-                            onSongClick(moodBasedSongs.first())
-                        }
-                    }
-                )
-            }
-        }
-    }
-}
 
-@Composable
-private fun ModernMoodCard(
-    title: String,
-    description: String,
-    songs: List<Song>,
-    backgroundColor: Color,
-    contentColor: Color,
-    icon: ImageVector,
-    songCount: Int,
-    onPlayClick: () -> Unit
-) {
-    val context = LocalContext.current
-    val haptic = LocalHapticFeedback.current
-    
-    ExpressiveCard(
-        modifier = Modifier
-            .width(200.dp)
-            .height(220.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = backgroundColor
-        ),
-        shape = ExpressiveShapes.SquircleExtraLarge
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = contentColor,
-                        modifier = Modifier.size(32.dp)
-                    )
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = contentColor
-                    )
-                    
-                    Spacer(modifier = Modifier.height(6.dp))
-                    
-                    Text(
-                        text = description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = contentColor.copy(alpha = 0.8f)
-                    )
-                }
-                
-                ExpressiveFilledIconButton(
-                    onClick = {
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.LongPress)
-                        onPlayClick()
-                    },
-                    modifier = Modifier.size(48.dp),
-                    colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = contentColor,
-                        contentColor = backgroundColor
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.PlayArrow,
-                        contentDescription = context.getString(R.string.ui_play_action, title),
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
-
-            Surface(
-                color = contentColor.copy(alpha = 0.2f),
-                shape = RoundedCornerShape(bottomStart = 20.dp, topEnd = 32.dp),
-                modifier = Modifier.align(Alignment.TopEnd)
-            ) {
-                Text(
-                    text = context.getString(R.string.ui_songs_count, songCount),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = contentColor,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ModernUpdateSection(
-    latestVersion: AppVersion,
-    onUpdateClick: (Boolean) -> Unit
-) {
-    val context = LocalContext.current
-    var isDownloading by remember { mutableStateOf(false) }
-    val haptic = LocalHapticFeedback.current
-    
-    ExpressiveElevatedCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = {
-                if (!isDownloading) {
-                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                    onUpdateClick(false)
-                }
-            }),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        ),
-        shape = ExpressiveShapes.SquircleLarge
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(28.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(bottom = 20.dp)
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.rhythm_splash_logo),
-                    contentDescription = context.getString(R.string.cd_rhythm_logo),
-                    modifier = Modifier.size(45.dp)
-                )
-                
-                Spacer(modifier = Modifier.width(8.dp))
-                
-                Text(
-                    text = context.getString(R.string.app_name),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-            
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Surface(
-                    modifier = Modifier.size(52.dp),
-                    shape = ExpressiveShapes.SquircleSmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f)
-                ) {
-                    Icon(
-                        imageVector = RhythmIcons.Download,
-                        contentDescription = context.getString(R.string.update_available_cd),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier
-                            .size(28.dp)
-                            .padding(10.dp)
-                    )
-                }
-                
-                Spacer(modifier = Modifier.width(20.dp))
-                
-                Text(
-                    text = context.getString(R.string.update_available_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(20.dp))
-            
-            Text(
-                text = context.getString(R.string.update_version, latestVersion.versionName),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            if (latestVersion.whatsNew.isNotEmpty()) {
-                Text(
-                    text = context.getString(R.string.update_whats_new),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                latestVersion.whatsNew.take(2).forEach { item ->
-                    Text(
-                        text = HtmlCompat.fromHtml(item, HtmlCompat.FROM_HTML_MODE_COMPACT).toString(),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-            
-            ExpressiveElevatedCard(
-                onClick = {
-                    if (!isDownloading) {
-                        isDownloading = true
-                        HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                        onUpdateClick(false)
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.onPrimaryContainer
-                ),
-                shape = ExpressiveShapes.Large
-            ) {
-                Row(
-                    modifier = Modifier.padding(20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = if (isDownloading) context.getString(R.string.update_downloading) else context.getString(R.string.update_now),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        fontWeight = FontWeight.Bold
-                    )
-                    
-                    if (isDownloading) {
-                        CircularWavyProgressIndicator(
-                            progress = { 0.75f },
-                            modifier = Modifier.size(24.dp),
-                            trackColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-                            color = MaterialTheme.colorScheme.primaryContainer
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
-                            contentDescription = "Update",
-                            tint = MaterialTheme.colorScheme.primaryContainer
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
 
 @Composable
 private fun ModernRecommendedSection(

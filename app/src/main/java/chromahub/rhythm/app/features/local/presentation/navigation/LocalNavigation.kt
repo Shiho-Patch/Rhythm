@@ -95,6 +95,7 @@ import androidx.navigation.navArgument
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AddToPlaylistBottomSheet
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AlbumBottomSheet
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.ArtistBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.UpdateBottomSheet
 import chromahub.rhythm.app.features.local.presentation.screens.AddToPlaylistScreen
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.QueueActionDialog
@@ -116,6 +117,7 @@ import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel.SortOrder
 import chromahub.rhythm.app.shared.presentation.viewmodel.ThemeViewModel
+import chromahub.rhythm.app.shared.presentation.viewmodel.AppUpdaterViewModel
 import coil.compose.AsyncImage
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -255,6 +257,30 @@ fun LocalNavigation(
     themeViewModel: ThemeViewModel = viewModel(),
     appSettings: chromahub.rhythm.app.shared.data.model.AppSettings // Add appSettings parameter
 ) {
+    // Update monitoring
+    val updaterViewModel: AppUpdaterViewModel = viewModel()
+    val updateAvailable by updaterViewModel.updateAvailable.collectAsState()
+    val updatesEnabled by appSettings.updatesEnabled.collectAsState()
+    val latestVersion by updaterViewModel.latestVersion.collectAsState()
+    var showUpdateBottomSheet by remember { mutableStateOf(false) }
+    
+    // Track the version we've shown to avoid re-showing for the same version
+    var lastShownVersion by remember { mutableStateOf<String?>(null) }
+    
+    // Monitor for updates and show bottom sheet automatically
+    LaunchedEffect(updateAvailable, updatesEnabled, latestVersion) {
+        if (updateAvailable && updatesEnabled) {
+            val currentVersion = latestVersion?.versionName
+            // Show if we haven't shown this version yet, or if the version changed
+            if (currentVersion != null && currentVersion != lastShownVersion) {
+                showUpdateBottomSheet = true
+                lastShownVersion = currentVersion
+            }
+        } else {
+            // Reset when update is no longer available
+            lastShownVersion = null
+        }
+    }
     // Collect state from ViewModel
     val songs by viewModel.filteredSongs.collectAsState() // Use filtered songs to exclude blacklisted ones
     val allSongs by viewModel.songs.collectAsState() // Keep all songs for specific cases
@@ -532,6 +558,19 @@ fun LocalNavigation(
                 onLyricsSeek = onLyricsSeek
             )
         }
+    }
+    
+    // Global Update Bottom Sheet - shows automatically when update is available
+    if (showUpdateBottomSheet) {
+        UpdateBottomSheet(
+            updaterViewModel = updaterViewModel,
+            onDismiss = { showUpdateBottomSheet = false },
+            onUpdateClick = { immediate ->
+                showUpdateBottomSheet = false
+                // Navigate to update settings
+                navController.navigate(Screen.TunerUpdates.route)
+            }
+        )
     }
 }
 
@@ -1092,10 +1131,6 @@ private fun LocalNavigationContent(
                         onSettingsClick = {
                             // Navigate to the settings screen
                             navController.navigate(Screen.Settings.route)
-                        },
-                        onAppUpdateClick = { autoDownload ->
-                            // Navigate to updates settings in tuner
-                            navController.navigate(Screen.TunerUpdates.route)
                         },
                         onNavigateToLibrary = {
                             // Navigate to library with playlists tab selected
@@ -2198,7 +2233,7 @@ private fun LocalNavigationContent(
             }
         )
     }
-}
+    }
 
 /**
  * Navigation rail for tablets with Material 3 design - Local Navigation
