@@ -5,6 +5,8 @@
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 package chromahub.rhythm.app.features.local.presentation.screens
 
+import kotlin.math.abs
+
 import android.widget.Toast
 import android.os.Environment
 import android.provider.MediaStore
@@ -45,7 +47,9 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -221,6 +225,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.ContentLoading
 import chromahub.rhythm.app.shared.presentation.components.common.DataProcessingLoader
 import chromahub.rhythm.app.shared.presentation.components.common.AlphabetBar
 import chromahub.rhythm.app.shared.presentation.components.common.ScrollToTopButton
+import chromahub.rhythm.app.shared.presentation.components.common.TabAnimation
 import chromahub.rhythm.app.util.AudioFormatDetector
 import chromahub.rhythm.app.util.AudioQualityDetector
 import chromahub.rhythm.app.shared.presentation.components.common.ActionProgressLoader
@@ -1234,7 +1239,7 @@ fun LibraryScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                     contentPadding = PaddingValues(horizontal = 4.dp)
                 ) {
                     items(
@@ -1242,88 +1247,50 @@ fun LibraryScreen(
                         key = { index -> tabOrder.getOrNull(index) ?: "tab_$index" }
                     ) { index ->
                         val isSelected = selectedTabIndex == index
-                        val animatedScale by animateFloatAsState(
-                            targetValue = if (isSelected) 1.05f else 1f,
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessLow
-                            ),
-                            label = "buttonScale"
-                        )
                         
-                        val animatedContainerColor by animateColorAsState(
-                            targetValue = if (isSelected) 
-                                MaterialTheme.colorScheme.primary 
-                            else 
-                                MaterialTheme.colorScheme.surfaceContainer,
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessLow
-                            ),
-                            label = "buttonContainerColor"
-                        )
-                        
-                        val animatedContentColor by animateColorAsState(
-                            targetValue = if (isSelected) 
-                                MaterialTheme.colorScheme.onPrimary 
-                            else 
-                                MaterialTheme.colorScheme.onSurface,
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessLow
-                            ),
-                            label = "buttonContentColor"
-                        )
-
-                        Button(
+                        TabAnimation(
+                            index = index,
+                            selectedIndex = selectedTabIndex,
+                            title = tabs[index],
+                            selectedColor = MaterialTheme.colorScheme.primary,
+                            onSelectedColor = MaterialTheme.colorScheme.onPrimary,
+                            unselectedColor = MaterialTheme.colorScheme.surfaceContainer,
+                            onUnselectedColor = MaterialTheme.colorScheme.onSurface,
                             onClick = {
-                                HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                                 selectedTabIndex = index
                                 scope.launch {
                                     pagerState.animateScrollToPage(index)
                                     tabRowState.animateScrollToItem(index)
                                 }
                             },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = animatedContainerColor,
-                                contentColor = animatedContentColor
-                            ),
-                            shape = RoundedCornerShape(20.dp),
-                            modifier = Modifier.graphicsLayer {
-                                scaleX = animatedScale
-                                scaleY = animatedScale
-                            },
-                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-                            elevation = ButtonDefaults.buttonElevation(
-                                defaultElevation = 0.dp,
-                                pressedElevation = 0.dp
-                            )
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                // Get the actual tab ID from the visible tabs list
-                                val currentTabId = visibleTabIds.getOrNull(index)
-                                Icon(
-                                    imageVector = when (currentTabId) {
-                                        "SONGS" -> RhythmIcons.Relax
-                                        "PLAYLISTS" -> RhythmIcons.PlaylistFilled
-                                        "ALBUMS" -> RhythmIcons.Music.Album
-                                        "ARTISTS" -> RhythmIcons.Artist
-                                        "EXPLORER" -> Icons.Default.Folder
-                                        else -> RhythmIcons.Music.Song
-                                    },
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Text(
-                                    text = tabs[index],
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                                )
+                            modifier = Modifier.padding(all = 2.dp),
+                            content = {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    // Get the actual tab ID from the visible tabs list
+                                    val currentTabId = visibleTabIds.getOrNull(index)
+                                    Icon(
+                                        imageVector = when (currentTabId) {
+                                            "SONGS" -> RhythmIcons.Relax
+                                            "PLAYLISTS" -> RhythmIcons.PlaylistFilled
+                                            "ALBUMS" -> RhythmIcons.Music.Album
+                                            "ARTISTS" -> RhythmIcons.Artist
+                                            "EXPLORER" -> Icons.Default.Folder
+                                            else -> RhythmIcons.Music.Song
+                                        },
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Text(
+                                        text = tabs[index],
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                    )
+                                }
                             }
-                        }
+                        )
                     }
                     
                     // Edit button at the end to open LibraryTabReorderBottomSheet
@@ -2541,6 +2508,45 @@ fun SingleCardSongsContent(
                                     key = { it }
                                 ) { category ->
                                     val isSelected = selectedCategory == category
+                                    
+                                    // Add TabAnimation-like effects for filter chips
+                                    val scaleAnimatable = remember { Animatable(1f) }
+                                    val offsetAnimatable = remember { Animatable(0f) }
+                                    
+                                    // Pop animation for selected filter
+                                    LaunchedEffect(isSelected) {
+                                        if (isSelected) {
+                                            launch {
+                                                scaleAnimatable.animateTo(1.05f, animationSpec = tween<Float>(durationMillis = 250, easing = FastOutSlowInEasing))
+                                                scaleAnimatable.animateTo(1f, animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing))
+                                            }
+                                        } else {
+                                            scaleAnimatable.snapTo(1f)
+                                        }
+                                    }
+                                    
+                                    // Offset animation for neighboring filters
+                                    LaunchedEffect(selectedCategory) {
+                                        if (!isSelected && selectedCategory != null) {
+                                            val currentIndex = categories.indexOf(category)
+                                            val selectedIndex = categories.indexOf(selectedCategory)
+                                            if (currentIndex >= 0 && selectedIndex >= 0) {
+                                                val distance = currentIndex - selectedIndex
+                                                if (abs(distance) == 1) { // Only affect direct neighbors
+                                                    val direction = if (distance > 0) 1 else -1
+                                                    val offsetValue = 8f * direction
+                                                    launch {
+                                                        offsetAnimatable.animateTo(offsetValue, animationSpec = tween<Float>(durationMillis = 250, easing = FastOutSlowInEasing))
+                                                        offsetAnimatable.animateTo(0f, animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing))
+                                                    }
+                                                } else {
+                                                    offsetAnimatable.snapTo(0f)
+                                                }
+                                            }
+                                        } else {
+                                            offsetAnimatable.snapTo(0f)
+                                        }
+                                    }
 
                                     val containerColor by animateColorAsState(
                                         targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerLow,
@@ -2576,14 +2582,6 @@ fun SingleCardSongsContent(
                                         ),
                                         label = "chipBorderWidth"
                                     )
-                                    val scale by animateFloatAsState(
-                                        targetValue = if (isSelected) 1.05f else 1f,
-                                        animationSpec = spring(
-                                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                                            stiffness = Spring.StiffnessLow
-                                        ),
-                                        label = "chipScale"
-                                    )
 
                                     FilterChip(
                                         onClick = {
@@ -2617,8 +2615,9 @@ fun SingleCardSongsContent(
                                         ),
                                         shape = RoundedCornerShape(50.dp),
                                         modifier = Modifier.graphicsLayer {
-                                            scaleX = scale
-                                            scaleY = scale
+                                            scaleX = scaleAnimatable.value
+                                            scaleY = scaleAnimatable.value
+                                            translationX = offsetAnimatable.value
                                         }
                                     )
                                 }

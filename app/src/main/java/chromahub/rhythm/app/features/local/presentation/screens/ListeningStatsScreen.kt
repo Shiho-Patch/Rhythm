@@ -49,6 +49,7 @@ import androidx.navigation.NavController
 import chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository
 import chromahub.rhythm.app.shared.data.repository.StatsTimeRange
 import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
+import chromahub.rhythm.app.shared.presentation.components.common.TabAnimation
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.util.HapticUtils
 import chromahub.rhythm.app.features.local.presentation.viewmodel.MusicViewModel
@@ -263,82 +264,45 @@ private fun RhythmTimeRangeTabs(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
             contentPadding = PaddingValues(horizontal = 4.dp)
         ) {
             itemsIndexed(StatsTimeRange.entries) { index, range ->
                 val isSelected = range == selectedRange
-                val animatedScale by animateFloatAsState(
-                    targetValue = if (isSelected) 1.05f else 1f,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessLow
-                    ),
-                    label = "tabScale"
-                )
                 
-                val animatedContainerColor by animateColorAsState(
-                    targetValue = if (isSelected) 
-                        MaterialTheme.colorScheme.primary 
-                    else 
-                        MaterialTheme.colorScheme.surfaceContainer,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessLow
-                    ),
-                    label = "tabContainerColor"
-                )
-                
-                val animatedContentColor by animateColorAsState(
-                    targetValue = if (isSelected) 
-                        MaterialTheme.colorScheme.onPrimary 
-                    else 
-                        MaterialTheme.colorScheme.onSurface,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessLow
-                    ),
-                    label = "tabContentColor"
-                )
-                
-                Button(
+                TabAnimation(
+                    index = index,
+                    selectedIndex = StatsTimeRange.entries.indexOf(selectedRange),
+                    title = tabNames[range] ?: range.displayName,
+                    selectedColor = MaterialTheme.colorScheme.primary,
+                    onSelectedColor = MaterialTheme.colorScheme.onPrimary,
+                    unselectedColor = MaterialTheme.colorScheme.surfaceContainer,
+                    onUnselectedColor = MaterialTheme.colorScheme.onSurface,
                     onClick = { onRangeSelected(range) },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = animatedContainerColor,
-                        contentColor = animatedContentColor
-                    ),
-                    shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.graphicsLayer {
-                        scaleX = animatedScale
-                        scaleY = animatedScale
-                    },
-                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-                    elevation = ButtonDefaults.buttonElevation(
-                        defaultElevation = 0.dp,
-                        pressedElevation = 0.dp
-                    )
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = when (range) {
-                                StatsTimeRange.TODAY -> Icons.Outlined.Today
-                                StatsTimeRange.WEEK -> Icons.Outlined.DateRange
-                                StatsTimeRange.MONTH -> Icons.Outlined.CalendarMonth
-                                StatsTimeRange.ALL_TIME -> Icons.Outlined.AllInclusive
-                            },
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Text(
-                            text = tabNames[range] ?: range.displayName,
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                        )
+                    modifier = Modifier.padding(all = 2.dp),
+                    content = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = when (range) {
+                                    StatsTimeRange.TODAY -> Icons.Outlined.Today
+                                    StatsTimeRange.WEEK -> Icons.Outlined.DateRange
+                                    StatsTimeRange.MONTH -> Icons.Outlined.CalendarMonth
+                                    StatsTimeRange.ALL_TIME -> Icons.Outlined.AllInclusive
+                                },
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = tabNames[range] ?: range.displayName,
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                            )
+                        }
                     }
-                }
+                )
             }
         }
     }

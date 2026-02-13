@@ -624,7 +624,8 @@ fun SongInfoBottomSheet(
                                         item {
                                             FileInfoCard(
                                                 song = currentSong ?: song,
-                                                extendedInfo = extendedInfo
+                                                extendedInfo = extendedInfo,
+                                                folderPath = folderPath
                                             )
                                         }
                                     }
@@ -1089,7 +1090,8 @@ fun SongInfoBottomSheet(
                 ) {
                     FileInfoCard(
                         song = song,
-                        extendedInfo = extendedInfo
+                        extendedInfo = extendedInfo,
+                        folderPath = folderPath
                     )
                 }
             }
@@ -1147,6 +1149,16 @@ private fun SongInfoCard(
         if (!song.album.isNullOrEmpty()) {
             add(MetadataItem("Album", song.album, Icons.Rounded.Album))
         }
+
+        // Composer (moved from FileInfoCard)
+        extendedInfo?.let { info ->
+            if (info.composer.isNotEmpty() && info.composer != song.artist) {
+                add(MetadataItem("Composer", info.composer, Icons.Rounded.EditNote))
+            }
+            if (info.albumArtist.isNotEmpty() && info.albumArtist != song.artist) {
+                add(MetadataItem("Album Artist", info.albumArtist, Icons.Rounded.Person))
+            }
+        }
     }
 
     if (songInfoItems.isNotEmpty()) {
@@ -1186,11 +1198,26 @@ private fun SongInfoCard(
                     columns = GridCells.Fixed(2),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.height(((songInfoItems.size / 2 + songInfoItems.size % 2) * 80).dp)
+                    modifier = Modifier.height(
+                        songInfoItems.count { it.label == "Album" || it.label == "Composer" || it.label == "Album Artist" }.let { wideCount ->
+                            val regularCount = songInfoItems.size - wideCount
+                            val regularRows = (regularCount + 1) / 2 // Ceiling division
+                            (wideCount + regularRows) * 80
+                        }.dp
+                    )
                 ) {
                     itemsIndexed(
                         items = songInfoItems,
-                        span = { index, item -> if (index == songInfoItems.lastIndex && songInfoItems.size % 2 == 1) GridItemSpan(2) else GridItemSpan(1) }
+                        span = { index, item -> 
+                            when {
+                                item.label == "Album" || item.label == "Composer" || item.label == "Album Artist" -> GridItemSpan(2)
+                                else -> {
+                                    val regularItems = songInfoItems.filter { it.label != "Album" && it.label != "Composer" && it.label != "Album Artist" }
+                                    val itemIndexInRegular = regularItems.indexOf(item)
+                                    if (itemIndexInRegular == regularItems.lastIndex && regularItems.size % 2 == 1) GridItemSpan(2) else GridItemSpan(1)
+                                }
+                            }
+                        }
                     ) { index, item ->
                         AnimatedVisibility(
                             visible = true,
@@ -1310,7 +1337,8 @@ private fun RhythmStatsCard(
 @Composable
 private fun FileInfoCard(
     song: Song,
-    extendedInfo: ExtendedSongInfo?
+    extendedInfo: ExtendedSongInfo?,
+    folderPath: String?
 ) {
     val context = LocalContext.current
     val fileInfoItems = buildList {
@@ -1368,12 +1396,6 @@ private fun FileInfoCard(
             }
 
             // Additional metadata (non-duplicating)
-            if (info.composer.isNotEmpty() && info.composer != song.artist) {
-                add(MetadataItem("Composer", info.composer, Icons.Rounded.EditNote))
-            }
-            if (info.albumArtist.isNotEmpty() && info.albumArtist != song.artist) {
-                add(MetadataItem("Album Artist", info.albumArtist, Icons.Rounded.Person))
-            }
             if (info.hasLyrics) {
                 add(MetadataItem("Lyrics", "Available", Icons.Rounded.Lyrics))
             }
@@ -1429,7 +1451,7 @@ private fun FileInfoCard(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.height(
-                        fileInfoItems.count { it.label == "Composer" || it.label == "Album Artist" || it.label == "Location" }.let { wideCount ->
+                        fileInfoItems.count { it.label == "Location" }.let { wideCount ->
                             val regularCount = fileInfoItems.size - wideCount
                             val regularRows = (regularCount + 1) / 2 // Ceiling division
                             (wideCount + regularRows) * 80
@@ -1440,9 +1462,12 @@ private fun FileInfoCard(
                         items = fileInfoItems,
                         span = { index, item -> 
                             when {
-                                item.label == "Composer" || item.label == "Album Artist" || item.label == "Location" -> GridItemSpan(2)
-                                index == fileInfoItems.lastIndex && fileInfoItems.size % 2 == 1 -> GridItemSpan(2)
-                                else -> GridItemSpan(1)
+                                item.label == "Location" -> GridItemSpan(2)
+                                else -> {
+                                    val regularItems = fileInfoItems.filter { it.label != "Location" }
+                                    val itemIndexInRegular = regularItems.indexOf(item)
+                                    if (itemIndexInRegular == regularItems.lastIndex && regularItems.size % 2 == 1) GridItemSpan(2) else GridItemSpan(1)
+                                }
                             }
                         }
                     ) { index, item ->
@@ -1508,14 +1533,28 @@ private fun SongInfoGridItem(
                 )
             }
 
-            Text(
-                text = item.value,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            if (item.label in listOf("Album", "Composer", "Album Artist")) {
+                Text(
+                    text = item.value,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    maxLines = 1,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .basicMarquee()
+                )
+            } else {
+                Text(
+                    text = item.value,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }
@@ -1608,14 +1647,28 @@ private fun FileInfoGridItem(
                 )
             }
 
-            Text(
-                text = item.value,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            if (item.label in listOf("Location")) {
+                Text(
+                    text = item.value,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    maxLines = 1,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .basicMarquee()
+                )
+            } else {
+                Text(
+                    text = item.value,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }
@@ -1854,6 +1907,29 @@ private fun EditSongSheet(
                                             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
                                         )
                                     }
+
+                                    // Change artwork button in top corner
+                                    IconButton(
+                                        onClick = {
+                                            imagePickerLauncher.launch("image/*")
+                                        },
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .size(44.dp)
+                                            .background(
+                                                color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.8f),
+                                                shape = CircleShape
+                                            ),
+                                        colors = IconButtonDefaults.iconButtonColors(
+                                            contentColor = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Image,
+                                            contentDescription = "Change artwork",
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                    }
                                 }
 
 
@@ -2023,36 +2099,67 @@ private fun EditSongSheet(
                                         Spacer(modifier = Modifier.height(8.dp))
 
                                         // Action buttons
-                                        ExpressiveButtonGroup(
-                                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                                         ) {
-                                            // Change artwork button
-                                            ExpressiveFilledTonalButton(
-                                                onClick = {
-                                                    imagePickerLauncher.launch("image/*")
-                                                },
-                                                text = "Change",
-                                                icon = Icons.Rounded.Image
-                                            )
-
                                             // Reset button
-                                            ExpressiveFilledTonalButton(
+                                            OutlinedButton(
                                                 onClick = {
                                                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                                                     resetToOriginal()
                                                 },
-                                                text = "Reset",
-                                                icon = Icons.Rounded.RestartAlt
-                                            )
+                                                modifier = Modifier.weight(1f),
+                                                shape = RoundedCornerShape(16.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.RestartAlt,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text("Reset")
+                                            }
+
+                                            // Cancel button
+                                            OutlinedButton(
+                                                onClick = onDismiss,
+                                                modifier = Modifier.weight(1f),
+                                                shape = RoundedCornerShape(16.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Rounded.Close,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text("Cancel")
+                                            }
 
                                             // Save button
-                                            ExpressiveFilledTonalButton(
+                                            Button(
                                                 onClick = { handleSave() },
-                                                text = if (isSaving) "Saving..." else "Save",
-                                                icon = if (isSaving) null else Icons.Rounded.Save,
-                                                enabled = title.isNotBlank() && artist.isNotBlank() && !isSaving,
-                                                loading = isSaving
-                                            )
+                                                modifier = Modifier.weight(1f),
+                                                shape = RoundedCornerShape(16.dp),
+                                                enabled = title.isNotBlank() && artist.isNotBlank() && !isSaving
+                                            ) {
+                                                if (isSaving) {
+                                                    ActionProgressLoader(
+                                                        size = 20.dp,
+                                                        color = MaterialTheme.colorScheme.onPrimary
+                                                    )
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Text("Saving...")
+                                                } else {
+                                                    Icon(
+                                                        imageVector = Icons.Rounded.Save,
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Text("Save")
+                                                }
+                                            }
                                         }
 
                                         Spacer(modifier = Modifier.height(16.dp))
@@ -2222,6 +2329,29 @@ private fun EditSongSheet(
                             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
                         )
                     }
+
+                    // Change artwork button in top corner
+                    IconButton(
+                        onClick = {
+                            imagePickerLauncher.launch("image/*")
+                        },
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .size(40.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.8f),
+                                shape = CircleShape
+                            ),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Image,
+                            contentDescription = "Change artwork",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
                 
 
@@ -2368,36 +2498,67 @@ private fun EditSongSheet(
             }
             
                 // Action buttons
-                ExpressiveButtonGroup(
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Change artwork button
-                    ExpressiveFilledTonalButton(
-                        onClick = {
-                            imagePickerLauncher.launch("image/*")
-                        },
-                        text = "Change",
-                        icon = Icons.Rounded.Image
-                    )
-
                     // Reset button
-                    ExpressiveFilledTonalButton(
+                    OutlinedButton(
                         onClick = {
                             HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                             resetToOriginal()
                         },
-                        text = "Reset",
-                        icon = Icons.Rounded.RestartAlt
-                    )
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.RestartAlt,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Reset")
+                    }
+
+                    // Cancel button
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Cancel")
+                    }
 
                     // Save button
-                    ExpressiveFilledTonalButton(
+                    Button(
                         onClick = { handleSave() },
-                        text = if (isSaving) "Saving..." else "Save",
-                        icon = if (isSaving) null else Icons.Rounded.Save,
-                        enabled = title.isNotBlank() && artist.isNotBlank() && !isSaving,
-                        loading = isSaving
-                    )
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(16.dp),
+                        enabled = title.isNotBlank() && artist.isNotBlank() && !isSaving
+                    ) {
+                        if (isSaving) {
+                            ActionProgressLoader(
+                                size = 20.dp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Saving...")
+                        } else {
+                            Icon(
+                                imageVector = Icons.Rounded.Save,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Save")
+                        }
+                    }
                 }
                 
                 Spacer(modifier = Modifier.height(8.dp))
