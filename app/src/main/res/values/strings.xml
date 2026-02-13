@@ -931,6 +931,8 @@
     <string name="song_info_title">Song Information</string>
     <string name="song_info_no_metadata">No metadata available</string>
     <string name="song_info_permission">Rhythm needs permission to modify this audio file\'s metadata. You may see a system dialog asking for access - please allow it to save your changes.</string>
+    <string name="rhythm_stats">Rhythm Stats</string>
+    <string name="file_info">File Info</string>
     
     <!-- Components: Add to Playlist -->
     <string name="add_to_playlists">Add to Playlists</string>
@@ -1005,7 +1007,7 @@
     <string name="auto_backup">Auto Backup</string>
     <string name="manage_backup">MANAGE BACKUP</string>
     <string name="restore_backup">RESTORE BACKUP</string>
-    <string name="edit_metadata">Edit Metadata</string>
+    <string name="edit_metadata">Edit Song Info</string>
     
     <!-- Updates Messages -->
     <string name="updates_disabled_message">App updates have been disabled in settings</string>

@@ -63,6 +63,14 @@ import chromahub.rhythm.app.shared.presentation.components.common.ActionProgress
 import chromahub.rhythm.app.shared.presentation.components.common.ContentLoadingIndicator
 import chromahub.rhythm.app.features.local.presentation.components.player.formatDuration
 import chromahub.rhythm.app.shared.presentation.components.common.MarqueeText
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButtonGroup
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveFilledTonalButton
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGroupButton
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapes
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
+import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
+import chromahub.rhythm.app.shared.presentation.components.common.ButtonGroupStyle
+import chromahub.rhythm.app.shared.presentation.components.RatingStarsDisplay
 import chromahub.rhythm.app.util.ImageUtils
 import chromahub.rhythm.app.util.MediaUtils
 import chromahub.rhythm.app.util.HapticUtils
@@ -152,11 +160,20 @@ fun SongInfoBottomSheet(
     val blacklistedSongs by appSettings.blacklistedSongs.collectAsState()
     val blacklistedFolders by appSettings.blacklistedFolders.collectAsState()
     var isLoadingBlacklist by remember { mutableStateOf(false) }
+    var showBlacklistTrackConfirm by remember { mutableStateOf(false) }
+    var showBlacklistFolderConfirm by remember { mutableStateOf(false) }
     
     // Whitelist states
     val whitelistedSongs by appSettings.whitelistedSongs.collectAsState()
     val whitelistedFolders by appSettings.whitelistedFolders.collectAsState()
     var isLoadingWhitelist by remember { mutableStateOf(false) }
+    
+    // Rhythm stats and rating states
+    var songPlaybackStats by remember { mutableStateOf<chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository.SongPlaybackSummary?>(null) }
+    var songRating by remember(song?.id) { mutableStateOf(0) }
+    
+    // Expressive shape for artwork
+    val songArtShape = rememberExpressiveShapeFor(ExpressiveShapeTarget.SONG_ART)
     
     // Check if song is blacklisted
     val isBlacklisted = song?.let { blacklistedSongs.contains(it.id) } ?: false
@@ -210,11 +227,183 @@ fun SongInfoBottomSheet(
         }
         isLoadingMetadata = false
     }
+    
+    // Load rhythm stats and rating
+    LaunchedEffect(song.id) {
+        song?.let { currentSong ->
+            // Load playback stats
+            songPlaybackStats = withContext(Dispatchers.IO) {
+                chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository.getInstance(context).getSongPlaybackStats(
+                    currentSong.id,
+                    chromahub.rhythm.app.shared.data.repository.StatsTimeRange.ALL_TIME
+                )
+            }
+            
+            // Load rating
+            songRating = appSettings.getSongRating(currentSong.id)
+        }
+    }
 
     // Animation trigger
     LaunchedEffect(Unit) {
         kotlinx.coroutines.delay(100)
         showContent = true
+    }
+    
+    // Blacklist track confirmation dialog
+    if (showBlacklistTrackConfirm) {
+        AlertDialog(
+            onDismissRequest = { showBlacklistTrackConfirm = false },
+            title = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = if (isBlacklisted) Icons.Rounded.CheckCircle else Icons.Rounded.Block,
+                        contentDescription = null,
+                        tint = if (isBlacklisted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(if (isBlacklisted) "Remove from Blacklist?" else "Add to Blacklist?")
+                }
+            },
+            text = {
+                Column {
+                    Text(
+                        if (isBlacklisted) "This song will no longer be hidden from your library." else "This song will be hidden from your library and excluded from playback.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "This action can be undone anytime.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        isLoadingBlacklist = true
+                        song?.let { songToBlock ->
+                            if (isBlacklisted) {
+                                appSettings.removeFromBlacklist(songToBlock.id)
+                            } else {
+                                appSettings.addToBlacklist(songToBlock.id)
+                            }
+                            isLoadingBlacklist = false
+                            val message = if (isBlacklisted) "Song removed from blacklist" else "Song added to blacklist"
+                            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                        }
+                        showBlacklistTrackConfirm = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isBlacklisted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Icon(
+                        imageVector = if (isBlacklisted) Icons.Rounded.CheckCircle else Icons.Rounded.Block,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(if (isBlacklisted) "Remove" else "Blacklist")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { showBlacklistTrackConfirm = false }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Cancel")
+                }
+            },
+            shape = RoundedCornerShape(24.dp)
+        )
+    }
+    
+    // Blacklist folder confirmation dialog
+    if (showBlacklistFolderConfirm) {
+        AlertDialog(
+            onDismissRequest = { showBlacklistFolderConfirm = false },
+            title = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = if (isInBlacklistedFolder) Icons.Rounded.CheckCircle else Icons.Rounded.FolderOff,
+                        contentDescription = null,
+                        tint = if (isInBlacklistedFolder) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(if (isInBlacklistedFolder) "Remove Folder from Blacklist?" else "Blacklist Folder?")
+                }
+            },
+            text = {
+                Column {
+                    Text(
+                        if (isInBlacklistedFolder) "All songs in this folder will be visible again." else "All songs in this folder will be hidden and excluded from playback.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "This action can be undone anytime.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        isLoadingBlacklist = true
+                        folderPath?.let { path ->
+                            if (isInBlacklistedFolder) {
+                                appSettings.removeFolderFromBlacklist(path)
+                            } else {
+                                appSettings.addFolderToBlacklist(path)
+                            }
+                        }
+                        isLoadingBlacklist = false
+                        val message = if (isInBlacklistedFolder) "Folder removed from blacklist" else "Folder added to blacklist"
+                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                        showBlacklistFolderConfirm = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isInBlacklistedFolder) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Icon(
+                        imageVector = if (isInBlacklistedFolder) Icons.Rounded.CheckCircle else Icons.Rounded.FolderOff,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(if (isInBlacklistedFolder) "Remove" else "Blacklist")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { showBlacklistFolderConfirm = false }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Cancel")
+                }
+            },
+            shape = RoundedCornerShape(24.dp)
+        )
     }
 
     if (isTablet) {
@@ -267,7 +456,7 @@ fun SongInfoBottomSheet(
                                 Surface(
                                     modifier = Modifier
                                         .size(180.dp),
-                                    shape = RoundedCornerShape(24.dp),
+                                    shape = songArtShape,
                                     shadowElevation = 16.dp,
                                     tonalElevation = 8.dp
                                 ) {
@@ -313,15 +502,6 @@ fun SongInfoBottomSheet(
                                         style = MaterialTheme.typography.titleLarge,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         fontWeight = FontWeight.Medium,
-                                        textAlign = TextAlign.Center,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-
-                                    Text(
-                                        text = song.album,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         textAlign = TextAlign.Center,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
@@ -428,11 +608,23 @@ fun SongInfoBottomSheet(
                                         userScrollEnabled = true
                                     ) {
                                         item {
-                                            MetadataGridSection(
+                                            SongInfoCard(
                                                 song = currentSong ?: song,
                                                 extendedInfo = extendedInfo,
-                                                isLoading = isLoadingMetadata,
                                                 useHoursFormat = useHoursFormat
+                                            )
+                                        }
+                                        item {
+                                            RhythmStatsCard(
+                                                songPlaybackStats = songPlaybackStats,
+                                                songRating = songRating,
+                                                useHoursFormat = useHoursFormat
+                                            )
+                                        }
+                                        item {
+                                            FileInfoCard(
+                                                song = currentSong ?: song,
+                                                extendedInfo = extendedInfo
                                             )
                                         }
                                     }
@@ -461,7 +653,8 @@ fun SongInfoBottomSheet(
                     onEditSong?.invoke(title, artist, album, genre, year, trackNumber)
                     showEditSheet = false
                 },
-                onShowLyricsEditor = onShowLyricsEditor
+                onShowLyricsEditor = onShowLyricsEditor,
+                songArtShape = songArtShape
             )
         }
     } else {
@@ -500,7 +693,7 @@ fun SongInfoBottomSheet(
                         // Album Art with modern styling
                         Surface(
                             modifier = Modifier.size(80.dp),
-                            shape = RoundedCornerShape(20.dp),
+                            shape = songArtShape,
                             tonalElevation = 0.dp,
                             shadowElevation = 0.dp
                         ) {
@@ -526,13 +719,14 @@ fun SongInfoBottomSheet(
                             modifier = Modifier.weight(1f),
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            MarqueeText(
+                            Text(
                                 text = song.title,
                                 style = MaterialTheme.typography.headlineSmall.copy(
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
                                 ),
-                                gradientEdgeColor = MaterialTheme.colorScheme.surface,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.fillMaxWidth()
                             )
                             
@@ -544,35 +738,9 @@ fun SongInfoBottomSheet(
                                 gradientEdgeColor = MaterialTheme.colorScheme.surface,
                                 modifier = Modifier.fillMaxWidth()
                             )
-                            
-                            MarqueeText(
-                                text = song.album,
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                ),
-                                gradientEdgeColor = MaterialTheme.colorScheme.surface,
-                                modifier = Modifier.fillMaxWidth()
-                            )
                         }
                         
-                        // Edit button
-                        onEditSong?.let { editCallback ->
-                            FilledTonalIconButton(
-                                onClick = { 
-                                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    showEditSheet = true
-                                },
-                                colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Edit,
-                                    contentDescription = "Edit metadata"
-                                )
-                            }
-                        }
+                        // No edit button here - moved to actions section
                     }
                 }
             }
@@ -586,44 +754,60 @@ fun SongInfoBottomSheet(
                     Column(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Text(
-                            text = context.getString(R.string.bottomsheet_actions),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(top = 4.dp, bottom = 2.dp),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ExpressiveButtonGroup(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            style = ButtonGroupStyle.Tonal
                         ) {
-                            // Block/Unblock Song
-                            FilledTonalButton(
+                            // Edit button
+                            onEditSong?.let {
+                                ExpressiveFilledTonalButton(
+                                    onClick = {
+                                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        showEditSheet = true
+                                    },
+                                    shape = if (folderPath == null) ExpressiveShapes.Full else RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp, topEnd = 8.dp, bottomEnd = 8.dp),
+                                    colors = ButtonDefaults.filledTonalButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Edit,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Edit")
+                                }
+                            }
+                            
+                            // Block Song
+                            ExpressiveFilledTonalButton(
                                 onClick = {
                                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    isLoadingBlacklist = true
-                                    
-                                    song?.let { songToBlock ->
-                                        if (isBlacklisted) {
-                                            appSettings.removeFromBlacklist(songToBlock.id)
-                                        } else {
-                                            appSettings.addToBlacklist(songToBlock.id)
-                                        }
-                                        
-                                        isLoadingBlacklist = false
-                                        val message = if (isBlacklisted) "Song removed from blacklist" else "Song added to blacklist"
-                                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                                    }
+                                    showBlacklistTrackConfirm = true
                                 },
                                 enabled = !isLoadingBlacklist,
-                                modifier = Modifier.weight(1f),
+                                shape = if (onEditSong == null && folderPath == null) 
+                                    ExpressiveShapes.Full 
+                                else if (onEditSong == null) 
+                                    RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp, topEnd = 8.dp, bottomEnd = 8.dp)
+                                else if (folderPath == null)
+                                    RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp, topEnd = 20.dp, bottomEnd = 20.dp)
+                                else
+                                    RoundedCornerShape(8.dp),
                                 colors = ButtonDefaults.filledTonalButtonColors(
                                     containerColor = if (isBlacklisted) 
                                         MaterialTheme.colorScheme.errorContainer 
                                     else 
-                                        MaterialTheme.colorScheme.secondaryContainer
-                                )
+                                        MaterialTheme.colorScheme.secondaryContainer,
+                                    contentColor = if (isBlacklisted) 
+                                        MaterialTheme.colorScheme.onErrorContainer 
+                                    else 
+                                        MaterialTheme.colorScheme.onSecondaryContainer
+                                ),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
                             ) {
                                 if (isLoadingBlacklist) {
                                     ActionProgressLoader(
@@ -632,55 +816,50 @@ fun SongInfoBottomSheet(
                                     )
                                 } else {
                                     Icon(
-                                        imageVector = if (isBlacklisted) Icons.Rounded.Block else Icons.Rounded.DoNotDisturb,
+                                        imageVector = Icons.Rounded.Block,
                                         contentDescription = null,
                                         modifier = Modifier.size(16.dp)
                                     )
                                 }
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(if (isBlacklisted) "Un-Blacklist Track" else "Blacklist Track")
+                                Text("Track")
                             }
                             
-                            // Block/Unblock Folder
+                            // Block Folder
                             if (folderPath != null) {
-                                FilledTonalButton(
+                                ExpressiveFilledTonalButton(
                                     onClick = {
                                         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        isLoadingBlacklist = true
-                                        
-                                        if (isInBlacklistedFolder) {
-                                            appSettings.removeFolderFromBlacklist(folderPath)
-                                        } else {
-                                            appSettings.addFolderToBlacklist(folderPath)
-                                        }
-                                        
-                                        isLoadingBlacklist = false
-                                        val message = if (isInBlacklistedFolder) "Folder removed from blacklist" else "Folder added to blacklist"
-                                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                                        showBlacklistFolderConfirm = true
                                     },
                                     enabled = !isLoadingBlacklist,
-                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp, topEnd = 20.dp, bottomEnd = 20.dp),
                                     colors = ButtonDefaults.filledTonalButtonColors(
                                         containerColor = if (isInBlacklistedFolder) 
                                             MaterialTheme.colorScheme.errorContainer 
                                         else 
-                                            MaterialTheme.colorScheme.tertiaryContainer
-                                    )
+                                            MaterialTheme.colorScheme.secondaryContainer,
+                                        contentColor = if (isInBlacklistedFolder) 
+                                            MaterialTheme.colorScheme.onErrorContainer 
+                                        else 
+                                            MaterialTheme.colorScheme.onSecondaryContainer
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
                                 ) {
                                     if (isLoadingBlacklist) {
                                         ActionProgressLoader(
                                             size = 16.dp,
-                                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer
                                         )
                                     } else {
                                         Icon(
-                                            imageVector = if (isInBlacklistedFolder) Icons.Rounded.FolderOff else Icons.Rounded.Folder,
+                                            imageVector = Icons.Rounded.FolderOff,
                                             contentDescription = null,
                                             modifier = Modifier.size(16.dp)
                                         )
                                     }
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text(if (isInBlacklistedFolder) "Un-Blacklist Folder" else "Blacklist Folder")
+                                    Text("Folder")
                                 }
                             }
                         }
@@ -872,17 +1051,45 @@ fun SongInfoBottomSheet(
             // }
 
             item {
-                // Metadata grid section
+                // Song Info card
                 AnimatedVisibility(
                     visible = showContent,
                     enter = fadeIn() + slideInVertically { it },
                     exit = fadeOut() + slideOutVertically { it }
                 ) {
-                    MetadataGridSection(
+                    SongInfoCard(
                         song = song,
                         extendedInfo = extendedInfo,
-                        isLoading = isLoadingMetadata,
                         useHoursFormat = useHoursFormat
+                    )
+                }
+            }
+
+            item {
+                // Rhythm Stats card
+                AnimatedVisibility(
+                    visible = showContent,
+                    enter = fadeIn() + slideInVertically { it },
+                    exit = fadeOut() + slideOutVertically { it }
+                ) {
+                    RhythmStatsCard(
+                        songPlaybackStats = songPlaybackStats,
+                        songRating = songRating,
+                        useHoursFormat = useHoursFormat
+                    )
+                }
+            }
+
+            item {
+                // File Info card
+                AnimatedVisibility(
+                    visible = showContent,
+                    enter = fadeIn() + slideInVertically { it },
+                    exit = fadeOut() + slideOutVertically { it }
+                ) {
+                    FileInfoCard(
+                        song = song,
+                        extendedInfo = extendedInfo
                     )
                 }
             }
@@ -897,7 +1104,8 @@ fun SongInfoBottomSheet(
                     onEditSong?.invoke(title, artist, album, genre, year, trackNumber)
                     showEditSheet = false
                 },
-                onShowLyricsEditor = onShowLyricsEditor
+                onShowLyricsEditor = onShowLyricsEditor,
+                songArtShape = songArtShape
             )
         }
     }
@@ -905,18 +1113,16 @@ fun SongInfoBottomSheet(
 }
 
 @Composable
-private fun MetadataGridSection(
+private fun SongInfoCard(
     song: Song,
     extendedInfo: ExtendedSongInfo?,
-    isLoading: Boolean,
     useHoursFormat: Boolean = false
 ) {
     val context = LocalContext.current
-    // Prepare metadata items (avoiding duplicates and showing more information)
-    val metadataItems = buildList {
+    val songInfoItems = buildList {
         // Basic song info
         add(MetadataItem("Duration", formatDuration(song.duration, useHoursFormat), Icons.Rounded.Schedule))
-        
+
         // Track info (prefer extended info if available)
         val trackNum = if (song.trackNumber > 0) song.trackNumber else 0
         val discNum = extendedInfo?.discNumber ?: 0
@@ -924,19 +1130,190 @@ private fun MetadataGridSection(
             trackNum > 0 && discNum > 0 -> add(MetadataItem("Track", "$discNum.$trackNum", Icons.Rounded.FormatListNumbered))
             trackNum > 0 -> add(MetadataItem("Track", trackNum.toString(), Icons.Rounded.FormatListNumbered))
         }
-        
+
         // Year (prefer song data, fallback to extended info)
         val yearValue = if (song.year > 0) song.year else extendedInfo?.year ?: 0
         if (yearValue > 0) {
             add(MetadataItem("Year", yearValue.toString(), Icons.Rounded.DateRange))
         }
-        
+
         // Genre (prefer song data, fallback to extended info)
         val genreValue = if (!song.genre.isNullOrEmpty()) song.genre else extendedInfo?.genre
         if (!genreValue.isNullOrEmpty()) {
             add(MetadataItem("Genre", genreValue.trim(), Icons.Rounded.Category))
         }
-        
+
+        // Album
+        if (!song.album.isNullOrEmpty()) {
+            add(MetadataItem("Album", song.album, Icons.Rounded.Album))
+        }
+    }
+
+    if (songInfoItems.isNotEmpty()) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Info,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = context.getString(R.string.cd_song_info),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.height(((songInfoItems.size / 2 + songInfoItems.size % 2) * 80).dp)
+                ) {
+                    itemsIndexed(
+                        items = songInfoItems,
+                        span = { index, item -> if (index == songInfoItems.lastIndex && songInfoItems.size % 2 == 1) GridItemSpan(2) else GridItemSpan(1) }
+                    ) { index, item ->
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = fadeIn(
+                                animationSpec = tween(
+                                    durationMillis = 500,
+                                    delayMillis = 400 + (index * 100)
+                                )
+                            ) + slideInVertically(
+                                animationSpec = tween(
+                                    durationMillis = 500,
+                                    delayMillis = 400 + (index * 100)
+                                ),
+                                initialOffsetY = { it / 5 }
+                            )
+                        ) {
+                            SongInfoGridItem(item = item)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RhythmStatsCard(
+    songPlaybackStats: chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository.SongPlaybackSummary?,
+    songRating: Int,
+    useHoursFormat: Boolean = false
+) {
+    val context = LocalContext.current
+    val rhythmStatsItems = buildList {
+        // Rhythm stats
+        songPlaybackStats?.let { stats ->
+            if (stats.playCount > 0) {
+                add(MetadataItem("Play Count", stats.playCount.toString(), Icons.Rounded.PlayArrow))
+            }
+            if (stats.totalDurationMs > 0) {
+                add(MetadataItem("Total Played", formatDuration(stats.totalDurationMs, useHoursFormat), Icons.Rounded.Schedule))
+            }
+        }
+
+        // Star rating
+        if (songRating > 0) {
+            add(MetadataItem("Rating", "${songRating}★", Icons.Rounded.Star))
+        }
+    }
+
+    if (rhythmStatsItems.isNotEmpty()) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.BarChart,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = context.getString(R.string.rhythm_stats),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.height(((rhythmStatsItems.size / 2 + rhythmStatsItems.size % 2) * 80).dp)
+                ) {
+                    itemsIndexed(
+                        items = rhythmStatsItems,
+                        span = { index, item -> if (index == rhythmStatsItems.lastIndex && rhythmStatsItems.size % 2 == 1) GridItemSpan(2) else GridItemSpan(1) }
+                    ) { index, item ->
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = fadeIn(
+                                animationSpec = tween(
+                                    durationMillis = 500,
+                                    delayMillis = 400 + (index * 100)
+                                )
+                            ) + slideInVertically(
+                                animationSpec = tween(
+                                    durationMillis = 500,
+                                    delayMillis = 400 + (index * 100)
+                                ),
+                                initialOffsetY = { it / 5 }
+                            )
+                        ) {
+                            RhythmStatsGridItem(item = item)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FileInfoCard(
+    song: Song,
+    extendedInfo: ExtendedSongInfo?
+) {
+    val context = LocalContext.current
+    val fileInfoItems = buildList {
         extendedInfo?.let { info ->
             // Enhanced Audio Quality Badge - show detailed quality type
             if (info.qualityLabel != "Unknown" && info.qualityLabel.isNotEmpty()) {
@@ -949,7 +1326,7 @@ private fun MetadataGridSection(
                 }
                 add(MetadataItem("Quality", info.qualityLabel, qualityIcon))
             }
-            
+
             // Legacy quality badges for backward compatibility (only if not covered by qualityLabel)
             if (info.qualityLabel == "Unknown") {
                 if (info.isLossless) {
@@ -965,7 +1342,7 @@ private fun MetadataGridSection(
                     add(MetadataItem("Quality", "Hi-Res", Icons.Rounded.HighQuality))
                 }
             }
-            
+
             // Audio quality info
             if (info.bitDepth > 0) {
                 add(MetadataItem("Bit Depth", "${info.bitDepth}-bit", Icons.Rounded.HighQuality))
@@ -984,12 +1361,12 @@ private fun MetadataGridSection(
             } else if (info.format != "Unknown") {
                 add(MetadataItem("Format", info.format, Icons.Rounded.MusicNote))
             }
-            
+
             // File info
-            if (info.fileSize > 0) {
-                add(MetadataItem("File Size", formatFileSize(info.fileSize), Icons.Rounded.FolderOpen))
+            folderPath?.let {
+                add(MetadataItem("Location", it, Icons.Rounded.FolderOpen))
             }
-            
+
             // Additional metadata (non-duplicating)
             if (info.composer.isNotEmpty() && info.composer != song.artist) {
                 add(MetadataItem("Composer", info.composer, Icons.Rounded.EditNote))
@@ -1003,7 +1380,7 @@ private fun MetadataGridSection(
             if (info.mimeType.isNotEmpty()) {
                 add(MetadataItem("MIME Type", info.mimeType.substringAfter("/").uppercase(), Icons.Rounded.Code))
             }
-            
+
             // Date info
             if (info.dateAdded > 0) {
                 add(MetadataItem("Date Added", formatDate(info.dateAdded), Icons.Rounded.Add))
@@ -1013,64 +1390,61 @@ private fun MetadataGridSection(
             }
         }
     }
-    
-    // Always show the card, but show loader when loading or no metadata
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
+
+    if (fileInfoItems.isNotEmpty()) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
+            Column(
+                modifier = Modifier.padding(20.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.Info,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = context.getString(R.string.bottomsheet_metadata),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            if (isLoading) {
-                // Show loader while loading
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp),
-                    contentAlignment = Alignment.Center
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    ContentLoadingIndicator(
-                        modifier = Modifier.size(32.dp),
-                        color = MaterialTheme.colorScheme.primary
+                    Icon(
+                        imageVector = Icons.Rounded.Folder,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = context.getString(R.string.file_info),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
-            } else if (metadataItems.isNotEmpty()) {
-                // Show metadata grid with staggered item animations
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.height(((metadataItems.size / 2 + metadataItems.size % 2) * 80).dp)
+                    modifier = Modifier.height(
+                        fileInfoItems.count { it.label == "Composer" || it.label == "Album Artist" || it.label == "Location" }.let { wideCount ->
+                            val regularCount = fileInfoItems.size - wideCount
+                            val regularRows = (regularCount + 1) / 2 // Ceiling division
+                            (wideCount + regularRows) * 80
+                        }.dp
+                    )
                 ) {
                     itemsIndexed(
-                        items = metadataItems,
-                        span = { index, item -> if (index == metadataItems.lastIndex && metadataItems.size % 2 == 1) GridItemSpan(2) else GridItemSpan(1) }
+                        items = fileInfoItems,
+                        span = { index, item -> 
+                            when {
+                                item.label == "Composer" || item.label == "Album Artist" || item.label == "Location" -> GridItemSpan(2)
+                                index == fileInfoItems.lastIndex && fileInfoItems.size % 2 == 1 -> GridItemSpan(2)
+                                else -> GridItemSpan(1)
+                            }
+                        }
                     ) { index, item ->
                         AnimatedVisibility(
                             visible = true,
@@ -1087,23 +1461,9 @@ private fun MetadataGridSection(
                                 initialOffsetY = { it / 5 }
                             )
                         ) {
-                            MetadataGridItem(item = item)
+                            FileInfoGridItem(item = item)
                         }
                     }
-                }
-            } else {
-                // Show empty state
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(80.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = context.getString(R.string.song_info_no_metadata),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
             }
         }
@@ -1111,7 +1471,7 @@ private fun MetadataGridSection(
 }
 
 @Composable
-private fun MetadataGridItem(
+private fun SongInfoGridItem(
     item: MetadataItem
 ) {
     val context = LocalContext.current
@@ -1120,7 +1480,7 @@ private fun MetadataGridItem(
             .fillMaxWidth()
             .height(68.dp),
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+        color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f)
     ) {
         Column(
             modifier = Modifier
@@ -1135,23 +1495,123 @@ private fun MetadataGridItem(
                 Icon(
                     imageVector = item.icon,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = MaterialTheme.colorScheme.tertiary,
                     modifier = Modifier.size(16.dp)
                 )
                 Text(
                     text = item.label,
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            
+
             Text(
                 text = item.value,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
+private fun RhythmStatsGridItem(
+    item: MetadataItem
+) {
+    val context = LocalContext.current
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(68.dp),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Icon(
+                    imageVector = item.icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    text = item.label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Text(
+                text = item.value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
+private fun FileInfoGridItem(
+    item: MetadataItem
+) {
+    val context = LocalContext.current
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(68.dp),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Icon(
+                    imageVector = item.icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    text = item.label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Text(
+                text = item.value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -1166,7 +1626,8 @@ private fun EditSongSheet(
     song: Song,
     onDismiss: () -> Unit,
     onSave: (title: String, artist: String, album: String, genre: String, year: Int, trackNumber: Int) -> Unit,
-    onShowLyricsEditor: (() -> Unit)? = null
+    onShowLyricsEditor: (() -> Unit)? = null,
+    songArtShape: androidx.compose.ui.graphics.Shape
 ) {
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
@@ -1371,7 +1832,7 @@ private fun EditSongSheet(
                                 Box(
                                     modifier = Modifier
                                         .size(220.dp)
-                                        .clip(RoundedCornerShape(24.dp))
+                                        .clip(songArtShape)
                                         .background(MaterialTheme.colorScheme.surfaceVariant),
                                     contentAlignment = Alignment.Center
                                 ) {
@@ -1395,50 +1856,7 @@ private fun EditSongSheet(
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.height(24.dp))
 
-                                // Artwork action buttons
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    // Change artwork button
-                                    Button(
-                                        onClick = { imagePickerLauncher.launch("image/*") },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        shape = RoundedCornerShape(16.dp),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = MaterialTheme.colorScheme.primary
-                                        )
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.Image,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text("Change Artwork")
-                                    }
-
-                                    // Reset button
-                                    FilledTonalButton(
-                                        onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                            resetToOriginal()
-                                        },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        shape = RoundedCornerShape(16.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.RestartAlt,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text("Reset All")
-                                    }
-                                }
                             }
                         }
 
@@ -1605,41 +2023,36 @@ private fun EditSongSheet(
                                         Spacer(modifier = Modifier.height(8.dp))
 
                                         // Action buttons
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        ExpressiveButtonGroup(
+                                            modifier = Modifier.align(Alignment.CenterHorizontally)
                                         ) {
-                                            OutlinedButton(
-                                                onClick = onDismiss,
-                                                modifier = Modifier.weight(1f),
-                                                shape = RoundedCornerShape(16.dp)
-                                            ) {
-                                                Text("Cancel")
-                                            }
+                                            // Change artwork button
+                                            ExpressiveFilledTonalButton(
+                                                onClick = {
+                                                    imagePickerLauncher.launch("image/*")
+                                                },
+                                                text = "Change",
+                                                icon = Icons.Rounded.Image
+                                            )
 
-                                            Button(
+                                            // Reset button
+                                            ExpressiveFilledTonalButton(
+                                                onClick = {
+                                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                                    resetToOriginal()
+                                                },
+                                                text = "Reset",
+                                                icon = Icons.Rounded.RestartAlt
+                                            )
+
+                                            // Save button
+                                            ExpressiveFilledTonalButton(
                                                 onClick = { handleSave() },
-                                                modifier = Modifier.weight(1f),
-                                                shape = RoundedCornerShape(16.dp),
-                                                enabled = title.isNotBlank() && artist.isNotBlank() && !isSaving
-                                            ) {
-                                                if (isSaving) {
-                                                    ActionProgressLoader(
-                                                        size = 16.dp,
-                                                        color = MaterialTheme.colorScheme.onPrimary
-                                                    )
-                                                    Spacer(modifier = Modifier.width(8.dp))
-                                                    Text("Saving...")
-                                                } else {
-                                                    Icon(
-                                                        imageVector = Icons.Rounded.Save,
-                                                        contentDescription = null,
-                                                        modifier = Modifier.size(16.dp)
-                                                    )
-                                                    Spacer(modifier = Modifier.width(8.dp))
-                                                    Text("Save")
-                                                }
-                                            }
+                                                text = if (isSaving) "Saving..." else "Save",
+                                                icon = if (isSaving) null else Icons.Rounded.Save,
+                                                enabled = title.isNotBlank() && artist.isNotBlank() && !isSaving,
+                                                loading = isSaving
+                                            )
                                         }
 
                                         Spacer(modifier = Modifier.height(16.dp))
@@ -1787,7 +2200,7 @@ private fun EditSongSheet(
                 Box(
                     modifier = Modifier
                         .size(200.dp)
-                        .clip(RoundedCornerShape(24.dp))
+                        .clip(songArtShape)
                         .background(MaterialTheme.colorScheme.surfaceVariant),
                     contentAlignment = Alignment.Center
                 ) {
@@ -1811,71 +2224,7 @@ private fun EditSongSheet(
                     }
                 }
                 
-                // Artwork action buttons
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    // Change artwork button
-                    FilledTonalButton(
-                        onClick = { 
-                            imagePickerLauncher.launch("image/*")
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Image,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Change")
-                    }
-                    
-                    // Reset button
-                    OutlinedButton(
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                            resetToOriginal()
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.RestartAlt,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Reset")
-                    }
-                    
-                    // Edit Lyrics button
-//                    FilledTonalButton(
-//                        onClick = {
-//                            onShowLyricsEditor?.invoke()
-//                        },
-//                        modifier = Modifier.weight(1f),
-//                        shape = RoundedCornerShape(16.dp),
-//                        colors = ButtonDefaults.filledTonalButtonColors(
-//                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-//                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-//                        )
-//                    ) {
-//                        Icon(
-//                            imageVector = Icons.Rounded.Edit,
-//                            contentDescription = null,
-//                            modifier = Modifier.size(18.dp)
-//                        )
-//                        Spacer(modifier = Modifier.width(8.dp))
-//                        Text("Lyrics")
-//                    }
-                }
+
                 
                 // Remove artwork button (only show if artwork is selected)
                 if (selectedImageUri != null) {
@@ -2019,45 +2368,36 @@ private fun EditSongSheet(
             }
             
                 // Action buttons
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ExpressiveButtonGroup(
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
                 ) {
-                    OutlinedButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
-                        Text("Cancel")
-                    }
-                    
-                    Button(
+                    // Change artwork button
+                    ExpressiveFilledTonalButton(
+                        onClick = {
+                            imagePickerLauncher.launch("image/*")
+                        },
+                        text = "Change",
+                        icon = Icons.Rounded.Image
+                    )
+
+                    // Reset button
+                    ExpressiveFilledTonalButton(
+                        onClick = {
+                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                            resetToOriginal()
+                        },
+                        text = "Reset",
+                        icon = Icons.Rounded.RestartAlt
+                    )
+
+                    // Save button
+                    ExpressiveFilledTonalButton(
                         onClick = { handleSave() },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(16.dp),
-                        enabled = title.isNotBlank() && artist.isNotBlank() && !isSaving
-                    ) {
-                        if (isSaving) {
-                            ActionProgressLoader(
-                                size = 16.dp,
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Saving...")
-                        } else {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Save,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Save Changes")
-                            }
-                        }
-                    }
+                        text = if (isSaving) "Saving..." else "Save",
+                        icon = if (isSaving) null else Icons.Rounded.Save,
+                        enabled = title.isNotBlank() && artist.isNotBlank() && !isSaving,
+                        loading = isSaving
+                    )
                 }
                 
                 Spacer(modifier = Modifier.height(8.dp))

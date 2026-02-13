@@ -537,9 +537,68 @@ class PlaybackStatsRepository private constructor(private val context: Context) 
     }
     
     /**
-     * Get all events (for debugging/export)
+     * Get playback statistics for a specific song
      */
-    fun getAllEvents(): List<PlaybackEvent> = readEvents()
+    suspend fun getSongPlaybackStats(
+        songId: String,
+        range: StatsTimeRange = StatsTimeRange.ALL_TIME,
+        nowMillis: Long = System.currentTimeMillis()
+    ): SongPlaybackSummary? = withContext(Dispatchers.IO) {
+        val allEvents = readEvents()
+        val (startBound, endBound) = range.resolveBounds(nowMillis, ZoneId.systemDefault())
+        
+        // Filter events for this song and time range
+        val songEvents = allEvents.filter { event ->
+            event.songId == songId &&
+            event.endMillis() >= (startBound ?: Long.MIN_VALUE) &&
+            event.startMillis() <= endBound
+        }.mapNotNull { event ->
+            val start = event.startMillis()
+            val end = event.endMillis()
+            val lowerBound = startBound ?: Long.MIN_VALUE
+            
+            if (end < lowerBound || start > endBound) {
+                return@mapNotNull null
+            }
+            
+            // Clip to range boundaries
+            val clippedStart = max(start, lowerBound)
+            val clippedEnd = min(end, endBound)
+            val clippedDuration = (clippedEnd - clippedStart).coerceAtLeast(0L)
+            
+            if (clippedDuration <= 0L) {
+                return@mapNotNull null
+            }
+            
+            event.copy(
+                timestamp = clippedEnd,
+                durationMs = clippedDuration,
+                startTimestamp = clippedStart,
+                endTimestamp = clippedEnd
+            )
+        }
+        
+        if (songEvents.isEmpty()) {
+            return@withContext null
+        }
+        
+        // Merge overlapping segments
+        val segments = mergeSongEvents(songEvents)
+        val totalDuration = segments.sumOf { it.durationMs }
+        val playCount = segments.size
+        
+        // Get song info from the first event
+        val firstEvent = songEvents.first()
+        
+        SongPlaybackSummary(
+            songId = songId,
+            title = firstEvent.songTitle ?: "Unknown",
+            artist = firstEvent.artistName ?: "Unknown Artist",
+            albumArtUri = null, // We don't have this in events
+            totalDurationMs = totalDuration,
+            playCount = playCount
+        )
+    }
     
     /**
      * Clear all history

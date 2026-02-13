@@ -5360,6 +5360,16 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
      * Get the PlaybackStatsRepository for direct access
      */
     fun getPlaybackStatsRepository(): PlaybackStatsRepository = playbackStatsRepository
+    
+    /**
+     * Get playback statistics for a specific song
+     */
+    suspend fun getSongPlaybackStats(
+        songId: String,
+        range: chromahub.rhythm.app.shared.data.repository.StatsTimeRange = chromahub.rhythm.app.shared.data.repository.StatsTimeRange.ALL_TIME
+    ): chromahub.rhythm.app.shared.data.repository.PlaybackStatsRepository.SongPlaybackSummary? {
+        return playbackStatsRepository.getSongPlaybackStats(songId, range)
+    }
 
     // Initialize from persistence
     private suspend fun initializeFromPersistence() {

@@ -170,6 +170,9 @@ import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.shared.presentation.components.common.AutoScrollingTextOnDemand
 import chromahub.rhythm.app.features.local.presentation.components.player.PlayingEqIcon
 import chromahub.rhythm.app.shared.presentation.components.common.ShimmerBox
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButtonGroup
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGroupButton
+import chromahub.rhythm.app.shared.presentation.components.common.ButtonGroupStyle
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapeTarget
 import chromahub.rhythm.app.shared.presentation.components.common.rememberExpressiveShapeFor
 import chromahub.rhythm.app.ui.theme.PlayerButtonColor
@@ -1918,17 +1921,13 @@ fun PlayerScreen(
                                                             if (!isLoadingLyrics) {
                                                                 Spacer(modifier = Modifier.height(16.dp))
 
-                                                                // Action buttons row
-                                                                Row(
-                                                                    horizontalArrangement = Arrangement.spacedBy(
-                                                                        12.dp
-                                                                    ),
-                                                                    modifier = Modifier.padding(
-                                                                        horizontal = 24.dp
-                                                                    )
+                                                                // Action buttons with expressive button group
+                                                                ExpressiveButtonGroup(
+                                                                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                                                                    style = ButtonGroupStyle.Tonal
                                                                 ) {
                                                                     // Retry button
-                                                                    FilledTonalButton(
+                                                                    ExpressiveGroupButton(
                                                                         onClick = {
                                                                             HapticUtils.performHapticFeedback(
                                                                                 context,
@@ -1937,100 +1936,67 @@ fun PlayerScreen(
                                                                             )
                                                                             onRetryLyrics()
                                                                         },
-                                                                        colors = ButtonDefaults.filledTonalButtonColors(
-                                                                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                                                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                                                                        ),
-                                                                        modifier = Modifier.weight(
-                                                                            1f
-                                                                        )
+                                                                        isStart = true,
+                                                                        isEnd = false
                                                                     ) {
                                                                         Icon(
                                                                             imageVector = Icons.Rounded.Refresh,
                                                                             contentDescription = null,
-                                                                            modifier = Modifier.size(
-                                                                                18.dp
-                                                                            )
+                                                                            modifier = Modifier.size(18.dp)
                                                                         )
-                                                                        Spacer(
-                                                                            modifier = Modifier.width(
-                                                                                8.dp
-                                                                            )
-                                                                        )
+                                                                        Spacer(modifier = Modifier.width(8.dp))
                                                                         Text("Retry")
                                                                     }
 
                                                                     // Edit manually button
-                                                                    OutlinedButton(
+                                                                    ExpressiveGroupButton(
                                                                         onClick = {
                                                                             HapticUtils.performHapticFeedback(
                                                                                 context,
                                                                                 haptic,
                                                                                 HapticFeedbackType.LongPress
                                                                             )
-                                                                            showLyricsEditorDialog =
-                                                                                true
+                                                                            showLyricsEditorDialog = true
                                                                         },
-                                                                        colors = ButtonDefaults.outlinedButtonColors(
-                                                                            contentColor = MaterialTheme.colorScheme.secondary
-                                                                        ),
-                                                                        modifier = Modifier.weight(
-                                                                            1f
-                                                                        )
+                                                                        isStart = false,
+                                                                        isEnd = false
                                                                     ) {
                                                                         Icon(
                                                                             imageVector = Icons.Rounded.Edit,
                                                                             contentDescription = null,
-                                                                            modifier = Modifier.size(
-                                                                                18.dp
-                                                                            )
+                                                                            modifier = Modifier.size(18.dp)
                                                                         )
-                                                                        Spacer(
-                                                                            modifier = Modifier.width(
-                                                                                8.dp
-                                                                            )
-                                                                        )
+                                                                        Spacer(modifier = Modifier.width(8.dp))
                                                                         Text("Add")
                                                                     }
-                                                                }
 
-                                                                Spacer(modifier = Modifier.height(8.dp))
-
-                                                                // Full width button for loading lyrics
-                                                                FilledTonalButton(
-                                                                    onClick = {
-                                                                        HapticUtils.performHapticFeedback(
-                                                                            context,
-                                                                            haptic,
-                                                                            HapticFeedbackType.LongPress
-                                                                        )
-                                                                        loadLyricsLauncher.launch(
-                                                                            arrayOf(
-                                                                                "text/plain",
-                                                                                "text/*",
-                                                                                "*/*"
+                                                                    // Load lyrics button
+                                                                    ExpressiveGroupButton(
+                                                                        onClick = {
+                                                                            HapticUtils.performHapticFeedback(
+                                                                                context,
+                                                                                haptic,
+                                                                                HapticFeedbackType.LongPress
                                                                             )
+                                                                            loadLyricsLauncher.launch(
+                                                                                arrayOf(
+                                                                                    "text/plain",
+                                                                                    "text/*",
+                                                                                    "*/*"
+                                                                                )
+                                                                            )
+                                                                        },
+                                                                        isStart = false,
+                                                                        isEnd = true
+                                                                    ) {
+                                                                        Icon(
+                                                                            imageVector = Icons.Rounded.FileOpen,
+                                                                            contentDescription = null,
+                                                                            modifier = Modifier.size(18.dp)
                                                                         )
-                                                                    },
-                                                                    modifier = Modifier.padding(
-                                                                        horizontal = 24.dp
-                                                                    ),
-                                                                    colors = ButtonDefaults.filledTonalButtonColors(
-                                                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                                                    )
-                                                                ) {
-                                                                    Icon(
-                                                                        imageVector = Icons.Rounded.FileOpen,
-                                                                        contentDescription = null,
-                                                                        modifier = Modifier.size(18.dp)
-                                                                    )
-                                                                    Spacer(
-                                                                        modifier = Modifier.width(
-                                                                            8.dp
-                                                                        )
-                                                                    )
-                                                                    Text("Load Lyrics")
+                                                                        Spacer(modifier = Modifier.width(8.dp))
+                                                                        Text("Load")
+                                                                    }
                                                                 }
                                                             }
                                                         }
