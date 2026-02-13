@@ -257,16 +257,17 @@ fun SleepTimerBottomSheetNew(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Box(
-                                modifier = Modifier.size(120.dp),
+                                modifier = Modifier.size(140.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                // Progress circle - show elapsed time using official Material 3 Expressive
                                 val elapsedSeconds = totalTimerDuration - remainingSeconds
                                 val progress = if (totalTimerDuration > 0) elapsedSeconds.toFloat() / totalTimerDuration else 0f
                                 
                                 CircularWavyProgressIndicator(
                                     progress = { progress },
-                                    modifier = Modifier.fillMaxSize()
+                                    modifier = Modifier.fillMaxSize(),
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    trackColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f)
                                 )
                                 
                                 Column(

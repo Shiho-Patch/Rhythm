@@ -2283,8 +2283,8 @@ fun PlayerScreen(
                                     },
                                     modifier = Modifier.weight(1f)
                                         .padding(horizontal = 8.dp),
-                                    waveColor = MaterialTheme.colorScheme.primary,
-                                    trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                                    activeTrackColor = MaterialTheme.colorScheme.primary,
+                                    inactiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
                                     isPlaying = isPlaying
                                 )
                             } else {

@@ -70,16 +70,18 @@ fun WaveSlider(
     onValueChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
     onValueChangeFinished: (() -> Unit)? = null,
-    waveColor: Color = PlayerProgressColor,
-    trackColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    activeTrackColor: Color = PlayerProgressColor,
+    inactiveTrackColor: Color = MaterialTheme.colorScheme.surfaceVariant,
     enabled: Boolean = true,
     isPlaying: Boolean = true,
     trackHeight: Dp = 6.dp,
     thumbRadius: Dp = 8.dp,
     waveAmplitudeWhenPlaying: Dp = 3.dp,
     waveLength: Dp = 40.dp,
+    waveAnimationDuration: Int = 4000,
     thumbLineHeightWhenInteracting: Dp = 24.dp,
-    hideInactiveTrackPortion: Boolean = true
+    hideInactiveTrackPortion: Boolean = true,
+    isWaveEligible: Boolean = true
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isDragged by interactionSource.collectIsDraggedAsState()
@@ -96,8 +98,8 @@ fun WaveSlider(
         label = "ThumbInteractionAnim"
     )
 
-    // Wave only shows when playing and not interacting
-    val shouldShowWave = isPlaying && !isInteracting
+    // Wave only shows when playing, not interacting, and eligible
+    val shouldShowWave = isWaveEligible && isPlaying && !isInteracting
 
     val animatedWaveAmplitude by androidx.compose.animation.core.animateDpAsState(
         targetValue = if (shouldShowWave) waveAmplitudeWhenPlaying else 0.dp,
@@ -109,8 +111,8 @@ fun WaveSlider(
     val phaseShiftAnim = remember { Animatable(0f) }
     val phaseShift = phaseShiftAnim.value
 
-    LaunchedEffect(shouldShowWave) {
-        if (shouldShowWave) {
+    LaunchedEffect(shouldShowWave, waveAnimationDuration) {
+        if (shouldShowWave && waveAnimationDuration > 0) {
             val fullRotation = (2 * PI).toFloat()
             while (shouldShowWave) {
                 val start = (phaseShiftAnim.value % fullRotation).let { 
@@ -119,7 +121,7 @@ fun WaveSlider(
                 phaseShiftAnim.snapTo(start)
                 phaseShiftAnim.animateTo(
                     targetValue = start + fullRotation,
-                    animationSpec = tween(durationMillis = 4000, easing = LinearEasing)
+                    animationSpec = tween(durationMillis = waveAnimationDuration, easing = LinearEasing)
                 )
             }
         }
@@ -196,7 +198,7 @@ fun WaveSlider(
                         if (hideInactiveTrackPortion) {
                             if (currentProgressPxEnd < localTrackEnd) {
                                 drawLine(
-                                    color = trackColor,
+                                    color = inactiveTrackColor,
                                     start = Offset(currentProgressPxEnd, localCenterY),
                                     end = Offset(localTrackEnd, localCenterY),
                                     strokeWidth = trackHeightPx,
@@ -205,7 +207,7 @@ fun WaveSlider(
                             }
                         } else {
                             drawLine(
-                                color = trackColor,
+                                color = inactiveTrackColor,
                                 start = Offset(localTrackStart, localCenterY),
                                 end = Offset(localTrackEnd, localCenterY),
                                 strokeWidth = trackHeightPx,
@@ -218,22 +220,23 @@ fun WaveSlider(
                             val activeTrackVisualEnd = currentProgressPxEnd - (thumbGapPx * thumbInteractionFraction)
 
                             if (waveAmplitudePx > 0.01f && waveFrequency > 0f) {
-                                // Draw wavy line
                                 wavePath.reset()
                                 val waveStartDrawX = localTrackStart
                                 val waveEndDrawX = activeTrackVisualEnd.coerceAtLeast(waveStartDrawX)
-                                
                                 if (waveEndDrawX > waveStartDrawX) {
                                     val periodPx = ((2 * PI) / waveFrequency).toFloat()
                                     val samplesPerCycle = 20f
-                                    val waveStep = (periodPx / samplesPerCycle).coerceAtLeast(1.2f).coerceAtMost(trackHeightPx)
+                                    val waveStep = (periodPx / samplesPerCycle)
+                                        .coerceAtLeast(1.2f)
+                                        .coerceAtMost(trackHeightPx)
 
                                     fun yAt(x: Float): Float {
                                         val s = sin(waveFrequency * x + phaseShift)
-                                        return (localCenterY + waveAmplitudePx * s).coerceIn(
-                                            localCenterY - waveAmplitudePx - trackHeightPx / 2f,
-                                            localCenterY + waveAmplitudePx + trackHeightPx / 2f
-                                        )
+                                        return (localCenterY + waveAmplitudePx * s)
+                                            .coerceIn(
+                                                localCenterY - waveAmplitudePx - trackHeightPx / 2f,
+                                                localCenterY + waveAmplitudePx + trackHeightPx / 2f
+                                            )
                                     }
 
                                     var prevX = waveStartDrawX
@@ -245,6 +248,7 @@ fun WaveSlider(
                                         val y = yAt(x)
                                         val midX = (prevX + x) * 0.5f
                                         val midY = (prevY + y) * 0.5f
+                                        // Compose Path: quadraticBezierTo(controlX, controlY, endX, endY)
                                         wavePath.quadraticBezierTo(prevX, prevY, midX, midY)
                                         prevX = x
                                         prevY = y
@@ -255,11 +259,11 @@ fun WaveSlider(
 
                                     drawPath(
                                         path = wavePath,
-                                        color = waveColor,
+                                        color = activeTrackColor,
                                         style = Stroke(
                                             width = trackHeightPx,
                                             cap = StrokeCap.Round,
-                                            join = StrokeJoin.Round,
+                                            join = StrokeJoin.Round, // <- important for smooth joins
                                             miter = 1f
                                         )
                                     )
@@ -268,7 +272,7 @@ fun WaveSlider(
                                 // Draw straight line when paused
                                 if (activeTrackVisualEnd > localTrackStart) {
                                     drawLine(
-                                        color = waveColor,
+                                        color = activeTrackColor,
                                         start = Offset(localTrackStart, localCenterY),
                                         end = Offset(activeTrackVisualEnd, localCenterY),
                                         strokeWidth = trackHeightPx,
@@ -284,7 +288,7 @@ fun WaveSlider(
                         val thumbCurrentHeightPx = lerp(thumbRadiusPx * 2f, thumbLineHeightPx, thumbInteractionFraction)
 
                         drawRoundRect(
-                            color = waveColor,
+                            color = activeTrackColor,
                             topLeft = Offset(
                                 currentThumbCenterX - thumbCurrentWidthPx / 2f,
                                 localCenterY - thumbCurrentHeightPx / 2f

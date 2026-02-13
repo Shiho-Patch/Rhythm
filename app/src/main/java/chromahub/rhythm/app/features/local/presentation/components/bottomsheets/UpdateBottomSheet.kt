@@ -87,7 +87,7 @@ fun UpdateBottomSheet(
                             Image(
                                 painter = painterResource(id = R.drawable.rhythm_logo),
                                 contentDescription = context.getString(R.string.cd_rhythm_logo),
-                                modifier = Modifier.size(42.dp)
+                                modifier = Modifier.size(45.dp)
                             )
                             
                             Spacer(modifier = Modifier.width(0.dp))

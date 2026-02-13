@@ -415,8 +415,8 @@ fun ExternalPlaybackBottomSheet(
                                     musicViewModel.seekTo(positionMs)
                                 },
                                 modifier = Modifier.fillMaxWidth(),
-                                waveColor = MaterialTheme.colorScheme.primary,
-                                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                                activeTrackColor = MaterialTheme.colorScheme.primary,
+                                inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant,
                                 isPlaying = isPlaying
                             )
                             
