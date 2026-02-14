@@ -1643,7 +1643,8 @@ private fun ModernRecentSongCard(
             M3ImageUtils.TrackImage(
                 imageUrl = song.artworkUri,
                 trackName = song.title,
-                modifier = Modifier.size(52.dp)
+                modifier = Modifier.size(52.dp),
+                applyExpressiveShape = false
             )
             
             Spacer(modifier = Modifier.width(12.dp))
@@ -2508,7 +2509,8 @@ private fun ModernSongCard(
                     M3ImageUtils.TrackImage(
                         imageUrl = song.artworkUri,
                         trackName = song.title,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        applyExpressiveShape = false
                     )
                 }
             }
@@ -2838,7 +2840,8 @@ private fun RecommendedSongItem(
         M3ImageUtils.TrackImage(
             imageUrl = song.artworkUri,
             trackName = song.title,
-            modifier = Modifier.size(52.dp)
+            modifier = Modifier.size(52.dp),
+            applyExpressiveShape = false
         )
         
         Spacer(modifier = Modifier.width(16.dp))

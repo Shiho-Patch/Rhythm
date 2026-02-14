@@ -5014,7 +5014,8 @@ fun AlbumGridItem(
                             M3ImageUtils.AlbumArt(
                                 imageUrl = album.artworkUri,
                                 albumName = album.title,
-                                modifier = Modifier.fillMaxSize()
+                                modifier = Modifier.fillMaxSize(),
+                                applyExpressiveShape = false
                             )
                         } else {
                             Icon(
@@ -5480,7 +5481,7 @@ private fun ArtistGridCard(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val artworkShape = rememberExpressiveShapeFor(ExpressiveShapeTarget.ALBUM_ART)
+    val artworkShape = rememberExpressiveShapeFor(ExpressiveShapeTarget.ARTIST_ART)
     
     Card(
         onClick = onClick,
@@ -5501,37 +5502,55 @@ private fun ArtistGridCard(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Artist image with expressive shape container
-            Box(
-                modifier = Modifier.size(140.dp)
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f),
+                shape = rememberExpressiveShapeFor(
+                    ExpressiveShapeTarget.ARTIST_ART,
+                    fallbackShape = RoundedCornerShape(16.dp)
+                ),
+                tonalElevation = 0.dp,
+                color = MaterialTheme.colorScheme.secondaryContainer
             ) {
-                M3ImageUtils.ArtistImage(
-                    imageUrl = artist.artworkUri,
-                    artistName = artist.name,
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
-                )
-                
-                // Play button overlay positioned at bottom right
-                Surface(
-                    onClick = onPlayClick,
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primary,
-                    shadowElevation = 6.dp,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .align(Alignment.BottomEnd)
-                        .padding(4.dp)
+                        .background(
+                            if (artist.artworkUri != null) Color.Transparent
+                            else MaterialTheme.colorScheme.secondaryContainer
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
+                    M3ImageUtils.ArtistImage(
+                        imageUrl = artist.artworkUri,
+                        artistName = artist.name,
+                        modifier = Modifier.fillMaxSize(),
+                        applyExpressiveShape = false
+                    )
+                    
+                    // Play button overlay positioned at bottom right
+                    Surface(
+                        onClick = onPlayClick,
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary,
+                        shadowElevation = 6.dp,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .align(Alignment.BottomEnd)
+                            .padding(4.dp)
                     ) {
-                        Icon(
-                            imageVector = RhythmIcons.Play,
-                            contentDescription = "Play ${artist.name}",
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(24.dp)
-                        )
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Icon(
+                                imageVector = RhythmIcons.Play,
+                                contentDescription = "Play ${artist.name}",
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                     }
                 }
             }

@@ -3,7 +3,10 @@
 package chromahub.rhythm.app.shared.presentation.components.common
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -40,6 +43,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -1235,6 +1239,8 @@ fun ExpressiveSettingItem(
  * Groups playback controls (Prev, SeekBack, Play/Pause, SeekForward, Next) 
  * with unified background and native expressive grouping for spacing.
  */
+private enum class PlaybackButtonType { PREVIOUS, SEEK_BACK, PLAY_PAUSE, SEEK_FORWARD, NEXT }
+
 @Composable
 fun ExpressivePlayerControlGroup(
     isPlaying: Boolean,
@@ -1249,6 +1255,33 @@ fun ExpressivePlayerControlGroup(
     isCompactWidth: Boolean = false,
     isLoading: Boolean = false
 ) {
+    // Animation state management
+    var lastClicked by remember { mutableStateOf<PlaybackButtonType?>(null) }
+    val isPlayPauseLocked =
+        lastClicked == PlaybackButtonType.NEXT || lastClicked == PlaybackButtonType.PREVIOUS
+    var playPauseVisualState by remember { mutableStateOf(isPlaying) }
+    var pendingPlayPauseState by remember { mutableStateOf<Boolean?>(null) }
+
+    LaunchedEffect(lastClicked) {
+        if (lastClicked != null) {
+            delay(220L) // releaseDelay
+            lastClicked = null
+        }
+    }
+
+    LaunchedEffect(isPlaying) {
+        pendingPlayPauseState = isPlaying
+    }
+
+    LaunchedEffect(isPlayPauseLocked, pendingPlayPauseState) {
+        if (!isPlayPauseLocked) {
+            pendingPlayPauseState?.let {
+                playPauseVisualState = it
+                pendingPlayPauseState = null
+            }
+        }
+    }
+
     // Container height and padding
     val containerHeight = when {
         isExtraSmallWidth -> 64.dp
@@ -1282,6 +1315,65 @@ fun ExpressivePlayerControlGroup(
         else -> 8.dp
     }
     
+    // Weight calculation function
+    fun weightFor(button: PlaybackButtonType): Float = when (lastClicked) {
+        button -> when (button) {
+            PlaybackButtonType.PLAY_PAUSE -> 1.3f // play/pause expands more
+            else -> 1.1f
+        }
+        null -> when (button) {
+            PlaybackButtonType.PLAY_PAUSE -> 1.2f // play/pause is wider by default
+            else -> 1f
+        }
+        else -> when (button) {
+            PlaybackButtonType.PLAY_PAUSE -> 0.8f // play/pause compresses less
+            else -> 0.65f
+        }
+    }
+    
+    // Animation specs
+    val pressAnimationSpec: AnimationSpec<Float> = spring(
+        dampingRatio = Spring.DampingRatioMediumBouncy,
+        stiffness = Spring.StiffnessMedium
+    )
+    
+    // Animated weights
+    val prevWeight by animateFloatAsState(
+        targetValue = weightFor(PlaybackButtonType.PREVIOUS),
+        animationSpec = pressAnimationSpec,
+        label = "prevWeight"
+    )
+    val seekBackWeight by animateFloatAsState(
+        targetValue = if (showSeekButtons) weightFor(PlaybackButtonType.SEEK_BACK) else 0f,
+        animationSpec = pressAnimationSpec,
+        label = "seekBackWeight"
+    )
+    val playWeight by animateFloatAsState(
+        targetValue = weightFor(PlaybackButtonType.PLAY_PAUSE),
+        animationSpec = pressAnimationSpec,
+        label = "playWeight"
+    )
+    val seekForwardWeight by animateFloatAsState(
+        targetValue = if (showSeekButtons) weightFor(PlaybackButtonType.SEEK_FORWARD) else 0f,
+        animationSpec = pressAnimationSpec,
+        label = "seekForwardWeight"
+    )
+    val nextWeight by animateFloatAsState(
+        targetValue = weightFor(PlaybackButtonType.NEXT),
+        animationSpec = pressAnimationSpec,
+        label = "nextWeight"
+    )
+    
+    // Corner radius animation for play/pause
+    val playCorner by animateDpAsState(
+        targetValue = if (!playPauseVisualState) 60.dp else 26.dp, // playPauseCornerPlaying : playPauseCornerPaused
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "playCorner"
+    )
+
     // Unified background surface
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -1300,79 +1392,115 @@ fun ExpressivePlayerControlGroup(
                 .fillMaxWidth()
                 .height(containerHeight)
                 .padding(horizontal = containerPadding, vertical = containerPadding),
-            horizontalArrangement = Arrangement.SpaceEvenly,
+            horizontalArrangement = Arrangement.spacedBy(buttonSpacing),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Previous button
-            FilledIconButton(
-                onClick = onPrevious,
-                modifier = Modifier.size(prevNextSize),
-                colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.tertiary,
-                    contentColor = MaterialTheme.colorScheme.onTertiary
-                ),
-                shapes = IconButtonDefaults.shapes()
+            Box(
+                modifier = Modifier
+                    .weight(prevWeight)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(containerHeight / 2))
+                    .background(MaterialTheme.colorScheme.tertiary)
+                    .clickable {
+                        lastClicked = PlaybackButtonType.PREVIOUS
+                        onPrevious()
+                    },
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = RhythmIcons.SkipPrevious,
                     contentDescription = "Previous",
+                    tint = MaterialTheme.colorScheme.onTertiary,
                     modifier = Modifier.size(prevNextSize * 0.5f)
                 )
             }
             
             // Seek back button - always visible if enabled
             if (showSeekButtons) {
-                FilledTonalIconButton(
-                    onClick = onSeekBack,
-                    modifier = Modifier.size(seekButtonSize),
-                    shapes = IconButtonDefaults.shapes()
+                Box(
+                    modifier = Modifier
+                        .weight(seekBackWeight)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(containerHeight / 2))
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                        .clickable {
+                            lastClicked = PlaybackButtonType.SEEK_BACK
+                            onSeekBack()
+                        },
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = RhythmIcons.Replay10,
                         contentDescription = "Seek back",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(seekButtonSize * 0.5f)
                     )
                 }
             }
             
             // Play/Pause button - center
-            ExpressiveMorphingPlayPauseButton(
-                isPlaying = isPlaying,
-                onClick = onPlayPause,
-                isExtraSmallWidth = isExtraSmallWidth,
-                isCompactWidth = isCompactWidth,
-                isLoading = isLoading,
-                showSeekButtons = showSeekButtons
-            )
+            Box(
+                modifier = Modifier
+                    .weight(playWeight)
+                    .fillMaxHeight(),
+                contentAlignment = Alignment.Center
+            ) {
+                ExpressiveMorphingPlayPauseButton(
+                    isPlaying = playPauseVisualState,
+                    onClick = {
+                        lastClicked = PlaybackButtonType.PLAY_PAUSE
+                        onPlayPause()
+                    },
+                    isExtraSmallWidth = isExtraSmallWidth,
+                    isCompactWidth = isCompactWidth,
+                    isLoading = isLoading,
+                    showSeekButtons = showSeekButtons,
+                    cornerRadius = playCorner,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
             
             // Seek forward button - always visible if enabled
             if (showSeekButtons) {
-                FilledTonalIconButton(
-                    onClick = onSeekForward,
-                    modifier = Modifier.size(seekButtonSize),
-                    shapes = IconButtonDefaults.shapes()
+                Box(
+                    modifier = Modifier
+                        .weight(seekForwardWeight)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(containerHeight / 2))
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                        .clickable {
+                            lastClicked = PlaybackButtonType.SEEK_FORWARD
+                            onSeekForward()
+                        },
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = RhythmIcons.Forward10,
                         contentDescription = "Seek forward",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(seekButtonSize * 0.5f)
                     )
                 }
             }
             
             // Next button
-            FilledIconButton(
-                onClick = onNext,
-                modifier = Modifier.size(prevNextSize),
-                colors = IconButtonDefaults.filledIconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.tertiary,
-                    contentColor = MaterialTheme.colorScheme.onTertiary
-                ),
-                shapes = IconButtonDefaults.shapes()
+            Box(
+                modifier = Modifier
+                    .weight(nextWeight)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(containerHeight / 2))
+                    .background(MaterialTheme.colorScheme.tertiary)
+                    .clickable {
+                        lastClicked = PlaybackButtonType.NEXT
+                        onNext()
+                    },
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = RhythmIcons.SkipNext,
                     contentDescription = "Next",
+                    tint = MaterialTheme.colorScheme.onTertiary,
                     modifier = Modifier.size(prevNextSize * 0.5f)
                 )
             }
@@ -1391,6 +1519,7 @@ private fun ExpressiveMorphingPlayPauseButton(
     isCompactWidth: Boolean,
     isLoading: Boolean = false,
     showSeekButtons: Boolean = true,
+    cornerRadius: Dp = 26.dp,
     modifier: Modifier = Modifier
 ) {
     // Show PAUSE text after 2 seconds when paused
@@ -1429,47 +1558,57 @@ private fun ExpressiveMorphingPlayPauseButton(
     
     if (!showSeekButtons && !isLoading) {
         // Pill button with text when seek buttons disabled
-        Button(
-            onClick = onClick,
+        Box(
             modifier = modifier
-                .width(width)
-                .height(height),
-            shapes = ButtonDefaults.shapes(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ),
-            contentPadding = PaddingValues(horizontal = 12.dp)
+                .then(if (modifier == Modifier) Modifier.width(width) else Modifier)
+                .height(height)
+                .clip(RoundedCornerShape(height / 2))
+                .background(MaterialTheme.colorScheme.primary)
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = if (isPlaying) RhythmIcons.Pause else RhythmIcons.Play,
-                contentDescription = if (isPlaying) "Pause" else "Play",
-                modifier = Modifier.size(if (isExtraSmallWidth) 18.dp else 24.dp)
-            )
-            AnimatedVisibility(
-                visible = !isPlaying || showPauseText,
-                enter = fadeIn() + expandHorizontally(),
-                exit = fadeOut() + shrinkHorizontally()
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.padding(horizontal = 12.dp)
             ) {
-                Text(
-                    text = if (isPlaying) "PAUSE" else "PLAY",
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    modifier = Modifier.padding(start = 8.dp)
-                )
+                Crossfade(
+                    targetState = isPlaying,
+                    animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
+                    label = "playPauseCrossfade"
+                ) { playing ->
+                    Icon(
+                        imageVector = if (playing) RhythmIcons.Pause else RhythmIcons.Play,
+                        contentDescription = if (playing) "Pause" else "Play",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(if (isExtraSmallWidth) 18.dp else 24.dp)
+                    )
+                }
+                AnimatedVisibility(
+                    visible = !isPlaying || showPauseText,
+                    enter = fadeIn() + expandHorizontally(),
+                    exit = fadeOut() + shrinkHorizontally()
+                ) {
+                    Text(
+                        text = if (isPlaying) "PAUSE" else "PLAY",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
             }
         }
     } else {
         // Icon button when seek buttons enabled or loading
-        FilledIconButton(
-            onClick = onClick,
-            modifier = modifier.size(height),
-            shapes = IconButtonDefaults.shapes(),
-            colors = IconButtonDefaults.filledIconButtonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
+        Box(
+            modifier = modifier
+                .then(if (modifier == Modifier) Modifier.size(height) else Modifier.fillMaxWidth().height(height))
+                .clip(RoundedCornerShape(height / 2))
+                .background(MaterialTheme.colorScheme.primary)
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center
         ) {
             // When loading, show ONLY the loader, hide everything else
             if (isLoading) {
@@ -1494,11 +1633,18 @@ private fun ExpressiveMorphingPlayPauseButton(
                     )
                 }
             } else {
-                Icon(
-                    imageVector = if (isPlaying) RhythmIcons.Pause else RhythmIcons.Play,
-                    contentDescription = if (isPlaying) "Pause" else "Play",
-                    modifier = Modifier.size(if (isExtraSmallWidth) 20.dp else 24.dp)
-                )
+                Crossfade(
+                    targetState = isPlaying,
+                    animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
+                    label = "playPauseCrossfade"
+                ) { playing ->
+                    Icon(
+                        imageVector = if (playing) RhythmIcons.Pause else RhythmIcons.Play,
+                        contentDescription = if (playing) "Pause" else "Play",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(if (isExtraSmallWidth) 20.dp else 24.dp)
+                    )
+                }
             }
         }
     }

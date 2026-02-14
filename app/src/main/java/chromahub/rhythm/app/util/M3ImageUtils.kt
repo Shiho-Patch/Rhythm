@@ -103,7 +103,7 @@ object M3ImageUtils {
                 MaterialTheme.shapes.large
             )
         } else {
-            MaterialTheme.shapes.large
+            null // Don't apply any shape when applyExpressiveShape is false
         }
         val finalShape = shape ?: expressiveShape
         
@@ -135,7 +135,7 @@ object M3ImageUtils {
                 MaterialTheme.shapes.large
             )
         } else {
-            MaterialTheme.shapes.large
+            null // Don't apply any shape when applyExpressiveShape is false
         }
         val finalShape = shape ?: expressiveShape
         
@@ -167,7 +167,7 @@ object M3ImageUtils {
                 MaterialTheme.shapes.large
             )
         } else {
-            MaterialTheme.shapes.large
+            null // Don't apply any shape when applyExpressiveShape is false
         }
         val finalShape = shape ?: expressiveShape
         
@@ -199,7 +199,7 @@ object M3ImageUtils {
                 MaterialTheme.shapes.large
             )
         } else {
-            MaterialTheme.shapes.large
+            null // Don't apply any shape when applyExpressiveShape is false
         }
         val finalShape = shape ?: expressiveShape
         

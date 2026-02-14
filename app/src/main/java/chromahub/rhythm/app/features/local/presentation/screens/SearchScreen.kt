@@ -1654,7 +1654,8 @@ fun SearchSongItem(
             M3ImageUtils.TrackImage(
                 imageUrl = song.artworkUri,
                 trackName = song.title,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(48.dp),
+                applyExpressiveShape = false
             )
             
             // Song info with reduced spacing and font sizes
@@ -1734,7 +1735,8 @@ fun SearchAlbumItem(
                 albumName = album.title,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(1f)
+                    .aspectRatio(1f),
+                applyExpressiveShape = false
             )
             
             Spacer(modifier = Modifier.height(8.dp))
