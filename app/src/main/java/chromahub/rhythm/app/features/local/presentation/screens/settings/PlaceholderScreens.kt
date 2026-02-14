@@ -5589,16 +5589,10 @@ fun ExperimentalFeaturesScreen(onBackClick: () -> Unit) {
                             onClick = { appSettings.setOnboardingCompleted(false) }
                         ),
                         SettingItem(
-                            Icons.Default.CloudDownload,
-                            "Force Update Available",
-                            "Trigger update available state (bottom sheet will appear automatically)",
-                            onClick = { updaterViewModel.forceUpdateAvailable(true) }
-                        ),
-                        SettingItem(
-                            Icons.Default.Cancel,
-                            "Clear Update Available",
-                            "Clear the forced update available state",
-                            onClick = { updaterViewModel.forceUpdateAvailable(false) }
+                            Icons.Default.BugReport,
+                            "Test Crash",
+                            "Forcibly crash the app to test crash handling and reporting",
+                            onClick = { chromahub.rhythm.app.util.CrashReporter.testCrash() }
                         )
                     )
                 )
@@ -13036,7 +13030,7 @@ fun CrashLogHistorySettingsScreen(onBackClick: () -> Unit, appSettings: AppSetti
                         ),
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f)),
                         shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth(),
                         enabled = crashLogHistory.isNotEmpty()
                     ) {
                         Icon(
@@ -13046,26 +13040,6 @@ fun CrashLogHistorySettingsScreen(onBackClick: () -> Unit, appSettings: AppSetti
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Clear All Logs")
-                    }
-
-                    Button(
-                        onClick = {
-                            chromahub.rhythm.app.util.CrashReporter.testCrash()
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.BugReport,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Test Crash")
                     }
                 }
             }
