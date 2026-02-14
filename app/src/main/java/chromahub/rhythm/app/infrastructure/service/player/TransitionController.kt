@@ -128,16 +128,38 @@ class TransitionController(
 
             val player = engine.masterPlayer
             val repeatMode = player.repeatMode
-            val nextIndex = player.currentMediaItemIndex + 1
+            
+            // Use ExoPlayer's timeline to get the next track correctly (respects shuffle mode)
+            val currentWindowIndex = player.currentMediaItemIndex
+            val timeline = player.currentTimeline
+            val nextIndex: Int
+            
+            // Get the next window index using ExoPlayer's timeline (shuffle-aware)
+            if (timeline.isEmpty || currentWindowIndex == C.INDEX_UNSET) {
+                Log.d(TAG, "Timeline is empty or current index is unset. No transition.")
+                engine.cancelNext()
+                return@launch
+            }
+            
+            val window = Timeline.Window()
+            timeline.getWindow(currentWindowIndex, window)
+            nextIndex = timeline.getNextWindowIndex(
+                currentWindowIndex,
+                repeatMode,
+                player.shuffleModeEnabled
+            )
+            
+            Log.d(TAG, "Current index: $currentWindowIndex, Next index (shuffle-aware): $nextIndex, Shuffle enabled: ${player.shuffleModeEnabled}")
 
-            // Resolve the next media item based on repeat mode
-            val nextMediaItem = when (repeatMode) {
-                Player.REPEAT_MODE_ONE -> currentMediaItem
-                else -> if (nextIndex < player.mediaItemCount) player.getMediaItemAt(nextIndex) else null
+            // Resolve the next media item based on repeat mode and timeline
+            val nextMediaItem = when {
+                repeatMode == Player.REPEAT_MODE_ONE -> currentMediaItem
+                nextIndex != C.INDEX_UNSET -> player.getMediaItemAt(nextIndex)
+                else -> null
             }
 
             if (nextMediaItem == null) {
-                Log.d(TAG, "No next track (index=$nextIndex, count=${player.mediaItemCount}, repeat=$repeatMode). No transition.")
+                Log.d(TAG, "No next track (repeat=$repeatMode). No transition.")
                 engine.cancelNext()
                 return@launch
             }
