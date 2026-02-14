@@ -722,7 +722,7 @@ class AppUpdaterViewModel(application: Application) : AndroidViewModel(applicati
             }
             
             // Start or resume download
-            downloadApkInApp(downloadUrl, latestVersion?.apkAssetName ?: "rhythm-update.apk")
+            downloadApkInApp(downloadUrl, latestVersion?.apkAssetName ?: "rhythm-update.apk", expectedSize = latestVersion?.apkSize ?: 0)
         }
     }
     
@@ -742,8 +742,9 @@ class AppUpdaterViewModel(application: Application) : AndroidViewModel(applicati
     
     /**
      * Download an APK file in-app with progress tracking and resume support
+     * @param expectedSize The expected file size from GitHub API (0 if unknown)
      */
-    private fun downloadApkInApp(downloadUrl: String, fileName: String, retryAttempt: Int = 0) {
+    private fun downloadApkInApp(downloadUrl: String, fileName: String, expectedSize: Long = 0, retryAttempt: Int = 0) {
         // Use mutex to prevent concurrent downloads
         viewModelScope.launch {
             if (!downloadMutex.tryLock()) {
@@ -752,7 +753,7 @@ class AppUpdaterViewModel(application: Application) : AndroidViewModel(applicati
             }
             
             try {
-                downloadApkInAppInternal(downloadUrl, fileName, retryAttempt)
+                downloadApkInAppInternal(downloadUrl, fileName, expectedSize, retryAttempt)
             } finally {
                 downloadMutex.unlock()
             }
@@ -761,8 +762,9 @@ class AppUpdaterViewModel(application: Application) : AndroidViewModel(applicati
     
     /**
      * Internal download implementation with mutex protection
+     * @param expectedSize The expected file size from GitHub API (0 if unknown)
      */
-    private fun downloadApkInAppInternal(downloadUrl: String, fileName: String, retryAttempt: Int = 0) {
+    private fun downloadApkInAppInternal(downloadUrl: String, fileName: String, expectedSize: Long = 0, retryAttempt: Int = 0) {
         if (_isDownloading.value) {
             return // Already downloading
         }
@@ -998,16 +1000,20 @@ class AppUpdaterViewModel(application: Application) : AndroidViewModel(applicati
                             
                             // Verify file integrity
                             val fileSize = file.length()
-                            val expectedSize = if (totalLength > 0) totalLength else contentLength
+                            // Use GitHub's reported APK size if available, otherwise fall back to HTTP headers
+                            val httpExpectedSize = if (totalLength > 0) totalLength else contentLength
+                            val finalExpectedSize = if (expectedSize > 0) expectedSize else httpExpectedSize
                             
-                            if (expectedSize > 0 && fileSize != expectedSize) {
-                                Log.e(TAG, "Download corrupted: file size mismatch (expected: $expectedSize, actual: $fileSize)")
+                            if (finalExpectedSize > 0 && fileSize != finalExpectedSize) {
+                                Log.e(TAG, "Download corrupted: file size mismatch (expected: $finalExpectedSize [GitHub: $expectedSize, HTTP: $httpExpectedSize], actual: $fileSize)")
                                 viewModelScope.launch {
                                     file.delete() // Delete corrupted file
-                                    handleDownloadFailure(downloadUrl, fileName, retryAttempt, "File size mismatch")
+                                    handleDownloadFailure(downloadUrl, fileName, retryAttempt, "File size mismatch: expected $finalExpectedSize bytes, got $fileSize bytes")
                                 }
                                 return
                             }
+                            
+                            Log.d(TAG, "File size verification passed: $fileSize bytes (expected: $finalExpectedSize)")
                             
                             // Verify checksum if available
                             val checksumValid = activeDownload?.checksum?.let { expectedChecksum ->
@@ -1088,7 +1094,9 @@ class AppUpdaterViewModel(application: Application) : AndroidViewModel(applicati
                 if (!_isDownloading.value) {
                     Log.d(TAG, "Retrying download (attempt ${nextRetryAttempt})")
                     activeDownload = null // Clear state for fresh retry
-                    downloadApkInApp(downloadUrl, fileName, if (forceRetry) 0 else nextRetryAttempt)
+                    // Get expected size from latest version info
+                    val expectedSize = _latestVersion.value?.apkSize ?: 0
+                    downloadApkInApp(downloadUrl, fileName, expectedSize, if (forceRetry) 0 else nextRetryAttempt)
                 }
             }
         } else {
