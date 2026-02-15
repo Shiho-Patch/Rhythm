@@ -232,6 +232,8 @@ import chromahub.rhythm.app.shared.presentation.components.common.ActionProgress
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveButtonGroup
 import chromahub.rhythm.app.shared.presentation.components.common.ButtonGroupStyle
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGroupButton
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveFilledIconButton
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShapes
 
 
 enum class LibraryTab { SONGS, PLAYLISTS, ALBUMS, ARTISTS, EXPLORER }
@@ -278,7 +280,8 @@ fun LibraryScreen(
     musicViewModel: MusicViewModel, // Add MusicViewModel as a parameter
     onExportAllPlaylists: ((PlaylistImportExportUtils.PlaylistExportFormat, Boolean, Uri?, (Result<String>) -> Unit) -> Unit)? = null,
     onImportPlaylist: ((Uri, (Result<String>) -> Unit, (() -> Unit)?) -> Unit)? = null,
-    onRestartApp: (() -> Unit)? = null
+    onRestartApp: (() -> Unit)? = null,
+    onNavigateToArtist: (Artist) -> Unit = {}
 ) {
     val context = LocalContext.current
     val appSettings = remember { AppSettings.getInstance(context) }
@@ -355,7 +358,6 @@ fun LibraryScreen(
     var showCreatePlaylistDialog by remember { mutableStateOf(false) }
     var showAddToPlaylistSheet by remember { mutableStateOf(false) }
     var showAlbumBottomSheet by remember { mutableStateOf(false) }
-    var showArtistBottomSheet by remember { mutableStateOf(false) }
     var showSongInfoSheet by remember { mutableStateOf(false) }
     var showBulkExportDialog by remember { mutableStateOf(false) }
     var showImportDialog by remember { mutableStateOf(false) }
@@ -401,10 +403,8 @@ fun LibraryScreen(
     var explorerReloadTrigger by remember { mutableStateOf(0) }
     var selectedSong by remember { mutableStateOf<Song?>(null) }
     var selectedAlbum by remember { mutableStateOf<Album?>(null) }
-    var selectedArtist by remember { mutableStateOf<Artist?>(null) }
     val addToPlaylistSheetState = rememberModalBottomSheetState()
     val albumBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
-    val artistBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     
     // Multi-selection state
     val multiSelectionState = remember { chromahub.rhythm.app.features.local.presentation.viewmodel.MultiSelectionStateHolder() }
@@ -641,56 +641,6 @@ fun LibraryScreen(
         )
     }
     
-    // Artist bottom sheet
-    if (showArtistBottomSheet && selectedArtist != null) {
-        ArtistBottomSheet(
-            artist = selectedArtist!!,
-            onDismiss = { showArtistBottomSheet = false },
-            onSongClick = onSongClick,
-            onAlbumClick = { album ->
-                selectedAlbum = album
-                showAlbumBottomSheet = true
-            },
-            onPlayAll = { songs ->
-                if (songs.isNotEmpty()) {
-                    onPlayQueue(songs)
-                }
-            },
-            onShufflePlay = { songs ->
-                if (songs.isNotEmpty()) {
-                    onShuffleQueue(songs)
-                }
-            },
-            onAddToQueue = onAddToQueue,
-            onAddSongToPlaylist = { song ->
-                selectedSong = song
-                scope.launch {
-                    artistBottomSheetState.hide()
-                }.invokeOnCompletion {
-                    if (!artistBottomSheetState.isVisible) {
-                        showArtistBottomSheet = false
-                        showAddToPlaylistSheet = true
-                    }
-                }
-            },
-            onPlayerClick = onPlayerClick,
-            sheetState = artistBottomSheetState,
-            haptics = haptics,
-            onPlayNext = { song -> musicViewModel.playNext(song) },
-            onToggleFavorite = { song -> musicViewModel.toggleFavorite(song) },
-            favoriteSongs = musicViewModel.favoriteSongs.collectAsState().value,
-            onShowSongInfo = { song ->
-                selectedSong = song
-                showSongInfoSheet = true
-            },
-            onAddToBlacklist = { song ->
-                appSettings.addToBlacklist(song.id)
-            },
-            currentSong = currentSong,
-            isPlaying = isPlaying
-        )
-    }
-
     // Playlist Management now handled in Tuner > Playlists settings
     
     // Track media scanning state for pull-to-refresh
@@ -1296,25 +1246,39 @@ fun LibraryScreen(
                     // Edit button at the end to open LibraryTabReorderBottomSheet
                     item {
                         var showLibraryTabOrderSheet by remember { mutableStateOf(false) }
-                        
-                        FilledTonalIconButton(
+
+                        TabAnimation(
+                            index = tabs.size, // Use tabs.size as index since it's after all tabs
+                            selectedIndex = -1, // Never selected
+                            title = "Edit",
+                            selectedColor = MaterialTheme.colorScheme.secondaryContainer,
+                            onSelectedColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            unselectedColor = MaterialTheme.colorScheme.surfaceContainer,
+                            onUnselectedColor = MaterialTheme.colorScheme.onSurface,
                             onClick = {
                                 HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                                 showLibraryTabOrderSheet = true
                             },
-                            colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                            ),
-                            modifier = Modifier.size(48.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = "Reorder tabs",
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                        
+                            modifier = Modifier.padding(all = 2.dp),
+                            content = {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = "Reorder tabs",
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Text(
+                                        text = "Edit",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+                        )
+
                         if (showLibraryTabOrderSheet) {
                             LibraryTabOrderBottomSheet(
                                 onDismiss = { showLibraryTabOrderSheet = false },
@@ -1531,8 +1495,7 @@ fun LibraryScreen(
                         "ARTISTS" -> SingleCardArtistsContent(
                             artists = artists,
                             onArtistClick = { artist ->
-                                selectedArtist = artist
-                                showArtistBottomSheet = true
+                                onNavigateToArtist(artist)
                             },
                             haptics = haptics,
                             onPlayQueue = onPlayQueue,
@@ -2369,24 +2332,26 @@ fun SingleCardSongsContent(
                                             )
                                         }
 
-                                        // Shuffle Button Only (normal mode)
+                                        // Expressive Shuffle Button with modern design
                                         if (filteredSongs.isNotEmpty()) {
-                                            FilledIconButton(
+                                            ExpressiveFilledIconButton(
                                                 onClick = {
                                                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                                                     onShuffleQueue(filteredSongs)
                                                 },
-                                                modifier = Modifier.size(40.dp),
+                                                modifier = Modifier.size(44.dp),
+                                                shape = ExpressiveShapes.SquircleMedium,
                                                 colors = IconButtonDefaults.filledIconButtonColors(
-                                                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                                                 )
                                             ) {
                                                 Icon(
                                                     imageVector = Icons.Rounded.Shuffle,
                                                     contentDescription = context.getString(R.string.cd_shuffle),
-                                                modifier = Modifier.size(20.dp)
-                                            )
+                                                    modifier = Modifier.size(22.dp)
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -2488,7 +2453,6 @@ fun SingleCardSongsContent(
                                 }
                             }
                         }
-                    }
             }
 
             // Sticky Filter Chips
@@ -3056,9 +3020,9 @@ fun SingleCardAlbumsContent(
 
                             Spacer(modifier = Modifier.weight(0.1f))
 
-                            // Shuffle Button Only
+                            // Expressive Shuffle Button
                             if (preparedAlbums.isNotEmpty()) {
-                                FilledIconButton(
+                                ExpressiveFilledIconButton(
                                     onClick = {
                                         HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                                         val allSongs = preparedAlbums.flatMap { it.songs }
@@ -3066,16 +3030,17 @@ fun SingleCardAlbumsContent(
                                             onShuffleQueue(allSongs)
                                         }
                                     },
-                                    modifier = Modifier.size(40.dp),
+                                    modifier = Modifier.size(44.dp),
+                                    shape = ExpressiveShapes.SquircleMedium,
                                     colors = IconButtonDefaults.filledIconButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                                     )
                                 ) {
                                     Icon(
                                         imageVector = Icons.Rounded.Shuffle,
                                         contentDescription = context.getString(R.string.cd_shuffle),
-                                        modifier = Modifier.size(20.dp)
+                                        modifier = Modifier.size(22.dp)
                                     )
                                 }
                             }
@@ -3155,9 +3120,9 @@ fun SingleCardAlbumsContent(
 
                             Spacer(modifier = Modifier.weight(0.1f))
 
-                            // Shuffle Button Only
+                            // Expressive Shuffle Button
                             if (preparedAlbums.isNotEmpty()) {
-                                FilledIconButton(
+                                ExpressiveFilledIconButton(
                                     onClick = {
                                         HapticUtils.performHapticFeedback(
                                             context,
@@ -3169,16 +3134,17 @@ fun SingleCardAlbumsContent(
                                             onShuffleQueue(allSongs)
                                         }
                                     },
-                                    modifier = Modifier.size(40.dp),
+                                    modifier = Modifier.size(44.dp),
+                                    shape = ExpressiveShapes.SquircleMedium,
                                     colors = IconButtonDefaults.filledIconButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                                     )
                                 ) {
                                     Icon(
                                         imageVector = Icons.Rounded.Shuffle,
                                         contentDescription = context.getString(R.string.cd_shuffle),
-                                        modifier = Modifier.size(20.dp)
+                                        modifier = Modifier.size(22.dp)
                                     )
                                 }
                             }
@@ -8948,8 +8914,8 @@ fun BottomFloatingButtonGroup(
                 )
             }
             
-            // Shuffle Button
-            FilledIconButton(
+            // Expressive Shuffle Button
+            ExpressiveFilledIconButton(
                 onClick = {
                     if (!isPlayAllLoading && !isShuffleLoading) {
                         isShuffleLoading = true
@@ -8966,6 +8932,7 @@ fun BottomFloatingButtonGroup(
                     }
                 },
                 modifier = Modifier.size(52.dp),
+                shape = ExpressiveShapes.SquircleMedium,
                 colors = IconButtonDefaults.filledIconButtonColors(
                     containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                     contentColor = MaterialTheme.colorScheme.onTertiaryContainer

@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -47,7 +49,12 @@ import androidx.compose.ui.unit.dp
 import chromahub.rhythm.app.ui.theme.RhythmTheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import chromahub.rhythm.app.shared.data.model.Artist
+import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -250,11 +257,271 @@ fun CollapsibleHeaderScreen(
         }
     }
 }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ArtistCollapsibleHeaderScreen(
+    title: String,
+    artist: Artist?,
+    artworkUri: String?,
+    artistName: String,
+    artistSongsCount: Int,
+    artistAlbumsCount: Int,
+    showBackButton: Boolean = false,
+    onBackClick: () -> Unit = {},
+    actions: @Composable () -> Unit = {},
+    filterDropdown: @Composable () -> Unit = {},
+    scrollBehaviorKey: String? = null,
+    showAppIcon: Boolean = false,
+    iconVisibilityMode: Int = 0,
+    headerDisplayMode: Int = 1,
+    alwaysCollapsed: Boolean = false,
+    containerColor: Color = Color.Transparent,
+    content: @Composable (Modifier) -> Unit
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val appSettings = remember { chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context) }
+    val globalCollapseBehavior by appSettings.headerCollapseBehavior.collectAsState()
 
-/**
- * Non-expandable header for Player Screen - looks exactly like the collapsible header
- * but doesn't expand/collapse at all. Always stays in a consistent state.
- */
+    val topAppBarState = rememberTopAppBarState()
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
+        topAppBarState,
+        canScroll = { true }
+    )
+
+    // Apply global collapse behavior or screen-specific override
+    val shouldStartCollapsed = alwaysCollapsed || globalCollapseBehavior == 1
+
+    // If shouldStartCollapsed is true, set the initial state to fully collapsed
+    LaunchedEffect(shouldStartCollapsed) {
+        if (shouldStartCollapsed) {
+            topAppBarState.heightOffset = topAppBarState.heightOffsetLimit
+        }
+    }
+
+    // Entrance animation state
+    var showContent by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        delay(50) // Small delay for smoother transition
+        showContent = true
+    }
+
+    val contentAlpha by animateFloatAsState(
+        targetValue = if (showContent) 1f else 0f,
+        animationSpec = tween(durationMillis = 400),
+        label = "contentAlpha"
+    )
+
+    val contentOffset by animateFloatAsState(
+        targetValue = if (showContent) 0f else 30f,
+        animationSpec = tween(durationMillis = 450),
+        label = "contentOffset"
+    )
+
+    val lazyListState = rememberLazyListState()
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Fixed background art - doesn't scroll with content
+        val collapsedFraction = scrollBehavior.state.collapsedFraction
+        if (collapsedFraction < 0.5f) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(360.dp)
+            ) {
+                AsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .apply(
+                            chromahub.rhythm.app.util.ImageUtils.buildImageRequest(
+                                artworkUri,
+                                artistName,
+                                context.cacheDir,
+                                chromahub.rhythm.app.shared.presentation.components.common.M3PlaceholderType.ARTIST
+                            )
+                        )
+                        .build(),
+                    contentDescription = "Artist artwork for $artistName",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                // Multi-layer gradient overlay for better readability
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                                    MaterialTheme.colorScheme.surface
+                                )
+                            )
+                        )
+                )
+
+                // Artist Info - Bottom aligned, only visible when expanded
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = artistName,
+                        style = MaterialTheme.typography.displaySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        androidx.compose.material3.Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons.Album,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                                Text(
+                                    text = "$artistAlbumsCount albums",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+
+                        androidx.compose.material3.Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = MaterialTheme.colorScheme.secondaryContainer
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons.Music.Song,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                                Text(
+                                    text = "$artistSongsCount songs",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Scaffold with transparent topBar that overlays the background
+        Scaffold(
+            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            containerColor = Color.Transparent,
+            topBar = {
+                val collapsedFraction = scrollBehavior.state.collapsedFraction
+                val fontSize = (24 + (32 - 24) * (1 - collapsedFraction)).sp
+
+                Column {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    LargeTopAppBar(
+                        title = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                modifier = Modifier.padding(start = 14.dp)
+                            ) {
+                                // For artist screen, only show title when collapsed (normal behavior)
+                                val shouldShowTitle = collapsedFraction >= 0.5f
+
+                                if (shouldShowTitle) {
+                                    Text(
+                                        text = title,
+                                        style = MaterialTheme.typography.headlineLarge.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = fontSize
+                                        ),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                        },
+                        navigationIcon = {
+                            if (showBackButton) {
+                                IconButton(
+                                    onClick = onBackClick,
+                                    modifier = Modifier.padding(start = 12.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .clip(RoundedCornerShape(50))
+                                            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                            contentDescription = "Back",
+                                            tint = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                            }
+                        },
+                        actions = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(end = 10.dp)
+                            ) {
+                                filterDropdown()
+                                actions()
+                            }
+                        },
+                        scrollBehavior = scrollBehavior,
+                        colors = TopAppBarDefaults.largeTopAppBarColors(
+                            containerColor = Color.Transparent,
+                            scrolledContainerColor = containerColor
+                        )
+                    )
+                }
+            }
+        ) { paddingValues ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .graphicsLayer {
+                        alpha = contentAlpha
+                        translationY = contentOffset
+                    }
+            ) {
+                content(Modifier.fillMaxSize())
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FixedHeaderScreen(

@@ -134,7 +134,6 @@ import chromahub.rhythm.app.shared.data.model.AppSettings
 import androidx.compose.material3.rememberModalBottomSheetState
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AddToPlaylistBottomSheet
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.ArtistBottomSheet
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AlbumBottomSheet
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.SongInfoBottomSheet
 import chromahub.rhythm.app.util.ImageUtils
@@ -166,7 +165,8 @@ fun SearchScreen(
     onSkipNext: () -> Unit = {},
     onAddSongToPlaylist: (Song, String) -> Unit = { _, _ -> },
     onCreatePlaylist: (String) -> Unit = {},
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    onNavigateToArtist: (Artist) -> Unit = {}
 ) {
     val context = LocalContext.current
     val viewModel: MusicViewModel = viewModel()
@@ -323,11 +323,6 @@ fun SearchScreen(
     var showAlbumBottomSheet by remember { mutableStateOf(false) }
     var selectedAlbum by remember { mutableStateOf<Album?>(null) }
     val albumBottomSheetState = rememberModalBottomSheetState()
-    
-    // Artist bottom sheet state  
-    var showArtistBottomSheet by remember { mutableStateOf(false) }
-    var selectedArtist by remember { mutableStateOf<Artist?>(null) }
-    val artistBottomSheetState = rememberModalBottomSheetState()
     
     // Song info bottom sheet state
     var showSongInfoSheet by remember { mutableStateOf(false) }
@@ -548,8 +543,7 @@ fun SearchScreen(
                                 showAlbumBottomSheet = true
                             },
                             onArtistBottomSheetClick = { artist ->
-                                selectedArtist = artist
-                                showArtistBottomSheet = true
+                                onNavigateToArtist(artist)
                             },
                             onViewAllSongsClick = { showAllSongsPage = true },
                             filterSection = {
@@ -861,73 +855,6 @@ fun SearchScreen(
         )
     }
     
-    // Artist bottom sheet
-    if (showArtistBottomSheet && selectedArtist != null) {
-        ArtistBottomSheet(
-            artist = selectedArtist!!,
-            onDismiss = { 
-                scope.launch {
-                    artistBottomSheetState.hide()
-                }.invokeOnCompletion {
-                    if (!artistBottomSheetState.isVisible) {
-                        showArtistBottomSheet = false
-                    }
-                }
-            },
-            onSongClick = onSongClick,
-            onAlbumClick = { album ->
-                selectedAlbum = album
-                showAlbumBottomSheet = true
-            },
-            onPlayAll = { artistSongs -> 
-                if (artistSongs.isNotEmpty()) {
-                    viewModel.playQueue(artistSongs)
-                }
-            },
-            onShufflePlay = { artistSongs -> 
-                if (artistSongs.isNotEmpty()) {
-                    viewModel.playShuffled(artistSongs)
-                }
-            },
-            onAddToQueue = { song -> viewModel.addSongToQueue(song) },
-            onAddSongToPlaylist = { song ->
-                selectedSong = song
-                scope.launch {
-                    artistBottomSheetState.hide()
-                }.invokeOnCompletion {
-                    if (!artistBottomSheetState.isVisible) {
-                        showArtistBottomSheet = false
-                        showAddToPlaylistSheet = true
-                    }
-                }
-            },
-            onPlayerClick = onPlayerClick,
-            sheetState = artistBottomSheetState,
-            haptics = haptics,
-            onPlayNext = { song -> viewModel.playNext(song) },
-            onToggleFavorite = { song -> viewModel.toggleFavorite(song) },
-            favoriteSongs = viewModel.favoriteSongs.collectAsState().value,
-            onShowSongInfo = { song ->
-                selectedSong = song
-                scope.launch {
-                    artistBottomSheetState.hide()
-                }.invokeOnCompletion {
-                    if (!artistBottomSheetState.isVisible) {
-                        showArtistBottomSheet = false
-                        showSongInfoSheet = true
-                    }
-                }
-            },
-            onAddToBlacklist = { song ->
-                val appSettings = AppSettings.getInstance(context)
-                appSettings.addToBlacklist(song.id)
-                Toast.makeText(context, "${song.title} added to blacklist", Toast.LENGTH_SHORT).show()
-            },
-            currentSong = currentSong,
-            isPlaying = isPlaying
-        )
-    }
-    
     // Song info bottom sheet
     if (showSongInfoSheet && selectedSong != null) {
         SongInfoBottomSheet(
@@ -1001,8 +928,7 @@ fun SearchScreen(
                 showSongOptionsSheet = false
                 val artist = artists.find { it.name == selectedSong!!.artist }
                 if (artist != null) {
-                    selectedArtist = artist
-                    showArtistBottomSheet = true
+                    onNavigateToArtist(artist)
                 } else {
                     Toast.makeText(context, "Artist not found", Toast.LENGTH_SHORT).show()
                 }

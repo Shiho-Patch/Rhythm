@@ -334,6 +334,7 @@
     <string name="home_listening_stats">Your Rhythm Stats</string>
     <string name="home_listening_stats_subtitle">This week\'s musical journey</string>
     <string name="home_stat_listening_time">Listening Time</string>
+    <string name="home_stat_listening_time_short">Less than 1h</string>
     <string name="home_stat_songs_played">Songs Played</string>
     <string name="home_stat_artists">Artists</string>
     

@@ -1299,7 +1299,7 @@ class AppUpdaterViewModel(application: Application) : AndroidViewModel(applicati
         val downloadState = activeDownload!!
         Log.d(TAG, "Resuming download: ${downloadState.fileName} from ${downloadState.downloadedBytes} bytes (retry: ${downloadState.retryCount})")
         
-        downloadApkInApp(downloadState.url, downloadState.fileName, downloadState.retryCount)
+        downloadApkInApp(downloadState.url, downloadState.fileName, downloadState.totalBytes, downloadState.retryCount)
     }
     
     /**

@@ -1,5 +1,6 @@
 package chromahub.rhythm.app.features.local.presentation.navigation
 
+import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -95,6 +96,7 @@ import androidx.navigation.navArgument
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AddToPlaylistBottomSheet
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AlbumBottomSheet
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.ArtistBottomSheet
+import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.SongInfoBottomSheet
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.UpdateBottomSheet
 import chromahub.rhythm.app.features.local.presentation.screens.AddToPlaylistScreen
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog
@@ -108,6 +110,7 @@ import chromahub.rhythm.app.features.local.presentation.screens.EqualizerScreen
 import chromahub.rhythm.app.features.local.presentation.screens.PlayerScreen
 
 import chromahub.rhythm.app.features.local.presentation.screens.PlaylistDetailScreen
+import chromahub.rhythm.app.features.local.presentation.screens.ArtistDetailScreen
 import chromahub.rhythm.app.features.local.presentation.screens.SearchScreen
 import chromahub.rhythm.app.features.local.presentation.screens.settings.SettingsScreenWrapper
 import chromahub.rhythm.app.features.local.presentation.screens.settings.*
@@ -188,6 +191,9 @@ sealed class Screen(val route: String) {
     object AddToPlaylist : Screen("add_to_playlist")
     object PlaylistDetail : Screen("playlist/{playlistId}") {
         fun createRoute(playlistId: String) = "playlist/$playlistId"
+    }
+    object ArtistDetail : Screen("artist/{artistName}") {
+        fun createRoute(artistName: String) = "artist/${Uri.encode(artistName)}"
     }
     
     // Tuner Settings Subroutes
@@ -1160,6 +1166,9 @@ private fun LocalNavigationContent(
                         },
                         onNavigateToStats = {
                             navController.navigate(Screen.ListeningStats.route)
+                        },
+                        onNavigateToArtist = { artist ->
+                            navController.navigate(Screen.ArtistDetail.createRoute(artist.name))
                         }
                     )
                 }
@@ -1216,6 +1225,9 @@ private fun LocalNavigationContent(
                         },
                         onBack = {
                             navController.popBackStack()
+                        },
+                        onNavigateToArtist = { artist ->
+                            navController.navigate(Screen.ArtistDetail.createRoute(artist.name))
                         }
                     )
                 }
@@ -1223,31 +1235,20 @@ private fun LocalNavigationContent(
                 composable(
                     Screen.Settings.route,
                     enterTransition = {
-                        fadeIn(animationSpec = tween(350)) +
-                                scaleIn(
-                                    initialScale = 0.85f,
-                                    animationSpec = tween(400, easing = EaseOutQuint)
+                        fadeIn(animationSpec = tween(300)) +
+                                slideInVertically(
+                                    initialOffsetY = { it / 4 },
+                                    animationSpec = tween(350, easing = EaseInOutQuart)
                                 )
                     },
                     exitTransition = {
-                        fadeOut(animationSpec = tween(350)) +
-                                scaleOut(
-                                    targetScale = 0.85f,
-                                    animationSpec = tween(300, easing = EaseInOutQuart)
-                                )
-                    },
-                    popEnterTransition = {
-                        fadeIn(animationSpec = tween(350)) +
-                                scaleIn(
-                                    initialScale = 0.85f,
-                                    animationSpec = tween(400, easing = EaseOutQuint)
-                                )
+                        fadeOut(animationSpec = tween(300))
                     },
                     popExitTransition = {
-                        fadeOut(animationSpec = tween(350)) +
-                                scaleOut(
-                                    targetScale = 0.85f,
-                                    animationSpec = tween(300, easing = EaseInOutQuart)
+                        fadeOut(animationSpec = tween(300)) +
+                                slideOutVertically(
+                                    targetOffsetY = { it / 4 },
+                                    animationSpec = tween(350, easing = EaseInOutQuart)
                                 )
                     }
                 ) {
@@ -1595,6 +1596,9 @@ private fun LocalNavigationContent(
                         },
                         onRestartApp = {
                             viewModel.restartApp()
+                        },
+                        onNavigateToArtist = { artist ->
+                            navController.navigate(Screen.ArtistDetail.createRoute(artist.name))
                         }
                     )
                 }
@@ -1895,11 +1899,8 @@ private fun LocalNavigationContent(
 
                     // Album/Artist data for bottom sheets
                     val allAlbums by viewModel.albums.collectAsState()
-                    val allArtists by viewModel.artists.collectAsState()
                     var selectedAlbumForSheet by remember { mutableStateOf<chromahub.rhythm.app.shared.data.model.Album?>(null) }
                     var showAlbumSheet by remember { mutableStateOf(false) }
-                    var selectedArtistForSheet by remember { mutableStateOf<chromahub.rhythm.app.shared.data.model.Artist?>(null) }
-                    var showArtistSheet by remember { mutableStateOf(false) }
                     val playlistHaptics = LocalHapticFeedback.current
 
                     if (playlist != null) {
@@ -1969,11 +1970,7 @@ private fun LocalNavigationContent(
                                 }
                             },
                             onGoToArtist = { song ->
-                                val artist = allArtists.find { it.name == song.artist }
-                                if (artist != null) {
-                                    selectedArtistForSheet = artist
-                                    showArtistSheet = true
-                                }
+                                navController.navigate(Screen.ArtistDetail.createRoute(song.artist))
                             }
                         )
                     }
@@ -1997,22 +1994,167 @@ private fun LocalNavigationContent(
                             isPlaying = isPlaying
                         )
                     }
+                }
 
-                    // Artist Bottom Sheet
-                    if (showArtistSheet && selectedArtistForSheet != null) {
-                        val artistSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-                        ArtistBottomSheet(
-                            artist = selectedArtistForSheet!!,
-                            onDismiss = { showArtistSheet = false; selectedArtistForSheet = null },
+                // Artist Detail Screen
+                composable(
+                    route = Screen.ArtistDetail.route,
+                    arguments = listOf(
+                        navArgument("artistName") {
+                            type = NavType.StringType
+                        }
+                    ),
+                    enterTransition = {
+                        fadeIn(animationSpec = tween(300)) +
+                                slideInVertically(
+                                    initialOffsetY = { it / 4 },
+                                    animationSpec = tween(350, easing = EaseInOutQuart)
+                                )
+                    },
+                    exitTransition = {
+                        fadeOut(animationSpec = tween(300))
+                    },
+                    popExitTransition = {
+                        fadeOut(animationSpec = tween(300)) +
+                                slideOutVertically(
+                                    targetOffsetY = { it / 4 },
+                                    animationSpec = tween(350, easing = EaseInOutQuart)
+                                )
+                    }
+                ) { backStackEntry ->
+                    val artistName = backStackEntry.arguments?.getString("artistName")?.let { Uri.decode(it) } ?: ""
+                    val favoriteSongs by viewModel.favoriteSongs.collectAsState()
+                    
+                    // State for bottom sheets
+                    var showAddToPlaylistSheet by remember { mutableStateOf(false) }
+                    var selectedSongForPlaylist by remember { mutableStateOf<chromahub.rhythm.app.shared.data.model.Song?>(null) }
+                    var showSongInfoSheet by remember { mutableStateOf(false) }
+                    var selectedSongForInfo by remember { mutableStateOf<chromahub.rhythm.app.shared.data.model.Song?>(null) }
+                    var showAlbumBottomSheet by remember { mutableStateOf(false) }
+                    var selectedAlbum by remember { mutableStateOf<chromahub.rhythm.app.shared.data.model.Album?>(null) }
+                    val albumBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+                    
+                    ArtistDetailScreen(
+                        artistName = artistName,
+                        onBack = {
+                            navController.popBackStack()
+                        },
+                        onSongClick = onPlaySong,
+                        onAlbumClick = { album ->
+                            selectedAlbum = album
+                            showAlbumBottomSheet = true
+                        },
+                        onPlayAll = { songs ->
+                            if (songs.isNotEmpty()) {
+                                viewModel.playSongs(songs)
+                            }
+                        },
+                        onShufflePlay = { songs ->
+                            if (songs.isNotEmpty()) {
+                                viewModel.playShuffled(songs)
+                            }
+                        },
+                        onAddToQueue = { song ->
+                            viewModel.addSongToQueue(song)
+                        },
+                        onAddSongToPlaylist = { song ->
+                            selectedSongForPlaylist = song
+                            showAddToPlaylistSheet = true
+                        },
+                        onPlayerClick = {
+                            navController.navigate(Screen.Player.route)
+                        },
+                        onPlayNext = { song ->
+                            viewModel.playNext(song)
+                        },
+                        onToggleFavorite = { song ->
+                            viewModel.toggleFavorite(song)
+                        },
+                        favoriteSongs = favoriteSongs,
+                        onShowSongInfo = { song ->
+                            selectedSongForInfo = song
+                            showSongInfoSheet = true
+                        },
+                        currentSong = currentSong,
+                        isPlaying = isPlaying
+                    )
+                    
+                    // Add to playlist bottom sheet
+                    if (showAddToPlaylistSheet && selectedSongForPlaylist != null) {
+                        AddToPlaylistBottomSheet(
+                            song = selectedSongForPlaylist!!,
+                            playlists = playlists,
+                            onDismissRequest = { 
+                                showAddToPlaylistSheet = false
+                                selectedSongForPlaylist = null
+                            },
+                            onAddToPlaylist = { playlist ->
+                                viewModel.addSongToPlaylist(selectedSongForPlaylist!!, playlist.id) { message ->
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar(message)
+                                    }
+                                }
+                                showAddToPlaylistSheet = false
+                                selectedSongForPlaylist = null
+                            },
+                            onCreateNewPlaylist = {
+                                // For now, just close the sheet. Could implement create playlist dialog here
+                                showAddToPlaylistSheet = false
+                                selectedSongForPlaylist = null
+                            }
+                        )
+                    }
+                    
+                    // Song info bottom sheet
+                    if (showSongInfoSheet && selectedSongForInfo != null) {
+                        SongInfoBottomSheet(
+                            song = selectedSongForInfo!!,
+                            onDismiss = { 
+                                showSongInfoSheet = false
+                                selectedSongForInfo = null
+                            },
+                            appSettings = appSettings,
+                            onEditSong = { title, artist, album, genre, year, trackNumber ->
+                                viewModel.saveMetadataChanges(
+                                    song = selectedSongForInfo!!,
+                                    title = title,
+                                    artist = artist,
+                                    album = album,
+                                    genre = genre,
+                                    year = year,
+                                    trackNumber = trackNumber,
+                                    onSuccess = { fileWriteSucceeded ->
+                                        if (fileWriteSucceeded) {
+                                            android.widget.Toast.makeText(context, "Metadata saved successfully to file!", android.widget.Toast.LENGTH_SHORT).show()
+                                        }
+                                    },
+                                    onError = { errorMessage ->
+                                        android.widget.Toast.makeText(context, errorMessage, android.widget.Toast.LENGTH_LONG).show()
+                                    },
+                                    onPermissionRequired = { pendingRequest ->
+                                        android.widget.Toast.makeText(context, "Permission required to modify file metadata", android.widget.Toast.LENGTH_SHORT).show()
+                                    }
+                                )
+                            }
+                        )
+                    }
+                    
+                    // Album bottom sheet
+                    if (showAlbumBottomSheet && selectedAlbum != null) {
+                        AlbumBottomSheet(
+                            album = selectedAlbum!!,
+                            onDismiss = { 
+                                showAlbumBottomSheet = false
+                                selectedAlbum = null
+                            },
                             onSongClick = onPlaySong,
-                            onAlbumClick = { album -> selectedAlbumForSheet = album; showAlbumSheet = true },
                             onPlayAll = { songs -> viewModel.playSongs(songs) },
                             onShufflePlay = { songs -> viewModel.playShuffled(songs) },
                             onAddToQueue = { song -> viewModel.addSongToQueue(song) },
                             onAddSongToPlaylist = { },
                             onPlayerClick = { navController.navigate(Screen.Player.route) },
-                            sheetState = artistSheetState,
-                            haptics = playlistHaptics,
+                            sheetState = albumBottomSheetState,
+                            haptics = LocalHapticFeedback.current,
                             onPlayNext = { song -> viewModel.playNext(song) },
                             currentSong = currentSong,
                             isPlaying = isPlaying

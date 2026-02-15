@@ -191,7 +191,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.ButtonGroupSty
 import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveGroupButton
 import chromahub.rhythm.app.shared.presentation.components.common.ActionProgressLoader
 import chromahub.rhythm.app.shared.presentation.components.common.NetworkOperationLoader
-import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.ArtistBottomSheet
+import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveAnimatedCounter
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AlbumBottomSheet
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.AddToPlaylistBottomSheet
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.SongInfoBottomSheet
@@ -237,7 +237,8 @@ fun HomeScreen(
     onAddSongToPlaylist: (Song, String) -> Unit = { _, _ -> },
     onNavigateToPlaylist: (String) -> Unit = {},
     onCreatePlaylist: (String) -> Unit = { _ -> },
-    onNavigateToStats: () -> Unit = {}
+    onNavigateToStats: () -> Unit = {},
+    onNavigateToArtist: (Artist) -> Unit = {}
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val coroutineScope = rememberCoroutineScope()
@@ -250,11 +251,6 @@ fun HomeScreen(
     val headerDisplayMode by appSettings.homeHeaderDisplayMode.collectAsState()
     val showAppIcon by appSettings.homeShowAppIcon.collectAsState()
     val iconVisibilityMode by appSettings.homeAppIconVisibility.collectAsState()
-    
-    // State for artist bottom sheet
-    var showArtistSheet by remember { mutableStateOf(false) }
-    var selectedArtist by remember { mutableStateOf<Artist?>(null) }
-    val artistSheetState = rememberModalBottomSheetState()
 
     // State for album bottom sheet
     var showAlbumBottomSheet by remember { mutableStateOf(false) }
@@ -316,71 +312,7 @@ fun HomeScreen(
         }
     }
 
-    // Bottom sheet handlers (keeping same logic as original)
-    if (showArtistSheet && selectedArtist != null) {
-        ArtistBottomSheet(
-            artist = selectedArtist!!,
-            onDismiss = { showArtistSheet = false },
-            onSongClick = { song: Song ->
-                showArtistSheet = false
-                onSongClick(song)
-            },
-            onAlbumClick = { album: Album ->
-                showArtistSheet = false
-                selectedAlbum = album
-                showAlbumBottomSheet = true
-            },
-            onPlayAll = { songs ->
-                if (songs.isNotEmpty()) {
-                    musicViewModel.playQueue(songs)
-                }
-            },
-            onShufflePlay = { songs ->
-                if (songs.isNotEmpty()) {
-                    musicViewModel.playShuffled(songs)
-                }
-            },
-            onAddToQueue = { song ->
-                onAddToQueue(song)
-            },
-            onAddSongToPlaylist = { song ->
-                selectedSongForPlaylist = song
-                coroutineScope.launch {
-                    artistSheetState.hide()
-                }.invokeOnCompletion {
-                    if (!artistSheetState.isVisible) {
-                        showArtistSheet = false
-                        showAddToPlaylistSheet = true
-                    }
-                }
-            },
-            onPlayerClick = onPlayerClick,
-            sheetState = artistSheetState,
-            haptics = haptics,
-            onPlayNext = { song -> musicViewModel.playNext(song) },
-            onToggleFavorite = { song -> musicViewModel.toggleFavorite(song) },
-            favoriteSongs = musicViewModel.favoriteSongs.collectAsState().value,
-            onShowSongInfo = { song ->
-                selectedSongForPlaylist = song
-                coroutineScope.launch {
-                    artistSheetState.hide()
-                }.invokeOnCompletion {
-                    if (!artistSheetState.isVisible) {
-                        showArtistSheet = false
-                        showSongInfoSheet = true
-                    }
-                }
-            },
-            onAddToBlacklist = { song ->
-                val appSettings = AppSettings.getInstance(context)
-                appSettings.addToBlacklist(song.id)
-                Toast.makeText(context, "${song.title} added to blacklist", Toast.LENGTH_SHORT).show()
-            },
-            currentSong = currentSong,
-            isPlaying = isPlaying
-        )
-    }
-
+    // Album bottom sheet
     if (showAlbumBottomSheet && selectedAlbum != null) {
         AlbumBottomSheet(
             album = selectedAlbum!!,
@@ -587,8 +519,7 @@ fun HomeScreen(
                 showAlbumBottomSheet = true
             },
             onArtistClick = { artist: Artist ->
-                selectedArtist = artist
-                showArtistSheet = true
+                onNavigateToArtist(artist)
             },
             onViewAllSongs = onViewAllSongs,
             onViewAllAlbums = onViewAllAlbums,
@@ -1219,7 +1150,15 @@ private fun ModernScrollableContent(
                     "STATS" -> {
                         if (showListeningStats) {
                             item(key = "section_stats") {
-                                ModernListeningStatsSection(onClick = onNavigateToStats)
+                                Column {
+                                    ModernSectionTitle(
+                                        title = context.getString(R.string.home_listening_stats),
+                                        subtitle = context.getString(R.string.home_listening_stats_subtitle),
+                                        viewAllAction = onNavigateToStats
+                                    )
+                                    Spacer(modifier = Modifier.height(20.dp))
+                                    ModernListeningStatsSection(onClick = onNavigateToStats, showHeader = false)
+                                }
                             }
                         }
                     }
@@ -1644,7 +1583,7 @@ private fun ModernRecentSongCard(
                 imageUrl = song.artworkUri,
                 trackName = song.title,
                 modifier = Modifier.size(52.dp),
-                applyExpressiveShape = false
+                applyExpressiveShape = true
             )
             
             Spacer(modifier = Modifier.width(12.dp))
@@ -2510,7 +2449,7 @@ private fun ModernSongCard(
                         imageUrl = song.artworkUri,
                         trackName = song.title,
                         modifier = Modifier.fillMaxSize(),
-                        applyExpressiveShape = false
+                        applyExpressiveShape = true
                     )
                 }
             }
@@ -2544,7 +2483,8 @@ private fun ModernSongCard(
 
 @Composable
 private fun ModernListeningStatsSection(
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    showHeader: Boolean = true
 ) {
     val context = LocalContext.current
     val viewModel = viewModel<chromahub.rhythm.app.viewmodel.MusicViewModel>()
@@ -2560,22 +2500,22 @@ private fun ModernListeningStatsSection(
     val listeningTimeHours = remember(statsSummary) {
         val totalMillis = statsSummary?.totalDurationMs ?: 0L
         val hours = totalMillis / (1000 * 60 * 60)
-        if (hours < 1) "< 1h" else "${hours}h"
+        if (hours < 1) 0 else hours.toInt()
     }
 
     val songsPlayed = remember(statsSummary) {
-        (statsSummary?.totalPlayCount ?: 0).toString()
+        (statsSummary?.totalPlayCount ?: 0).toInt()
     }
 
     val uniqueArtistsCount = remember(statsSummary) {
-        (statsSummary?.uniqueArtists ?: 0).toString()
+        (statsSummary?.uniqueArtists ?: 0).toInt()
     }
 
-    // Enhanced stats card with expressive design 
-    ExpressiveCard(
+    // Enhanced stats card with expressive design and animations
+    ExpressiveElevatedCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
+        colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
         shape = ExpressiveShapes.SquircleLarge
@@ -2583,78 +2523,91 @@ private fun ModernListeningStatsSection(
         Column(
             modifier = Modifier.padding(24.dp)
         ) {
-            // Header with icon and title
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Surface(
-                    shape = ExpressiveShapes.SquircleMedium, // Squircle for modern look
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                    modifier = Modifier.size(52.dp) // Slightly larger
+            if (showHeader) {
+                // Header with animated icon and title
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
+                    // Animated icon container with gradient background
                     Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier
+                            .size(56.dp)
+                            .background(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f)
+                                    )
+                                ),
+                                shape = ExpressiveShapes.SquircleMedium
+                            ),
+                            contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.BarChart,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = context.getString(R.string.home_listening_stats),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = context.getString(R.string.home_listening_stats_subtitle),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    // Expressive navigation arrow
+                    ExpressiveLargeIconButton(
+                        onClick = onClick,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                            contentDescription = context.getString(R.string.cd_view_detailed_stats),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(24.dp)
                         )
                     }
                 }
-                
-                Spacer(modifier = Modifier.width(16.dp))
-                
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = context.getString(R.string.home_listening_stats),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = context.getString(R.string.home_listening_stats_subtitle),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                
-                // Arrow indicator for navigation
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                    contentDescription = context.getString(R.string.cd_view_detailed_stats),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp)
-                )
+
+                Spacer(modifier = Modifier.height(32.dp))
             }
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Stats grid with better layout
+
+            // Expressive stats grid with animated counters
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                EnhancedStatItem(
+                ExpressiveStatItem(
                     modifier = Modifier.weight(1f),
                     value = listeningTimeHours,
-                    label = context.getString(R.string.home_stat_listening_time),
+                    suffix = if (listeningTimeHours < 1) "" else "h",
+                    label = if (listeningTimeHours < 1) context.getString(R.string.home_stat_listening_time_short) else context.getString(R.string.home_stat_listening_time),
                     icon = RhythmIcons.Player.Timer,
                     accentColor = MaterialTheme.colorScheme.primary
                 )
-                
-                EnhancedStatItem(
+
+                ExpressiveStatItem(
                     modifier = Modifier.weight(1f),
                     value = songsPlayed,
                     label = context.getString(R.string.home_stat_songs_played),
                     icon = RhythmIcons.Music.MusicNote,
                     accentColor = MaterialTheme.colorScheme.secondary
                 )
-                
-                EnhancedStatItem(
+
+                ExpressiveStatItem(
                     modifier = Modifier.weight(1f),
                     value = uniqueArtistsCount,
                     label = context.getString(R.string.home_stat_artists),
@@ -2667,9 +2620,10 @@ private fun ModernListeningStatsSection(
 }
 
 @Composable
-private fun EnhancedStatItem(
+private fun ExpressiveStatItem(
     modifier: Modifier = Modifier,
-    value: String,
+    value: Int,
+    suffix: String = "",
     label: String,
     icon: ImageVector,
     accentColor: Color
@@ -2677,34 +2631,46 @@ private fun EnhancedStatItem(
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Icon without background shape
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = accentColor,
-            modifier = Modifier.size(28.dp)
+        // Expressive icon with animated background
+        Surface(
+            shape = ExpressiveShapes.SquircleMedium,
+            color = accentColor.copy(alpha = 0.12f),
+            modifier = Modifier.size(48.dp)
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = accentColor,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+
+        // Animated counter value with expressive styling
+        ExpressiveAnimatedCounter(
+            value = value,
+            style = MaterialTheme.typography.headlineMedium.copy(
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            ),
+            suffix = suffix
         )
-        
-        Spacer(modifier = Modifier.height(8.dp)) // Add spacing where the surface was
-        
-        // Value with emphasis
-        Text(
-            text = value,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center
-        )
-        
-        // Label
+
+        // Label with improved typography
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
-            lineHeight = 16.sp
+            lineHeight = 16.sp,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
@@ -2841,7 +2807,7 @@ private fun RecommendedSongItem(
             imageUrl = song.artworkUri,
             trackName = song.title,
             modifier = Modifier.size(52.dp),
-            applyExpressiveShape = false
+            applyExpressiveShape = true
         )
         
         Spacer(modifier = Modifier.width(16.dp))
