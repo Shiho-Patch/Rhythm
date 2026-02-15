@@ -2564,6 +2564,41 @@ class MusicRepository(context: Context) {
             }
             
             if (hasLyricsContent) {
+                // Check for karaoke format with syllable-level timestamps [mm:ss.xxx]text[mm:ss.xxx]text
+                // Karaoke format has multiple timestamps on the SAME line, each followed by a character/syllable
+                // Check if any line has more than 2 timestamps (indicating karaoke format)
+                val hasKaraokeTimestamps = cleanedLyrics.lines().any { line ->
+                    val timestampPattern = Regex("\\[\\d{1,2}:\\d{2}\\.\\d{3}\\]")
+                    val timestampCount = timestampPattern.findAll(line).count()
+                    timestampCount > 2 // More than 2 timestamps on same line = karaoke
+                }
+                
+                if (hasKaraokeTimestamps) {
+                    Log.d(TAG, "Detected karaoke format with syllable-level timestamps")
+                    
+                    // Parse karaoke format and convert to word-by-word format
+                    val enhancedLines = parseKaraokeLyrics(cleanedLyrics)
+                    
+                    if (enhancedLines.isNotEmpty()) {
+                        // Convert to Apple Music word-by-word format (JSON)
+                        val wordByWordJson = convertEnhancedLRCToWordByWord(enhancedLines)
+                        
+                        // Also extract plain text and line-synced LRC
+                        val plainText = enhancedLines.joinToString("\n") { line: EnhancedLyricLine ->
+                            line.words.joinToString("") { word: EnhancedWord -> word.text }
+                        }
+                        
+                        val syncedLrc = enhancedLines.joinToString("\n") { line: EnhancedLyricLine ->
+                            val timestamp = formatLRCTimestamp(line.lineTimestamp)
+                            val text = line.words.joinToString("") { word: EnhancedWord -> word.text }
+                            "[$timestamp]$text"
+                        }
+                        
+                        Log.d(TAG, "Successfully converted karaoke lyrics to word-by-word format (${enhancedLines.size} lines)")
+                        return LyricsData(plainText, syncedLrc, wordByWordJson)
+                    }
+                }
+                
                 // Check for Enhanced LRC format with word-level timestamps <mm:ss.xx>
                 val hasWordTimestamps = LyricsParser.hasWordTimestamps(cleanedLyrics)
                 
@@ -2641,6 +2676,89 @@ class MusicRepository(context: Context) {
         }
         
         return com.google.gson.Gson().toJson(appleMusicLines)
+    }
+    
+    /**
+     * Parse karaoke lyrics format with syllable-level timestamps [mm:ss.xxx]text[mm:ss.xxx]text
+     */
+    private fun parseKaraokeLyrics(lyrics: String): List<EnhancedLyricLine> {
+        val enhancedLines = mutableListOf<EnhancedLyricLine>()
+        val lines = lyrics.trim().split("\n", "\r\n", "\r")
+        
+        for (line in lines) {
+            val trimmedLine = line.trim()
+            if (trimmedLine.isEmpty()) continue
+            
+            // Pattern to match [mm:ss.xxx]text sequences
+            val karaokePattern = Regex("\\[(\\d{1,2}):(\\d{2})\\.(\\d{3})\\]([^\\[]*)")
+            val matches = karaokePattern.findAll(trimmedLine)
+            
+            val words = mutableListOf<EnhancedWord>()
+            var lineStartTime = Long.MAX_VALUE
+            var lineEndTime = Long.MIN_VALUE
+            
+            for (match in matches) {
+                try {
+                    val minutes = match.groupValues[1].toLong()
+                    val seconds = match.groupValues[2].toLong()
+                    val milliseconds = match.groupValues[3].toLong()
+                    val text = match.groupValues[4]
+                    
+                    val timestamp = (minutes * 60 * 1000) + (seconds * 1000) + milliseconds
+                    
+                    if (text.isNotBlank()) {
+                        // For karaoke format, each syllable gets a minimal duration
+                        // We'll estimate end time as the start of the next syllable or add a small duration
+                        val endtime = timestamp + 100 // 100ms default duration per syllable
+                        
+                        words.add(EnhancedWord(
+                            text = text,
+                            timestamp = timestamp,
+                            endtime = endtime
+                        ))
+                        
+                        lineStartTime = minOf(lineStartTime, timestamp)
+                        lineEndTime = maxOf(lineEndTime, endtime)
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Error parsing karaoke timestamp: ${match.value}", e)
+                }
+            }
+            
+            // Adjust end times based on next syllable's start time
+            val adjustedWords = words.mapIndexed { index, word ->
+                if (index < words.size - 1) {
+                    // Set end time to the start of the next word
+                    word.copy(endtime = words[index + 1].timestamp)
+                } else {
+                    // Last word: if it still has the default duration, extend it
+                    if (word.endtime == word.timestamp + 100) {
+                        word.copy(endtime = word.timestamp + 500) // 500ms for last syllable
+                    } else {
+                        word
+                    }
+                }
+            }
+            
+            // Update lineEndTime based on adjusted words
+            if (adjustedWords.isNotEmpty()) {
+                lineEndTime = adjustedWords.last().endtime
+            }
+            
+            if (adjustedWords.isNotEmpty()) {
+                // Use the first timestamp as line timestamp, or estimate if not available
+                val actualLineStart = if (lineStartTime != Long.MAX_VALUE) lineStartTime else adjustedWords.first().timestamp
+                val actualLineEnd = if (lineEndTime != Long.MIN_VALUE) lineEndTime else adjustedWords.last().endtime
+                
+                enhancedLines.add(EnhancedLyricLine(
+                    words = adjustedWords,
+                    lineTimestamp = actualLineStart,
+                    lineEndtime = actualLineEnd
+                ))
+            }
+        }
+        
+        return enhancedLines.sortedBy { it.lineTimestamp }
     }
     
     /**
@@ -2801,16 +2919,24 @@ class MusicRepository(context: Context) {
                     val sourceName = when (sourceFetchers[index]) {
                         fetchFromAPI -> "API"
                         fetchFromEmbedded -> "Embedded"
-                        fetchFromLocal -> "Local"
+                        fetchFromLocal -> "Local File"
                         else -> "Unknown"
                     }
                     Log.d(TAG, "Found lyrics from $sourceName for: $artist - $title")
-                    lyricsCache[cacheKey] = lyrics
+                    
+                    // Add source to lyrics data if not already set
+                    val lyricsWithSource = if (lyrics.source == null) {
+                        lyrics.copy(source = sourceName)
+                    } else {
+                        lyrics
+                    }
+                    
+                    lyricsCache[cacheKey] = lyricsWithSource
                     if (sourceName == "API") {
                         // Only save API-fetched lyrics to local cache
-                        saveLocalLyrics(artist, title, lyrics)
+                        saveLocalLyrics(artist, title, lyricsWithSource)
                     }
-                    return@withContext lyrics
+                    return@withContext lyricsWithSource
                 }
             } catch (e: Exception) {
                 Log.w(TAG, "Error fetching from source ${index + 1}: ${e.message}")
@@ -2884,7 +3010,7 @@ class MusicRepository(context: Context) {
                             TAG,
                             "LRCLib lyrics found - Synced: ${syncedLyrics != null}, Plain: ${plainLyrics != null}"
                         )
-                        val lyricsData = LyricsData(plainLyrics, syncedLyrics, wordByWordLyrics)
+                        val lyricsData = LyricsData(plainLyrics, syncedLyrics, wordByWordLyrics, "LRCLib")
                         return lyricsData
                     }
                 }

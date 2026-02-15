@@ -44,6 +44,53 @@ object LyricsParser {
             Pair(null, text)
         }
     }
+    
+    /**
+     * Separate main lyrics from translation and romanization lines
+     * @param lines List of text lines (first is main lyrics, rest may be translations/romanizations)
+     * @return Triple of (mainText, translation, romanization)
+     */
+    private fun separateTranslation(lines: List<String>): Triple<String, String?, String?> {
+        if (lines.isEmpty()) return Triple("", null, null)
+        if (lines.size == 1) return Triple(lines[0], null, null)
+        
+        val mainText = lines[0]
+        var translation: String? = null
+        var romanization: String? = null
+        
+        // Process additional lines
+        for (i in 1 until lines.size) {
+            val line = lines[i].trim()
+            
+            // Detect translation patterns:
+            // 1. Parentheses: (Translation text)
+            // 2. Square brackets: [Translation text]
+            // 3. Other languages (contains non-ASCII characters different from main text)
+            when {
+                line.startsWith("(") && line.endsWith(")") -> {
+                    translation = line.substring(1, line.length - 1).trim()
+                }
+                line.startsWith("[") && line.endsWith("]") -> {
+                    romanization = line.substring(1, line.length - 1).trim()
+                }
+                // If main text has non-ASCII and this line has ASCII, it's likely romanization
+                mainText.any { it.toInt() > 127 } && line.all { it.toInt() <= 127 || it.isWhitespace() } -> {
+                    romanization = line
+                }
+                // Otherwise, treat as translation
+                else -> {
+                    if (translation == null) {
+                        translation = line
+                    } else {
+                        // Append to existing translation
+                        translation += "\n" + line
+                    }
+                }
+            }
+        }
+        
+        return Triple(mainText, translation, romanization)
+    }
 
     /**
      * Parse LRC format lyrics into structured lyric lines with timestamps.
@@ -141,12 +188,12 @@ object LyricsParser {
             if (timestamps.isNotEmpty()) {
                 // This line has timestamps - process any pending text first
                 if (pendingTimestamps.isNotEmpty() && pendingTextLines.isNotEmpty()) {
-                    // Combine all pending text lines with newline separator
-                    val combinedText = pendingTextLines.joinToString("\n")
-                    val (voiceTag, cleanedText) = extractVoiceTag(combinedText)
+                    // Separate main lyrics from translations/romanizations
+                    val (mainText, translation, romanization) = separateTranslation(pendingTextLines)
+                    val (voiceTag, cleanedText) = extractVoiceTag(mainText)
                     
                     for (timestamp in pendingTimestamps) {
-                        lyricLines.add(LyricLine(timestamp, cleanedText, voiceTag))
+                        lyricLines.add(LyricLine(timestamp, cleanedText, voiceTag, translation, romanization))
                     }
                     pendingTextLines.clear()
                 }
@@ -174,11 +221,11 @@ object LyricsParser {
         
         // Process any remaining pending text
         if (pendingTimestamps.isNotEmpty() && pendingTextLines.isNotEmpty()) {
-            val combinedText = pendingTextLines.joinToString("\n")
-            val (voiceTag, cleanedText) = extractVoiceTag(combinedText)
+            val (mainText, translation, romanization) = separateTranslation(pendingTextLines)
+            val (voiceTag, cleanedText) = extractVoiceTag(mainText)
             
             for (timestamp in pendingTimestamps) {
-                lyricLines.add(LyricLine(timestamp, cleanedText, voiceTag))
+                lyricLines.add(LyricLine(timestamp, cleanedText, voiceTag, translation, romanization))
             }
         }
 
@@ -388,7 +435,9 @@ object LyricsParser {
 data class LyricLine(
     val timestamp: Long,
     val text: String,
-    val voiceTag: String? = null // Voice tag (v1, v2, v3, etc.) for multi-voice lyrics
+    val voiceTag: String? = null, // Voice tag (v1, v2, v3, etc.) for multi-voice lyrics
+    val translation: String? = null, // Translation text (if present)
+    val romanization: String? = null // Romanization text (if present)
 )
 
 /**

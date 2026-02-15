@@ -333,6 +333,8 @@ fun PlayerScreen(
     
     // Enhanced seeking settings
     val enhancedSeekingEnabled by appSettingsInstance.enhancedSeekingEnabled.collectAsState()
+    val showLyricsTranslation by appSettingsInstance.showLyricsTranslation.collectAsState()
+    val showLyricsRomanization by appSettingsInstance.showLyricsRomanization.collectAsState()
     
     // Enhanced seeking state - shows preview during scrubbing
     var isScrubbing by remember { mutableStateOf(false) }
@@ -2015,7 +2017,8 @@ fun PlayerScreen(
                                                             wordByWordLyrics = wordByWordLyrics,
                                                             currentPlaybackTime = currentTimeMs,
                                                             modifier = Modifier.fillMaxSize(),
-                                                            onSeek = onLyricsSeek
+                                                            onSeek = onLyricsSeek,
+                                                            lyricsSource = lyrics?.source
                                                         )
                                                     } else {
                                                         // Fall back to line-by-line synced or plain lyrics
@@ -2035,7 +2038,10 @@ fun PlayerScreen(
                                                                 lyrics = lyricsText,
                                                                 currentPlaybackTime = currentTimeMs,
                                                                 modifier = Modifier.fillMaxSize(),
-                                                                onSeek = onLyricsSeek
+                                                                onSeek = onLyricsSeek,
+                                                                showTranslation = showLyricsTranslation,
+                                                                showRomanization = showLyricsRomanization,
+                                                                lyricsSource = lyrics?.source
                                                             )
                                                         } else {
                                                             // Fallback to plain text lyrics if not synchronized

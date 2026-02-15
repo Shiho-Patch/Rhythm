@@ -63,7 +63,8 @@ fun WordByWordLyricsView(
     listState: LazyListState = rememberLazyListState(),
     onSeek: ((Long) -> Unit)? = null,
     syncOffset: Long = 0L, // TODO: Add UI controls for adjusting sync offset in real-time
-    animationPreset: WordAnimationPreset = WordAnimationPreset.DEFAULT // TODO: Implement animation presets
+    animationPreset: WordAnimationPreset = WordAnimationPreset.DEFAULT, // TODO: Implement animation presets
+    lyricsSource: String? = null // Source of lyrics
 ) {
     val context = LocalContext.current
     // TODO: Apply syncOffset to all timestamp comparisons for manual sync adjustment
@@ -364,6 +365,20 @@ fun WordByWordLyricsView(
                                 .padding(horizontal = 32.dp)
                         )
                     }
+                }
+            }
+            
+            // Display lyrics source at the bottom
+            if (!lyricsSource.isNullOrBlank()) {
+                item {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = "Lyrics by $lyricsSource",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
                 }
             }
         }

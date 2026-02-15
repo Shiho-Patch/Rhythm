@@ -471,6 +471,24 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
             parentScreen = "Player"
         ))
         add(SearchableSettingItem(
+            id = "lyrics_show_translation",
+            title = "Show Translation",
+            description = "Display translated lyrics when available",
+            keywords = listOf("lyrics", "translation", "translate", "multi-language", "subtitle"),
+            icon = Icons.Default.Public,
+            route = SettingsRoutes.PLAYER_CUSTOMIZATION,
+            parentScreen = "Player"
+        ))
+        add(SearchableSettingItem(
+            id = "lyrics_show_romanization",
+            title = "Show Romanization",
+            description = "Display romanized lyrics when available",
+            keywords = listOf("lyrics", "romanization", "romaji", "pinyin", "transliteration"),
+            icon = Icons.Default.TextFields,
+            route = SettingsRoutes.PLAYER_CUSTOMIZATION,
+            parentScreen = "Player"
+        ))
+        add(SearchableSettingItem(
             id = "player_canvas",
             title = "Canvas Backgrounds",
             description = "Show animated backgrounds for supported songs",
@@ -708,6 +726,15 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
             keywords = listOf("stop", "playback", "close", "exit", "quit"),
             icon = Icons.Default.Stop,
             route = SettingsRoutes.QUEUE_PLAYBACK,
+            parentScreen = "Queue & Playback"
+        ))
+        add(SearchableSettingItem(
+            id = "sleep_timer",
+            title = "Sleep Timer",
+            description = "Auto-stop playback after a set time",
+            keywords = listOf("sleep", "timer", "auto stop", "automatic", "fade out", "pause", "bedtime"),
+            icon = Icons.Default.Timer,
+            route = null, // Opens from player chip
             parentScreen = "Queue & Playback"
         ))
         add(SearchableSettingItem(

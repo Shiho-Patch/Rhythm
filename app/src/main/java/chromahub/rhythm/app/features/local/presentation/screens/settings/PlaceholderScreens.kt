@@ -8453,6 +8453,32 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             toggleState = showLyrics,
                             onToggleChange = { appSettings.setShowLyrics(it) }
                         )
+                        
+                        // Show translation toggle (only visible when lyrics are enabled)
+                        if (showLyrics) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 20.dp),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                            )
+                            SettingRow(
+                                icon = Icons.Rounded.Translate,
+                                title = context.getString(R.string.lyrics_show_translation),
+                                description = context.getString(R.string.lyrics_show_translation_desc),
+                                toggleState = appSettings.showLyricsTranslation.collectAsState().value,
+                                onToggleChange = { appSettings.setShowLyricsTranslation(it) }
+                            )
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 20.dp),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                            )
+                            SettingRow(
+                                icon = Icons.Rounded.Language,
+                                title = context.getString(R.string.lyrics_show_romanization),
+                                description = context.getString(R.string.lyrics_show_romanization_desc),
+                                toggleState = appSettings.showLyricsRomanization.collectAsState().value,
+                                onToggleChange = { appSettings.setShowLyricsRomanization(it) }
+                            )
+                        }
                         // Canvas Backgrounds - Only show if Spotify Canvas is enabled in BuildConfig
                         if (chromahub.rhythm.app.BuildConfig.ENABLE_SPOTIFY_CANVAS) {
                             HorizontalDivider(

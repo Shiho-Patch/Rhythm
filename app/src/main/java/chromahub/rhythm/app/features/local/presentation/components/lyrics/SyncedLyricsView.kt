@@ -31,7 +31,10 @@ fun SyncedLyricsView(
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
     onSeek: ((Long) -> Unit)? = null,
-    syncOffset: Long = 0L // TODO: Add UI controls for adjusting sync offset in real-time
+    syncOffset: Long = 0L, // TODO: Add UI controls for adjusting sync offset in real-time
+    showTranslation: Boolean = true,
+    showRomanization: Boolean = true,
+    lyricsSource: String? = null // Source of lyrics (e.g., "LRCLib", "Embedded", "Local File")
 ) {
     val context = LocalContext.current
     // TODO: Apply syncOffset to all timestamp comparisons for manual sync adjustment
@@ -90,8 +93,24 @@ fun SyncedLyricsView(
                     currentLineIndex = currentLineIndex,
                     currentPlaybackTime = adjustedPlaybackTime, // Use adjusted time for progress calculation
                     parsedLyrics = parsedLyrics,
-                    onSeek = onSeek
+                    onSeek = onSeek,
+                    showTranslation = showTranslation,
+                    showRomanization = showRomanization
                 )
+            }
+            
+            // Display lyrics source at the bottom
+            if (!lyricsSource.isNullOrBlank()) {
+                item {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = "Lyrics by $lyricsSource",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
             }
         }
     }
@@ -107,7 +126,9 @@ private fun SyncedLyricItem(
     currentLineIndex: Int,
     currentPlaybackTime: Long,
     parsedLyrics: List<chromahub.rhythm.app.util.LyricLine>,
-    onSeek: ((Long) -> Unit)?
+    onSeek: ((Long) -> Unit)?,
+    showTranslation: Boolean,
+    showRomanization: Boolean
 ) {
     val isCurrentLine = currentLineIndex == index
     val isPreviousLine = currentLineIndex == index + 1
@@ -197,15 +218,7 @@ private fun SyncedLyricItem(
     // Subtle letter spacing for emphasis
     val letterSpacing = if (isCurrentLine) 0.05.sp else 0.sp
 
-    Text(
-        text = line.text,
-        style = MaterialTheme.typography.headlineSmall.copy(
-            fontWeight = fontWeight,
-            lineHeight = MaterialTheme.typography.headlineSmall.lineHeight * 1.5f,
-            letterSpacing = letterSpacing
-        ),
-        color = textColor,
-        textAlign = TextAlign.Center,
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
@@ -217,6 +230,55 @@ private fun SyncedLyricItem(
                 scaleY = scale
                 translationY = verticalTranslation
             }
-            .alpha(alpha)
-    )
+            .alpha(alpha),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Main lyrics text
+        Text(
+            text = line.text,
+            style = MaterialTheme.typography.headlineSmall.copy(
+                fontWeight = fontWeight,
+                lineHeight = MaterialTheme.typography.headlineSmall.lineHeight * 1.5f,
+                letterSpacing = letterSpacing
+            ),
+            color = textColor,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
+        
+        // Translation text (if available and enabled)
+        if (showTranslation && !line.translation.isNullOrBlank()) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = line.translation,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = if (isCurrentLine) FontWeight.Medium else FontWeight.Normal,
+                    lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.4f
+                ),
+                color = textColor.copy(alpha = if (isCurrentLine) 0.75f else 0.6f),
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .alpha(if (isCurrentLine) 0.9f else 0.7f)
+            )
+        }
+        
+        // Romanization text (if available and enabled)
+        if (showRomanization && !line.romanization.isNullOrBlank()) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = line.romanization,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontWeight = if (isCurrentLine) FontWeight.Normal else FontWeight.Light,
+                    lineHeight = MaterialTheme.typography.bodySmall.lineHeight * 1.3f,
+                    letterSpacing = 0.02.sp
+                ),
+                color = MaterialTheme.colorScheme.onSurface.copy(
+                    alpha = if (isCurrentLine) 0.65f else 0.5f
+                ),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
 }

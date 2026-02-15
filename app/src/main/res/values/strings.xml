@@ -838,6 +838,10 @@
     <string name="lyrics_source_priority">Lyrics Source Priority</string>
     <string name="lyrics_choose_source">Choose where to look for Lyrics</string>
     <string name="lyrics_embedded_note">Embedded lyrics are extracted from ID3v2 USLT tags in your audio files. For best results, use properly tagged MP3/FLAC files.</string>
+    <string name="lyrics_show_translation">Show Translation</string>
+    <string name="lyrics_show_translation_desc">Display translated lyrics when available</string>
+    <string name="lyrics_show_romanization">Show Romanization</string>
+    <string name="lyrics_show_romanization_desc">Display romanized lyrics when available</string>
     
     <!-- Theme Customization -->
     <string name="theme_good_to_know">Good to Know</string>
