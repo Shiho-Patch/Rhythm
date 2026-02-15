@@ -1581,7 +1581,7 @@ fun SearchSongItem(
                 imageUrl = song.artworkUri,
                 trackName = song.title,
                 modifier = Modifier.size(48.dp),
-                applyExpressiveShape = false
+                applyExpressiveShape = true
             )
             
             // Song info with reduced spacing and font sizes
@@ -1662,7 +1662,7 @@ fun SearchAlbumItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f),
-                applyExpressiveShape = false
+                applyExpressiveShape = true
             )
             
             Spacer(modifier = Modifier.height(8.dp))

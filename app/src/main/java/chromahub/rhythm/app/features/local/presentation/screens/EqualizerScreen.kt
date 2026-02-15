@@ -937,7 +937,7 @@ fun EqualizerScreen(
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(80.dp)
+                                            .height(60.dp)
                                     ) {
 
                                         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -1080,7 +1080,7 @@ fun EqualizerScreen(
                             // Frequency Bands Grid with gradient colors
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
-                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 val secondaryColor = MaterialTheme.colorScheme.secondary
                                 val primaryColor = MaterialTheme.colorScheme.primary
@@ -1126,7 +1126,7 @@ fun EqualizerScreen(
                                             Surface(
                                                 shape = RoundedCornerShape(8.dp),
                                                 color = bandColor.copy(alpha = 0.2f),
-                                                modifier = Modifier.size(40.dp)
+                                                modifier = Modifier.size(38.dp)
                                             ) {
                                                 Box(
                                                     contentAlignment = Alignment.Center,
@@ -1140,7 +1140,7 @@ fun EqualizerScreen(
                                                             style = MaterialTheme.typography.labelSmall,
                                                             fontWeight = FontWeight.Bold,
                                                             color = bandColor,
-                                                            fontSize = 9.sp
+                                                            fontSize = 8.sp
                                                         )
                                                         Text(
                                                             text = if (level >= 0) "+${String.format("%.1f", level)}" else String.format("%.1f", level),
@@ -1154,7 +1154,7 @@ fun EqualizerScreen(
 
                                             // Band info
                                             Column(
-                                                modifier = Modifier.width(56.dp)
+                                                modifier = Modifier.width(55.dp)
                                             ) {
                                                 Text(
                                                     text = bandLabel,
