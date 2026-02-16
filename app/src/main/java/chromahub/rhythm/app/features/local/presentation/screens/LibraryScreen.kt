@@ -4170,7 +4170,7 @@ fun PlaylistItem(
             Surface(
                 modifier = Modifier.size(72.dp),
                 shape = rememberExpressiveShapeFor(
-                    ExpressiveShapeTarget.ALBUM_ART,
+                    ExpressiveShapeTarget.PLAYLIST_ART,
                     fallbackShape = RoundedCornerShape(16.dp)
                 ),
                 tonalElevation = 0.dp,
@@ -4841,7 +4841,7 @@ fun PlaylistGridItem(
                     .fillMaxWidth()
                     .aspectRatio(1f),
                 shape = rememberExpressiveShapeFor(
-                    ExpressiveShapeTarget.ALBUM_ART,
+                    ExpressiveShapeTarget.PLAYLIST_ART,
                     fallbackShape = RoundedCornerShape(16.dp)
                 ),
                 tonalElevation = 0.dp,

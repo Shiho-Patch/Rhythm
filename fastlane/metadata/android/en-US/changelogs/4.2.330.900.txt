@@ -1,0 +1,15 @@
+Rhythm v4.2 - Expressive Update 
+
+✨ Fixes:
+• Many critical fixes related to Performance, Equalizer, Navigation, etc
+
+🎨 Improvements:
+• System: New Expressive Shapes, Components and UI Elements across Rhythm
+• Library: Added multi-select actions
+• Player: Added more codec support (Like ALAC, etc)
+• Player: Added Bit Perfect
+• Many more UI & Performance improvements
+
+Thanks for using Rhythm ;)
+
+
