@@ -219,12 +219,48 @@ fun getDefaultShape(target: ShapeTarget): Shape {
  * Object containing commonly used expressive shape presets for different UI contexts
  */
 object ExpressiveShapePresets {
+    // Default preset - gentle expressive shapes suitable for all ages
+    val Default = mapOf(
+        ShapeTarget.ALBUM_ART to ExpressiveMaterialShape.COOKIE_6,
+        ShapeTarget.FAB to ExpressiveMaterialShape.CIRCLE,
+        ShapeTarget.CARDS to ExpressiveMaterialShape.CLOVER_8_LEAF,
+        ShapeTarget.BUTTONS to ExpressiveMaterialShape.OVAL,
+        ShapeTarget.CHIPS to ExpressiveMaterialShape.PILL,
+        ShapeTarget.PLAYER_CONTROLS to ExpressiveMaterialShape.CIRCLE,
+        ShapeTarget.MINI_PLAYER to ExpressiveMaterialShape.COOKIE_4,
+        ShapeTarget.NAVIGATION_INDICATOR to ExpressiveMaterialShape.CIRCLE
+    )
+    
+    // Friendly preset - warm and approachable shapes
+    val Friendly = mapOf(
+        ShapeTarget.ALBUM_ART to ExpressiveMaterialShape.CLOVER_8_LEAF,
+        ShapeTarget.FAB to ExpressiveMaterialShape.SOFT_BURST,
+        ShapeTarget.CARDS to ExpressiveMaterialShape.COOKIE_6,
+        ShapeTarget.BUTTONS to ExpressiveMaterialShape.CLOVER_8_LEAF,
+        ShapeTarget.CHIPS to ExpressiveMaterialShape.BUN,
+        ShapeTarget.PLAYER_CONTROLS to ExpressiveMaterialShape.CIRCLE,
+        ShapeTarget.MINI_PLAYER to ExpressiveMaterialShape.OVAL,
+        ShapeTarget.NAVIGATION_INDICATOR to ExpressiveMaterialShape.HEART
+    )
+    
+    // Modern preset - contemporary expressive design
+    val Modern = mapOf(
+        ShapeTarget.ALBUM_ART to ExpressiveMaterialShape.SLANTED,
+        ShapeTarget.FAB to ExpressiveMaterialShape.DIAMOND,
+        ShapeTarget.CARDS to ExpressiveMaterialShape.COOKIE_7,
+        ShapeTarget.BUTTONS to ExpressiveMaterialShape.PENTAGON,
+        ShapeTarget.CHIPS to ExpressiveMaterialShape.DIAMOND,
+        ShapeTarget.PLAYER_CONTROLS to ExpressiveMaterialShape.CIRCLE,
+        ShapeTarget.MINI_PLAYER to ExpressiveMaterialShape.SLANTED,
+        ShapeTarget.NAVIGATION_INDICATOR to ExpressiveMaterialShape.DIAMOND
+    )
+    
     // Playful preset - for fun, casual music apps
     val Playful = mapOf(
         ShapeTarget.ALBUM_ART to ExpressiveMaterialShape.FLOWER,
         ShapeTarget.FAB to ExpressiveMaterialShape.SOFT_BURST,
         ShapeTarget.CARDS to ExpressiveMaterialShape.COOKIE_6,
-        ShapeTarget.BUTTONS to ExpressiveMaterialShape.PUFFY,
+        ShapeTarget.BUTTONS to ExpressiveMaterialShape.CLOVER_8_LEAF,
         ShapeTarget.CHIPS to ExpressiveMaterialShape.BUN,
         ShapeTarget.PLAYER_CONTROLS to ExpressiveMaterialShape.SUNNY,
         ShapeTarget.MINI_PLAYER to ExpressiveMaterialShape.SQUARE,
@@ -235,7 +271,7 @@ object ExpressiveShapePresets {
     val Organic = mapOf(
         ShapeTarget.ALBUM_ART to ExpressiveMaterialShape.CLOVER_4_LEAF,
         ShapeTarget.FAB to ExpressiveMaterialShape.FLOWER,
-        ShapeTarget.CARDS to ExpressiveMaterialShape.PUFFY,
+        ShapeTarget.CARDS to ExpressiveMaterialShape.CLOVER_8_LEAF,
         ShapeTarget.BUTTONS to ExpressiveMaterialShape.OVAL,
         ShapeTarget.CHIPS to ExpressiveMaterialShape.PILL,
         ShapeTarget.PLAYER_CONTROLS to ExpressiveMaterialShape.CIRCLE,
@@ -266,25 +302,15 @@ object ExpressiveShapePresets {
         ShapeTarget.MINI_PLAYER to ExpressiveMaterialShape.SQUARE,
         ShapeTarget.NAVIGATION_INDICATOR to ExpressiveMaterialShape.PIXEL_CIRCLE
     )
-    
-    // Default preset - standard rounded shapes
-    val Default = mapOf(
-        ShapeTarget.ALBUM_ART to ExpressiveMaterialShape.SQUARE,
-        ShapeTarget.FAB to ExpressiveMaterialShape.CIRCLE,
-        ShapeTarget.CARDS to ExpressiveMaterialShape.SQUARE,
-        ShapeTarget.BUTTONS to ExpressiveMaterialShape.CIRCLE,
-        ShapeTarget.CHIPS to ExpressiveMaterialShape.PILL,
-        ShapeTarget.PLAYER_CONTROLS to ExpressiveMaterialShape.CIRCLE,
-        ShapeTarget.MINI_PLAYER to ExpressiveMaterialShape.SQUARE,
-        ShapeTarget.NAVIGATION_INDICATOR to ExpressiveMaterialShape.CIRCLE
-    )
 }
 
 /**
  * Preset identifiers for saving/loading
  */
 enum class ShapePreset(val displayName: String, val description: String) {
-    DEFAULT("Default", "Standard rounded shapes"),
+    DEFAULT("Default", "Gentle expressive shapes for all ages"),
+    FRIENDLY("Friendly", "Warm and approachable shapes"),
+    MODERN("Modern", "Contemporary expressive design"),
     PLAYFUL("Playful", "Fun and expressive shapes"),
     ORGANIC("Organic", "Nature-inspired shapes"),
     GEOMETRIC("Geometric", "Clean and modern shapes"),

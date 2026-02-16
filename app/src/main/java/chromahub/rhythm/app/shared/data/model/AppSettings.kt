@@ -3507,7 +3507,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     // ==================== Expressive MaterialShapes Settings ====================
     
     // Master toggle for expressive shapes feature
-    private val _expressiveShapesEnabled = MutableStateFlow(prefs.getBoolean(KEY_EXPRESSIVE_SHAPES_ENABLED, false))
+    private val _expressiveShapesEnabled = MutableStateFlow(prefs.getBoolean(KEY_EXPRESSIVE_SHAPES_ENABLED, true))
     val expressiveShapesEnabled: StateFlow<Boolean> = _expressiveShapesEnabled.asStateFlow()
     fun setExpressiveShapesEnabled(value: Boolean) {
         _expressiveShapesEnabled.value = value
@@ -3600,13 +3600,31 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     fun applyExpressiveShapePreset(preset: String) {
         when (preset) {
             "DEFAULT" -> {
-                _expressiveShapeAlbumArt.value = "SQUARE"
-                _expressiveShapePlayerArt.value = "SQUARE"
-                _expressiveShapeSongArt.value = "SQUARE"
-                _expressiveShapePlaylistArt.value = "SQUARE"
+                _expressiveShapeAlbumArt.value = "COOKIE_6"
+                _expressiveShapePlayerArt.value = "COOKIE_6"
+                _expressiveShapeSongArt.value = "CLOVER_8_LEAF"
+                _expressiveShapePlaylistArt.value = "COOKIE_4"
                 _expressiveShapeArtistArt.value = "CIRCLE"
                 _expressiveShapePlayerControls.value = "CIRCLE"
-                _expressiveShapeMiniPlayer.value = "SQUARE"
+                _expressiveShapeMiniPlayer.value = "COOKIE_4"
+            }
+            "FRIENDLY" -> {
+                _expressiveShapeAlbumArt.value = "CLOVER_8_LEAF"
+                _expressiveShapePlayerArt.value = "CLOVER_8_LEAF"
+                _expressiveShapeSongArt.value = "COOKIE_6"
+                _expressiveShapePlaylistArt.value = "OVAL"
+                _expressiveShapeArtistArt.value = "HEART"
+                _expressiveShapePlayerControls.value = "CIRCLE"
+                _expressiveShapeMiniPlayer.value = "OVAL"
+            }
+            "MODERN" -> {
+                _expressiveShapeAlbumArt.value = "SLANTED"
+                _expressiveShapePlayerArt.value = "SLANTED"
+                _expressiveShapeSongArt.value = "COOKIE_7"
+                _expressiveShapePlaylistArt.value = "DIAMOND"
+                _expressiveShapeArtistArt.value = "CIRCLE"
+                _expressiveShapePlayerControls.value = "PENTAGON"
+                _expressiveShapeMiniPlayer.value = "SLANTED"
             }
             "PLAYFUL" -> {
                 _expressiveShapeAlbumArt.value = "FLOWER"
@@ -3615,12 +3633,12 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
                 _expressiveShapePlaylistArt.value = "CLOVER_4_LEAF"
                 _expressiveShapeArtistArt.value = "HEART"
                 _expressiveShapePlayerControls.value = "SUNNY"
-                _expressiveShapeMiniPlayer.value = "PUFFY"
+                _expressiveShapeMiniPlayer.value = "CLOVER_8_LEAF"
             }
             "ORGANIC" -> {
                 _expressiveShapeAlbumArt.value = "CLOVER_4_LEAF"
                 _expressiveShapePlayerArt.value = "FLOWER"
-                _expressiveShapeSongArt.value = "PUFFY"
+                _expressiveShapeSongArt.value = "CLOVER_8_LEAF"
                 _expressiveShapePlaylistArt.value = "COOKIE_4"
                 _expressiveShapeArtistArt.value = "OVAL"
                 _expressiveShapePlayerControls.value = "CIRCLE"
@@ -3643,6 +3661,15 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
                 _expressiveShapeArtistArt.value = "PIXEL_CIRCLE"
                 _expressiveShapePlayerControls.value = "PIXEL_CIRCLE"
                 _expressiveShapeMiniPlayer.value = "SQUARE"
+            }
+            "CHEERFUL" -> {
+                _expressiveShapeAlbumArt.value = "FLOWER"
+                _expressiveShapePlayerArt.value = "SUNNY"
+                _expressiveShapeSongArt.value = "PUFFY"
+                _expressiveShapePlaylistArt.value = "CLOVER_4_LEAF"
+                _expressiveShapeArtistArt.value = "HEART"
+                _expressiveShapePlayerControls.value = "CIRCLE"
+                _expressiveShapeMiniPlayer.value = "PUFFY"
             }
             // CUSTOM - don't change individual shapes
         }

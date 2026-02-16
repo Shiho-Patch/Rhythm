@@ -3856,14 +3856,6 @@ fun AboutScreen(
                             )
 
                             CommunityMember(
-                                name = "Christian",
-                                role = "Collab & Project Booming's Lead Dev",
-                                githubUsername = "mardous",
-                                avatarUrl = "https://github.com/mardous.png",
-                                context = context
-                            )
-
-                            CommunityMember(
                                 name = "theovilardo",
                                 role = "Collab & Project PixelPlayer's Lead Dev",
                                 githubUsername = "theovilardo",
@@ -14654,7 +14646,10 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
     // Define presets
     val presets = remember {
         listOf(
-            PresetOption("DEFAULT", "Default", "Standard rounded shapes", Icons.Default.RadioButtonUnchecked),
+            PresetOption("DEFAULT", "Default", "Gentle expressive shapes for all ages", Icons.Default.RadioButtonUnchecked),
+            PresetOption("FRIENDLY", "Friendly", "Warm and approachable shapes", Icons.Default.Favorite),
+            PresetOption("CHEERFUL", "Cheerful", "Bright and expressive shapes", Icons.Default.WbSunny),
+            PresetOption("MODERN", "Modern", "Contemporary expressive design", Icons.Default.Star),
             PresetOption("PLAYFUL", "Playful", "Fun and expressive shapes", Icons.Default.Celebration),
             PresetOption("ORGANIC", "Organic", "Nature-inspired shapes", Icons.Default.Park),
             PresetOption("GEOMETRIC", "Geometric", "Clean and modern shapes", Icons.Default.Category),
@@ -14679,6 +14674,8 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
             ShapeOption("CLOVER_4_LEAF", "4-Leaf Clover", "Four-leaf clover", "Organic"),
             ShapeOption("CLOVER_8_LEAF", "8-Leaf Clover", "Eight-leaf clover", "Organic"),
             ShapeOption("HEART", "Heart", "Heart shape", "Organic"),
+            ShapeOption("BUN", "Bun", "Bun/bread shape", "Organic"),
+            ShapeOption("BUTTERFLY", "Butterfly", "Butterfly shape", "Organic"),
             // Playful Shapes
             ShapeOption("BOOM", "Boom", "Explosion shape", "Playful"),
             ShapeOption("SOFT_BOOM", "Soft Boom", "Softer explosion", "Playful"),
@@ -14686,6 +14683,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
             ShapeOption("SOFT_BURST", "Soft Burst", "Softer starburst", "Playful"),
             ShapeOption("SUNNY", "Sunny", "Sun with rays", "Playful"),
             ShapeOption("VERY_SUNNY", "Very Sunny", "Sun with more rays", "Playful"),
+            ShapeOption("STAR", "Star", "Star shape", "Playful"),
             // Cookie Shapes
             ShapeOption("COOKIE_4", "Cookie 4", "4-sided cookie", "Cookie"),
             ShapeOption("COOKIE_6", "Cookie 6", "6-sided cookie", "Cookie"),
@@ -15021,7 +15019,7 @@ fun ExpressiveShapesSettingsScreen(onBackClick: () -> Unit) {
                         }
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = "Material 3 Expressive introduces organic, playful shapes like flowers, hearts, cookies, and more. These shapes create a unique, expressive experience that makes your music app feel more personal and fun.",
+                            text = "Material 3 Expressive introduces organic, playful shapes like flowers, hearts, cookies, and more. These shapes create a unique, expressive experience that makes your music app feel more personal and fun. Enable expressive shapes to bring your music collection to life with beautiful, age-appropriate organic forms.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.9f),
                             lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.2f

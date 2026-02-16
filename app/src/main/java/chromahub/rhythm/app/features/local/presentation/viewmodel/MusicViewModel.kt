@@ -1458,12 +1458,25 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         val filteredSongsSet = filteredSongs.value.map { it.id }.toSet()
         
         _playlists.value = _playlists.value.map { playlist ->
-            val updatedSongs = playlist.songs.filter { song ->
+            // First, update metadata for all songs in the playlist
+            val songsWithUpdatedMetadata = playlist.songs.map { song ->
+                // Replace with the current version of the song from the library
+                currentSongsMap[song.id] ?: song
+            }
+            
+            // Then, filter out songs that no longer exist or are filtered out
+            val updatedSongs = songsWithUpdatedMetadata.filter { song ->
                 // Keep song only if it exists on device AND is not filtered out (blacklisted/not whitelisted)
                 currentSongsMap.containsKey(song.id) && filteredSongsSet.contains(song.id)
             }
-            if (updatedSongs.size < playlist.songs.size) {
-                Log.d(TAG, "Removed ${playlist.songs.size - updatedSongs.size} missing/filtered songs from playlist: ${playlist.name}")
+            
+            if (updatedSongs.size < playlist.songs.size || songsWithUpdatedMetadata != playlist.songs) {
+                if (updatedSongs.size < playlist.songs.size) {
+                    Log.d(TAG, "Removed ${playlist.songs.size - updatedSongs.size} missing/filtered songs from playlist: ${playlist.name}")
+                }
+                if (songsWithUpdatedMetadata != playlist.songs && updatedSongs.size == playlist.songs.size) {
+                    Log.d(TAG, "Updated metadata for songs in playlist: ${playlist.name}")
+                }
                 playlist.copy(songs = updatedSongs, dateModified = System.currentTimeMillis())
             } else {
                 playlist
@@ -1802,6 +1815,11 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
             }
             _playlists.value = playlists
             
+            // Refresh playlist songs with current metadata from the songs list
+            // This ensures that if metadata was updated after songs were added to playlists,
+            // the playlists will reflect the updated metadata
+            refreshPlaylistSongsMetadata()
+            
             // Load favorite songs
             val favoriteSongsJson = appSettings.favoriteSongs.value
             if (favoriteSongsJson != null) {
@@ -1828,6 +1846,58 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
                 )
             }
             _favoriteSongs.value = emptySet()
+        }
+    }
+    
+    /**
+     * Refreshes the metadata of songs in playlists by matching them with the current songs list.
+     * This fixes the issue where playlist songs have outdated metadata if they were added before
+     * the metadata was edited.
+     */
+    private fun refreshPlaylistSongsMetadata() {
+        try {
+            val currentSongs = _songs.value
+            if (currentSongs.isEmpty()) {
+                Log.d(TAG, "No songs loaded yet, skipping playlist metadata refresh")
+                return
+            }
+            
+            // Create a map of song ID to Song for fast lookup
+            val songMap = currentSongs.associateBy { it.id }
+            var updatedCount = 0
+            
+            // Update each playlist's songs with current metadata
+            _playlists.value = _playlists.value.map { playlist ->
+                val updatedSongs = playlist.songs.mapNotNull { playlistSong ->
+                    // Find the current version of the song by ID
+                    val currentSong = songMap[playlistSong.id]
+                    if (currentSong != null) {
+                        // Check if metadata has changed
+                        if (currentSong != playlistSong) {
+                            updatedCount++
+                        }
+                        currentSong
+                    } else {
+                        // Song no longer exists in library, keep the old version
+                        // (user might have deleted the file but want to keep it in playlist)
+                        playlistSong
+                    }
+                }
+                
+                if (updatedSongs != playlist.songs) {
+                    playlist.copy(songs = updatedSongs)
+                } else {
+                    playlist
+                }
+            }
+            
+            if (updatedCount > 0) {
+                Log.d(TAG, "Refreshed metadata for $updatedCount songs across ${_playlists.value.size} playlists")
+                // Save the updated playlists to persist the metadata changes
+                savePlaylists()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error refreshing playlist songs metadata", e)
         }
     }
 

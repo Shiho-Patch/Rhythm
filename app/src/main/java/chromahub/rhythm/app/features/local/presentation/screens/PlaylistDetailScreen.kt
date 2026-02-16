@@ -1174,8 +1174,7 @@ fun PlaylistDetailScreen(
                                 M3ImageUtils.PlaylistImage(
                                     imageUrl = playlist.artworkUri,
                                     playlistName = playlist.name,
-                                    modifier = Modifier.fillMaxSize(),
-                                    applyExpressiveShape = false
+                                    modifier = Modifier.fillMaxSize()
                                 )
                             } else {
                                 Box(

@@ -59,11 +59,11 @@ Rhythm is a modern, open-source music player for Android built with Material 3 d
 <br/><b>🏠 Smart Home</b>
 </td>
 <td align="center" width="25%">
-<img src="assets/ScreenShots/Player.png" alt="Player" width="180" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"/>
+<img src="assets/ScreenShots/Player_2.png" alt="Player" width="180" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"/>
 <br/><b>▶️ Beautiful Player</b>
 </td>
 <td align="center" width="25%">
-<img src="assets/ScreenShots/Player_Lyrics.png" alt="Lyrics" width="180" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"/>
+<img src="assets/ScreenShots/Player_Lyrics_View.png" alt="Lyrics" width="180" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"/>
 <br/><b>🎤 Synced Lyrics</b>
 </td>
 <td align="center" width="25%">
@@ -136,14 +136,21 @@ Complete documentation is available in our [**Wiki**](https://github.com/cromagu
 
 | Category | Technology |
 |:---|:---|
-| **UI Framework** | Jetpack Compose + Material 3 |
-| **Audio Engine** | Media3 ExoPlayer 1.9.0 |
-| **Widgets** | Glance 1.1.1 + RemoteViews |
+| **UI Framework** | Jetpack Compose + Material 3 + Glance Widgets |
+| **Audio Engine** | Media3 ExoPlayer 1.9.0 + FFmpeg Decoder |
+| **Database** | Room + SQLite |
+| **Networking** | Retrofit + OkHttp + Ktor |
+| **Image Processing** | Coil + AndroidX Palette |
+| **Audio Metadata** | JAudioTagger |
+| **Async Programming** | Kotlin Coroutines + Flow |
+| **Work Management** | WorkManager |
+| **Permissions** | Accompanist Permissions |
+| **Navigation** | AndroidX Navigation |
+| **JSON Processing** | Gson |
+| **Memory Management** | LeakCanary (debug) + Desugar JDK Libs |
+| **Typography** | Geom Font + Material Icons Extended |
 | **Language** | 100% Kotlin |
 | **Architecture** | MVVM + Clean Architecture |
-| **Async** | Coroutines + Flow |
-| **Networking** | Retrofit + OkHttp |
-| **Image Loading** | Coil |
 
 📖 **Full tech stack:** See [Technology Stack](https://github.com/cromaguy/Rhythm/wiki/Technology-Stack) in the wiki
 
@@ -169,14 +176,17 @@ We welcome contributions! See [CONTRIBUTING.md](https://github.com/cromaguy/Rhyt
 
 ### Contributors
 - **[Izzy](https://github.com/IzzySoft)** - IzzyOnDroid repository management
-- **[Christian](https://github.com/mardous)** - Project Booming collaboration
+- **[theovilardo](https://github.com/theovilardo)** - Project PixelPlayer collaboration & Lead Dev
 - **[Alex](https://github.com/Paxsenix0)** - Spotify Canvas API integration
+- **[nikutow](https://github.com/nikutow)** - Contributor
 
 ### Special Thanks
-- Google - Android platform & Jetpack libraries
-- JetBrains - Kotlin programming language
-- Open Source Community - Continuous support & inspiration
-- All beta testers and users for valuable feedback
+- **Google Material Design Team** - Design principles and Material 3 components
+- **Android Open Source Project** - Android platform and Jetpack libraries
+- **JetBrains** - Kotlin programming language and development tools
+- **Jetpack Compose Team** - Modern UI framework development
+- **Open Source Community** - Continuous support, inspiration, and libraries
+- **All beta testers and users** - Valuable feedback and bug reports
 
 ---
 
