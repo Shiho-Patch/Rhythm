@@ -15,6 +15,8 @@ import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import chromahub.rhythm.app.infrastructure.audio.BitPerfectRenderersFactory
 import chromahub.rhythm.app.infrastructure.audio.BitPerfectAudioSink
+import chromahub.rhythm.app.infrastructure.audio.RhythmBassBoostProcessor
+import chromahub.rhythm.app.infrastructure.audio.RhythmSpatializationProcessor
 import chromahub.rhythm.app.shared.data.model.TransitionSettings
 import chromahub.rhythm.app.util.envelope
 import kotlinx.coroutines.CoroutineScope
@@ -38,7 +40,9 @@ import kotlinx.coroutines.launch
 @OptIn(UnstableApi::class)
 class RhythmPlayerEngine(
     private val context: Context,
-    private val bitPerfectMode: Boolean = false
+    private val bitPerfectMode: Boolean = false,
+    private val bassBoostProcessor: RhythmBassBoostProcessor? = null,
+    private val spatializationProcessor: RhythmSpatializationProcessor? = null
 ) {
     companion object {
         private const val TAG = "RhythmPlayerEngine"
@@ -192,9 +196,15 @@ class RhythmPlayerEngine(
             .setPrioritizeTimeOverSizeThresholds(true)
             .build()
 
-        val renderersFactory = if (bitPerfectMode) {
-            Log.d(TAG, "Using BitPerfectRenderersFactory")
-            BitPerfectRenderersFactory(context, enableBitPerfect = true)
+        val renderersFactory = if (bitPerfectMode || bassBoostProcessor != null || spatializationProcessor != null) {
+            // Use BitPerfectRenderersFactory if bit-perfect mode is enabled OR if Rhythm processors are available
+            Log.d(TAG, "Using BitPerfectRenderersFactory (bit-perfect: $bitPerfectMode, processors: ${bassBoostProcessor != null || spatializationProcessor != null})")
+            BitPerfectRenderersFactory(
+                context, 
+                enableBitPerfect = bitPerfectMode,
+                bassBoostProcessor = bassBoostProcessor,
+                spatializationProcessor = spatializationProcessor
+            )
         } else {
             Log.d(TAG, "Using DefaultRenderersFactory")
             DefaultRenderersFactory(context).apply {

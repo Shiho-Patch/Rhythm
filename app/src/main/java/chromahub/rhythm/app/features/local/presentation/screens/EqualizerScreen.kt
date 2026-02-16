@@ -1333,17 +1333,15 @@ fun EqualizerScreen(
 
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            // Spatial Audio (Virtualizer) with tertiary color
+                            // Spatial Audio (Rhythm Spatialization) with tertiary color
                             val tertiaryColor = MaterialTheme.colorScheme.tertiary
-                            val isAndroid12Plus = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-                            val isAndroid13Plus = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                            // Rhythm's custom spatialization works on all Android versions
                             val statusText = when {
-                                !isAndroid13Plus -> "Requires Android 13+"
-                                !isSpatializationAvailable -> "Not available on this device"
+                                !isSpatializationAvailable -> "Not compatible with mono audio"
                                 isVirtualizerEnabled -> spatializationStatus
-                                else -> "Spatial audio enhancement"
+                                else -> "Spatial audio enhancement - Available"
                             }
-                            val showIntensitySlider = isAndroid13Plus && isSpatializationAvailable && isVirtualizerEnabled
+                            val showIntensitySlider = isSpatializationAvailable && isVirtualizerEnabled
                             
                             Card(
                                 colors = CardDefaults.cardColors(
@@ -1386,7 +1384,7 @@ fun EqualizerScreen(
 
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(
-                                                text = if (isAndroid13Plus) "Spatial Audio" else context.getString(R.string.virtualizer),
+                                                text = "Spatial Audio",
                                                 style = MaterialTheme.typography.titleSmall,
                                                 fontWeight = FontWeight.SemiBold
                                             )
@@ -1403,7 +1401,7 @@ fun EqualizerScreen(
                                         TunerAnimatedSwitch(
                                             checked = isVirtualizerEnabled && isSpatializationAvailable,
                                             onCheckedChange = { enabled ->
-                                                if (isAndroid12Plus && isSpatializationAvailable) {
+                                                if (isSpatializationAvailable) {
                                                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
                                                     isVirtualizerEnabled = enabled
                                                     viewModel.setVirtualizer(enabled, virtualizerStrength.toInt().toShort())
@@ -1412,35 +1410,13 @@ fun EqualizerScreen(
                                         )
                                     }
 
-                                    // Info text for Android < 13
-                                    if (!isAndroid13Plus && isVirtualizerEnabled) {
+                                    // Info about Rhythm's custom spatialization
+                                    if (!isSpatializationAvailable && isVirtualizerEnabled) {
                                         Spacer(modifier = Modifier.height(8.dp))
                                         Text(
-                                            text = "🔔 This feature requires Android 13 or higher. Please update your device OS.",
+                                            text = "ℹ️ Spatial audio works best with stereo (2-channel) audio.",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.padding(horizontal = 4.dp)
-                                        )
-                                    }
-                                    
-                                    // Info text for unavailable spatializer
-                                    if (isAndroid13Plus && !isSpatializationAvailable && isVirtualizerEnabled) {
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text(
-                                            text = "ℹ️ Spatial audio is not supported on this device.",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.padding(horizontal = 4.dp)
-                                        )
-                                    }
-                                    
-                                    // Info about system settings
-                                    if (isAndroid13Plus && isSpatializationAvailable && spatializationStatus.contains("system settings") && isVirtualizerEnabled) {
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text(
-                                            text = "⚙️ To use spatial audio, enable it in your device's Sound settings.",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = tertiaryColor,
                                             modifier = Modifier.padding(horizontal = 4.dp)
                                         )
                                     }

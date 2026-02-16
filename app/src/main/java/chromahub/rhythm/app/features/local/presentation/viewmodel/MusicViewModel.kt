@@ -5842,26 +5842,17 @@ class MusicViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             try {
                 val context = getApplication<Application>()
-                val serviceIntent = Intent(context, MediaPlaybackService::class.java)
-                // We'll need to get the service instance to call methods
-                // For now, just update based on Android version
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
-                    val spatializer = audioManager.spatializer
-                    _isSpatializationAvailable.value = spatializer?.isAvailable == true
-                    _spatializationStatus.value = when {
-                        spatializer == null -> "Not available"
-                        !spatializer.isAvailable -> "Not available on this device"
-                        !spatializer.isEnabled -> "Available (enable in system settings)"
-                        else -> "Active"
-                    }
-                } else {
-                    _isSpatializationAvailable.value = false
-                    _spatializationStatus.value = "Requires Android 13+"
+                // Rhythm's custom spatialization works on ALL Android versions
+                // It uses M/S stereo widening, so it's always available for stereo audio
+                _isSpatializationAvailable.value = true
+                _spatializationStatus.value = when {
+                    appSettings.virtualizerEnabled.value -> "Active (Rhythm Spatial Audio)"
+                    else -> "Available"
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error updating spatialization status", e)
-                _spatializationStatus.value = "Error checking status"
+                _isSpatializationAvailable.value = true // Still available even if check fails
+                _spatializationStatus.value = "Available"
             }
         }
     }

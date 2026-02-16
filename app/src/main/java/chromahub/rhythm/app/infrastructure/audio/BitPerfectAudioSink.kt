@@ -28,32 +28,67 @@ object BitPerfectAudioSink {
     
     private const val TAG = "BitPerfectAudioSink"
     
+    // Rhythm audio processors
+    private var rhythmBassBoostProcessor: RhythmBassBoostProcessor? = null
+    private var rhythmSpatializationProcessor: RhythmSpatializationProcessor? = null
+    
     /**
-     * Create AudioSink with bit-perfect configuration
+     * Create AudioSink with bit-perfect configuration and Rhythm audio effects
      */
-    fun create(context: Context, enableBitPerfect: Boolean): AudioSink {
-        Log.d(TAG, "Creating AudioSink (bit-perfect: $enableBitPerfect)")
+    fun create(
+        context: Context, 
+        enableBitPerfect: Boolean,
+        bassBoostProcessor: RhythmBassBoostProcessor? = null,
+        spatializationProcessor: RhythmSpatializationProcessor? = null
+    ): AudioSink {
+        Log.d(TAG, "Creating AudioSink (bit-perfect: $enableBitPerfect, Rhythm effects: ${bassBoostProcessor != null || spatializationProcessor != null})")
+        
+        // Store processor references
+        rhythmBassBoostProcessor = bassBoostProcessor
+        rhythmSpatializationProcessor = spatializationProcessor
         
         // Create a builder with the appropriate configuration
         val builder = DefaultAudioSink.Builder(context)
             .setEnableFloatOutput(false)
             .setEnableAudioTrackPlaybackParams(true)
         
-        // Configure for bit-perfect output if enabled
-        if (enableBitPerfect) {
-            Log.d(TAG, "Bit-perfect mode enabled - will output at native sample rate")
-            
-            // Minimal audio processing for bit-perfect output
-            // Empty processor chain means no DSP modifications
+        // Configure audio processor chain
+        val processors = mutableListOf<AudioProcessor>()
+        
+        // Add Rhythm processors if provided (even if not currently enabled)
+        // The processors' isActive() method will control whether they actually process audio
+        if (bassBoostProcessor != null) {
+            processors.add(bassBoostProcessor)
+            Log.d(TAG, "Added Rhythm bass boost processor (enabled: ${bassBoostProcessor.isEnabled()})")
+        }
+        
+        if (spatializationProcessor != null) {
+            processors.add(spatializationProcessor)
+            Log.d(TAG, "Added Rhythm spatialization processor (enabled: ${spatializationProcessor.isEnabled()})")
+        }
+        
+        // Configure processor chain
+        if (processors.isNotEmpty() || enableBitPerfect) {
+            Log.d(TAG, "Configuring audio processor chain with ${processors.size} Rhythm processors")
             builder.setAudioProcessorChain(
                 DefaultAudioSink.DefaultAudioProcessorChain(
-                    *emptyArray<AudioProcessor>()
+                    *processors.toTypedArray()
                 )
             )
         }
         
         return builder.build()
     }
+    
+    /**
+     * Get the current bass boost processor
+     */
+    fun getBassBoostProcessor(): RhythmBassBoostProcessor? = rhythmBassBoostProcessor
+    
+    /**
+     * Get the current spatialization processor
+     */
+    fun getSpatializationProcessor(): RhythmSpatializationProcessor? = rhythmSpatializationProcessor
     
     /**
      * Check if the device supports the requested sample rate

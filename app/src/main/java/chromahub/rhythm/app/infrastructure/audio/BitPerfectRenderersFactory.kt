@@ -14,15 +14,19 @@ import androidx.media3.exoplayer.mediacodec.MediaCodecSelector
 import java.util.ArrayList
 
 /**
- * Custom RenderersFactory that creates audio renderers configured for bit-perfect playback.
+ * Custom RenderersFactory that creates audio renderers configured for bit-perfect playback
+ * with optional Rhythm audio effects.
  * 
  * This factory creates MediaCodecAudioRenderer instances that use a custom AudioSink
- * capable of outputting audio at its native sample rate without resampling.
+ * capable of outputting audio at its native sample rate without resampling, and
+ * applying Rhythm audio filters for bass boost and spatialization.
  */
 @OptIn(UnstableApi::class)
 class BitPerfectRenderersFactory(
     context: Context,
-    private val enableBitPerfect: Boolean = false
+    private val enableBitPerfect: Boolean = false,
+    private val bassBoostProcessor: RhythmBassBoostProcessor? = null,
+    private val spatializationProcessor: RhythmSpatializationProcessor? = null
 ) : DefaultRenderersFactory(context) {
     
     companion object {
@@ -30,18 +34,23 @@ class BitPerfectRenderersFactory(
     }
     
     init {
-        Log.d(TAG, "Creating BitPerfectRenderersFactory (bit-perfect: $enableBitPerfect)")
+        val effectsEnabled = (bassBoostProcessor != null) || (spatializationProcessor != null)
+        Log.d(TAG, "Creating BitPerfectRenderersFactory (bit-perfect: $enableBitPerfect, Rhythm effects: $effectsEnabled)")
         
-        // Prefer extension renderers (like FFmpeg) if available for better format support
+        // Prefer extension renderers when available if available for better format support
         setExtensionRendererMode(EXTENSION_RENDERER_MODE_PREFER)
         
         if (enableBitPerfect) {
             Log.i(TAG, "Bit-perfect mode enabled - audio will output at native sample rate")
         }
+        
+        if (effectsEnabled) {
+            Log.i(TAG, "Rhythm audio effects enabled (bass boost: ${bassBoostProcessor != null}, spatialization: ${spatializationProcessor != null})")
+        }
     }
     
     /**
-     * Override buildAudioRenderers to inject our custom AudioSink
+     * Override buildAudioRenderers to inject our custom AudioSink with Rhythm processors
      */
     override fun buildAudioRenderers(
         context: Context,
@@ -53,16 +62,15 @@ class BitPerfectRenderersFactory(
         eventListener: AudioRendererEventListener,
         out: ArrayList<Renderer>
     ) {
-        Log.d(TAG, "Building audio renderers for bit-perfect playback")
+        Log.d(TAG, "Building audio renderers for bit-perfect playback with Rhythm effects")
         
-        // Create our custom audio sink if bit-perfect is enabled
-        val customAudioSink = if (enableBitPerfect) {
-            Log.d(TAG, "Using BitPerfectAudioSink")
-            BitPerfectAudioSink.create(context, enableBitPerfect)
-        } else {
-            Log.d(TAG, "Using standard AudioSink")
-            audioSink
-        }
+        // Create our custom audio sink with Rhythm processors
+        val customAudioSink = BitPerfectAudioSink.create(
+            context, 
+            enableBitPerfect,
+            bassBoostProcessor,
+            spatializationProcessor
+        )
         
         // Add the MediaCodec audio renderer with our custom sink
         val audioRenderer = MediaCodecAudioRenderer(
@@ -75,7 +83,7 @@ class BitPerfectRenderersFactory(
         )
         
         out.add(audioRenderer)
-        Log.d(TAG, "Audio renderer configured: bit-perfect=$enableBitPerfect")
+Log.d(TAG, "Audio renderer configured: bit-perfect=$enableBitPerfect, Rhythm effects enabled")
         
         // Let the parent class add extension renderers if available
         if (extensionRendererMode != EXTENSION_RENDERER_MODE_OFF) {

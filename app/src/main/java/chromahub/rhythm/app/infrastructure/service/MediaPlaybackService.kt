@@ -80,12 +80,15 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     
     // Audio effects (for equalizer integration)
     private var equalizer: android.media.audiofx.Equalizer? = null
-    private var bassBoost: android.media.audiofx.BassBoost? = null
-    private var spatializer: android.media.Spatializer? = null
-    private var virtualizerStrength: Short = 0 // Store strength for older devices
+    
+    // Rhythm audio processors (replaced Android BassBoost and Spatializer for better quality)
+    private var rhythmBassBoostProcessor: chromahub.rhythm.app.infrastructure.audio.RhythmBassBoostProcessor? = null
+    private var rhythmSpatializationProcessor: chromahub.rhythm.app.infrastructure.audio.RhythmSpatializationProcessor? = null
+    
+    private var virtualizerStrength: Short = 0 // Store strength for virtualizer
     private var isInitializingAudioEffects: Boolean = false // Prevent concurrent initialization
     private var audioEffectsInitialized: Boolean = false // Track if effects have been successfully initialized
-    private var isBassBoostAvailable: Boolean = true // Track if device supports bass boost (not alongside EQ)
+    private var isBassBoostAvailable: Boolean = true // Rhythm bass boost is always available
     
     // Player listener reference for proper cleanup
     private var playerListener: Player.Listener? = null
@@ -226,6 +229,21 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         updateForegroundNotification("Rhythm Music", "Loading settings...")
         appSettings = AppSettings.getInstance(applicationContext)
         
+        // Initialize Rhythm audio processors early (before player creation)
+        try {
+            rhythmBassBoostProcessor = chromahub.rhythm.app.infrastructure.audio.RhythmBassBoostProcessor()
+            rhythmSpatializationProcessor = chromahub.rhythm.app.infrastructure.audio.RhythmSpatializationProcessor()
+            isBassBoostAvailable = true
+            appSettings.setBassBoostAvailable(true)
+            Log.d(TAG, "Rhythm audio processors initialized early")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to initialize Rhythm processors", e)
+            rhythmBassBoostProcessor = null
+            rhythmSpatializationProcessor = null
+            isBassBoostAvailable = false
+            appSettings.setBassBoostAvailable(false)
+        }
+        
         // Initialize scrobbler manager
         scrobblerManager = chromahub.rhythm.app.utils.ScrobblerManager(applicationContext)
         
@@ -348,7 +366,12 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         // Pass bit-perfect mode setting to enable native sample rate output
         val bitPerfectEnabled = appSettings.bitPerfectMode.value
         Log.d(TAG, "Initializing player with bit-perfect mode: $bitPerfectEnabled")
-        rhythmPlayerEngine = RhythmPlayerEngine(this, bitPerfectMode = bitPerfectEnabled)
+        rhythmPlayerEngine = RhythmPlayerEngine(
+            this, 
+            bitPerfectMode = bitPerfectEnabled,
+            bassBoostProcessor = rhythmBassBoostProcessor,
+            spatializationProcessor = rhythmSpatializationProcessor
+        )
         rhythmPlayerEngine.initialize()
         
         // The master player is exposed to MediaSession and used everywhere
@@ -918,31 +941,22 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                 val strength = intent.getShortExtra("strength", 0)
                 Log.d(TAG, "Received intent to set bass boost - enabled: $enabled, strength: $strength")
                 
-                if (bassBoost == null && player.audioSessionId != 0) {
-                    Log.d(TAG, "Bass boost is null, attempting initialization")
+                if (rhythmBassBoostProcessor == null && player.audioSessionId != 0) {
+                    Log.d(TAG, "Rhythm bass boost processor is null, attempting initialization")
                     initializeAudioEffects()
                 }
                 
                 setBassBoostEnabled(enabled)
                 if (enabled) setBassBoostStrength(strength)
-                
-                // Verify state
-                val actualState = bassBoost?.enabled ?: false
-                if (actualState != enabled) {
-                    Log.w(TAG, "Bass boost state verification failed. Requested: $enabled, Actual: $actualState")
-                }
             }
             ACTION_SET_VIRTUALIZER -> {
                 val enabled = intent.getBooleanExtra("enabled", false)
                 val strength = intent.getShortExtra("strength", 0)
                 Log.d(TAG, "Received intent to set virtualizer - enabled: $enabled, strength: $strength")
                 
-                // For Android 13+, spatializer is system-controlled
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    if (spatializer == null && player.audioSessionId != 0) {
-                        Log.d(TAG, "Spatializer is null, attempting initialization")
-                        initializeAudioEffects()
-                    }
+                if (rhythmSpatializationProcessor == null && player.audioSessionId != 0) {
+                    Log.d(TAG, "Rhythm spatialization processor is null, attempting initialization")
+                    initializeAudioEffects()
                 }
                 
                 setVirtualizerEnabled(enabled)
@@ -1587,12 +1601,14 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             try {
                 equalizer?.release()
                 equalizer = null
-                bassBoost?.release()
-                bassBoost = null
+                
+                // Reset Rhythm processors
+                rhythmBassBoostProcessor?.reset()
+                rhythmSpatializationProcessor?.reset()
+                
                 Log.d(TAG, "Released existing audio effects before reinitialization")
                 
                 // Small delay to allow Android AudioFlinger to fully release resources
-                // This prevents error -38 (EBUSY) when creating new effect instances
                 Thread.sleep(50)
             } catch (e: Exception) {
                 Log.w(TAG, "Error releasing existing effects: ${e.message}")
@@ -1609,59 +1625,31 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                 equalizer = null
             }
             
-            // CRITICAL: Add delay after equalizer creation to let AudioFlinger complete attachment
-            // Without this, bass boost gets error -38 (EBUSY) from AudioFlinger
-            if (equalizer != null) {
-                try {
-                    Thread.sleep(100)  // Longer delay needed for sequential effect creation
-                } catch (e: InterruptedException) {
-                    Thread.currentThread().interrupt()
-                }
-            }
+            // Initialize Rhythm audio processors (replaces Android BassBoost and Spatializer)
+            // Processors are already created in onCreate(), just load their settings here
+            Log.d(TAG, "Loading Rhythm processor settings")
             
-            // Initialize bass boost directly (no dummy checks - they waste effect slots)
-            try {
-                bassBoost = android.media.audiofx.BassBoost(0, audioSessionId).apply {
-                    enabled = false
-                }
-                isBassBoostAvailable = true
-                appSettings.setBassBoostAvailable(true)
-                Log.d(TAG, "Bass boost initialized for session $audioSessionId")
-            } catch (e: RuntimeException) {
-                // Error -38 means AudioFlinger can't create multiple effects on this device/session
-                if (e.message?.contains("-3") == true || e.message?.contains("-38") == true) {
+            // Ensure processors are available (they should be created in onCreate)
+            if (rhythmBassBoostProcessor == null) {
+                Log.w(TAG, "Rhythm bass boost processor is null, creating new instance")
+                try {
+                    rhythmBassBoostProcessor = chromahub.rhythm.app.infrastructure.audio.RhythmBassBoostProcessor()
+                    isBassBoostAvailable = true
+                    appSettings.setBassBoostAvailable(true)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to create bass boost processor", e)
                     isBassBoostAvailable = false
                     appSettings.setBassBoostAvailable(false)
-                    Log.w(TAG, "Bass boost not supported alongside equalizer on this device (AudioFlinger limitation)")
-                } else {
-                    Log.w(TAG, "Bass boost initialization failed: ${e.message}")
                 }
-                bassBoost = null
-            } catch (e: Exception) {
-                Log.w(TAG, "Bass boost initialization failed: ${e.message}")
-                bassBoost = null
             }
             
-            // Initialize spatial audio (Android 13+)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (rhythmSpatializationProcessor == null) {
+                Log.w(TAG, "Rhythm spatialization processor is null, creating new instance")
                 try {
-                    val audioManager = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
-                    spatializer = audioManager.spatializer
-                    if (spatializer?.isAvailable == true) {
-                        // Spatializer is available - actual spatialization depends on system settings
-                        Log.d(TAG, "Spatializer available, isEnabled=${spatializer?.isEnabled}")
-                    } else {
-                        Log.w(TAG, "Spatializer not available on this device")
-                        spatializer = null
-                    }
+                    rhythmSpatializationProcessor = chromahub.rhythm.app.infrastructure.audio.RhythmSpatializationProcessor()
                 } catch (e: Exception) {
-                    Log.w(TAG, "Spatializer initialization failed: ${e.message}")
-                    spatializer = null
+                    Log.e(TAG, "Failed to create spatialization processor", e)
                 }
-            } else {
-                // For Android 12 and below, spatial audio effects are not supported
-                Log.d(TAG, "Spatial audio requires Android 13+. Current version: ${Build.VERSION.SDK_INT}")
-                spatializer = null
             }
             
             // Load saved settings and apply them
@@ -1706,33 +1694,27 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                 Log.e(TAG, "EQ state mismatch after load! Expected: $shouldBeEnabled, Actual: $actualState")
             }
             
-            // Load bass boost settings
+            // Load Rhythm bass boost settings
             val bassBoostShouldBeEnabled = appSettings.bassBoostEnabled.value
-            if (bassBoost != null) {
-                bassBoost?.enabled = bassBoostShouldBeEnabled
+            if (rhythmBassBoostProcessor != null) {
+                rhythmBassBoostProcessor?.setEnabled(bassBoostShouldBeEnabled)
                 if (bassBoostShouldBeEnabled) {
-                    bassBoost?.setStrength(appSettings.bassBoostStrength.value.toShort())
+                    rhythmBassBoostProcessor?.setStrength(appSettings.bassBoostStrength.value.toShort())
                 }
-                val actualBassState = bassBoost?.enabled ?: false
-                if (actualBassState != bassBoostShouldBeEnabled) {
-                    Log.e(TAG, "Bass boost state mismatch after load! Expected: $bassBoostShouldBeEnabled, Actual: $actualBassState")
-                }
+                Log.d(TAG, "Rhythm bass boost loaded: enabled=$bassBoostShouldBeEnabled, strength=${rhythmBassBoostProcessor?.getStrength()}")
             } else {
-                Log.w(TAG, "Cannot load bass boost settings: bassBoost is null")
+                Log.w(TAG, "Cannot load bass boost settings: Rhythm processor is null")
             }
             
-            // Load spatial audio settings
+            // Load Rhythm spatialization settings
+            val virtualizerEnabled = appSettings.virtualizerEnabled.value
             virtualizerStrength = appSettings.virtualizerStrength.value.toShort()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                val virtualizerEnabled = appSettings.virtualizerEnabled.value
-                // Note: Spatializer is system-wide and requires compatible audio output
-                // We track user preference but actual spatialization depends on device capabilities
-                Log.d(TAG, "Spatial audio preference: enabled=$virtualizerEnabled, strength=$virtualizerStrength")
-                if (spatializer?.isAvailable == true) {
-                    Log.d(TAG, "Spatializer is available and system-controlled")
-                }
+            if (rhythmSpatializationProcessor != null) {
+                rhythmSpatializationProcessor?.setEnabled(virtualizerEnabled)
+                rhythmSpatializationProcessor?.setStrength(virtualizerStrength)
+                Log.d(TAG, "Rhythm spatialization loaded: enabled=$virtualizerEnabled, strength=$virtualizerStrength")
             } else {
-                Log.d(TAG, "Spatial audio not supported (Android < 13), stored preference: $virtualizerStrength")
+                Log.d(TAG, "Cannot load spatialization settings: Rhythm processor is null")
             }
             
             Log.d(TAG, "Loaded saved audio effects - EQ: ${appSettings.equalizerEnabled.value}, Bass: ${appSettings.bassBoostEnabled.value}, Virtualizer: ${appSettings.virtualizerEnabled.value}")
@@ -1822,26 +1804,22 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             appendLine("Settings - AutoEQ: ${appSettings.autoEQProfile.value}")
             appendLine("Settings - Band levels: ${appSettings.equalizerBandLevels.value}")
             appendLine("")
-            appendLine("--- Bass Boost ---")
-            appendLine("Bass Boost object: ${if (bassBoost != null) "initialized" else "null"}")
-            bassBoost?.let { bb ->
-                appendLine("Enabled state: ${bb.enabled}")
-                appendLine("Strength: ${bb.roundedStrength}")
+            appendLine("--- Rhythm Bass Boost ---")
+            appendLine("Processor: ${if (rhythmBassBoostProcessor != null) "initialized" else "null"}")
+            rhythmBassBoostProcessor?.let { bb ->
+                appendLine("Enabled state: ${bb.isEnabled()}")
+                appendLine("Strength: ${bb.getStrength()}")
             }
             appendLine("Settings - Enabled: ${appSettings.bassBoostEnabled.value}")
             appendLine("Settings - Strength: ${appSettings.bassBoostStrength.value}")
+            appendLine("Available: $isBassBoostAvailable")
             appendLine("")
-            appendLine("--- Spatial Audio / Virtualizer ---")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                appendLine("Spatializer object: ${if (spatializer != null) "initialized" else "null"}")
-                spatializer?.let { sp ->
-                    appendLine("Available: ${sp.isAvailable}")
-                    appendLine("Enabled (system): ${sp.isEnabled}")
-                }
-            } else {
-                appendLine("Spatializer: Not supported (Android < 13)")
+            appendLine("--- Rhythm Spatialization ---")
+            appendLine("Processor: ${if (rhythmSpatializationProcessor != null) "initialized" else "null"}")
+            rhythmSpatializationProcessor?.let { sp ->
+                appendLine("Enabled state: ${sp.isEnabled()}")
+                appendLine("Strength: ${sp.getStrength()}")
             }
-            appendLine("Virtualizer strength preference: $virtualizerStrength")
             appendLine("Settings - Enabled: ${appSettings.virtualizerEnabled.value}")
             appendLine("Settings - Strength: ${appSettings.virtualizerStrength.value}")
         }
@@ -1933,9 +1911,8 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     }
     
     fun setBassBoostEnabled(enabled: Boolean) {
-        if (bassBoost == null) {
-            Log.w(TAG, "Attempting to enable bass boost but bassBoost is null. Will reinitialize.")
-            // Try to initialize if we have a valid session ID
+        if (rhythmBassBoostProcessor == null) {
+            Log.w(TAG, "Attempting to enable bass boost but Rhythm processor is null. Will reinitialize.")
             if (player.audioSessionId != 0) {
                 initializeAudioEffects()
             } else {
@@ -1944,102 +1921,62 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
             }
         }
         
-        bassBoost?.enabled = enabled
-        val actualState = bassBoost?.enabled ?: false
-        Log.d(TAG, "Bass boost enabled: $enabled, actual state: $actualState")
-        
-        if (actualState != enabled) {
-            Log.e(TAG, "Bass boost state mismatch! Requested: $enabled, Actual: $actualState")
-        }
+        rhythmBassBoostProcessor?.setEnabled(enabled)
+        Log.d(TAG, "Rhythm bass boost enabled: $enabled")
     }
     
     fun setBassBoostStrength(strength: Short) {
         try {
-            if (bassBoost == null) {
-                Log.w(TAG, "Cannot set bass boost strength: bassBoost is null")
+            if (rhythmBassBoostProcessor == null) {
+                Log.w(TAG, "Cannot set bass boost strength: Rhythm processor is null")
                 return
             }
-            bassBoost?.setStrength(strength)
-            val actualStrength = bassBoost?.roundedStrength ?: 0
-            Log.d(TAG, "Bass boost strength set to $strength, actual: $actualStrength")
+            rhythmBassBoostProcessor?.setStrength(strength)
+            Log.d(TAG, "Rhythm bass boost strength set to $strength")
         } catch (e: Exception) {
             Log.e(TAG, "Error setting bass boost strength", e)
         }
     }
     
     fun getBassBoostStrength(): Short {
-        return bassBoost?.roundedStrength ?: 0
+        return rhythmBassBoostProcessor?.getStrength() ?: 0
     }
     
     fun setVirtualizerEnabled(enabled: Boolean) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            // On Android 13+, check if spatializer needs initialization
-            if (spatializer == null && player.audioSessionId != 0) {
-                Log.w(TAG, "Spatializer is null, attempting reinitialization")
-                initializeAudioEffects()
-            }
-            
-            if (spatializer?.isAvailable == true) {
-                // Spatializer is system-controlled
-                // The actual spatialization depends on:
-                // 1. System settings (user must enable it in device settings)
-                // 2. Audio output device (e.g., headphones with head tracking)
-                // 3. Audio attributes of the content
-                val isSystemEnabled = spatializer?.isEnabled ?: false
-                Log.d(TAG, "Spatial audio preference: $enabled | System enabled: $isSystemEnabled")
-                
-                if (!isSystemEnabled && enabled) {
-                    Log.w(TAG, "User wants spatial audio but it's disabled in system settings")
-                }
-            } else {
-                Log.w(TAG, "Spatial audio requested but not available on this device (spatializer: ${spatializer != null})")
-            }
-        } else {
-            Log.w(TAG, "Spatial audio requires Android 13+. Current: ${Build.VERSION.SDK_INT}")
+        if (rhythmSpatializationProcessor == null && player.audioSessionId != 0) {
+            Log.w(TAG, "Rhythm spatialization processor is null, attempting reinitialization")
+            initializeAudioEffects()
         }
         
-        // Store preference even if not available (for future device compatibility)
+        rhythmSpatializationProcessor?.setEnabled(enabled)
         virtualizerStrength = if (enabled) virtualizerStrength else 0
+        Log.d(TAG, "Rhythm spatialization enabled: $enabled")
     }
     
     fun setVirtualizerStrength(strength: Short) {
         try {
             virtualizerStrength = strength
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                // Spatializer strength is system-controlled
-                // We store the preference but can't directly control the effect
-                Log.d(TAG, "Spatial audio strength preference set: $strength (system-controlled)")
-            } else {
-                Log.d(TAG, "Spatial audio not supported on Android < 13")
-            }
+            rhythmSpatializationProcessor?.setStrength(strength)
+            Log.d(TAG, "Rhythm spatialization strength set to $strength")
         } catch (e: Exception) {
             Log.e(TAG, "Error setting virtualizer strength", e)
         }
     }
     
     fun getVirtualizerStrength(): Short {
-        return virtualizerStrength
+        return rhythmSpatializationProcessor?.getStrength() ?: virtualizerStrength
     }
     
     fun isSpatializationAvailable(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            spatializer?.isAvailable == true
-        } else {
-            false
-        }
+        // Rhythm spatialization is always available
+        return rhythmSpatializationProcessor != null
     }
     
     fun getSpatializationStatus(): String {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val spatializer = this.spatializer
-            when {
-                spatializer == null -> "Not available"
-                !spatializer.isAvailable -> "Not available on this device"
-                !spatializer.isEnabled -> "Available but disabled in system settings"
-                else -> "Active"
-            }
-        } else {
-            "Requires Android 13+"
+        return when {
+            rhythmSpatializationProcessor == null -> "Not initialized"
+            !rhythmSpatializationProcessor!!.isEnabled() -> "Available (Rhythm-based)"
+            else -> "Active (Rhythm-based)"
         }
     }
     
@@ -2053,11 +1990,14 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
     private fun releaseAudioEffects() {
         try {
             equalizer?.release()
-            bassBoost?.release()
-            // Spatializer is system-managed, no need to release
-            spatializer = null
             equalizer = null
-            bassBoost = null
+            
+            // Reset Rhythm processors
+            rhythmBassBoostProcessor?.reset()
+            rhythmSpatializationProcessor?.reset()
+            rhythmBassBoostProcessor = null
+            rhythmSpatializationProcessor = null
+            
             Log.d(TAG, "Audio effects released")
         } catch (e: Exception) {
             Log.e(TAG, "Error releasing audio effects", e)
