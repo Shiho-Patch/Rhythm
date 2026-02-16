@@ -78,6 +78,7 @@ import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import kotlin.system.exitProcess
 import chromahub.rhythm.app.shared.presentation.components.common.CollapsibleHeaderScreen
+import chromahub.rhythm.app.shared.presentation.components.common.ArcProgressSlider
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.features.local.presentation.components.bottomsheets.StandardBottomSheetHeader
 import chromahub.rhythm.app.shared.presentation.components.common.StyledProgressBar
@@ -1230,239 +1231,68 @@ fun EqualizerScreen(
 
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            // Bass Boost with secondary color
-                            val secondaryColor = MaterialTheme.colorScheme.secondary
-                            // Check if device supports bass boost (based on service detection of AudioFlinger error -38)
-                            val bassBoostStatusText = if (isBassBoostAvailableState) {
-                                if (isBassBoostEnabled) "${(bassBoostStrength/10).toInt()}% intensity" else "Enhance low frequencies"
-                            } else {
-                                "Not available on this device"
-                            }
-                            
-                            Card(
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (isBassBoostEnabled && isBassBoostAvailableState)
-                                        secondaryColor.copy(alpha = 0.15f)
-                                    else
-                                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-                                ),
-                                shape = RoundedCornerShape(14.dp),
-                                modifier = Modifier.fillMaxWidth(),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                            // Audio Effects
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                Column(modifier = Modifier.padding(16.dp)) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Surface(
-                                            shape = RoundedCornerShape(12.dp),
-                                            color = if (isBassBoostEnabled && isBassBoostAvailableState)
-                                                secondaryColor.copy(alpha = 0.2f)
-                                            else
-                                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f),
-                                            modifier = Modifier.size(40.dp)
-                                        ) {
-                                            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                                                Icon(
-                                                    imageVector = Icons.Rounded.Speaker,
-                                                    contentDescription = null,
-                                                    tint = if (isBassBoostEnabled && isBassBoostAvailableState)
-                                                        secondaryColor
-                                                    else
-                                                        MaterialTheme.colorScheme.onSurfaceVariant,
-                                                    modifier = Modifier.size(20.dp)
-                                                )
-                                            }
+                                // Bass Boost Card
+                                val secondaryColor = MaterialTheme.colorScheme.secondary
+                                EffectArcCard(
+                                    title = "Bass Boost",
+                                    icon = Icons.Rounded.Speaker,
+                                    value = bassBoostStrength,
+                                    valueRange = 0f..1000f,
+                                    isEnabled = isBassBoostEnabled && isBassBoostAvailableState,
+                                    isAvailable = isBassBoostAvailableState,
+                                    activeColor = secondaryColor,
+                                    onValueChange = { strength ->
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                        bassBoostStrength = strength
+                                        viewModel.setBassBoost(true, strength.toInt().toShort())
+                                    },
+                                    onEnabledChange = { enabled ->
+                                        if (isBassBoostAvailableState) {
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            isBassBoostEnabled = enabled
+                                            viewModel.setBassBoost(enabled, bassBoostStrength.toInt().toShort())
                                         }
-
-                                        Spacer(modifier = Modifier.width(12.dp))
-
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = "Bass Boost",
-                                                style = MaterialTheme.typography.titleSmall,
-                                                fontWeight = FontWeight.SemiBold
-                                            )
-                                            Text(
-                                                text = bassBoostStatusText,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = if (isBassBoostEnabled && isBassBoostAvailableState) secondaryColor else MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                        }
-
-                                        TunerAnimatedSwitch(
-                                            checked = isBassBoostEnabled && isBassBoostAvailableState,
-                                            onCheckedChange = { enabled ->
-                                                if (isBassBoostAvailableState) {
-                                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                                    isBassBoostEnabled = enabled
-                                                    viewModel.setBassBoost(enabled, bassBoostStrength.toInt().toShort())
-                                                }
-                                            }
-                                        )
+                                    },
+                                    statusText = if (isBassBoostAvailableState) {
+                                        if (isBassBoostEnabled) "Active" else "Enhance low frequencies"
+                                    } else {
+                                        "Not available"
                                     }
+                                )
 
-                                    AnimatedVisibility(
-                                        visible = isBassBoostEnabled && isBassBoostAvailableState,
-                                        enter = fadeIn() + androidx.compose.animation.expandVertically(),
-                                        exit = fadeOut() + androidx.compose.animation.shrinkVertically()
-                                    ) {
-                                        Column {
-                                            Spacer(modifier = Modifier.height(12.dp))
-
-                                            Slider(
-                                                value = bassBoostStrength,
-                                                onValueChange = { strength ->
-                                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                                    bassBoostStrength = strength
-                                                    viewModel.setBassBoost(true, strength.toInt().toShort())
-                                                },
-                                                valueRange = 0f..1000f,
-                                                modifier = Modifier.fillMaxWidth(),
-                                                colors = SliderDefaults.colors(
-                                                    thumbColor = secondaryColor,
-                                                    activeTrackColor = secondaryColor,
-                                                    inactiveTrackColor = secondaryColor.copy(alpha = 0.2f)
-                                                )
-                                            )
+                                // Spatial Audio Card
+                                val tertiaryColor = MaterialTheme.colorScheme.tertiary
+                                EffectArcCard(
+                                    title = "Spatial Audio",
+                                    icon = Icons.Rounded.Headphones,
+                                    value = virtualizerStrength,
+                                    valueRange = 0f..1000f,
+                                    isEnabled = isVirtualizerEnabled && isSpatializationAvailable,
+                                    isAvailable = isSpatializationAvailable,
+                                    activeColor = tertiaryColor,
+                                    onValueChange = { strength ->
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                        virtualizerStrength = strength
+                                        viewModel.setVirtualizer(true, strength.toInt().toShort())
+                                    },
+                                    onEnabledChange = { enabled ->
+                                        if (isSpatializationAvailable) {
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                            isVirtualizerEnabled = enabled
+                                            viewModel.setVirtualizer(enabled, virtualizerStrength.toInt().toShort())
                                         }
+                                    },
+                                    statusText = when {
+                                        !isSpatializationAvailable -> "Mono audio"
+                                        isVirtualizerEnabled -> "Active"
+                                        else -> "Available"
                                     }
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // Spatial Audio (Rhythm Spatialization) with tertiary color
-                            val tertiaryColor = MaterialTheme.colorScheme.tertiary
-                            // Rhythm's custom spatialization works on all Android versions
-                            val statusText = when {
-                                !isSpatializationAvailable -> "Not compatible with mono audio"
-                                isVirtualizerEnabled -> spatializationStatus
-                                else -> "Spatial audio enhancement - Available"
-                            }
-                            val showIntensitySlider = isSpatializationAvailable && isVirtualizerEnabled
-                            
-                            Card(
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (isVirtualizerEnabled && isSpatializationAvailable)
-                                        tertiaryColor.copy(alpha = 0.15f)
-                                    else
-                                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-                                ),
-                                shape = RoundedCornerShape(14.dp),
-                                modifier = Modifier.fillMaxWidth(),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                            ) {
-                                Column(modifier = Modifier.padding(16.dp)) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Surface(
-                                            shape = RoundedCornerShape(12.dp),
-                                            color = if (isVirtualizerEnabled && isSpatializationAvailable)
-                                                tertiaryColor.copy(alpha = 0.2f)
-                                            else
-                                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f),
-                                            modifier = Modifier.size(40.dp)
-                                        ) {
-                                            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                                                Icon(
-                                                    imageVector = Icons.Rounded.Headphones,
-                                                    contentDescription = null,
-                                                    tint = if (isVirtualizerEnabled && isSpatializationAvailable)
-                                                        tertiaryColor
-                                                    else
-                                                        MaterialTheme.colorScheme.onSurfaceVariant,
-                                                    modifier = Modifier.size(20.dp)
-                                                )
-                                            }
-                                        }
-
-                                        Spacer(modifier = Modifier.width(12.dp))
-
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = "Spatial Audio",
-                                                style = MaterialTheme.typography.titleSmall,
-                                                fontWeight = FontWeight.SemiBold
-                                            )
-                                            Text(
-                                                text = statusText,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = if (isVirtualizerEnabled && isSpatializationAvailable) 
-                                                    tertiaryColor 
-                                                else 
-                                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                        }
-
-                                        TunerAnimatedSwitch(
-                                            checked = isVirtualizerEnabled && isSpatializationAvailable,
-                                            onCheckedChange = { enabled ->
-                                                if (isSpatializationAvailable) {
-                                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                                    isVirtualizerEnabled = enabled
-                                                    viewModel.setVirtualizer(enabled, virtualizerStrength.toInt().toShort())
-                                                }
-                                            }
-                                        )
-                                    }
-
-                                    // Info about Rhythm's custom spatialization
-                                    if (!isSpatializationAvailable && isVirtualizerEnabled) {
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text(
-                                            text = "ℹ️ Spatial audio works best with stereo (2-channel) audio.",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.padding(horizontal = 4.dp)
-                                        )
-                                    }
-
-                                    // Slider for intensity (informational only, as Spatializer is system-controlled)
-                                    AnimatedVisibility(
-                                        visible = showIntensitySlider,
-                                        enter = fadeIn() + androidx.compose.animation.expandVertically(),
-                                        exit = fadeOut() + androidx.compose.animation.shrinkVertically()
-                                    ) {
-                                        Column {
-                                            Spacer(modifier = Modifier.height(12.dp))
-                                            
-                                            Text(
-                                                text = "Intensity preference: ${(virtualizerStrength/10).toInt()}%",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp)
-                                            )
-
-                                            Slider(
-                                                value = virtualizerStrength,
-                                                onValueChange = { strength ->
-                                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                                    virtualizerStrength = strength
-                                                    viewModel.setVirtualizer(true, strength.toInt().toShort())
-                                                },
-                                                valueRange = 0f..1000f,
-                                                modifier = Modifier.fillMaxWidth(),
-                                                colors = SliderDefaults.colors(
-                                                    thumbColor = tertiaryColor,
-                                                    activeTrackColor = tertiaryColor,
-                                                    inactiveTrackColor = tertiaryColor.copy(alpha = 0.2f)
-                                                )
-                                            )
-                                            
-                                            Text(
-                                                text = "Note: Actual spatial audio effect is system-controlled and depends on your audio output device.",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                                                modifier = Modifier.padding(horizontal = 4.dp),
-                                                fontSize = 11.sp
-                                            )
-                                        }
-                                    }
-                                }
+                                )
                             }
                         }
                     }
@@ -1700,6 +1530,98 @@ fun EqualizerScreen(
                 musicViewModel = viewModel,
                 onDismiss = { showDeviceConfiguration = false }
             )
+        }
+    }
+}
+
+@Composable
+private fun EffectArcCard(
+    title: String,
+    icon: ImageVector,
+    value: Float,
+    valueRange: ClosedFloatingPointRange<Float>,
+    isEnabled: Boolean,
+    isAvailable: Boolean,
+    activeColor: Color,
+    onValueChange: (Float) -> Unit,
+    onEnabledChange: (Boolean) -> Unit,
+    statusText: String
+) {
+    Card(
+        modifier = Modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        ),
+        shape = RoundedCornerShape(24.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Arc Slider
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.size(140.dp)
+            ) {
+                ArcProgressSlider(
+                    value = value,
+                    onValueChange = onValueChange,
+                    modifier = Modifier.fillMaxSize(),
+                    enabled = isEnabled,
+                    valueRange = valueRange,
+                    activeTrackColor = if (isEnabled) activeColor else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                    inactiveTrackColor = activeColor.copy(alpha = 0.2f),
+                    thumbColor = if (isEnabled) activeColor else MaterialTheme.colorScheme.onSurfaceVariant,
+                    waveAmplitude = 3.dp
+                )
+
+                // Percentage Text
+                val percentage = ((value - valueRange.start) / (valueRange.endInclusive - valueRange.start) * 100).toInt()
+                Text(
+                    text = "$percentage%",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = if (isEnabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Switch
+            TunerAnimatedSwitch(
+                checked = isEnabled,
+                onCheckedChange = onEnabledChange,
+                modifier = Modifier.scale(0.8f)
+            )
+
+            // Title and Status
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = if (isEnabled) activeColor else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                Text(
+                    text = statusText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isEnabled) activeColor else MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }
