@@ -412,7 +412,37 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                     // Reinitialize audio effects with valid session ID
                     val previouslyEnabled = equalizer?.enabled ?: false
                     Log.d(TAG, "Player ready with session ID ${player.audioSessionId}, reinitializing effects (EQ was: $previouslyEnabled)")
-                    initializeAudioEffects()// Verify state was preserved
+                    initializeAudioEffects()
+                    
+                    // Force reload audio effects settings to fix cold boot issue
+                    // This ensures bass boost and spatial audio are properly applied on first playback
+                    // Increased delay to ensure player is fully ready and processors are connected
+                    serviceScope.launch {
+                        delay(200) // Increased delay to ensure audio pipeline is fully initialized
+                        Log.d(TAG, "Force-reloading audio effects settings after player ready")
+                        loadSavedAudioEffects()
+                        
+                        // Additional verification: Re-apply Rhythm processor settings after another small delay
+                        // This fixes the issue where processors don't receive settings on cold boot
+                        delay(100)
+                        Log.d(TAG, "Re-applying Rhythm processor settings for cold boot fix")
+                        
+                        // Re-apply bass boost if enabled
+                        if (appSettings.bassBoostEnabled.value && rhythmBassBoostProcessor != null) {
+                            rhythmBassBoostProcessor?.setEnabled(true)
+                            rhythmBassBoostProcessor?.setStrength(appSettings.bassBoostStrength.value.toShort())
+                            Log.d(TAG, "Cold boot: Re-applied bass boost - enabled=true, strength=${appSettings.bassBoostStrength.value}")
+                        }
+                        
+                        // Re-apply spatial audio if enabled
+                        if (appSettings.virtualizerEnabled.value && rhythmSpatializationProcessor != null) {
+                            rhythmSpatializationProcessor?.setEnabled(true)
+                            rhythmSpatializationProcessor?.setStrength(appSettings.virtualizerStrength.value.toShort())
+                            Log.d(TAG, "Cold boot: Re-applied spatial audio - enabled=true, strength=${appSettings.virtualizerStrength.value}")
+                        }
+                    }
+                    
+                    // Verify state was preserved
                     val currentlyEnabled = equalizer?.enabled ?: false
                     if (previouslyEnabled != currentlyEnabled && appSettings.equalizerEnabled.value)
                     {
@@ -1922,7 +1952,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         }
         
         rhythmBassBoostProcessor?.setEnabled(enabled)
-        Log.d(TAG, "Rhythm bass boost enabled: $enabled")
+        Log.d(TAG, "Rhythm bass boost enabled: $enabled (applies to next audio buffer)")
     }
     
     fun setBassBoostStrength(strength: Short) {
@@ -1932,7 +1962,7 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
                 return
             }
             rhythmBassBoostProcessor?.setStrength(strength)
-            Log.d(TAG, "Rhythm bass boost strength set to $strength")
+            Log.d(TAG, "Rhythm bass boost strength set to $strength (applies to next audio buffer)")
         } catch (e: Exception) {
             Log.e(TAG, "Error setting bass boost strength", e)
         }
@@ -1950,14 +1980,14 @@ class MediaPlaybackService : MediaLibraryService(), Player.Listener {
         
         rhythmSpatializationProcessor?.setEnabled(enabled)
         virtualizerStrength = if (enabled) virtualizerStrength else 0
-        Log.d(TAG, "Rhythm spatialization enabled: $enabled")
+        Log.d(TAG, "Rhythm spatialization enabled: $enabled (applies to next audio buffer)")
     }
     
     fun setVirtualizerStrength(strength: Short) {
         try {
             virtualizerStrength = strength
             rhythmSpatializationProcessor?.setStrength(strength)
-            Log.d(TAG, "Rhythm spatialization strength set to $strength")
+            Log.d(TAG, "Rhythm spatialization strength set to $strength (applies to next audio buffer)")
         } catch (e: Exception) {
             Log.e(TAG, "Error setting virtualizer strength", e)
         }

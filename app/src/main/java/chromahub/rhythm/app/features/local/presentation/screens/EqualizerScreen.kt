@@ -1197,103 +1197,99 @@ fun EqualizerScreen(
                 }
             }
 
-            // Audio Effects Section with animation
+            // Audio Effects Section - Independent of EQ (uses custom Rhythm processors)
             item {
-                AnimatedVisibility(
-                    visible = isEqualizerEnabled,
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically()
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                        shape = RoundedCornerShape(20.dp),
-                        modifier = Modifier.fillMaxWidth()
+                    Column(
+                        modifier = Modifier.padding(20.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.padding(20.dp)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Tune,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(
-                                    text = context.getString(R.string.audio_effects),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
+                            Icon(
+                                imageVector = Icons.Rounded.Tune,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = context.getString(R.string.audio_effects),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
 
-                            Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                            // Audio Effects
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                // Bass Boost Card
-                                val secondaryColor = MaterialTheme.colorScheme.secondary
-                                EffectArcCard(
-                                    title = "Bass Boost",
-                                    icon = Icons.Rounded.Speaker,
-                                    value = bassBoostStrength,
-                                    valueRange = 0f..1000f,
-                                    isEnabled = isBassBoostEnabled && isBassBoostAvailableState,
-                                    isAvailable = isBassBoostAvailableState,
-                                    activeColor = secondaryColor,
-                                    onValueChange = { strength ->
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                        bassBoostStrength = strength
-                                        viewModel.setBassBoost(true, strength.toInt().toShort())
-                                    },
-                                    onEnabledChange = { enabled ->
-                                        if (isBassBoostAvailableState) {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                            isBassBoostEnabled = enabled
-                                            viewModel.setBassBoost(enabled, bassBoostStrength.toInt().toShort())
-                                        }
-                                    },
-                                    statusText = if (isBassBoostAvailableState) {
-                                        if (isBassBoostEnabled) "Active" else "Enhance low frequencies"
-                                    } else {
-                                        "Not available"
+                        // Audio Effects in responsive 2-column row
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            // Bass Boost Card
+                            val secondaryColor = MaterialTheme.colorScheme.secondary
+                            EffectArcCard(
+                                title = "Bass Boost",
+                                icon = Icons.Rounded.Speaker,
+                                value = bassBoostStrength,
+                                valueRange = 0f..1000f,
+                                isEnabled = isBassBoostEnabled && isBassBoostAvailableState,
+                                isAvailable = isBassBoostAvailableState,
+                                activeColor = secondaryColor,
+                                onValueChange = { strength ->
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    bassBoostStrength = strength
+                                    viewModel.setBassBoost(true, strength.toInt().toShort())
+                                },
+                                onEnabledChange = { enabled ->
+                                    if (isBassBoostAvailableState) {
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        isBassBoostEnabled = enabled
+                                        viewModel.setBassBoost(enabled, bassBoostStrength.toInt().toShort())
                                     }
-                                )
+                                },
+                                statusText = if (isBassBoostAvailableState) {
+                                    if (isBassBoostEnabled) "Active" else "Enhance low frequencies"
+                                } else {
+                                    "Not available"
+                                },
+                                modifier = Modifier.weight(1f)
+                            )
 
-                                // Spatial Audio Card
-                                val tertiaryColor = MaterialTheme.colorScheme.tertiary
-                                EffectArcCard(
-                                    title = "Spatial Audio",
-                                    icon = Icons.Rounded.Headphones,
-                                    value = virtualizerStrength,
-                                    valueRange = 0f..1000f,
-                                    isEnabled = isVirtualizerEnabled && isSpatializationAvailable,
-                                    isAvailable = isSpatializationAvailable,
-                                    activeColor = tertiaryColor,
-                                    onValueChange = { strength ->
-                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
-                                        virtualizerStrength = strength
-                                        viewModel.setVirtualizer(true, strength.toInt().toShort())
-                                    },
-                                    onEnabledChange = { enabled ->
-                                        if (isSpatializationAvailable) {
-                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
-                                            isVirtualizerEnabled = enabled
-                                            viewModel.setVirtualizer(enabled, virtualizerStrength.toInt().toShort())
-                                        }
-                                    },
-                                    statusText = when {
-                                        !isSpatializationAvailable -> "Mono audio"
-                                        isVirtualizerEnabled -> "Active"
-                                        else -> "Available"
+                            // Spatial Audio Card
+                            val tertiaryColor = MaterialTheme.colorScheme.tertiary
+                            EffectArcCard(
+                                title = "Spatial Audio",
+                                icon = Icons.Rounded.Headphones,
+                                value = virtualizerStrength,
+                                valueRange = 0f..1000f,
+                                isEnabled = isVirtualizerEnabled && isSpatializationAvailable,
+                                isAvailable = isSpatializationAvailable,
+                                activeColor = tertiaryColor,
+                                onValueChange = { strength ->
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    virtualizerStrength = strength
+                                    viewModel.setVirtualizer(true, strength.toInt().toShort())
+                                },
+                                onEnabledChange = { enabled ->
+                                    if (isSpatializationAvailable) {
+                                        HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.LongPress)
+                                        isVirtualizerEnabled = enabled
+                                        viewModel.setVirtualizer(enabled, virtualizerStrength.toInt().toShort())
                                     }
-                                )
-                            }
+                                },
+                                statusText = when {
+                                    !isSpatializationAvailable -> "Mono audio"
+                                    isVirtualizerEnabled -> "Active"
+                                    else -> "Available"
+                                },
+                                modifier = Modifier.weight(1f)
+                            )
                         }
                     }
                 }
@@ -1545,10 +1541,11 @@ private fun EffectArcCard(
     activeColor: Color,
     onValueChange: (Float) -> Unit,
     onEnabledChange: (Boolean) -> Unit,
-    statusText: String
+    statusText: String,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier,
+        modifier = modifier,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),

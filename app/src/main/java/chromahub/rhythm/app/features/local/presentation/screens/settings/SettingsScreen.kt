@@ -228,6 +228,7 @@ fun SettingsScreen(
                 title = context.getString(R.string.settings_section_appearance),
                 items = buildList {
                     add(SettingItem(Icons.Default.Palette, context.getString(R.string.settings_theme_customization), context.getString(R.string.settings_theme_customization_desc), onClick = { onNavigateTo(SettingsRoutes.THEME_CUSTOMIZATION) }))
+                    add(SettingItem(Icons.Default.Interests, "Shapes", "Expressive Shapes", onClick = { onNavigateTo(SettingsRoutes.EXPRESSIVE_SHAPES) }))
                     // Local-only customizations
                     if (appMode == "LOCAL") {
                         add(SettingItem(Icons.Default.Home, context.getString(R.string.settings_home_customization), context.getString(R.string.settings_home_customization_desc), onClick = { onNavigateTo(SettingsRoutes.HOME_SCREEN) }))
@@ -286,6 +287,7 @@ fun SettingsScreen(
                     // Equalizer only in LOCAL mode for now
                     if (appMode == "LOCAL") {
                         add(SettingItem(Icons.Default.Equalizer, context.getString(R.string.settings_equalizer_title), context.getString(R.string.settings_equalizer_desc), onClick = { onNavigateTo(SettingsRoutes.EQUALIZER) }))
+                        add(SettingItem(Icons.Default.AccessTime, context.getString(R.string.sleep_timer), context.getString(R.string.sleep_timer_set_control), onClick = { onNavigateTo(SettingsRoutes.SLEEP_TIMER) }))
                     }
                 }
             ),
@@ -887,6 +889,8 @@ fun SettingsScreenWrapper(
             navController.navigate("listening_stats")
         } else if (route == SettingsRoutes.EQUALIZER) {
             navController.navigate(Screen.Equalizer.route)
+        } else if (route == SettingsRoutes.SLEEP_TIMER) {
+            navController.navigate(Screen.TunerSleepTimer.route)
         } else {
             currentRoute = route
         }
@@ -991,7 +995,6 @@ fun SettingsScreenWrapper(
                         SettingsRoutes.THEME_CUSTOMIZATION -> ThemeCustomizationSettingsScreen(onBackClick = { currentRoute = null })
                         SettingsRoutes.PLAYER_CUSTOMIZATION -> PlayerCustomizationSettingsScreen(onBackClick = { currentRoute = null })
                         SettingsRoutes.MINIPLAYER_CUSTOMIZATION -> MiniPlayerCustomizationSettingsScreen(onBackClick = { currentRoute = null })
-                        SettingsRoutes.SLEEP_TIMER -> SleepTimerSettingsScreen(onBackClick = { currentRoute = null })
                         SettingsRoutes.CRASH_LOG_HISTORY -> CrashLogHistorySettingsScreen(onBackClick = { currentRoute = null }, appSettings = appSettings)
                         SettingsRoutes.QUEUE_PLAYBACK -> QueuePlaybackSettingsScreen(onBackClick = { currentRoute = null })
                         SettingsRoutes.LYRICS_SOURCE -> LyricsSourceSettingsScreen(onBackClick = { currentRoute = null })
@@ -1102,7 +1105,6 @@ fun SettingsScreenWrapper(
                 SettingsRoutes.THEME_CUSTOMIZATION -> ThemeCustomizationSettingsScreen(onBackClick = { currentRoute = null })
                 SettingsRoutes.PLAYER_CUSTOMIZATION -> PlayerCustomizationSettingsScreen(onBackClick = { currentRoute = null })
                 SettingsRoutes.MINIPLAYER_CUSTOMIZATION -> MiniPlayerCustomizationSettingsScreen(onBackClick = { currentRoute = null })
-                SettingsRoutes.SLEEP_TIMER -> SleepTimerSettingsScreen(onBackClick = { currentRoute = null })
                 SettingsRoutes.CRASH_LOG_HISTORY -> CrashLogHistorySettingsScreen(onBackClick = { currentRoute = null }, appSettings = appSettings)
                 SettingsRoutes.QUEUE_PLAYBACK -> QueuePlaybackSettingsScreen(onBackClick = { currentRoute = null })
                 SettingsRoutes.LYRICS_SOURCE -> LyricsSourceSettingsScreen(onBackClick = { currentRoute = null })

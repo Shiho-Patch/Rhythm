@@ -650,13 +650,13 @@ class AppSettings private constructor(context: Context) {
     private val _bassBoostEnabled = MutableStateFlow(prefs.getBoolean(KEY_BASS_BOOST_ENABLED, false))
     val bassBoostEnabled: StateFlow<Boolean> = _bassBoostEnabled.asStateFlow()
     
-    private val _bassBoostStrength = MutableStateFlow(prefs.getInt(KEY_BASS_BOOST_STRENGTH, 500))
+    private val _bassBoostStrength = MutableStateFlow(prefs.getInt(KEY_BASS_BOOST_STRENGTH, 0))
     val bassBoostStrength: StateFlow<Int> = _bassBoostStrength.asStateFlow()
     
     private val _virtualizerEnabled = MutableStateFlow(prefs.getBoolean(KEY_VIRTUALIZER_ENABLED, false))
     val virtualizerEnabled: StateFlow<Boolean> = _virtualizerEnabled.asStateFlow()
     
-    private val _virtualizerStrength = MutableStateFlow(prefs.getInt(KEY_VIRTUALIZER_STRENGTH, 500))
+    private val _virtualizerStrength = MutableStateFlow(prefs.getInt(KEY_VIRTUALIZER_STRENGTH, 0))
     val virtualizerStrength: StateFlow<Int> = _virtualizerStrength.asStateFlow()
     
     // Sleep Timer

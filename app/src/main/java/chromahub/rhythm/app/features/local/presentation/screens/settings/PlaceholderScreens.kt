@@ -72,6 +72,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -9992,20 +9993,6 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                 )
             ),
             SettingGroup(
-                title = "Shape Customization",
-                items = listOf(
-                    SettingItem(
-                        Icons.Default.Interests,
-                        "Shapes",
-                        "Customize Material 3 expressive shapes for artwork and player elements",
-                        onClick = {
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                            navigateToExpressiveShapes = true
-                        }
-                    )
-                )
-            ),
-            SettingGroup(
                 title = "Festive Themes",
                 items = buildList {
                     add(
@@ -12874,62 +12861,9 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
     }
 }
 
-// Equalizer Settings Screen
-@Composable
-fun SleepTimerSettingsScreen(onBackClick: () -> Unit) {
-    val context = LocalContext.current
-    val hapticFeedback = LocalHapticFeedback.current
-    val appSettings = AppSettings.getInstance(context)
-
-    CollapsibleHeaderScreen(
-        title = "Sleep Timer",
-        showBackButton = true,
-        onBackClick = {
-            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-            onBackClick()
-        }
-    ) { modifier ->
-        LazyColumn(
-            modifier = modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(horizontal = 24.dp)
-        ) {
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    text = context.getString(R.string.sleep_timer),
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = FontWeight.SemiBold
-                    ),
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
-                )
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Sleep timer controls will be implemented here",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(bottom = 16.dp)
-                        )
-                        // TODO: Implement sleep timer controls
-                        Text(
-                            text = "Coming Soon",
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
+// Sleep Timer Settings - Removed (now accessed via navigation in player screen)
+// Sleep timer launches as bottom sheet from player or via Settings -> Sleep Timer
+// No dedicated settings screen needed
 
 // Crash Log History Settings Screen
 @Composable

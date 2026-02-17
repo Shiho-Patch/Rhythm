@@ -734,8 +734,8 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
             description = "Auto-stop playback after a set time",
             keywords = listOf("sleep", "timer", "auto stop", "automatic", "fade out", "pause", "bedtime"),
             icon = Icons.Default.Timer,
-            route = null, // Opens from player chip
-            parentScreen = "Queue & Playback"
+            route = SettingsRoutes.SLEEP_TIMER,
+            parentScreen = "Audio & Playback"
         ))
         add(SearchableSettingItem(
             id = "queue_hours_format",

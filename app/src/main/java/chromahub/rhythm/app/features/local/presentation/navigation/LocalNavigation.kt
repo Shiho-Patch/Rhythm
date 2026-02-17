@@ -102,6 +102,7 @@ import chromahub.rhythm.app.features.local.presentation.screens.AddToPlaylistScr
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.CreatePlaylistDialog
 import chromahub.rhythm.app.features.local.presentation.components.dialogs.QueueActionDialog
 import chromahub.rhythm.app.features.local.presentation.components.player.MiniPlayer
+import chromahub.rhythm.app.features.local.presentation.components.player.SleepTimerBottomSheetNew
 import chromahub.rhythm.app.shared.presentation.components.icons.RhythmIcons
 import chromahub.rhythm.app.features.local.presentation.screens.LibraryScreen
 import chromahub.rhythm.app.features.local.presentation.screens.HomeScreen
@@ -1333,7 +1334,25 @@ private fun LocalNavigationContent(
                 }
 
                 composable(Screen.TunerSleepTimer.route) {
-                    SleepTimerSettingsScreen(onBackClick = { navController.popBackStack() })
+                    // Show sleep timer bottom sheet directly instead of placeholder screen
+                    var showBottomSheet by remember { mutableStateOf(true) }
+                    
+                    if (showBottomSheet) {
+                        SleepTimerBottomSheetNew(
+                            onDismiss = {
+                                showBottomSheet = false
+                                navController.popBackStack()
+                            },
+                            currentSong = currentSong,
+                            isPlaying = isPlaying,
+                            musicViewModel = viewModel
+                        )
+                    } else {
+                        // Navigate back if bottom sheet is dismissed without opening
+                        LaunchedEffect(Unit) {
+                            navController.popBackStack()
+                        }
+                    }
                 }
 
                 composable(Screen.TunerCrashLogHistory.route) {
