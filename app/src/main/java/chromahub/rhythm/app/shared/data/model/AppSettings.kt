@@ -3523,7 +3523,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     }
     
     // Individual shape settings for each artwork target
-    private val _expressiveShapeAlbumArt = MutableStateFlow(prefs.getString(KEY_EXPRESSIVE_SHAPE_ALBUM_ART, "SQUARE") ?: "SQUARE")
+    private val _expressiveShapeAlbumArt = MutableStateFlow(prefs.getString(KEY_EXPRESSIVE_SHAPE_ALBUM_ART, "COOKIE_6") ?: "COOKIE_6")
     val expressiveShapeAlbumArt: StateFlow<String> = _expressiveShapeAlbumArt.asStateFlow()
     fun setExpressiveShapeAlbumArt(value: String) {
         _expressiveShapeAlbumArt.value = value
@@ -3534,7 +3534,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         }
     }
     
-    private val _expressiveShapePlayerArt = MutableStateFlow(prefs.getString(KEY_EXPRESSIVE_SHAPE_PLAYER_ART, "SQUARE") ?: "SQUARE")
+    private val _expressiveShapePlayerArt = MutableStateFlow(prefs.getString(KEY_EXPRESSIVE_SHAPE_PLAYER_ART, "COOKIE_6") ?: "COOKIE_6")
     val expressiveShapePlayerArt: StateFlow<String> = _expressiveShapePlayerArt.asStateFlow()
     fun setExpressiveShapePlayerArt(value: String) {
         _expressiveShapePlayerArt.value = value
@@ -3544,7 +3544,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         }
     }
     
-    private val _expressiveShapeSongArt = MutableStateFlow(prefs.getString(KEY_EXPRESSIVE_SHAPE_SONG_ART, "SQUARE") ?: "SQUARE")
+    private val _expressiveShapeSongArt = MutableStateFlow(prefs.getString(KEY_EXPRESSIVE_SHAPE_SONG_ART, "CLOVER_8_LEAF") ?: "CLOVER_8_LEAF")
     val expressiveShapeSongArt: StateFlow<String> = _expressiveShapeSongArt.asStateFlow()
     fun setExpressiveShapeSongArt(value: String) {
         _expressiveShapeSongArt.value = value
@@ -3554,7 +3554,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         }
     }
     
-    private val _expressiveShapePlaylistArt = MutableStateFlow(prefs.getString(KEY_EXPRESSIVE_SHAPE_PLAYLIST_ART, "SQUARE") ?: "SQUARE")
+    private val _expressiveShapePlaylistArt = MutableStateFlow(prefs.getString(KEY_EXPRESSIVE_SHAPE_PLAYLIST_ART, "COOKIE_4") ?: "COOKIE_4")
     val expressiveShapePlaylistArt: StateFlow<String> = _expressiveShapePlaylistArt.asStateFlow()
     fun setExpressiveShapePlaylistArt(value: String) {
         _expressiveShapePlaylistArt.value = value
@@ -3584,7 +3584,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         }
     }
     
-    private val _expressiveShapeMiniPlayer = MutableStateFlow(prefs.getString(KEY_EXPRESSIVE_SHAPE_MINI_PLAYER, "SQUARE") ?: "SQUARE")
+    private val _expressiveShapeMiniPlayer = MutableStateFlow(prefs.getString(KEY_EXPRESSIVE_SHAPE_MINI_PLAYER, "COOKIE_4") ?: "COOKIE_4")
     val expressiveShapeMiniPlayer: StateFlow<String> = _expressiveShapeMiniPlayer.asStateFlow()
     fun setExpressiveShapeMiniPlayer(value: String) {
         _expressiveShapeMiniPlayer.value = value
