@@ -204,7 +204,6 @@
     <string name="settings_root">Root</string>
     
     <!-- Settings - Spotify -->
-    <string name="settings_spotify_canvas">Spotify Canvas</string>
     <string name="settings_spotify_api_config">Spotify API Configuration</string>
     <string name="settings_spotify_api_config_desc">Enter your Spotify API credentials to enable track search and Canvas videos.</string>
     <string name="settings_spotify_default_keys_warning">You are currently using the app\'s default Spotify keys. For full functionality and to avoid rate limits, please input your own Client ID and Secret.</string>
@@ -767,8 +766,6 @@
     <string name="onboarding_integrations_social">Social Features</string>
     <string name="onboarding_integration_deezer">Deezer API</string>
     <string name="onboarding_integration_deezer_desc">Fetch high-quality album artwork and metadata</string>
-    <string name="onboarding_integration_canvas">Spotify Canvas</string>
-    <string name="onboarding_integration_canvas_desc">Display animated video backgrounds for songs</string>
     <string name="onboarding_integration_lrclib">LrcLib API</string>
     <string name="onboarding_integration_lrclib_desc">Download synchronized lyrics for your songs</string>
     <string name="onboarding_integration_ytmusic">YouTube Music</string>

@@ -8,6 +8,8 @@
 package chromahub.rhythm.app.features.local.presentation.screens
 
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -269,6 +271,28 @@ fun HomeScreen(
     // Home section order bottom sheet state
     var showHomeSectionOrderSheet by remember { mutableStateOf(false) }
     
+    // Pending write request for metadata editing (Android 11+)
+    val pendingWriteRequest by musicViewModel.pendingWriteRequest.collectAsState()
+    
+    // Write permission launcher for Android 11+ metadata editing
+    val writePermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            musicViewModel.completeMetadataWriteAfterPermission(
+                onSuccess = {
+                    Toast.makeText(context, "Metadata saved successfully!", Toast.LENGTH_SHORT).show()
+                },
+                onError = { errorMessage ->
+                    Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+                }
+            )
+        } else {
+            musicViewModel.cancelPendingMetadataWrite()
+            Toast.makeText(context, "Permission denied. Changes saved to library only.", Toast.LENGTH_LONG).show()
+        }
+    }
+    
     // Select featured content from all albums (enhanced selection)
     // Note: Don't limit here, let the carousel use discoverItemCount setting
     val featuredContent = remember(albums) {
@@ -405,7 +429,19 @@ fun HomeScreen(
                         Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
                     },
                     onPermissionRequired = { pendingRequest ->
-                        Toast.makeText(context, "Permission required to modify file metadata", Toast.LENGTH_SHORT).show()
+                        try {
+                            val intentSenderRequest = androidx.activity.result.IntentSenderRequest.Builder(
+                                pendingRequest.intentSender
+                            ).build()
+                            writePermissionLauncher.launch(intentSenderRequest)
+                        } catch (e: Exception) {
+                            Toast.makeText(
+                                context,
+                                "Failed to request permission: ${e.message}",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            musicViewModel.cancelPendingMetadataWrite()
+                        }
                     }
                 )
             }
@@ -1021,27 +1057,13 @@ private fun ModernScrollableContent(
                                         title = context.getString(R.string.home_recently_added),
                                         subtitle = context.getString(R.string.home_latest_additions),
                                         onPlayAll = {
-                                            if (recentlyAddedAlbums.isNotEmpty()) {
-                                                coroutineScope.launch(Dispatchers.Default) {
-                                                    val allSongs = recentlyAddedAlbums.flatMap { album ->
-                                                        album.songs
-                                                    }
-                                                    withContext(Dispatchers.Main) {
-                                                        musicViewModel.playQueue(allSongs)
-                                                    }
-                                                }
+                                            if (recentlyAddedSongs.isNotEmpty()) {
+                                                musicViewModel.playQueue(recentlyAddedSongs)
                                             }
                                         },
                                         onShufflePlay = {
-                                            if (recentlyAddedAlbums.isNotEmpty()) {
-                                                coroutineScope.launch(Dispatchers.Default) {
-                                                    val allSongs = recentlyAddedAlbums.flatMap { album ->
-                                                        album.songs
-                                                    }
-                                                    withContext(Dispatchers.Main) {
-                                                        musicViewModel.playShuffled(allSongs)
-                                                    }
-                                                }
+                                            if (recentlyAddedSongs.isNotEmpty()) {
+                                                musicViewModel.playShuffled(recentlyAddedSongs)
                                             }
                                         }
                                     )

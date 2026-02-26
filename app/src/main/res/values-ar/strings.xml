@@ -190,7 +190,6 @@
     <string name="settings_clear_all_button_short">مسح الكل</string>
     <string name="settings_root">الجذر</string>
     
-    <string name="settings_spotify_canvas">Spotify Canvas</string>
     <string name="settings_spotify_api_config">تكوين Spotify API</string>
     <string name="settings_spotify_api_config_desc">أدخل بيانات اعتماد Spotify API لتمكين البحث عن المسارات وفيديوهات Canvas.</string>
     <string name="settings_spotify_default_keys_warning">أنت تستخدم حالياً مفاتيح Spotify الافتراضية للتطبيق. للحصول على الوظائف الكاملة وتجنب حدود الاستخدام، يرجى إدخال Client ID و Secret الخاصين بك.</string>

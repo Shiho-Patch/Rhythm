@@ -759,7 +759,7 @@ fun AlbumBottomSheet(
                                             ) {
                                                 itemsIndexed(
                                                     items = sortedSongs,
-                                                    key = { _, song -> song.id }
+                                                    key = { index, song -> "album_song_${song.id}_$index" }
                                                 ) { index, song ->
                                                     val shouldAnimate = index < 10
                                                     var itemVisible by remember { mutableStateOf(!shouldAnimate) }
@@ -1634,7 +1634,7 @@ fun AlbumBottomSheet(
                             ) {
                                 itemsIndexed(
                                     items = sortedSongs,
-                                    key = { _, song -> song.id }
+                                    key = { index, song -> "album_song_${song.id}_$index" }
                                 ) { index, song ->
                                     // Staggered animation with smooth entrance for first 10 items
                                     val shouldAnimate = index < 10

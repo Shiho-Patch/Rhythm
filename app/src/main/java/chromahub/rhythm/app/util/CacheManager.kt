@@ -164,17 +164,14 @@ object CacheManager {
      * - Internal cache directory
      * - External cache directory (if available)
      * - Coil image cache (memory and disk)
-     * - Canvas cache (if provided)
      * 
      * @param context Application context
      * @param imageLoader Coil ImageLoader instance for clearing image cache
-     * @param canvasRepository Optional CanvasRepository to clear canvas cache
      */
     @OptIn(ExperimentalCoilApi::class)
     suspend fun clearAllCache(
         context: Context, 
-        imageLoader: ImageLoader? = null,
-        canvasRepository: chromahub.rhythm.app.shared.data.repository.CanvasRepository? = null
+        imageLoader: ImageLoader? = null
     ) = withContext(Dispatchers.IO) {
         try {
             Log.d(TAG, "Starting cache cleanup...")
@@ -199,16 +196,6 @@ object CacheManager {
                     Log.d(TAG, "Cleared Coil disk cache")
                 } catch (e: Exception) {
                     Log.e(TAG, "Error clearing Coil cache", e)
-                }
-            }
-            
-            // Clear Canvas cache if provided
-            canvasRepository?.let { repository ->
-                try {
-                    repository.clearCache()
-                    Log.d(TAG, "Cleared Canvas cache")
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error clearing Canvas cache", e)
                 }
             }
             
@@ -270,50 +257,15 @@ object CacheManager {
         return deletedCount
     }
     
-    /**
-     * Gets the total size of cache directories in bytes
-     * 
-     * @param context Application context
-     * @param canvasRepository Optional CanvasRepository to include canvas cache size
-     * @return Total cache size in bytes
-     */
-    suspend fun getCacheSize(
-        context: Context, 
-        canvasRepository: chromahub.rhythm.app.shared.data.repository.CanvasRepository? = null
-    ): Long = withContext(Dispatchers.IO) {
-        var totalSize = 0L
-        
-        try {
-            // Internal cache size
-            totalSize += getDirectorySize(context.cacheDir)
-            
-            // External cache size
-            context.externalCacheDir?.let { externalCache ->
-                totalSize += getDirectorySize(externalCache)
-            }
-            
-            // Canvas cache size if provided
-            canvasRepository?.let { repository ->
-                totalSize += repository.getCanvasCacheSize()
-            }
-            
-        } catch (e: Exception) {
-            Log.e(TAG, "Error calculating cache size", e)
-        }
-        
-        return@withContext totalSize
-    }
     
     /**
      * Gets detailed cache size breakdown
      * 
      * @param context Application context
-     * @param canvasRepository Optional CanvasRepository to include canvas cache size
      * @return Map of cache type to size in bytes
      */
     suspend fun getDetailedCacheSize(
-        context: Context,
-        canvasRepository: chromahub.rhythm.app.shared.data.repository.CanvasRepository? = null
+        context: Context
     ): Map<String, Long> = withContext(Dispatchers.IO) {
         val details = mutableMapOf<String, Long>()
         
@@ -326,13 +278,6 @@ object CacheManager {
                 details["External Cache"] = getDirectorySize(externalCache)
             } ?: run {
                 details["External Cache"] = 0L
-            }
-            
-            // Canvas cache size if provided
-            canvasRepository?.let { repository ->
-                details["Canvas Cache"] = repository.getCanvasCacheSize()
-            } ?: run {
-                details["Canvas Cache"] = 0L
             }
             
         } catch (e: Exception) {

@@ -207,9 +207,6 @@ import chromahub.rhythm.app.features.local.presentation.components.player.Player
 import chromahub.rhythm.app.features.local.presentation.components.lyrics.LyricsEditorBottomSheet
 import chromahub.rhythm.app.shared.presentation.components.AudioQualityBadges
 import chromahub.rhythm.app.util.MediaUtils
-import chromahub.rhythm.app.features.local.presentation.components.player.CanvasPlayer
-import chromahub.rhythm.app.shared.data.repository.CanvasRepository
-import chromahub.rhythm.app.shared.data.repository.CanvasData
 import chromahub.rhythm.app.shared.data.model.Album
 import chromahub.rhythm.app.shared.data.model.Artist
 import chromahub.rhythm.app.features.local.presentation.navigation.Screen
@@ -319,7 +316,6 @@ fun PlayerScreen(
     val playerShowSongInfoOnArtwork by appSettingsInstance.playerShowSongInfoOnArtwork.collectAsState()
     val playerArtworkCornerRadius by appSettingsInstance.playerArtworkCornerRadius.collectAsState()
     val playerShowAudioQualityBadges by appSettingsInstance.playerShowAudioQualityBadges.collectAsState()
-    val canvasApiEnabled by appSettingsInstance.canvasApiEnabled.collectAsState()
     
     // Expressive shape for player artwork display
     val playerArtworkShape = rememberExpressiveShapeFor(
@@ -505,41 +501,6 @@ fun PlayerScreen(
     var isLyricsContentVisible by remember { mutableStateOf(false) }
     var isSongInfoVisible by remember { mutableStateOf(true) }
 
-    // Canvas video state with improved caching and retry capability
-    var canvasData by remember { mutableStateOf<CanvasData?>(null) }
-    var canvasRetryCount by remember { mutableStateOf(0) }
-    val canvasRepository = remember { 
-        CanvasRepository(context, appSettings).apply {
-            // Clear expired cache entries on initialization and optimize memory
-            clearExpiredCache()
-            optimizeCache() // New method for better cache management
-        }
-    }
-
-    // Canvas retry function
-    val retryCanvasLoading = {
-        if (song != null && canvasRetryCount < 2) { // Allow up to 2 retries
-            canvasRetryCount++
-            
-            kotlinx.coroutines.GlobalScope.launch {
-                try {
-                    Log.d("PlayerScreen", "Retrying canvas load for: ${song.artist} - ${song.title} (attempt $canvasRetryCount)")
-                    val canvas = canvasRepository.retryCanvasForSong(song.artist, song.title)
-                    canvasData = canvas
-                    
-                    if (canvas != null) {
-                        Log.d("PlayerScreen", "Canvas retry successful: ${canvas.videoUrl}")
-                    } else {
-                        Log.d("PlayerScreen", "Canvas retry failed - no canvas found")
-                    }
-                } catch (e: Exception) {
-                    Log.e("PlayerScreen", "Canvas retry failed: ${e.message}")
-                    canvasData = null
-                }
-            }
-        }
-    }
-
     // Reset lyrics view when lyrics are disabled
     LaunchedEffect(showLyrics) {
         if (!showLyrics && showLyricsView) {
@@ -549,57 +510,13 @@ fun PlayerScreen(
         }
     }
 
-    // Load canvas when song changes, but preserve lyrics view state
-    LaunchedEffect(song?.id, canvasApiEnabled) {
+    // Reset song info when song changes
+    LaunchedEffect(song?.id) {
         if (song != null) {
             // Don't reset lyrics view state - let user maintain their preference
             // Only reset song info visibility if lyrics are currently showing
             if (!showLyricsView) {
                 isSongInfoVisible = true
-            }
-            
-            // Reset canvas state
-            canvasData = null
-            canvasRetryCount = 0 // Reset retry count for new song
-            
-            // Only load canvas if Canvas API is enabled
-            if (!canvasApiEnabled) {
-                Log.d("PlayerScreen", "Canvas API disabled, skipping canvas load")
-                return@LaunchedEffect
-            }
-            
-            // Try to load canvas for the new song
-            try {
-                Log.d("PlayerScreen", "Loading canvas for: ${song.artist} - ${song.title}")
-                
-                // Enhanced cache check with better logging
-                val cachedCanvas = canvasRepository.getCachedCanvas(song.artist, song.title)
-                if (cachedCanvas != null) {
-                    Log.d("PlayerScreen", "Using cached canvas: ${cachedCanvas.videoUrl}")
-                    canvasData = cachedCanvas
-                } else {
-                    Log.d("PlayerScreen", "No cached canvas found, fetching from API...")
-                    // Fetch from API if not cached
-                    val canvas = canvasRepository.fetchCanvasForSong(song.artist, song.title)
-                    canvasData = canvas
-                    
-                    if (canvas != null) {
-                        Log.d("PlayerScreen", "Canvas loaded successfully: ${canvas.videoUrl}")
-                    } else {
-                        Log.d("PlayerScreen", "No canvas available for: ${song.artist} - ${song.title}")
-                    }
-                }
-                
-                // Preload canvas for upcoming queue items for better performance
-                if (queue.isNotEmpty() && queuePosition < queue.size) {
-                    val upcomingSongs = queue.drop(queuePosition + 1).take(3).map { it.artist to it.title }
-                    if (upcomingSongs.isNotEmpty()) {
-                        canvasRepository.preloadCanvasForQueue(upcomingSongs)
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("PlayerScreen", "Failed to load canvas: ${e.message}")
-                canvasData = null
             }
         }
     }
@@ -1453,130 +1370,148 @@ fun PlayerScreen(
                                 },
                             contentAlignment = Alignment.TopCenter // Align content to the center
                         ) {
-                            // Always render CanvasPlayer if song is not null, let CanvasPlayer manage its states
+                            // Render album art if song is not null
                             if (song != null) {
-                                CanvasPlayer(
-                                    videoUrl = canvasData?.videoUrl,
-                                    isPlaying = true, // Always keep canvas playing
-                                    cornerRadius = 28.dp,
-                                    modifier = Modifier.fillMaxSize(),
-                                    albumArtUrl = song.artworkUri,
-                                    albumName = song.title,
-                                    showGradientOverlay = playerShowGradientOverlay && !isTablet,
-                                    onCanvasLoaded = {
-                                        Log.d(
-                                            "PlayerScreen",
-                                            "Canvas loaded and album art transition completed"
-                                        )
-                                    },
-                                    onCanvasFailed = {
-                                        Log.d(
-                                            "PlayerScreen",
-                                            "Canvas failed, falling back to album art"
-                                        )
-                                    },
-                                    onRetryRequested = retryCanvasLoading,
-                                    fallbackContent = {
-                                        // Custom fallback content with enhanced styling
+                                Box(modifier = Modifier.fillMaxSize()) {
+                                    // Album art content with enhanced loading state
+                                    if (song.artworkUri != null) {
                                         Box(modifier = Modifier.fillMaxSize()) {
-                                            // Album art content with enhanced loading state
-                                            if (song.artworkUri != null) {
-                                                Box(modifier = Modifier.fillMaxSize()) {
-                                                    // Show shimmer while loading
-                                                    ShimmerBox(
-                                                        modifier = Modifier
-                                                            .fillMaxSize()
-                                                            .clip(playerArtworkShape)
-                                                    )
-                                                    
-                                                    AsyncImage(
-                                                        model = ImageRequest.Builder(context)
-                                                            .data(song.artworkUri)
-                                                            .placeholder(chromahub.rhythm.app.R.drawable.rhythm_logo)
-                                                            .error(chromahub.rhythm.app.R.drawable.rhythm_logo)
-                                                            .build(),
-                                                        contentDescription = "Album artwork for ${song.title}",
-                                                        contentScale = ContentScale.Crop,
-                                                        modifier = Modifier
-                                                            .fillMaxSize()
-                                                            .clip(playerArtworkShape)
-                                                    )
-                                                }
-                                            } else {
-                                                // Fallback to Rhythm logo if artwork is null
+                                            // Show shimmer while loading
+                                            ShimmerBox(
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .clip(playerArtworkShape)
+                                            )
+                                            
+                                            AsyncImage(
+                                                model = ImageRequest.Builder(context)
+                                                    .data(song.artworkUri)
+                                                    .placeholder(chromahub.rhythm.app.R.drawable.rhythm_logo)
+                                                    .error(chromahub.rhythm.app.R.drawable.rhythm_logo)
+                                                    .build(),
+                                                contentDescription = "Album artwork for ${song.title}",
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .clip(playerArtworkShape)
+                                            )
+
+                                            // Add gradient overlays for consistency (controlled by setting, disabled on tablets)
+                                            if (playerShowGradientOverlay && !isTablet) {
                                                 Box(
                                                     modifier = Modifier
                                                         .fillMaxSize()
-                                                        .clip(playerArtworkShape)
                                                         .background(
-                                                            Brush.radialGradient(
+                                                            Brush.verticalGradient(
+                                                                colors = listOf(
+                                                                    Color.Transparent,
+                                                                    BottomSheetDefaults.ContainerColor.copy(
+                                                                        alpha = 0.6f
+                                                                    ),
+                                                                    BottomSheetDefaults.ContainerColor.copy(
+                                                                        alpha = 0.9f
+                                                                    ),
+                                                                    BottomSheetDefaults.ContainerColor.copy(
+                                                                        alpha = 1.0f
+                                                                    )
+                                                                )
+                                                            )
+                                                        )
+                                                )
+
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .background(
+                                                            Brush.horizontalGradient(
                                                                 colors = listOf(
                                                                     BottomSheetDefaults.ContainerColor.copy(
-                                                                        alpha = 0.3f
+                                                                        alpha = 0.2f
                                                                     ),
-                                                                    BottomSheetDefaults.ContainerColor
-                                                                ),
-                                                                radius = 400f
+                                                                    Color.Transparent,
+                                                                    Color.Transparent,
+                                                                    BottomSheetDefaults.ContainerColor.copy(
+                                                                        alpha = 0.2f
+                                                                    )
+                                                                )
                                                             )
+                                                        )
+                                                )
+                                            }
+                                        }
+                                    } else {
+                                        // Fallback to Rhythm logo if artwork is null
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .clip(playerArtworkShape)
+                                                .background(
+                                                    Brush.radialGradient(
+                                                        colors = listOf(
+                                                            BottomSheetDefaults.ContainerColor.copy(
+                                                                alpha = 0.3f
+                                                            ),
+                                                            BottomSheetDefaults.ContainerColor
                                                         ),
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    Icon(
-                                                        painter = painterResource(id = chromahub.rhythm.app.R.drawable.rhythm_logo),
-                                                        contentDescription = "Album artwork for ${song.title}",
-                                                        tint = MaterialTheme.colorScheme.primary.copy(
-                                                            alpha = 0.7f
-                                                        ),
-                                                        modifier = Modifier.size(120.dp)
+                                                        radius = 400f
                                                     )
+                                                ),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(id = chromahub.rhythm.app.R.drawable.rhythm_logo),
+                                                contentDescription = "Album artwork for ${song.title}",
+                                                tint = MaterialTheme.colorScheme.primary.copy(
+                                                    alpha = 0.7f
+                                                ),
+                                                modifier = Modifier.size(120.dp)
+                                            )
 
-                                                    // Add gradient overlays for consistency (controlled by setting, disabled on tablets)
-                                                    if (playerShowGradientOverlay && !isTablet) {
-                                                        Box(
-                                                            modifier = Modifier
-                                                                .fillMaxSize()
-                                                                .background(
-                                                                    Brush.verticalGradient(
-                                                                        colors = listOf(
-                                                                            Color.Transparent,
-                                                                            BottomSheetDefaults.ContainerColor.copy(
-                                                                                alpha = 0.6f
-                                                                            ),
-                                                                            BottomSheetDefaults.ContainerColor.copy(
-                                                                                alpha = 0.9f
-                                                                            ),
-                                                                            BottomSheetDefaults.ContainerColor.copy(
-                                                                                alpha = 1.0f
-                                                                            )
-                                                                        )
+                                            // Add gradient overlays for consistency (controlled by setting, disabled on tablets)
+                                            if (playerShowGradientOverlay && !isTablet) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .background(
+                                                            Brush.verticalGradient(
+                                                                colors = listOf(
+                                                                    Color.Transparent,
+                                                                    BottomSheetDefaults.ContainerColor.copy(
+                                                                        alpha = 0.6f
+                                                                    ),
+                                                                    BottomSheetDefaults.ContainerColor.copy(
+                                                                        alpha = 0.9f
+                                                                    ),
+                                                                    BottomSheetDefaults.ContainerColor.copy(
+                                                                        alpha = 1.0f
                                                                     )
                                                                 )
+                                                            )
                                                         )
+                                                )
 
-                                                        Box(
-                                                            modifier = Modifier
-                                                                .fillMaxSize()
-                                                                .background(
-                                                                    Brush.horizontalGradient(
-                                                                        colors = listOf(
-                                                                            BottomSheetDefaults.ContainerColor.copy(
-                                                                                alpha = 0.2f
-                                                                            ),
-                                                                            Color.Transparent,
-                                                                            Color.Transparent,
-                                                                            BottomSheetDefaults.ContainerColor.copy(
-                                                                                alpha = 0.2f
-                                                                            )
-                                                                        )
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .background(
+                                                            Brush.horizontalGradient(
+                                                                colors = listOf(
+                                                                    BottomSheetDefaults.ContainerColor.copy(
+                                                                        alpha = 0.2f
+                                                                    ),
+                                                                    Color.Transparent,
+                                                                    Color.Transparent,
+                                                                    BottomSheetDefaults.ContainerColor.copy(
+                                                                        alpha = 0.2f
                                                                     )
                                                                 )
+                                                            )
                                                         )
-                                                    }
-                                                }
+                                                )
                                             }
                                         }
                                     }
-                                )
+                                }
                             } else {
                                 // Default placeholder if no song with Rhythm logo
                                 Box(

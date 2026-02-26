@@ -190,7 +190,6 @@
     <string name="settings_clear_all_button_short">모두 지우기</string>
     <string name="settings_root">루트</string>
 
-    <string name="settings_spotify_canvas">Spotify Canvas</string>
     <string name="settings_spotify_api_config">Spotify API 구성</string>
     <string name="settings_spotify_api_config_desc">트랙 검색 및 Canvas 비디오를 활성화하려면 Spotify API 자격 증명을 입력하세요.</string>
     <string name="settings_spotify_default_keys_warning">현재 앱의 기본 Spotify 키를 사용 중입니다. 전체 기능을 사용하고 속도 제한을 피하려면 고유한 Client ID와 Secret을 입력하세요.</string>

@@ -190,7 +190,6 @@
     <string name="settings_clear_all_button_short">Xóa tất cả</string>
     <string name="settings_root">Gốc</string>
 
-    <string name="settings_spotify_canvas">Spotify Canvas</string>
     <string name="settings_spotify_api_config">Cấu hình API Spotify</string>
     <string name="settings_spotify_api_config_desc">Nhập thông tin xác thực API Spotify của bạn để bật tìm kiếm bài hát và video Canvas.</string>
     <string name="settings_spotify_default_keys_warning">Bạn hiện đang sử dụng các khóa Spotify mặc định của ứng dụng. Để có đầy đủ chức năng và tránh giới hạn tốc độ, vui lòng nhập Client ID và Secret của riêng bạn.</string>

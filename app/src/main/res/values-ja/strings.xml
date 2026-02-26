@@ -190,7 +190,6 @@
     <string name="settings_clear_all_button_short">すべてクリア</string>
     <string name="settings_root">ルート</string>
 
-    <string name="settings_spotify_canvas">Spotify Canvas</string>
     <string name="settings_spotify_api_config">Spotify API設定</string>
     <string name="settings_spotify_api_config_desc">Spotify APIの認証情報を入力して、トラック検索とCanvasビデオを有効にします。</string>
     <string name="settings_spotify_default_keys_warning">現在、アプリのデフォルトのSpotifyキーを使用しています。すべての機能を利用し、レート制限を回避するには、独自のクライアントIDとシークレットを入力してください。</string>

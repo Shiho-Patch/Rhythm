@@ -92,6 +92,7 @@ class AppSettings private constructor(context: Context) {
         private const val KEY_PLAYLIST_VIEW_TYPE = "playlist_view_type"
         private const val KEY_ALBUM_SORT_ORDER = "album_sort_order"
         private const val KEY_PLAYLIST_SORT_ORDER = "playlist_sort_order"
+        private const val KEY_PLAYLIST_DETAIL_SORT_ORDER = "playlist_detail_sort_order"
         private const val KEY_ARTIST_COLLABORATION_MODE = "artist_collaboration_mode"
         private const val KEY_LIBRARY_TAB_ORDER = "library_tab_order"
         private const val KEY_PLAYER_CHIP_ORDER = "player_chip_order"
@@ -146,7 +147,6 @@ class AppSettings private constructor(context: Context) {
         
         // API Integration
         private const val KEY_DEEZER_API_ENABLED = "deezer_api_enabled"
-        private const val KEY_CANVAS_API_ENABLED = "canvas_api_enabled"
         private const val KEY_LRCLIB_API_ENABLED = "lrclib_api_enabled"
         private const val KEY_YTMUSIC_API_ENABLED = "ytmusic_api_enabled"
         private const val KEY_SPOTIFY_API_ENABLED = "spotify_api_enabled"
@@ -526,6 +526,10 @@ class AppSettings private constructor(context: Context) {
     private val _playlistSortOrder = MutableStateFlow(prefs.getString(KEY_PLAYLIST_SORT_ORDER, "NAME_ASC") ?: "NAME_ASC")
     val playlistSortOrder: StateFlow<String> = _playlistSortOrder.asStateFlow()
     
+    // Playlist Detail Sort Order (for songs within a playlist)
+    private val _playlistDetailSortOrder = MutableStateFlow(prefs.getString(KEY_PLAYLIST_DETAIL_SORT_ORDER, "TITLE_ASC") ?: "TITLE_ASC")
+    val playlistDetailSortOrder: StateFlow<String> = _playlistDetailSortOrder.asStateFlow()
+    
     // Artist Collaboration Mode
     private val _artistCollaborationMode = MutableStateFlow(prefs.getBoolean(KEY_ARTIST_COLLABORATION_MODE, false))
     val artistCollaborationMode: StateFlow<Boolean> = _artistCollaborationMode.asStateFlow()
@@ -828,9 +832,6 @@ class AppSettings private constructor(context: Context) {
     // API Enable/Disable States
     private val _deezerApiEnabled = MutableStateFlow(prefs.getBoolean(KEY_DEEZER_API_ENABLED, BuildConfig.FLAVOR != "fdroid"))
     val deezerApiEnabled: StateFlow<Boolean> = _deezerApiEnabled.asStateFlow()
-    
-    private val _canvasApiEnabled = MutableStateFlow(prefs.getBoolean(KEY_CANVAS_API_ENABLED, BuildConfig.FLAVOR != "fdroid"))
-    val canvasApiEnabled: StateFlow<Boolean> = _canvasApiEnabled.asStateFlow()
     
     private val _lrclibApiEnabled = MutableStateFlow(prefs.getBoolean(KEY_LRCLIB_API_ENABLED, BuildConfig.FLAVOR != "fdroid"))
     val lrclibApiEnabled: StateFlow<Boolean> = _lrclibApiEnabled.asStateFlow()
@@ -1355,6 +1356,11 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         _playlistSortOrder.value = sortOrder
     }
     
+    fun setPlaylistDetailSortOrder(sortOrder: String) {
+        prefs.edit().putString(KEY_PLAYLIST_DETAIL_SORT_ORDER, sortOrder).apply()
+        _playlistDetailSortOrder.value = sortOrder
+    }
+    
     fun setArtistCollaborationMode(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_ARTIST_COLLABORATION_MODE, enabled).apply()
         _artistCollaborationMode.value = enabled
@@ -1743,11 +1749,6 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     fun setDeezerApiEnabled(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_DEEZER_API_ENABLED, enabled).apply()
         _deezerApiEnabled.value = enabled
-    }
-    
-    fun setCanvasApiEnabled(enabled: Boolean) {
-        prefs.edit().putBoolean(KEY_CANVAS_API_ENABLED, enabled).apply()
-        _canvasApiEnabled.value = enabled
     }
     
     fun setLrcLibApiEnabled(enabled: Boolean) {
@@ -2925,7 +2926,6 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         
         // API Enable/Disable States
         _deezerApiEnabled.value = prefs.getBoolean(KEY_DEEZER_API_ENABLED, BuildConfig.FLAVOR != "fdroid")
-        _canvasApiEnabled.value = prefs.getBoolean(KEY_CANVAS_API_ENABLED, BuildConfig.FLAVOR != "fdroid")
         _lrclibApiEnabled.value = prefs.getBoolean(KEY_LRCLIB_API_ENABLED, BuildConfig.FLAVOR != "fdroid")
         _ytMusicApiEnabled.value = prefs.getBoolean(KEY_YTMUSIC_API_ENABLED, BuildConfig.FLAVOR != "fdroid")
         _spotifyApiEnabled.value = prefs.getBoolean(KEY_SPOTIFY_API_ENABLED, BuildConfig.FLAVOR != "fdroid")

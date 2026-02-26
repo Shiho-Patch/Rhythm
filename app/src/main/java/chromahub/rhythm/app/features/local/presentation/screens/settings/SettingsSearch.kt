@@ -489,15 +489,6 @@ fun buildSettingsSearchIndex(context: Context): List<SearchableSettingItem> {
             parentScreen = "Player"
         ))
         add(SearchableSettingItem(
-            id = "player_canvas",
-            title = "Canvas Backgrounds",
-            description = "Show animated backgrounds for supported songs",
-            keywords = listOf("canvas", "animated background", "video background", "spotify canvas"),
-            icon = Icons.Default.VideoLibrary,
-            route = SettingsRoutes.PLAYER_CUSTOMIZATION,
-            parentScreen = "Player"
-        ))
-        add(SearchableSettingItem(
             id = "player_gradient",
             title = "Gradient Overlay",
             description = "Show gradient overlay on album artwork",

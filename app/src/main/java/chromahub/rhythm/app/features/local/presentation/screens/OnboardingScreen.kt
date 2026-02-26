@@ -8284,7 +8284,6 @@ fun EnhancedIntegrationsContent(
 
     // Integration settings
     val deezerApiEnabled by appSettings.deezerApiEnabled.collectAsState()
-    val canvasApiEnabled by appSettings.canvasApiEnabled.collectAsState()
     val lrclibApiEnabled by appSettings.lrclibApiEnabled.collectAsState()
     val ytMusicApiEnabled by appSettings.ytMusicApiEnabled.collectAsState()
     val spotifyApiEnabled by appSettings.spotifyApiEnabled.collectAsState()
@@ -8357,7 +8356,6 @@ fun EnhancedIntegrationsContent(
             ) {
                 IntegrationsSettingsCards(
                     deezerApiEnabled = deezerApiEnabled,
-                    canvasApiEnabled = canvasApiEnabled,
                     lrclibApiEnabled = lrclibApiEnabled,
                     ytMusicApiEnabled = ytMusicApiEnabled,
                     spotifyApiEnabled = spotifyApiEnabled,
@@ -8365,7 +8363,6 @@ fun EnhancedIntegrationsContent(
                     discordRichPresenceEnabled = discordRichPresenceEnabled,
                     broadcastStatusEnabled = broadcastStatusEnabled,
                     onDeezerChange = { appSettings.setDeezerApiEnabled(it) },
-                    onCanvasChange = { appSettings.setCanvasApiEnabled(it) },
                     onLrcLibChange = { appSettings.setLrcLibApiEnabled(it) },
                     onYtMusicChange = { appSettings.setYTMusicApiEnabled(it) },
                     onSpotifyChange = { appSettings.setSpotifyApiEnabled(it) },
@@ -8418,7 +8415,6 @@ fun EnhancedIntegrationsContent(
 
             IntegrationsSettingsCards(
                 deezerApiEnabled = deezerApiEnabled,
-                canvasApiEnabled = canvasApiEnabled,
                 lrclibApiEnabled = lrclibApiEnabled,
                 ytMusicApiEnabled = ytMusicApiEnabled,
                 spotifyApiEnabled = spotifyApiEnabled,
@@ -8426,7 +8422,6 @@ fun EnhancedIntegrationsContent(
                 discordRichPresenceEnabled = discordRichPresenceEnabled,
                 broadcastStatusEnabled = broadcastStatusEnabled,
                 onDeezerChange = { appSettings.setDeezerApiEnabled(it) },
-                onCanvasChange = { appSettings.setCanvasApiEnabled(it) },
                 onLrcLibChange = { appSettings.setLrcLibApiEnabled(it) },
                 onYtMusicChange = { appSettings.setYTMusicApiEnabled(it) },
                 onSpotifyChange = { appSettings.setSpotifyApiEnabled(it) },
@@ -8447,7 +8442,6 @@ fun EnhancedIntegrationsContent(
 @Composable
 private fun IntegrationsSettingsCards(
     deezerApiEnabled: Boolean,
-    canvasApiEnabled: Boolean,
     lrclibApiEnabled: Boolean,
     ytMusicApiEnabled: Boolean,
     spotifyApiEnabled: Boolean,
@@ -8455,7 +8449,6 @@ private fun IntegrationsSettingsCards(
     discordRichPresenceEnabled: Boolean,
     broadcastStatusEnabled: Boolean,
     onDeezerChange: (Boolean) -> Unit,
-    onCanvasChange: (Boolean) -> Unit,
     onLrcLibChange: (Boolean) -> Unit,
     onYtMusicChange: (Boolean) -> Unit,
     onSpotifyChange: (Boolean) -> Unit,
@@ -8495,29 +8488,6 @@ private fun IntegrationsSettingsCards(
                     )
                     
                     // Show divider only if there are more items below
-                    if (chromahub.rhythm.app.BuildConfig.ENABLE_SPOTIFY_CANVAS || 
-                        chromahub.rhythm.app.BuildConfig.ENABLE_LRCLIB || 
-                        chromahub.rhythm.app.BuildConfig.ENABLE_YOUTUBE_MUSIC) {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 20.dp),
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                        )
-                    }
-                }
-                
-                // Spotify Canvas API - Only show if enabled in BuildConfig
-                if (chromahub.rhythm.app.BuildConfig.ENABLE_SPOTIFY_CANVAS) {
-                    OnboardingSettingRow(
-                        icon = Icons.Default.Brush,
-                        title = context.getString(R.string.onboarding_integration_canvas),
-                        description = context.getString(R.string.onboarding_integration_canvas_desc),
-                        isEnabled = canvasApiEnabled,
-                        onToggle = { 
-                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                            onCanvasChange(it) 
-                        }
-                    )
-                    
                     if (chromahub.rhythm.app.BuildConfig.ENABLE_LRCLIB || 
                         chromahub.rhythm.app.BuildConfig.ENABLE_YOUTUBE_MUSIC) {
                         HorizontalDivider(

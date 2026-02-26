@@ -190,7 +190,6 @@
     <string name="settings_clear_all_button_short">Tümünü Temizle</string>
     <string name="settings_root">Kök</string>
     
-    <string name="settings_spotify_canvas">Spotify Canvas</string>
     <string name="settings_spotify_api_config">Spotify API Yapılandırması</string>
     <string name="settings_spotify_api_config_desc">Parça aramayı ve Canvas videolarını etkinleştirmek için Spotify API kimlik bilgilerinizi girin.</string>
     <string name="settings_spotify_default_keys_warning">Şu anda uygulamanın varsayılan Spotify anahtarlarını kullanıyorsunuz. Tam işlevsellik ve hız sınırlarından kaçınmak için lütfen kendi İstemci Kimliğinizi (Client ID) ve Gizli Anahtarınızı (Secret) girin.</string>

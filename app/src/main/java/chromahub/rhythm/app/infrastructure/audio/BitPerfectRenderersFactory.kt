@@ -72,20 +72,8 @@ class BitPerfectRenderersFactory(
             spatializationProcessor
         )
         
-        // Add the MediaCodec audio renderer with our custom sink
-        val audioRenderer = MediaCodecAudioRenderer(
-            context,
-            mediaCodecSelector,
-            enableDecoderFallback,
-            eventHandler,
-            eventListener,
-            customAudioSink
-        )
-        
-        out.add(audioRenderer)
-Log.d(TAG, "Audio renderer configured: bit-perfect=$enableBitPerfect, Rhythm effects enabled")
-        
-        // Let the parent class add extension renderers if available
+        // Add extension renderers (FFmpeg) FIRST so they get priority for formats
+        // like EAC3-JOC (Dolby Atmos) that platform MediaCodec may not decode properly
         if (extensionRendererMode != EXTENSION_RENDERER_MODE_OFF) {
             val extensionRendererIndex = out.size
             super.buildAudioRenderers(
@@ -100,9 +88,35 @@ Log.d(TAG, "Audio renderer configured: bit-perfect=$enableBitPerfect, Rhythm eff
             )
             
             // Log if extension renderers were added
-            if (out.size > extensionRendererIndex + 1) {
-                Log.d(TAG, "Extension audio renderers added: ${out.size - extensionRendererIndex - 1}")
+            val extensionCount = out.size - extensionRendererIndex
+            if (extensionCount > 0) {
+                Log.d(TAG, "Extension audio renderers added: $extensionCount (includes FFmpeg for EAC3-JOC/Dolby Atmos support)")
+                
+                // Remove the standard MediaCodecAudioRenderer that super added,
+                // since we'll add our own custom one with BitPerfectAudioSink
+                val iterator = out.listIterator(extensionRendererIndex)
+                while (iterator.hasNext()) {
+                    val renderer = iterator.next()
+                    if (renderer is MediaCodecAudioRenderer) {
+                        iterator.remove()
+                        Log.d(TAG, "Removed standard MediaCodecAudioRenderer, will add custom one")
+                    }
+                }
             }
         }
+        
+        // Add our custom MediaCodec audio renderer AFTER extension renderers
+        // This ensures FFmpeg handles formats like EAC3-JOC before falling back to platform
+        val audioRenderer = MediaCodecAudioRenderer(
+            context,
+            mediaCodecSelector,
+            enableDecoderFallback,
+            eventHandler,
+            eventListener,
+            customAudioSink
+        )
+        
+        out.add(audioRenderer)
+        Log.d(TAG, "Audio renderer configured: bit-perfect=$enableBitPerfect, Rhythm effects enabled")
     }
 }

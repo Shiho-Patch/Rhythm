@@ -190,7 +190,6 @@
     <string name="settings_clear_all_button_short">Alle löschen</string>
     <string name="settings_root">Root</string>
     
-    <string name="settings_spotify_canvas">Spotify Canvas</string>
     <string name="settings_spotify_api_config">Spotify API Konfiguration</string>
     <string name="settings_spotify_api_config_desc">Gib deine Spotify API-Zugangsdaten ein, um die Titelsuche und Canvas-Videos zu aktivieren.</string>
     <string name="settings_spotify_default_keys_warning">Du verwendest derzeit die Standard-Spotify-Schlüssel der App. Für volle Funktionalität und zur Vermeidung von Ratenbegrenzungen, gib bitte deine eigene Client-ID und dein Secret ein.</string>

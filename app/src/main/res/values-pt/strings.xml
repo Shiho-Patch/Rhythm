@@ -190,7 +190,6 @@
     <string name="settings_clear_all_button_short">Limpar Tudo</string>
     <string name="settings_root">Raiz</string>
     
-    <string name="settings_spotify_canvas">Spotify Canvas</string>
     <string name="settings_spotify_api_config">Configuração da API do Spotify</string>
     <string name="settings_spotify_api_config_desc">Insira suas credenciais da API do Spotify para habilitar busca de faixas e vídeos Canvas.</string>
     <string name="settings_spotify_default_keys_warning">Você está usando atualmente as chaves padrão do Spotify do app. Para funcionalidade completa e para evitar limites de taxa, por favor insira seu próprio Client ID e Secret.</string>

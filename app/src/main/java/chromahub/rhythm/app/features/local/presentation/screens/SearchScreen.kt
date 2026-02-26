@@ -149,6 +149,7 @@ import chromahub.rhythm.app.shared.presentation.components.common.ExpressiveShap
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
+    musicViewModel: MusicViewModel,
     songs: List<Song>,
     albums: List<Album>,
     artists: List<Artist>,
@@ -169,7 +170,7 @@ fun SearchScreen(
     onNavigateToArtist: (Artist) -> Unit = {}
 ) {
     val context = LocalContext.current
-    val viewModel: MusicViewModel = viewModel()
+    val viewModel = musicViewModel
     var searchQuery by remember { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
@@ -2875,7 +2876,7 @@ fun AllSongsPage(
         ) {
             items(
                 items = songs,
-                key = { "song_${it.id}" },
+                key = { "song_${it.id}_${it.uri}" },
                 contentType = { "song" }
             ) { song ->
                 AnimateIn(modifier = Modifier.animateItem()) {

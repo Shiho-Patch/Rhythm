@@ -32,7 +32,6 @@ android {
             
             // F-Droid build: Enable all features (FOSS ethos)
             buildConfigField("boolean", "ENABLE_YOUTUBE_MUSIC", "true")
-            buildConfigField("boolean", "ENABLE_SPOTIFY_CANVAS", "true")
             buildConfigField("boolean", "ENABLE_APPLE_MUSIC", "true")
             buildConfigField("boolean", "ENABLE_DEEZER", "true")
             buildConfigField("boolean", "ENABLE_LRCLIB", "true")
@@ -48,7 +47,6 @@ android {
             
             // GitHub releases: Enable all features (same as F-Droid)
             buildConfigField("boolean", "ENABLE_YOUTUBE_MUSIC", "true")
-            buildConfigField("boolean", "ENABLE_SPOTIFY_CANVAS", "true")
             buildConfigField("boolean", "ENABLE_APPLE_MUSIC", "true")
             buildConfigField("boolean", "ENABLE_DEEZER", "true")
             buildConfigField("boolean", "ENABLE_LRCLIB", "true")

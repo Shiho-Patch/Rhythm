@@ -190,7 +190,6 @@
     <string name="settings_clear_all_button_short">Alles wissen</string>
     <string name="settings_root">Root</string>
     
-    <string name="settings_spotify_canvas">Spotify Canvas</string>
     <string name="settings_spotify_api_config">Spotify API-configuratie</string>
     <string name="settings_spotify_api_config_desc">Voer je Spotify API-inloggegevens in om nummers zoeken en Canvas-video\'s in te schakelen.</string>
     <string name="settings_spotify_default_keys_warning">Je gebruikt momenteel de standaard Spotify-sleutels van de app. Voor volledige functionaliteit en om limieten te vermijden, voer je eigen Client-ID en Secret in.</string>

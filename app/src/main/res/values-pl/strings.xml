@@ -190,7 +190,6 @@
     <string name="settings_clear_all_button_short">Wyczyść wszystko</string>
     <string name="settings_root">Główny</string>
     
-    <string name="settings_spotify_canvas">Spotify Canvas</string>
     <string name="settings_spotify_api_config">Konfiguracja API Spotify</string>
     <string name="settings_spotify_api_config_desc">Wprowadź dane uwierzytelniające API Spotify, aby włączyć wyszukiwanie utworów i filmy Canvas.</string>
     <string name="settings_spotify_default_keys_warning">Obecnie używasz domyślnych kluczy Spotify aplikacji. Aby uzyskać pełną funkcjonalność i uniknąć limitów, wprowadź własne Client ID i Secret.</string>

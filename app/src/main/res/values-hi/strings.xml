@@ -189,7 +189,6 @@
     <string name="settings_clear_all_button_short">सभी साफ़ करें</string>
     <string name="settings_root">रूट (Root)</string>
     
-    <string name="settings_spotify_canvas">Spotify कैनवास</string>
     <string name="settings_spotify_api_config">Spotify API कॉन्फ़िगरेशन</string>
     <string name="settings_spotify_api_config_desc">ट्रैक सर्च और कैनवास वीडियो सक्षम करने के लिए अपनी Spotify API क्रेडेंशियल्स दर्ज करें।</string>
     <string name="settings_spotify_default_keys_warning">आप वर्तमान में ऐप की डिफ़ॉल्ट Spotify कुंजियों (Keys) का उपयोग कर रहे हैं। पूर्ण कार्यक्षमता के लिए और रेट लिमिट से बचने के लिए, कृपया अपनी खुद की Client ID और Secret इनपुट करें।</string>

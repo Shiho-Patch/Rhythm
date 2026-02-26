@@ -3310,227 +3310,13 @@ fun ApiServiceRow(
                     onToggle(enabled)
                 }
             )
-        } else {
-            // Arrow icon (only for configurable services)
-            if (title == context.getString(R.string.settings_spotify_canvas)) {
-                Icon(
-                    imageVector = RhythmIcons.Forward,
-                    contentDescription = context.getString(R.string.cd_configure),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
         }
     }
 }
 
-@Composable
-fun SpotifyApiConfigDialog(
-    currentClientId: String,
-    currentClientSecret: String,
-    onDismiss: () -> Unit,
-    onSave: (clientId: String, clientSecret: String) -> Unit,
-    appSettings: AppSettings
-) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
+// SpotifyApiConfigDialog removed - Canvas API has been removed
 
-    var clientId by remember { mutableStateOf(currentClientId) }
-    var clientSecret by remember { mutableStateOf(currentClientSecret) }
-    var isTestingConnection by remember { mutableStateOf(false) }
-    var testResult by remember { mutableStateOf<Pair<Boolean, String>?>(null) }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = context.getString(R.string.settings_spotify_api_config),
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        },
-        text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text(
-                    text = context.getString(R.string.settings_spotify_api_config_desc),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                // Check if using default keys and display a warning
-                val isUsingDefaultKeys =
-                    currentClientId.isEmpty() && currentClientSecret.isEmpty()
-                if (isUsingDefaultKeys) {
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Info,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = context.getString(R.string.settings_spotify_default_keys_warning),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
-                            )
-                        }
-                    }
-                }
-
-                OutlinedTextField(
-                    value = clientId,
-                    onValueChange = {
-                        clientId = it
-                        testResult = null
-                    },
-                    label = { Text(context.getString(R.string.settings_spotify_client_id)) },
-                    placeholder = { Text(context.getString(R.string.settings_spotify_client_id_placeholder)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-
-                OutlinedTextField(
-                    value = clientSecret,
-                    onValueChange = {
-                        clientSecret = it
-                        testResult = null
-                    },
-                    label = { Text(context.getString(R.string.settings_spotify_client_secret)) },
-                    placeholder = { Text(context.getString(R.string.settings_spotify_client_secret_placeholder)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-
-                // Test connection button
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Button(
-                        onClick = {
-                            scope.launch {
-                                isTestingConnection = true
-                                try {
-                                    // Temporarily set the credentials for testing
-                                    appSettings.setSpotifyClientId(clientId)
-                                    appSettings.setSpotifyClientSecret(clientSecret)
-
-                                    val canvasRepository =
-                                        chromahub.rhythm.app.shared.data.repository.CanvasRepository(
-                                            context,
-                                            appSettings
-                                        )
-                                    testResult = canvasRepository.testSpotifyApiConfiguration()
-                                } catch (e: Exception) {
-                                    testResult = Pair(false, context.getString(R.string.settings_spotify_error, e.message ?: ""))
-                                } finally {
-                                    isTestingConnection = false
-                                }
-                            }
-                        },
-                        enabled = !isTestingConnection && clientId.isNotBlank() && clientSecret.isNotBlank(),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        if (isTestingConnection) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                        }
-                        Text(if (isTestingConnection) context.getString(R.string.settings_spotify_testing) else context.getString(R.string.settings_spotify_test_connection))
-                    }
-                }
-
-                // Test result display
-                testResult?.let { (success, message) ->
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (success)
-                                MaterialTheme.colorScheme.primaryContainer
-                            else
-                                MaterialTheme.colorScheme.errorContainer
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = if (success) Icons.Default.CheckCircle else Icons.Default.Error,
-                                contentDescription = null,
-                                tint = if (success)
-                                    MaterialTheme.colorScheme.onPrimaryContainer
-                                else
-                                    MaterialTheme.colorScheme.onErrorContainer,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = message,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = if (success)
-                                    MaterialTheme.colorScheme.onPrimaryContainer
-                                else
-                                    MaterialTheme.colorScheme.onErrorContainer
-                            )
-                        }
-                    }
-                }
-
-                // Help text
-                Text(
-                    text = context.getString(R.string.settings_spotify_instructions),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    onSave(clientId, clientSecret)
-                },
-                enabled = clientId.isNotBlank() && clientSecret.isNotBlank()
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Save,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Save")
-            }
-        },
-        dismissButton = {
-            OutlinedButton(onClick = onDismiss) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Cancel")
-            }
-        },
-        shape = RoundedCornerShape(24.dp)
-    )
-}
 
 @Composable
 fun AboutScreen(
@@ -3861,14 +3647,6 @@ fun AboutScreen(
                                 role = "Collab & Project PixelPlayer's Lead Dev",
                                 githubUsername = "theovilardo",
                                 avatarUrl = "https://github.com/theovilardo.png",
-                                context = context
-                            )
-
-                            CommunityMember(
-                                name = "Alex",
-                                role = "Spotify Canvas API",
-                                githubUsername = "Paxsenix0",
-                                avatarUrl = "https://github.com/Paxsenix0.png",
                                 context = context
                             )
 
@@ -6369,17 +6147,12 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
     var showClearCacheSuccess by remember { mutableStateOf(false) }
     var cacheDetails by remember { mutableStateOf<Map<String, Long>>(emptyMap()) }
 
-    // Canvas repository for cache management
-    val canvasRepository = remember {
-        chromahub.rhythm.app.shared.data.repository.CanvasRepository(context, appSettings)
-    }
-
     // Calculate cache size when the screen opens
     LaunchedEffect(Unit) {
         isCalculatingSize = true
         try {
-            currentCacheSize = chromahub.rhythm.app.util.CacheManager.getCacheSize(context, canvasRepository)
-            cacheDetails = chromahub.rhythm.app.util.CacheManager.getDetailedCacheSize(context, canvasRepository)
+            currentCacheSize = chromahub.rhythm.app.util.CacheManager.getCacheSize(context)
+            cacheDetails = chromahub.rhythm.app.util.CacheManager.getDetailedCacheSize(context)
         } catch (e: Exception) {
             Log.e("CacheManagement", "Error calculating cache size", e)
         } finally {
@@ -6583,8 +6356,8 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
                                     try {
                                         isClearingCache = true
                                         musicViewModel.clearLyricsCacheAndRefetch()
-                                        currentCacheSize = chromahub.rhythm.app.util.CacheManager.getCacheSize(context, canvasRepository)
-                                        cacheDetails = chromahub.rhythm.app.util.CacheManager.getDetailedCacheSize(context, canvasRepository)
+                                        currentCacheSize = chromahub.rhythm.app.util.CacheManager.getCacheSize(context)
+                                        cacheDetails = chromahub.rhythm.app.util.CacheManager.getDetailedCacheSize(context)
                                         Toast.makeText(context, "Lyrics cache cleared", Toast.LENGTH_SHORT).show()
                                     } catch (e: Exception) {
                                         Log.e("CacheManagement", "Error clearing lyrics cache", e)
@@ -6606,10 +6379,10 @@ fun CacheManagementSettingsScreen(onBackClick: () -> Unit) {
                                     scope.launch {
                                         try {
                                             isClearingCache = true
-                                            chromahub.rhythm.app.util.CacheManager.clearAllCache(context, null, canvasRepository)
+                                            chromahub.rhythm.app.util.CacheManager.clearAllCache(context, null)
                                             musicViewModel.getMusicRepository().clearInMemoryCaches()
-                                            currentCacheSize = chromahub.rhythm.app.util.CacheManager.getCacheSize(context, canvasRepository)
-                                            cacheDetails = chromahub.rhythm.app.util.CacheManager.getDetailedCacheSize(context, canvasRepository)
+                                            currentCacheSize = chromahub.rhythm.app.util.CacheManager.getCacheSize(context)
+                                            cacheDetails = chromahub.rhythm.app.util.CacheManager.getDetailedCacheSize(context)
                                             showClearCacheSuccess = true
                                             Toast.makeText(context, "All cache cleared", Toast.LENGTH_SHORT).show()
                                         } catch (e: Exception) {
@@ -8368,7 +8141,6 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
 
     // State variables
     val showLyrics by appSettings.showLyrics.collectAsState()
-    val canvasApiEnabled by appSettings.canvasApiEnabled.collectAsState()
     val playerShowGradientOverlay by appSettings.playerShowGradientOverlay.collectAsState()
     val playerShowSeekButtons by appSettings.playerShowSeekButtons.collectAsState()
     val playerTextAlignment by appSettings.playerTextAlignment.collectAsState()
@@ -8472,29 +8244,10 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                 onToggleChange = { appSettings.setShowLyricsRomanization(it) }
                             )
                         }
-                        // Canvas Backgrounds - Only show if Spotify Canvas is enabled in BuildConfig
-                        if (chromahub.rhythm.app.BuildConfig.ENABLE_SPOTIFY_CANVAS) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 20.dp),
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                            )
-                            SettingRow(
-                                icon = Icons.Default.VideoLibrary,
-                                title = "Canvas Backgrounds",
-                                description = "Show animated backgrounds for supported songs",
-                                toggleState = canvasApiEnabled,
-                                onToggleChange = { appSettings.setCanvasApiEnabled(it) }
-                            )
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 20.dp),
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                            )
-                        } else {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 20.dp),
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                            )
-                        }
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
                         SettingRow(
                             icon = Icons.Default.Gradient,
                             title = "Gradient Overlay",
@@ -12169,7 +11922,6 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
 
     // API states
     val deezerApiEnabled by appSettings.deezerApiEnabled.collectAsState()
-    val canvasApiEnabled by appSettings.canvasApiEnabled.collectAsState()
     val lrclibApiEnabled by appSettings.lrclibApiEnabled.collectAsState()
     val ytMusicApiEnabled by appSettings.ytMusicApiEnabled.collectAsState()
     val spotifyApiEnabled by appSettings.spotifyApiEnabled.collectAsState()
@@ -12184,9 +11936,6 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
     
     // Broadcast Status state
     val broadcastStatusEnabled by appSettings.broadcastStatusEnabled.collectAsState()
-
-    // Spotify API dialog state
-    var showSpotifyConfigDialog by remember { mutableStateOf(false) }
 
     CollapsibleHeaderScreen(
         title = "Integrations",
@@ -12238,54 +11987,6 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
                             )
                             
                             // Show divider only if there are more items below
-                            if (chromahub.rhythm.app.BuildConfig.ENABLE_SPOTIFY_CANVAS || 
-                                chromahub.rhythm.app.BuildConfig.ENABLE_LRCLIB || 
-                                chromahub.rhythm.app.BuildConfig.ENABLE_YOUTUBE_MUSIC) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(horizontal = 20.dp),
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                                )
-                            }
-                        }
-
-                        // Spotify Canvas API - Only show if enabled in BuildConfig
-                        if (chromahub.rhythm.app.BuildConfig.ENABLE_SPOTIFY_CANVAS) {
-                            ApiServiceRow(
-                                title = "Spotify Canvas",
-                                description = if (spotifyClientId.isNotEmpty() && spotifyClientSecret.isNotEmpty()) {
-                                    "Spotify integration for Canvas videos (High Data Usage)"
-                                } else {
-                                    "Canvas videos from Spotify (Please use your own key!)"
-                                },
-                                status = if (spotifyClientId.isNotEmpty() && spotifyClientSecret.isNotEmpty()) {
-                                    "Active"
-                                } else {
-                                    "Need Setup"
-                                },
-                                isConfigured = true,
-                                isEnabled = canvasApiEnabled && (spotifyApiEnabled || true),
-                                icon = RhythmIcons.Song,
-                                showToggle = true,
-                                onToggle = { enabled ->
-                                    appSettings.setCanvasApiEnabled(enabled)
-                                    // Auto-clear canvas cache when disabled
-                                    if (!enabled) {
-                                        scope.launch {
-                                            try {
-                                                val canvasRepository = chromahub.rhythm.app.shared.data.repository.CanvasRepository(context, appSettings)
-                                                canvasRepository.clearCache()
-                                                Log.d("ApiManagement", "Canvas cache cleared due to API being disabled")
-                                            } catch (e: Exception) {
-                                                Log.e("ApiManagement", "Error clearing canvas cache", e)
-                                            }
-                                        }
-                                    }
-                                },
-                                onClick = {
-                                    showSpotifyConfigDialog = true
-                                }
-                            )
-                            
                             if (chromahub.rhythm.app.BuildConfig.ENABLE_LRCLIB || 
                                 chromahub.rhythm.app.BuildConfig.ENABLE_YOUTUBE_MUSIC) {
                                 HorizontalDivider(
@@ -12839,25 +12540,6 @@ fun ApiManagementSettingsScreen(onBackClick: () -> Unit) {
                 }
             }
         }
-    }
-
-    // Spotify API Configuration Dialog
-    if (showSpotifyConfigDialog) {
-        SpotifyApiConfigDialog(
-            currentClientId = spotifyClientId,
-            currentClientSecret = spotifyClientSecret,
-            onDismiss = { showSpotifyConfigDialog = false },
-            onSave = { clientId, clientSecret ->
-                appSettings.setSpotifyClientId(clientId)
-                appSettings.setSpotifyClientSecret(clientSecret)
-                // Auto-enable API if credentials are provided
-                if (clientId.isNotEmpty() && clientSecret.isNotEmpty()) {
-                    appSettings.setSpotifyApiEnabled(true)
-                }
-                showSpotifyConfigDialog = false
-            },
-            appSettings = appSettings
-        )
     }
 }
 

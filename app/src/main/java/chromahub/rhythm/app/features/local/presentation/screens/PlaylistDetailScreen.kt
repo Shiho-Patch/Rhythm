@@ -227,15 +227,21 @@ fun PlaylistDetailScreen(
     var isMultiSelectMode by remember { mutableStateOf(false) }
     var selectedSongs by remember { mutableStateOf(setOf<String>()) }
     var showBulkDeleteDialog by remember { mutableStateOf(false) }
-    
-    // Track current sort order for playlist
-    var currentPlaylistSort by remember { mutableStateOf(PlaylistSortOrder.TITLE_ASC) }
 
     val haptics = LocalHapticFeedback.current
     val context = LocalContext.current
     val appSettings = remember { chromahub.rhythm.app.shared.data.model.AppSettings.getInstance(context) }
     val playlistClickBehavior by appSettings.playlistClickBehavior.collectAsState(initial = "ask")
     val useHoursFormat by appSettings.useHoursInTimeFormat.collectAsState()
+    
+    // Track current sort order for playlist - persisted via AppSettings
+    val persistedSortOrder by appSettings.playlistDetailSortOrder.collectAsState()
+    var currentPlaylistSort by remember(persistedSortOrder) {
+        mutableStateOf(
+            try { PlaylistSortOrder.valueOf(persistedSortOrder) }
+            catch (_: Exception) { PlaylistSortOrder.TITLE_ASC }
+        )
+    }
     
     // Floating toolbar scroll behavior
     val exitAlwaysScrollBehavior = FloatingToolbarDefaults.exitAlwaysScrollBehavior(exitDirection = Bottom)
@@ -1114,6 +1120,7 @@ fun PlaylistDetailScreen(
                                 onClick = {
                                     HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
                                     currentPlaylistSort = sortOrder
+                                    appSettings.setPlaylistDetailSortOrder(sortOrder.name)
                                     showSortMenu = false
                                     val sortedSongs = when (sortOrder) {
                                         PlaylistSortOrder.TITLE_ASC -> playlist.songs.sortedBy { it.title.lowercase() }

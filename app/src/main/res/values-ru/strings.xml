@@ -191,7 +191,6 @@
     <string name="settings_clear_all_button_short">Очистить всё</string>
     <string name="settings_root">Корень</string>
 
-    <string name="settings_spotify_canvas">Spotify Canvas</string>
     <string name="settings_spotify_api_config">Конфигурация API Spotify</string>
     <string name="settings_spotify_api_config_desc">Введите учетные данные Spotify API для поиска треков и видео Canvas.</string>
     <string name="settings_spotify_default_keys_warning">Вы используете стандартные ключи приложения. Для полной функциональности и избежания лимитов, пожалуйста, введите свои Client ID и Secret.</string>

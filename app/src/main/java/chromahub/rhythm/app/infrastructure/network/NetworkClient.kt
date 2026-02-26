@@ -16,7 +16,6 @@ import java.net.UnknownHostException
 import kotlin.math.pow
 import chromahub.rhythm.app.network.LRCLibApiService
 import chromahub.rhythm.app.network.DeezerApiService
-import chromahub.rhythm.app.network.SpotifyCanvasApiService
 import chromahub.rhythm.app.network.SpotifySearchApiService
 import chromahub.rhythm.app.network.YTMusicApiService
 
@@ -25,7 +24,6 @@ object NetworkClient {
     
     private const val LRCLIB_BASE_URL = "https://lrclib.net/"
     private const val DEEZER_BASE_URL = "https://api.deezer.com/"
-    private const val CANVAS_BASE_URL = "https://rhythm-spc.koyeb.app/"
     private const val YTMUSIC_BASE_URL = "https://music.youtube.com/"
     private const val SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1/"
     
@@ -154,22 +152,6 @@ object NetworkClient {
         .addConverterFactory(GsonConverterFactory.create())
         .build()
     
-    private val canvasHttpClient = OkHttpClient.Builder()
-        .addInterceptor(deezerHeadersInterceptor())
-        .addInterceptor(loggingInterceptor)
-        .addInterceptor(retryInterceptor)
-        .connectTimeout(CONNECT_TIMEOUT, TimeUnit.SECONDS)
-        .readTimeout(READ_TIMEOUT, TimeUnit.SECONDS)
-        .writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS)
-        .connectionPool(connectionPool)
-        .build()
-    
-    private val canvasRetrofit = Retrofit.Builder()
-        .baseUrl(CANVAS_BASE_URL)
-        .client(canvasHttpClient)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-    
     private val lrclibHttpClient = OkHttpClient.Builder()
         .addInterceptor(loggingInterceptor)
         .connectTimeout(CONNECT_TIMEOUT, TimeUnit.SECONDS)
@@ -219,10 +201,6 @@ object NetworkClient {
         deezerRetrofit.create(DeezerApiService::class.java)
     } else null
     
-    val canvasApiService: SpotifyCanvasApiService? = if (BuildConfig.ENABLE_SPOTIFY_CANVAS) {
-        canvasRetrofit.create(SpotifyCanvasApiService::class.java)
-    } else null
-    
     val lrclibApiService: LRCLibApiService? = if (BuildConfig.ENABLE_LRCLIB) {
         lrclibRetrofit.create(LRCLibApiService::class.java)
     } else null
@@ -243,7 +221,6 @@ object NetworkClient {
     
     // Helper methods to check if APIs are enabled (respects both BuildConfig AND runtime settings)
     fun isDeezerApiEnabled(): Boolean = BuildConfig.ENABLE_DEEZER && (appSettings?.deezerApiEnabled?.value ?: false)
-    fun isCanvasApiEnabled(): Boolean = BuildConfig.ENABLE_SPOTIFY_CANVAS && (appSettings?.canvasApiEnabled?.value ?: false)
     fun isLrcLibApiEnabled(): Boolean = BuildConfig.ENABLE_LRCLIB && (appSettings?.lrclibApiEnabled?.value ?: false)
     fun isYTMusicApiEnabled(): Boolean = BuildConfig.ENABLE_YOUTUBE_MUSIC && (appSettings?.ytMusicApiEnabled?.value ?: false)
     fun isSpotifyApiEnabled(): Boolean = BuildConfig.ENABLE_SPOTIFY_SEARCH && (appSettings?.spotifyApiEnabled?.value ?: false)

@@ -190,7 +190,6 @@
     <string name="settings_clear_all_button_short">Tout effacer</string>
     <string name="settings_root">Racine</string>
     
-    <string name="settings_spotify_canvas">Spotify Canvas</string>
     <string name="settings_spotify_api_config">Configuration API Spotify</string>
     <string name="settings_spotify_api_config_desc">Entrez vos identifiants API Spotify pour activer la recherche de titres et les vidéos Canvas.</string>
     <string name="settings_spotify_default_keys_warning">Vous utilisez actuellement les clés Spotify par défaut. Pour une fonctionnalité complète et éviter les limites, veuillez saisir votre propre Client ID et Secret.</string>

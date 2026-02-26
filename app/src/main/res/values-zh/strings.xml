@@ -190,7 +190,6 @@
     <string name="settings_clear_all_button_short">全部清除</string>
     <string name="settings_root">根目录</string>
     
-    <string name="settings_spotify_canvas">Spotify Canvas</string>
     <string name="settings_spotify_api_config">Spotify API 配置</string>
     <string name="settings_spotify_api_config_desc">输入你的 Spotify API 凭据以启用曲目搜索和 Canvas 视频。</string>
     <string name="settings_spotify_default_keys_warning">你当前使用的是应用的默认 Spotify 密钥。为了获得完整功能并避免速率限制，请输入你自己的客户端 ID 和密钥。</string>

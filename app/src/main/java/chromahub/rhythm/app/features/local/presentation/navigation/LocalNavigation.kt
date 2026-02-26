@@ -1195,6 +1195,7 @@ private fun LocalNavigationContent(
                     }
                 ) {
                     SearchScreen(
+                        musicViewModel = viewModel,
                         songs = songs,
                         albums = albums,
                         artists = artists,

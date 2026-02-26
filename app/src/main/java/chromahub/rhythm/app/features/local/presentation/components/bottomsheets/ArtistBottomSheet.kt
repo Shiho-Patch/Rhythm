@@ -558,7 +558,7 @@ fun ArtistBottomSheet(
 
                                             items(
                                                 items = artistSongs,
-                                                key = { "artistsong_${it.id}" }
+                                                key = { "artistsong_${it.id}_${it.uri}" }
                                             ) { song ->
                                                 EnhancedArtistSongItem(
                                                     song = song,
