@@ -8,8 +8,8 @@ espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.12.4"
 composeBom = "2026.02.00"
-foundationLayout = "1.10.3"
-animationCore = "1.10.3"
+foundationLayout = "1.10.4"
+animationCore = "1.10.4"
 roomKtx = "2.8.4"
 
 [libraries]
