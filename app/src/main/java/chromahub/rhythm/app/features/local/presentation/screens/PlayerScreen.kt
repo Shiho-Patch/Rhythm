@@ -1388,6 +1388,7 @@ fun PlayerScreen(
                                                     .data(song.artworkUri)
                                                     .placeholder(chromahub.rhythm.app.R.drawable.rhythm_logo)
                                                     .error(chromahub.rhythm.app.R.drawable.rhythm_logo)
+                                                    .allowHardware(false)
                                                     .build(),
                                                 contentDescription = "Album artwork for ${song.title}",
                                                 contentScale = ContentScale.Crop,
