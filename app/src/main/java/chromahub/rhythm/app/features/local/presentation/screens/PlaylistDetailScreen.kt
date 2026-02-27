@@ -2208,6 +2208,7 @@ fun PlaylistDetailScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .padding(horizontal = 15.dp)
                         .padding(vertical = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {

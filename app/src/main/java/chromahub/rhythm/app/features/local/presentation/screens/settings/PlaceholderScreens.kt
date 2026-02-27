@@ -7813,29 +7813,92 @@ fun MiniPlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                             toggleState = miniPlayerShowProgress,
                             onToggleChange = { appSettings.setMiniPlayerShowProgress(it) }
                         )
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 20.dp),
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                        )
-                        SettingRow(
-                            icon = Icons.Default.ChangeCircle,
-                            title = "Circular Progress",
-                            description = "Use circular progress on play/pause button",
-                            toggleState = miniPlayerUseCircularProgress,
-                            onToggleChange = { appSettings.setMiniPlayerUseCircularProgress(it) }
-                        )
-                        // Show progress style only for linear mode (circular always uses Material 3 wavy style)
-                        if (!miniPlayerUseCircularProgress) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 20.dp),
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                            )
-                            SettingRow(
-                                icon = Icons.Default.LinearScale,
-                                title = "Progress Style",
-                                description = miniPlayerProgressStyle.lowercase().replaceFirstChar { it.uppercase() },
-                                onClick = { showMiniPlayerProgressStyleSheet = true }
-                            )
+                        
+                        // Progress Mode and Style - conditionally shown when Show Progress is on
+                        AnimatedVisibility(
+                            visible = miniPlayerShowProgress,
+                            enter = fadeIn(animationSpec = tween(300)) + expandVertically(animationSpec = tween(300)),
+                            exit = fadeOut(animationSpec = tween(200)) + shrinkVertically(animationSpec = tween(200))
+                        ) {
+                            Column {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                                
+                                // Progress Mode Button Group
+                                Column(modifier = Modifier.padding(20.dp)) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        // Icon container with expressive design
+                                        Surface(
+                                            modifier = Modifier.size(40.dp),
+                                            shape = RoundedCornerShape(34.dp),
+                                            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                            tonalElevation = 0.dp
+                                        ) {
+                                            Box(
+                                                contentAlignment = Alignment.Center,
+                                                modifier = Modifier.fillMaxSize()
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.ChangeCircle,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(24.dp),
+                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+                                        Column {
+                                            Text(
+                                                text = "Progress Mode",
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.Medium,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = "Choose progress indicator style",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    ExpressiveButtonGroup(
+                                        items = listOf("Linear", "Circular"),
+                                        selectedIndex = if (miniPlayerUseCircularProgress) 1 else 0,
+                                        onItemClick = { index ->
+                                            HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                            appSettings.setMiniPlayerUseCircularProgress(index == 1)
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                                
+                                // Show progress style only for linear mode (circular always uses Material 3 wavy style)
+                                AnimatedVisibility(
+                                    visible = !miniPlayerUseCircularProgress,
+                                    enter = fadeIn(animationSpec = tween(300)) + expandVertically(animationSpec = tween(300)),
+                                    exit = fadeOut(animationSpec = tween(200)) + shrinkVertically(animationSpec = tween(200))
+                                ) {
+                                    Column {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 20.dp),
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                        )
+                                        SettingRow(
+                                            icon = Icons.Default.LinearScale,
+                                            title = "Progress Style",
+                                            description = miniPlayerProgressStyle.lowercase().replaceFirstChar { it.uppercase() },
+                                            onClick = { showMiniPlayerProgressStyleSheet = true }
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -8142,6 +8205,10 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
     // State variables
     val showLyrics by appSettings.showLyrics.collectAsState()
     val playerShowGradientOverlay by appSettings.playerShowGradientOverlay.collectAsState()
+    val playerLyricsTransition by appSettings.playerLyricsTransition.collectAsState()
+    val playerLyricsTextSize by appSettings.playerLyricsTextSize.collectAsState()
+    val playerLyricsAlignment by appSettings.playerLyricsAlignment.collectAsState()
+    val playerShowArtBelowLyrics by appSettings.playerShowArtBelowLyrics.collectAsState()
     val playerShowSeekButtons by appSettings.playerShowSeekButtons.collectAsState()
     val playerTextAlignment by appSettings.playerTextAlignment.collectAsState()
     val playerShowSongInfoOnArtwork by appSettings.playerShowSongInfoOnArtwork.collectAsState()
@@ -8211,47 +8278,11 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Column {
-                        SettingRow(
-                            icon = Icons.Rounded.Lyrics,
-                            title = "Show Lyrics",
-                            description = "Display synchronized lyrics in player",
-                            toggleState = showLyrics,
-                            onToggleChange = { appSettings.setShowLyrics(it) }
-                        )
-                        
-                        // Show translation toggle (only visible when lyrics are enabled)
-                        if (showLyrics) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 20.dp),
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                            )
-                            SettingRow(
-                                icon = Icons.Rounded.Translate,
-                                title = context.getString(R.string.lyrics_show_translation),
-                                description = context.getString(R.string.lyrics_show_translation_desc),
-                                toggleState = appSettings.showLyricsTranslation.collectAsState().value,
-                                onToggleChange = { appSettings.setShowLyricsTranslation(it) }
-                            )
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 20.dp),
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                            )
-                            SettingRow(
-                                icon = Icons.Rounded.Language,
-                                title = context.getString(R.string.lyrics_show_romanization),
-                                description = context.getString(R.string.lyrics_show_romanization_desc),
-                                toggleState = appSettings.showLyricsRomanization.collectAsState().value,
-                                onToggleChange = { appSettings.setShowLyricsRomanization(it) }
-                            )
-                        }
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 20.dp),
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                        )
+                        // Art View Overlay toggle
                         SettingRow(
                             icon = Icons.Default.Gradient,
-                            title = "Gradient Overlay",
-                            description = "Show gradient overlay on album artwork",
+                            title = "Artwork Overlay",
+                            description = "Show overlay on album artwork",
                             toggleState = playerShowGradientOverlay,
                             onToggleChange = { appSettings.setPlayerShowGradientOverlay(it) }
                         )
@@ -8281,7 +8312,238 @@ fun PlayerCustomizationSettingsScreen(onBackClick: () -> Unit) {
                 }
             }
 
-            // Layout Options Section
+            // Lyrics Customization Section (always visible)
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "Lyrics Customization",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                ) {
+                    Column {
+                        // Show Lyrics toggle
+                        SettingRow(
+                            icon = Icons.Rounded.Lyrics,
+                            title = "Show Lyrics",
+                            description = "Display synchronized lyrics in player",
+                            toggleState = showLyrics,
+                            onToggleChange = { appSettings.setShowLyrics(it) }
+                        )
+                        // All lyrics settings visible when lyrics are enabled
+                        AnimatedVisibility(
+                            visible = showLyrics,
+                            enter = fadeIn(animationSpec = tween(300)) + expandVertically(animationSpec = tween(300)),
+                            exit = fadeOut(animationSpec = tween(200)) + shrinkVertically(animationSpec = tween(200))
+                        ) {
+                            Column {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                                SettingRow(
+                                    icon = Icons.Rounded.Translate,
+                                    title = context.getString(R.string.lyrics_show_translation),
+                                    description = context.getString(R.string.lyrics_show_translation_desc),
+                                    toggleState = appSettings.showLyricsTranslation.collectAsState().value,
+                                    onToggleChange = { appSettings.setShowLyricsTranslation(it) }
+                                )
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                                SettingRow(
+                                    icon = Icons.Rounded.Language,
+                                    title = context.getString(R.string.lyrics_show_romanization),
+                                    description = context.getString(R.string.lyrics_show_romanization_desc),
+                                    toggleState = appSettings.showLyricsRomanization.collectAsState().value,
+                                    onToggleChange = { appSettings.setShowLyricsRomanization(it) }
+                                )
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 20.dp),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                )
+                        // Lyrics Transition
+                        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Surface(
+                                    modifier = Modifier.size(40.dp),
+                                    shape = RoundedCornerShape(34.dp),
+                                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    tonalElevation = 0.dp
+                                ) {
+                                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                                        Icon(
+                                            imageVector = Icons.Default.Animation,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(24.dp),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                                Column {
+                                    Text(
+                                        text = "Lyrics Transition",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = "Art ↔ Lyrics switch animation",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
+                            ExpressiveButtonGroup(
+                                items = listOf("Slide", "Fade", "Scale", "Up"),
+                                selectedIndex = playerLyricsTransition,
+                                onItemClick = { index ->
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    appSettings.setPlayerLyricsTransition(index)
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        // Lyrics Text Size
+                        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Surface(
+                                    modifier = Modifier.size(40.dp),
+                                    shape = RoundedCornerShape(34.dp),
+                                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    tonalElevation = 0.dp
+                                ) {
+                                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                                        Icon(
+                                            imageVector = Icons.Default.FormatSize,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(24.dp),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                                Column {
+                                    Text(
+                                        text = "Lyrics Text Size",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = "Size: ${(playerLyricsTextSize * 100).toInt()}%",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Slider(
+                                value = playerLyricsTextSize,
+                                onValueChange = { appSettings.setPlayerLyricsTextSize(it) },
+                                valueRange = 0.5f..2.0f,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("50%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("200%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        // Lyrics Alignment
+                        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Surface(
+                                    modifier = Modifier.size(40.dp),
+                                    shape = RoundedCornerShape(34.dp),
+                                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    tonalElevation = 0.dp
+                                ) {
+                                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                                        Icon(
+                                            imageVector = Icons.Default.FormatAlignCenter,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(24.dp),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                                Column {
+                                    Text(
+                                        text = "Lyrics Alignment",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = "Horizontal text alignment",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
+                            ExpressiveButtonGroup(
+                                items = listOf("Left", "Center", "Right"),
+                                selectedIndex = when (playerLyricsAlignment) {
+                                    "START" -> 0
+                                    "END" -> 2
+                                    else -> 1
+                                },
+                                onItemClick = { index ->
+                                    HapticUtils.performHapticFeedback(context, haptics, HapticFeedbackType.TextHandleMove)
+                                    appSettings.setPlayerLyricsAlignment(when (index) {
+                                        0 -> "START"
+                                        2 -> "END"
+                                        else -> "CENTER"
+                                    })
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                        )
+                        // Show art below lyrics
+                        SettingRow(
+                            icon = Icons.Default.Image,
+                            title = "Show Art Below Lyrics",
+                            description = "Display art beneath the lyrics overlay",
+                            toggleState = playerShowArtBelowLyrics,
+                            onToggleChange = { appSettings.setPlayerShowArtBelowLyrics(it) }
+                        )
+                            } // end AnimatedVisibility Column
+                        } // end AnimatedVisibility
+                    }
+                }
+            }
             item {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
@@ -9635,24 +9897,20 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
             SettingGroup(
                 title = "Display Mode",
                 items = listOf(
+                    // Display Mode Button Group
                     SettingItem(
                         Icons.Default.Settings,
-                        "Follow System Theme",
-                        "Automatically switch between light and dark mode",
-                        toggleState = useSystemTheme,
-                        onToggleChange = { appSettings.setUseSystemTheme(it) }
+                        "Theme Mode",
+                        "Choose your preferred theme",
+                        onClick = {
+                            // This will be replaced with button group below
+                        }
                     ),
-                    SettingItem(
-                        Icons.Default.DarkMode,
-                        "Dark Mode",
-                        if (useSystemTheme) "Managed by system settings" else "Enable dark theme manually",
-                        toggleState = darkMode,
-                        onToggleChange = { appSettings.setDarkMode(it) }
-                    ),
+                    // AMOLED Theme - always in list, rendered conditionally via AnimatedVisibility
                     SettingItem(
                         Icons.Default.Brightness2,
                         "AMOLED Theme",
-                        if (darkMode || useSystemTheme) "Pure black theme for OLED displays" else "Available only in dark mode",
+                        "Pure black theme for OLED displays",
                         toggleState = amoledTheme,
                         onToggleChange = { appSettings.setAmoledTheme(it) }
                     )
@@ -9810,27 +10068,78 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                     Column {
                         when (group.title) {
                             "Display Mode" -> {
-                                // First item: Follow System Theme
-                                TunerSettingRow(item = group.items[0])
-
-                                // Second item: Dark Mode with AnimatedVisibility
-                                AnimatedVisibility(
-                                    visible = !useSystemTheme,
-                                    enter = fadeIn(animationSpec = tween(300)) + expandVertically(animationSpec = tween(300)),
-                                    exit = fadeOut(animationSpec = tween(200)) + shrinkVertically(animationSpec = tween(200))
-                                ) {
-                                    Column {
-                                        HorizontalDivider(
-                                            modifier = Modifier.padding(horizontal = 20.dp),
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-                                        )
-                                        TunerSettingRow(item = group.items[1])
+                                // Display Mode Button Group
+                                Column(modifier = Modifier.padding(20.dp)) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        // Icon container with expressive design
+                                        Surface(
+                                            modifier = Modifier.size(40.dp),
+                                            shape = RoundedCornerShape(34.dp),
+                                            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                            tonalElevation = 0.dp
+                                        ) {
+                                            Box(
+                                                contentAlignment = Alignment.Center,
+                                                modifier = Modifier.fillMaxSize()
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Settings,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(24.dp),
+                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+                                        Column {
+                                            Text(
+                                                text = "Theme Mode",
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.Medium,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = "Choose your preferred theme",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
                                     }
+
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    ExpressiveButtonGroup(
+                                        items = listOf("System", "Light", "Dark"),
+                                        selectedIndex = when {
+                                            useSystemTheme -> 0
+                                            !darkMode -> 1
+                                            else -> 2
+                                        },
+                                        onItemClick = { index ->
+                                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                            when (index) {
+                                                0 -> { // System
+                                                    appSettings.setUseSystemTheme(true)
+                                                }
+                                                1 -> { // Light
+                                                    appSettings.setUseSystemTheme(false)
+                                                    appSettings.setDarkMode(false)
+                                                }
+                                                2 -> { // Dark
+                                                    appSettings.setUseSystemTheme(false)
+                                                    appSettings.setDarkMode(true)
+                                                }
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
                                 }
 
-                                // Third item: AMOLED Theme with AnimatedVisibility
+                                // AMOLED Theme - conditionally shown when Dark mode is selected
                                 AnimatedVisibility(
-                                    visible = darkMode || useSystemTheme,
+                                    visible = !useSystemTheme && darkMode,
                                     enter = fadeIn(animationSpec = tween(300)) + expandVertically(animationSpec = tween(300)),
                                     exit = fadeOut(animationSpec = tween(200)) + shrinkVertically(animationSpec = tween(200))
                                 ) {
@@ -9839,7 +10148,7 @@ fun ThemeCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                             modifier = Modifier.padding(horizontal = 20.dp),
                                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                                         )
-                                        TunerSettingRow(item = group.items[2])
+                                        TunerSettingRow(item = group.items[1]) // AMOLED Theme
                                     }
                                 }
                             }
@@ -13238,52 +13547,15 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
 
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                listOf(
-                                    Pair(0, "Icon"),
-                                    Pair(1, "Name"),
-                                    Pair(2, "Both")
-                                ).forEach { (mode, label) ->
-                                    Card(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .height(48.dp),
-                                        shape = RoundedCornerShape(12.dp),
-                                        colors = CardDefaults.cardColors(
-                                            containerColor = if (displayMode == mode)
-                                                MaterialTheme.colorScheme.primaryContainer
-                                            else
-                                                MaterialTheme.colorScheme.surfaceContainerHighest
-                                        ),
-                                        border = if (displayMode == mode)
-                                            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-                                        else null,
-                                        onClick = {
-                                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                            appSettings.setHomeHeaderDisplayMode(mode)
-                                        }
-                                    ) {
-                                        Box(
-                                            modifier = Modifier.fillMaxSize(),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(
-                                                text = label,
-                                                style = MaterialTheme.typography.labelLarge,
-                                                fontWeight = if (displayMode == mode) FontWeight.SemiBold else FontWeight.Normal,
-                                                color = if (displayMode == mode)
-                                                    MaterialTheme.colorScheme.onPrimaryContainer
-                                                else
-                                                    MaterialTheme.colorScheme.onSurface,
-                                                textAlign = TextAlign.Center
-                                            )
-                                        }
-                                    }
-                                }
-                            }
+                            ExpressiveButtonGroup(
+                                items = listOf("Icon", "Name", "Both"),
+                                selectedIndex = displayMode,
+                                onItemClick = { index ->
+                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                    appSettings.setHomeHeaderDisplayMode(index)
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
                         }
                         
                         // Hide visibility settings when "Both" is selected since it always shows both
@@ -13341,52 +13613,15 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
 
                                     Spacer(modifier = Modifier.height(16.dp))
 
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        listOf(
-                                            Pair(0, "Always"),
-                                            Pair(1, "Expanded"),
-                                            Pair(2, "Collapsed")
-                                        ).forEach { (mode, label) ->
-                                            Card(
-                                                modifier = Modifier
-                                                    .weight(1f)
-                                                    .height(48.dp),
-                                                shape = RoundedCornerShape(12.dp),
-                                                colors = CardDefaults.cardColors(
-                                                    containerColor = if (visibilityMode == mode)
-                                                        MaterialTheme.colorScheme.primaryContainer
-                                                    else
-                                                        MaterialTheme.colorScheme.surfaceContainerHighest
-                                                ),
-                                                border = if (visibilityMode == mode)
-                                                    BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-                                                else null,
-                                                onClick = {
-                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                                    appSettings.setHomeAppIconVisibility(mode)
-                                                }
-                                            ) {
-                                                Box(
-                                                    modifier = Modifier.fillMaxSize(),
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    Text(
-                                                        text = label,
-                                                        style = MaterialTheme.typography.labelLarge,
-                                                        fontWeight = if (visibilityMode == mode) FontWeight.SemiBold else FontWeight.Normal,
-                                                        color = if (visibilityMode == mode)
-                                                            MaterialTheme.colorScheme.onPrimaryContainer
-                                                        else
-                                                            MaterialTheme.colorScheme.onSurface,
-                                                        textAlign = TextAlign.Center
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
+                                    ExpressiveButtonGroup(
+                                        items = listOf("Always", "Expanded", "Collapsed"),
+                                        selectedIndex = visibilityMode,
+                                        onItemClick = { index ->
+                                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                            appSettings.setHomeAppIconVisibility(index)
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
                                 }
                             }
                         }
@@ -13657,68 +13892,15 @@ fun HomeScreenCustomizationSettingsScreen(onBackClick: () -> Unit) {
                                         }
                                     }
 
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        val context = LocalContext.current
-                                        val haptic = LocalHapticFeedback.current
-                                        val styles = listOf(
-                                            Triple(0, "Default", "2 side peek albums"),
-                                            Triple(1, "Hero", "1 side peek album")
-                                        )
-                                        
-                                        styles.forEach { (style, title, description) ->
-                                            val isSelected = discoverCarouselStyle == style
-
-                                            Card(
-                                                onClick = {
-                                                    HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
-                                                    appSettings.setHomeDiscoverCarouselStyle(style)
-                                                },
-                                                modifier = Modifier.weight(1f),
-                                                shape = RoundedCornerShape(12.dp),
-                                                colors = CardDefaults.cardColors(
-                                                    containerColor = if (isSelected)
-                                                        MaterialTheme.colorScheme.primaryContainer
-                                                    else
-                                                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                                                ),
-                                                border = if (isSelected)
-                                                    BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-                                                else
-                                                    null
-                                            ) {
-                                                Column(
-                                                    modifier = Modifier.padding(12.dp),
-                                                    horizontalAlignment = Alignment.CenterHorizontally
-                                                ) {
-                                                    Icon(
-                                                        imageVector = when (style) {
-                                                            0 -> Icons.Rounded.ViewColumn
-                                                            else -> Icons.Rounded.CenterFocusWeak
-                                                        },
-                                                        contentDescription = null,
-                                                        tint = if (isSelected)
-                                                            MaterialTheme.colorScheme.onPrimaryContainer
-                                                        else
-                                                            MaterialTheme.colorScheme.onSurfaceVariant,
-                                                        modifier = Modifier.size(24.dp)
-                                                    )
-                                                    Spacer(modifier = Modifier.height(4.dp))
-                                                    Text(
-                                                        text = title,
-                                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                                                        color = if (isSelected)
-                                                            MaterialTheme.colorScheme.onPrimaryContainer
-                                                        else
-                                                            MaterialTheme.colorScheme.onSurfaceVariant,
-                                                        textAlign = TextAlign.Center
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
+                                    ExpressiveButtonGroup(
+                                        items = listOf("Default", "Hero"),
+                                        selectedIndex = discoverCarouselStyle,
+                                        onItemClick = { index ->
+                                            HapticUtils.performHapticFeedback(context, haptic, HapticFeedbackType.TextHandleMove)
+                                            appSettings.setHomeDiscoverCarouselStyle(index)
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
                                 }
                                 
                                 HorizontalDivider(

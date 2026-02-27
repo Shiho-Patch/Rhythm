@@ -150,6 +150,7 @@ dependencies {
 
     // Core Android dependencies
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.core.splashscreen)
     implementation("androidx.core:core:1.17.0") // Downgrade core dependency for compatibility
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

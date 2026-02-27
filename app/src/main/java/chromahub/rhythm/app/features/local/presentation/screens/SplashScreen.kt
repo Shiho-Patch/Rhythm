@@ -111,9 +111,8 @@ fun SplashScreen(
 
     // Entrance animation
     LaunchedEffect(Unit) {
-        delay(200) // Brief delay
-
-        // Show content with smooth fade and scale
+        // Start entrance animations immediately; avoid artificial delays so the system
+        // (Android lifecycle) can control visible timing during cold starts.
         showContent = true
         launch {
             contentAlpha.animateTo(1f, animationSpec = tween(800, easing = EaseOut))
@@ -125,9 +124,7 @@ fun SplashScreen(
             ))
         }
 
-        delay(600) // Let content settle
-
-        // Show loader sliding up from bottom
+        // Show loader without extra holds
         showLoader = true
         launch {
             loaderOffsetY.animateTo(
@@ -144,7 +141,7 @@ fun SplashScreen(
     // Exit animation when ready
     LaunchedEffect(isInitialized) {
         if (isInitialized && !exitSplash) {
-            delay(1500) // Brief hold
+            // Proceed immediately once initialization completes; avoid additional holds
             exitSplash = true
 
             launch {
@@ -154,7 +151,8 @@ fun SplashScreen(
                 exitAlpha.animateTo(0f, animationSpec = tween(400))
             }
 
-            delay(100)
+            // Notify host right away. The activity/host can decide whether to keep
+            // the splash visible longer if necessary.
             onMediaScanComplete()
         }
     }

@@ -64,7 +64,9 @@ fun WordByWordLyricsView(
     onSeek: ((Long) -> Unit)? = null,
     syncOffset: Long = 0L, // TODO: Add UI controls for adjusting sync offset in real-time
     animationPreset: WordAnimationPreset = WordAnimationPreset.DEFAULT, // TODO: Implement animation presets
-    lyricsSource: String? = null // Source of lyrics
+    lyricsSource: String? = null, // Source of lyrics
+    textSizeMultiplier: Float = 1.0f, // Scale factor for lyrics text size
+    textAlignment: TextAlign = TextAlign.Center // Alignment of lyrics text
 ) {
     val context = LocalContext.current
     // TODO: Apply syncOffset to all timestamp comparisons for manual sync adjustment
@@ -166,7 +168,11 @@ fun WordByWordLyricsView(
         LazyColumn(
             state = listState,
             modifier = modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            horizontalAlignment = when (textAlignment) {
+                TextAlign.Start -> Alignment.Start
+                TextAlign.End -> Alignment.End
+                else -> Alignment.CenterHorizontally
+            },
             contentPadding = PaddingValues(vertical = 30.dp)
         ) {
             itemsIndexed(lyricsItems) { itemIndex, item ->
@@ -297,9 +303,10 @@ fun WordByWordLyricsView(
                         Text(
                             text = annotatedText,
                             style = MaterialTheme.typography.headlineSmall.copy(
-                                lineHeight = MaterialTheme.typography.headlineSmall.lineHeight * 1.4f
+                                fontSize = MaterialTheme.typography.headlineSmall.fontSize * textSizeMultiplier,
+                                lineHeight = MaterialTheme.typography.headlineSmall.lineHeight * 1.4f * textSizeMultiplier
                             ),
-                            textAlign = TextAlign.Center,
+                            textAlign = textAlignment,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {

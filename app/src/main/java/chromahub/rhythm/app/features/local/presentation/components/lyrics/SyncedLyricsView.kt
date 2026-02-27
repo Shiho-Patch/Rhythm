@@ -34,7 +34,9 @@ fun SyncedLyricsView(
     syncOffset: Long = 0L, // TODO: Add UI controls for adjusting sync offset in real-time
     showTranslation: Boolean = true,
     showRomanization: Boolean = true,
-    lyricsSource: String? = null // Source of lyrics (e.g., "LRCLib", "Embedded", "Local File")
+    lyricsSource: String? = null, // Source of lyrics (e.g., "LRCLib", "Embedded", "Local File")
+    textSizeMultiplier: Float = 1.0f, // Scale factor for lyrics text size
+    textAlignment: TextAlign = TextAlign.Center // Alignment of lyrics text
 ) {
     val context = LocalContext.current
     // TODO: Apply syncOffset to all timestamp comparisons for manual sync adjustment
@@ -83,7 +85,11 @@ fun SyncedLyricsView(
         LazyColumn(
             state = listState,
             modifier = modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            horizontalAlignment = when (textAlignment) {
+                TextAlign.Start -> Alignment.Start
+                TextAlign.End -> Alignment.End
+                else -> Alignment.CenterHorizontally
+            },
             contentPadding = PaddingValues(vertical = 30.dp)
         ) {
             itemsIndexed(parsedLyrics) { index, line ->
@@ -95,7 +101,9 @@ fun SyncedLyricsView(
                     parsedLyrics = parsedLyrics,
                     onSeek = onSeek,
                     showTranslation = showTranslation,
-                    showRomanization = showRomanization
+                    showRomanization = showRomanization,
+                    textSizeMultiplier = textSizeMultiplier,
+                    textAlignment = textAlignment
                 )
             }
             
@@ -128,7 +136,9 @@ private fun SyncedLyricItem(
     parsedLyrics: List<chromahub.rhythm.app.util.LyricLine>,
     onSeek: ((Long) -> Unit)?,
     showTranslation: Boolean,
-    showRomanization: Boolean
+    showRomanization: Boolean,
+    textSizeMultiplier: Float = 1.0f,
+    textAlignment: TextAlign = TextAlign.Center
 ) {
     val isCurrentLine = currentLineIndex == index
     val isPreviousLine = currentLineIndex == index + 1
@@ -218,6 +228,11 @@ private fun SyncedLyricItem(
     // Subtle letter spacing for emphasis
     val letterSpacing = if (isCurrentLine) 0.05.sp else 0.sp
 
+    val columnAlignment = when (textAlignment) {
+        TextAlign.Start -> Alignment.Start
+        TextAlign.End -> Alignment.End
+        else -> Alignment.CenterHorizontally
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -231,18 +246,19 @@ private fun SyncedLyricItem(
                 translationY = verticalTranslation
             }
             .alpha(alpha),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = columnAlignment
     ) {
         // Main lyrics text
         Text(
             text = line.text,
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontWeight = fontWeight,
-                lineHeight = MaterialTheme.typography.headlineSmall.lineHeight * 1.5f,
+                fontSize = MaterialTheme.typography.headlineSmall.fontSize * textSizeMultiplier,
+                lineHeight = MaterialTheme.typography.headlineSmall.lineHeight * 1.5f * textSizeMultiplier,
                 letterSpacing = letterSpacing
             ),
             color = textColor,
-            textAlign = TextAlign.Center,
+            textAlign = textAlignment,
             modifier = Modifier.fillMaxWidth()
         )
         
@@ -256,7 +272,7 @@ private fun SyncedLyricItem(
                     lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.4f
                 ),
                 color = textColor.copy(alpha = if (isCurrentLine) 0.75f else 0.6f),
-                textAlign = TextAlign.Center,
+                textAlign = textAlignment,
                 modifier = Modifier
                     .fillMaxWidth()
                     .alpha(if (isCurrentLine) 0.9f else 0.7f)
@@ -276,7 +292,7 @@ private fun SyncedLyricItem(
                 color = MaterialTheme.colorScheme.onSurface.copy(
                     alpha = if (isCurrentLine) 0.65f else 0.5f
                 ),
-                textAlign = TextAlign.Center,
+                textAlign = textAlignment,
                 modifier = Modifier.fillMaxWidth()
             )
         }

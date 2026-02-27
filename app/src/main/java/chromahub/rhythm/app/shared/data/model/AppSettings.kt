@@ -351,6 +351,14 @@ class AppSettings private constructor(context: Context) {
         
         // Player Screen Customization Settings
         private const val KEY_PLAYER_SHOW_GRADIENT_OVERLAY = "player_show_gradient_overlay"
+        private const val KEY_PLAYER_ART_OVERLAY_TYPE = "player_art_overlay_type" // 0=Gradient, 1=Blur
+        private const val KEY_PLAYER_ART_OVERLAY_INTENSITY = "player_art_overlay_intensity" // Float 0.0-1.0
+        private const val KEY_PLAYER_LYRICS_OVERLAY_TYPE = "player_lyrics_overlay_type" // 0=Gradient, 1=Blur
+        private const val KEY_PLAYER_LYRICS_OVERLAY_INTENSITY = "player_lyrics_overlay_intensity" // Float 0.0-1.0
+        private const val KEY_PLAYER_LYRICS_TRANSITION = "player_lyrics_transition" // 0=SlideVertical, 1=Fade, 2=Scale, 3=SlideHorizontal
+        private const val KEY_PLAYER_LYRICS_TEXT_SIZE = "player_lyrics_text_size" // Float sp multiplier, default 1.0
+        private const val KEY_PLAYER_LYRICS_ALIGNMENT = "player_lyrics_alignment" // "CENTER", "START", "END"
+        private const val KEY_PLAYER_SHOW_ART_BELOW_LYRICS = "player_show_art_below_lyrics" // Boolean
         private const val KEY_PLAYER_SHOW_SEEK_BUTTONS = "player_show_seek_buttons"
         private const val KEY_PLAYER_TEXT_ALIGNMENT = "player_text_alignment" // "START", "CENTER", "END"
         private const val KEY_PLAYER_SHOW_SONG_INFO_ON_ARTWORK = "player_show_song_info_on_artwork"
@@ -2798,7 +2806,7 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
      * Validates crossfade duration
      */
     private fun isValidCrossfadeDuration(duration: Float): Boolean {
-        return duration in 0.1f..10.0f
+        return duration in 0.1f..12.0f
     }
     
     /**
@@ -3023,6 +3031,14 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
         
         // Player Screen Customization Settings
         _playerShowGradientOverlay.value = prefs.getBoolean(KEY_PLAYER_SHOW_GRADIENT_OVERLAY, true)
+        _playerArtOverlayType.value = prefs.getInt(KEY_PLAYER_ART_OVERLAY_TYPE, 0)
+        _playerArtOverlayIntensity.value = prefs.getFloat(KEY_PLAYER_ART_OVERLAY_INTENSITY, 1.0f)
+        _playerLyricsOverlayType.value = prefs.getInt(KEY_PLAYER_LYRICS_OVERLAY_TYPE, 0)
+        _playerLyricsOverlayIntensity.value = prefs.getFloat(KEY_PLAYER_LYRICS_OVERLAY_INTENSITY, 0.1f)
+        _playerLyricsTransition.value = prefs.getInt(KEY_PLAYER_LYRICS_TRANSITION, 0)
+        _playerLyricsTextSize.value = prefs.getFloat(KEY_PLAYER_LYRICS_TEXT_SIZE, 1.0f)
+        _playerLyricsAlignment.value = prefs.getString(KEY_PLAYER_LYRICS_ALIGNMENT, "CENTER") ?: "CENTER"
+        _playerShowArtBelowLyrics.value = prefs.getBoolean(KEY_PLAYER_SHOW_ART_BELOW_LYRICS, false)
         _playerShowSeekButtons.value = prefs.getBoolean(KEY_PLAYER_SHOW_SEEK_BUTTONS, true)
         _playerTextAlignment.value = prefs.getString(KEY_PLAYER_TEXT_ALIGNMENT, "CENTER") ?: "CENTER"
         _playerShowSongInfoOnArtwork.value = prefs.getBoolean(KEY_PLAYER_SHOW_SONG_INFO_ON_ARTWORK, true)
@@ -3171,6 +3187,62 @@ private val _autoCheckForUpdates = MutableStateFlow(prefs.getBoolean(KEY_AUTO_CH
     fun setPlayerShowGradientOverlay(value: Boolean) {
         _playerShowGradientOverlay.value = value
         prefs.edit().putBoolean(KEY_PLAYER_SHOW_GRADIENT_OVERLAY, value).apply()
+    }
+
+    private val _playerArtOverlayType = MutableStateFlow(prefs.getInt(KEY_PLAYER_ART_OVERLAY_TYPE, 0))
+    val playerArtOverlayType: StateFlow<Int> = _playerArtOverlayType.asStateFlow()
+    fun setPlayerArtOverlayType(value: Int) {
+        _playerArtOverlayType.value = value
+        prefs.edit().putInt(KEY_PLAYER_ART_OVERLAY_TYPE, value).apply()
+    }
+
+    private val _playerArtOverlayIntensity = MutableStateFlow(prefs.getFloat(KEY_PLAYER_ART_OVERLAY_INTENSITY, 1.0f))
+    val playerArtOverlayIntensity: StateFlow<Float> = _playerArtOverlayIntensity.asStateFlow()
+    fun setPlayerArtOverlayIntensity(value: Float) {
+        _playerArtOverlayIntensity.value = value
+        prefs.edit().putFloat(KEY_PLAYER_ART_OVERLAY_INTENSITY, value).apply()
+    }
+
+    private val _playerLyricsOverlayType = MutableStateFlow(prefs.getInt(KEY_PLAYER_LYRICS_OVERLAY_TYPE, 0))
+    val playerLyricsOverlayType: StateFlow<Int> = _playerLyricsOverlayType.asStateFlow()
+    fun setPlayerLyricsOverlayType(value: Int) {
+        _playerLyricsOverlayType.value = value
+        prefs.edit().putInt(KEY_PLAYER_LYRICS_OVERLAY_TYPE, value).apply()
+    }
+
+    private val _playerLyricsOverlayIntensity = MutableStateFlow(prefs.getFloat(KEY_PLAYER_LYRICS_OVERLAY_INTENSITY, 0.1f))
+    val playerLyricsOverlayIntensity: StateFlow<Float> = _playerLyricsOverlayIntensity.asStateFlow()
+    fun setPlayerLyricsOverlayIntensity(value: Float) {
+        _playerLyricsOverlayIntensity.value = value
+        prefs.edit().putFloat(KEY_PLAYER_LYRICS_OVERLAY_INTENSITY, value).apply()
+    }
+
+    private val _playerLyricsTransition = MutableStateFlow(prefs.getInt(KEY_PLAYER_LYRICS_TRANSITION, 0))
+    val playerLyricsTransition: StateFlow<Int> = _playerLyricsTransition.asStateFlow()
+    fun setPlayerLyricsTransition(value: Int) {
+        _playerLyricsTransition.value = value
+        prefs.edit().putInt(KEY_PLAYER_LYRICS_TRANSITION, value).apply()
+    }
+
+    private val _playerLyricsTextSize = MutableStateFlow(prefs.getFloat(KEY_PLAYER_LYRICS_TEXT_SIZE, 1.0f))
+    val playerLyricsTextSize: StateFlow<Float> = _playerLyricsTextSize.asStateFlow()
+    fun setPlayerLyricsTextSize(value: Float) {
+        _playerLyricsTextSize.value = value.coerceIn(0.5f, 2.0f)
+        prefs.edit().putFloat(KEY_PLAYER_LYRICS_TEXT_SIZE, _playerLyricsTextSize.value).apply()
+    }
+
+    private val _playerLyricsAlignment = MutableStateFlow(prefs.getString(KEY_PLAYER_LYRICS_ALIGNMENT, "CENTER") ?: "CENTER")
+    val playerLyricsAlignment: StateFlow<String> = _playerLyricsAlignment.asStateFlow()
+    fun setPlayerLyricsAlignment(value: String) {
+        _playerLyricsAlignment.value = value
+        prefs.edit().putString(KEY_PLAYER_LYRICS_ALIGNMENT, value).apply()
+    }
+
+    private val _playerShowArtBelowLyrics = MutableStateFlow(prefs.getBoolean(KEY_PLAYER_SHOW_ART_BELOW_LYRICS, false))
+    val playerShowArtBelowLyrics: StateFlow<Boolean> = _playerShowArtBelowLyrics.asStateFlow()
+    fun setPlayerShowArtBelowLyrics(value: Boolean) {
+        _playerShowArtBelowLyrics.value = value
+        prefs.edit().putBoolean(KEY_PLAYER_SHOW_ART_BELOW_LYRICS, value).apply()
     }
     
     private val _playerShowSeekButtons = MutableStateFlow(prefs.getBoolean(KEY_PLAYER_SHOW_SEEK_BUTTONS, true))

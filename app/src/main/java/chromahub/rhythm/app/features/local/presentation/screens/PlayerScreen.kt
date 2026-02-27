@@ -25,6 +25,7 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.input.pointer.pointerInput
@@ -50,6 +51,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -311,6 +313,10 @@ fun PlayerScreen(
     
     // Player customization settings
     val playerShowGradientOverlay by appSettingsInstance.playerShowGradientOverlay.collectAsState()
+    val playerLyricsTransition by appSettingsInstance.playerLyricsTransition.collectAsState()
+    val playerLyricsTextSize by appSettingsInstance.playerLyricsTextSize.collectAsState()
+    val playerLyricsAlignment by appSettingsInstance.playerLyricsAlignment.collectAsState()
+    val playerShowArtBelowLyrics by appSettingsInstance.playerShowArtBelowLyrics.collectAsState()
     val playerShowSeekButtons by appSettingsInstance.playerShowSeekButtons.collectAsState()
     val playerTextAlignment by appSettingsInstance.playerTextAlignment.collectAsState()
     val playerShowSongInfoOnArtwork by appSettingsInstance.playerShowSongInfoOnArtwork.collectAsState()
@@ -1370,7 +1376,8 @@ fun PlayerScreen(
                                 },
                             contentAlignment = Alignment.TopCenter // Align content to the center
                         ) {
-                            // Render album art if song is not null
+                            // Render album art (hidden during lyrics view unless playerShowArtBelowLyrics is on)
+                            if (!showLyricsView || playerShowArtBelowLyrics) {
                             if (song != null) {
                                 Box(modifier = Modifier.fillMaxSize()) {
                                     // Album art content with enhanced loading state
@@ -1397,43 +1404,19 @@ fun PlayerScreen(
                                                     .clip(playerArtworkShape)
                                             )
 
-                                            // Add gradient overlays for consistency (controlled by setting, disabled on tablets)
+                                            // Art overlay: bottom-heavy vertical gradient
                                             if (playerShowGradientOverlay && !isTablet) {
                                                 Box(
                                                     modifier = Modifier
                                                         .fillMaxSize()
+                                                        .clip(playerArtworkShape)
                                                         .background(
                                                             Brush.verticalGradient(
                                                                 colors = listOf(
                                                                     Color.Transparent,
-                                                                    BottomSheetDefaults.ContainerColor.copy(
-                                                                        alpha = 0.6f
-                                                                    ),
-                                                                    BottomSheetDefaults.ContainerColor.copy(
-                                                                        alpha = 0.9f
-                                                                    ),
-                                                                    BottomSheetDefaults.ContainerColor.copy(
-                                                                        alpha = 1.0f
-                                                                    )
-                                                                )
-                                                            )
-                                                        )
-                                                )
-
-                                                Box(
-                                                    modifier = Modifier
-                                                        .fillMaxSize()
-                                                        .background(
-                                                            Brush.horizontalGradient(
-                                                                colors = listOf(
-                                                                    BottomSheetDefaults.ContainerColor.copy(
-                                                                        alpha = 0.2f
-                                                                    ),
-                                                                    Color.Transparent,
-                                                                    Color.Transparent,
-                                                                    BottomSheetDefaults.ContainerColor.copy(
-                                                                        alpha = 0.2f
-                                                                    )
+                                                                    BottomSheetDefaults.ContainerColor.copy(alpha = 0.6f),
+                                                                    BottomSheetDefaults.ContainerColor.copy(alpha = 0.9f),
+                                                                    BottomSheetDefaults.ContainerColor.copy(alpha = 1.0f)
                                                                 )
                                                             )
                                                         )
@@ -1468,44 +1451,16 @@ fun PlayerScreen(
                                                 modifier = Modifier.size(120.dp)
                                             )
 
-                                            // Add gradient overlays for consistency (controlled by setting, disabled on tablets)
+                                            // Art overlay: Bottom-heavy gradient for fallback logo (no artwork)
                                             if (playerShowGradientOverlay && !isTablet) {
                                                 Box(
                                                     modifier = Modifier
                                                         .fillMaxSize()
                                                         .background(
                                                             Brush.verticalGradient(
-                                                                colors = listOf(
-                                                                    Color.Transparent,
-                                                                    BottomSheetDefaults.ContainerColor.copy(
-                                                                        alpha = 0.6f
-                                                                    ),
-                                                                    BottomSheetDefaults.ContainerColor.copy(
-                                                                        alpha = 0.9f
-                                                                    ),
-                                                                    BottomSheetDefaults.ContainerColor.copy(
-                                                                        alpha = 1.0f
-                                                                    )
-                                                                )
-                                                            )
-                                                        )
-                                                )
-
-                                                Box(
-                                                    modifier = Modifier
-                                                        .fillMaxSize()
-                                                        .background(
-                                                            Brush.horizontalGradient(
-                                                                colors = listOf(
-                                                                    BottomSheetDefaults.ContainerColor.copy(
-                                                                        alpha = 0.2f
-                                                                    ),
-                                                                    Color.Transparent,
-                                                                    Color.Transparent,
-                                                                    BottomSheetDefaults.ContainerColor.copy(
-                                                                        alpha = 0.2f
-                                                                    )
-                                                                )
+                                                                0.0f to Color.Transparent,
+                                                                0.35f to Color.Transparent,
+                                                                1.0f to BottomSheetDefaults.ContainerColor.copy(alpha = 0.85f)
                                                             )
                                                         )
                                                 )
@@ -1538,6 +1493,7 @@ fun PlayerScreen(
                                     )
                                 }
                             }
+                            } // end art visibility condition
 
                             Column(
                                 modifier = Modifier.fillMaxSize(), // This Column will fill the Box
@@ -1683,95 +1639,63 @@ fun PlayerScreen(
                                     }
                                 }
 
-                                // Lyrics overlay view with improved animations
+                                // Lyrics overlay view with transition based on playerLyricsTransition setting
+                                val lyricsTextAlign = when (playerLyricsAlignment) {
+                                    "START" -> TextAlign.Start
+                                    "END" -> TextAlign.End
+                                    else -> TextAlign.Center
+                                }
+                                val lyricsEnterTransition = when (playerLyricsTransition) {
+                                    1 -> fadeIn(tween(400, easing = EaseInOut)) // Fade
+                                    2 -> fadeIn(tween(350, easing = EaseInOut)) + scaleIn(tween(350, easing = EaseInOut), initialScale = 0.92f) // Scale
+                                    3 -> fadeIn(tween(350, easing = EaseInOut)) + slideInVertically(tween(350, easing = EaseInOut)) { it / 2 } // Slide horizontal (repurposed as slide up from bottom)
+                                    else -> fadeIn(tween(350, easing = EaseInOut)) + slideInVertically(tween(350, easing = EaseInOut)) { -it / 2 } // 0 = SlideVertical (from top)
+                                }
+                                val lyricsExitTransition = when (playerLyricsTransition) {
+                                    1 -> fadeOut(tween(300, easing = EaseInOut))
+                                    2 -> fadeOut(tween(250, easing = EaseInOut)) + scaleOut(tween(250, easing = EaseInOut), targetScale = 0.92f)
+                                    3 -> fadeOut(tween(250, easing = EaseInOut)) + slideOutVertically(tween(250, easing = EaseInOut)) { it / 2 }
+                                    else -> fadeOut(tween(250, easing = EaseInOut)) + slideOutVertically(tween(250, easing = EaseInOut)) { -it / 2 }
+                                }
                                 AnimatedVisibility(
                                     visible = isLyricsContentVisible && showLyrics && showLyricsView,
-                                    enter = fadeIn(
-                                        animationSpec = tween(
-                                            durationMillis = 350,
-                                            easing = EaseInOut
-                                        )
-                                    ) +
-                                            slideInVertically(
-                                                animationSpec = tween(
-                                                    durationMillis = 350,
-                                                    easing = EaseInOut
-                                                )
-                                            ) { -it / 2 },
-                                    exit = fadeOut(
-                                        animationSpec = tween(
-                                            durationMillis = 250,
-                                            easing = EaseInOut
-                                        )
-                                    ) +
-                                            slideOutVertically(
-                                                animationSpec = tween(
-                                                    durationMillis = 250,
-                                                    easing = EaseInOut
-                                                )
-                                            ) { -it / 2 },
+                                    enter = lyricsEnterTransition,
+                                    exit = lyricsExitTransition,
                                     modifier = Modifier.fillMaxSize()
                                 ) {
                                     Box(modifier = Modifier.fillMaxSize()) {
-                                        // Deeper gradient overlay for lyrics
-                                        // Box(
-                                        //     modifier = Modifier
-                                        //         .fillMaxSize()
-                                        //         .background(
-                                        //             Brush.verticalGradient(
-                                        //                 colors = listOf(
-                                        //                     MaterialTheme.colorScheme.surface.copy(alpha = 0.0f), // Start more transparent
-                                        //                     MaterialTheme.colorScheme.surface.copy(alpha = 0.3f), // Reduced from 0.5f
-                                        //                     MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), // Reduced from 0.9f
-                                        //                     MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)  // Reduced from 1.0f
-                                        //                 )
-                                        //             )
-                                        //         )
-                                        // )
-
-                                        // Horizontal gradient for more depth
+                                        // Lyrics overlay: Fixed gradient
+                                        // Horizontal gradient for depth
                                         Box(
                                             modifier = Modifier
                                                 .fillMaxSize()
                                                 .background(
                                                     Brush.horizontalGradient(
                                                         colors = listOf(
-                                                            BottomSheetDefaults.ContainerColor.copy(
-                                                                alpha = 0.4f
-                                                            ), // Reduced from 0.6f
+                                                            BottomSheetDefaults.ContainerColor.copy(alpha = 0.4f),
                                                             Color.Transparent,
                                                             Color.Transparent,
-                                                            BottomSheetDefaults.ContainerColor.copy(
-                                                                alpha = 0.4f
-                                                            ) // Reduced from 0.6f
+                                                            BottomSheetDefaults.ContainerColor.copy(alpha = 0.4f)
                                                         )
                                                     )
                                                 )
                                         )
-
-                                        // Overlay with semi-transparent background for text readability (from original lyrics view)
+                                        // Semi-transparent background for text readability
                                         Box(
                                             modifier = Modifier
                                                 .fillMaxSize()
                                                 .background(
                                                     brush = Brush.verticalGradient(
                                                         colors = listOf(
-                                                            BottomSheetDefaults.ContainerColor.copy(
-                                                                alpha = 0.50f
-                                                            ), // Reduced from 0.70f
-                                                            BottomSheetDefaults.ContainerColor.copy(
-                                                                alpha = 0.60f
-                                                            ), // Reduced from 0.80f
-                                                            BottomSheetDefaults.ContainerColor.copy(
-                                                                alpha = 0.75f
-                                                            )  // Reduced from 0.85f
+                                                            BottomSheetDefaults.ContainerColor.copy(alpha = 0.50f),
+                                                            BottomSheetDefaults.ContainerColor.copy(alpha = 0.60f),
+                                                            BottomSheetDefaults.ContainerColor.copy(alpha = 0.75f)
                                                         )
                                                     ),
-                                                    shape = RoundedCornerShape(if (isCompactHeight) 0.dp else 0.dp) // Keep rounded corners
+                                                    shape = RoundedCornerShape(0.dp)
                                                 )
                                         )
-
-                                        // Additional subtle overlay for better text contrast (from original lyrics view)
+                                        // Subtle radial overlay for text contrast
                                         Box(
                                             modifier = Modifier
                                                 .fillMaxSize()
@@ -1779,13 +1703,11 @@ fun PlayerScreen(
                                                     brush = Brush.radialGradient(
                                                         colors = listOf(
                                                             Color.Transparent,
-                                                            BottomSheetDefaults.ContainerColor.copy(
-                                                                alpha = 0.10f
-                                                            ) // Reduced from 0.15f
+                                                            BottomSheetDefaults.ContainerColor.copy(alpha = 0.10f)
                                                         ),
                                                         radius = 500f
                                                     ),
-                                                    shape = RoundedCornerShape(if (isCompactHeight) 0.dp else 0.dp) // Keep rounded corners
+                                                    shape = RoundedCornerShape(0.dp)
                                                 )
                                         )
 
@@ -1954,7 +1876,9 @@ fun PlayerScreen(
                                                             currentPlaybackTime = currentTimeMs,
                                                             modifier = Modifier.fillMaxSize(),
                                                             onSeek = onLyricsSeek,
-                                                            lyricsSource = lyrics?.source
+                                                            lyricsSource = lyrics?.source,
+                                                            textSizeMultiplier = playerLyricsTextSize,
+                                                            textAlignment = lyricsTextAlign
                                                         )
                                                     } else {
                                                         // Fall back to line-by-line synced or plain lyrics
@@ -1977,7 +1901,9 @@ fun PlayerScreen(
                                                                 onSeek = onLyricsSeek,
                                                                 showTranslation = showLyricsTranslation,
                                                                 showRomanization = showLyricsRomanization,
-                                                                lyricsSource = lyrics?.source
+                                                                lyricsSource = lyrics?.source,
+                                                                textSizeMultiplier = playerLyricsTextSize,
+                                                                textAlignment = lyricsTextAlign
                                                             )
                                                         } else {
                                                             // Fallback to plain text lyrics if not synchronized
@@ -1985,17 +1911,22 @@ fun PlayerScreen(
                                                                 modifier = Modifier
                                                                     .fillMaxSize()
                                                                     .verticalScroll(rememberScrollState()),
-                                                                horizontalAlignment = Alignment.CenterHorizontally
+                                                                horizontalAlignment = when (playerLyricsAlignment) {
+                                                                    "START" -> Alignment.Start
+                                                                    "END" -> Alignment.End
+                                                                    else -> Alignment.CenterHorizontally
+                                                                }
                                                             ) {
                                                                 Text(
                                                                     text = lyricsText,
                                                                     style = MaterialTheme.typography.bodyLarge.copy(
-                                                                        lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.6f,
+                                                                        fontSize = MaterialTheme.typography.bodyLarge.fontSize * playerLyricsTextSize,
+                                                                        lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.6f * playerLyricsTextSize,
                                                                         fontWeight = FontWeight.Medium,
                                                                         letterSpacing = 0.5.sp
                                                                     ),
                                                                     color = MaterialTheme.colorScheme.onSurface,
-                                                                    textAlign = TextAlign.Center,
+                                                                    textAlign = lyricsTextAlign,
                                                                     modifier = Modifier
                                                                         .fillMaxWidth()
                                                                         .padding(horizontal = 8.dp)
@@ -2172,7 +2103,7 @@ fun PlayerScreen(
 
                             // Customizable progress slider based on user setting
                             if (playerProgressStyle == "WAVY") {
-                                // Wave progress slider (original style)
+                                // WaveSlider: proper animated waves + morphing thumb + play/pause reaction
                                 WaveSlider(
                                     value = if (isScrubbing && enhancedSeekingEnabled) scrubProgress else progress,
                                     onValueChange = { newValue ->
@@ -2189,11 +2120,12 @@ fun PlayerScreen(
                                             isScrubbing = false
                                         }
                                     },
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier
+                                        .weight(1f)
                                         .padding(horizontal = 8.dp),
+                                    isPlaying = isPlaying,
                                     activeTrackColor = MaterialTheme.colorScheme.primary,
-                                    inactiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-                                    isPlaying = isPlaying
+                                    inactiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
                                 )
                             } else {
                                 // Other styled progress bars
